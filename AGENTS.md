@@ -61,11 +61,15 @@ circuit-weather/
 ### Build & Deploy
 ```bash
 # Local development
-cd public && python -m http.server 3000
+npx wrangler dev
 
-# Deploy to Cloudflare
-npx wrangler deploy
+# Deploy to Cloudflare (auto-deploys on push to GitHub)
+git add .
+git commit -m "Your changes"
+git push origin main
 ```
+
+**Note**: The project is connected to Cloudflare Pages via GitHub integration. Pushing to `main` triggers automatic deployment - no manual `wrangler deploy` needed.
 
 ### Cloudflare Configuration (wrangler.toml)
 ```toml

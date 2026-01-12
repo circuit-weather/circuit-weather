@@ -586,47 +586,8 @@ body {
    Responsive Design
    =================================== */
 
-/* Tablet: 481px - 768px */
+/* Mobile/Tablet: up to 768px */
 @media (max-width: 768px) {
-    :root {
-        --spacing-md: 0.75rem;
-        --spacing-lg: 1rem;
-    }
-
-    .sidebar {
-        width: 260px;
-        min-width: 260px;
-    }
-
-    .sidebar-header h1 {
-        font-size: 1rem;
-    }
-
-    .countdown-timer {
-        font-size: 1.5rem;
-    }
-
-    .countdown-label,
-    .forecast-section h3 {
-        font-size: 0.65rem;
-    }
-
-    .countdown-session {
-        font-size: 0.75rem;
-    }
-
-    /* Reposition Leaflet controls */
-    .leaflet-right .leaflet-control {
-        margin-right: 8px;
-    }
-
-    .leaflet-bottom .leaflet-control {
-        margin-bottom: 70px;
-    }
-}
-
-/* Mobile: up to 480px */
-@media (max-width: 480px) {
     :root {
         --spacing-xs: 0.125rem;
         --spacing-sm: 0.375rem;
@@ -676,8 +637,8 @@ body {
         display: block;
     }
 
-    .sidebar.sidebar--open ~ .sidebar-backdrop,
-    .sidebar.sidebar--open + .sidebar-backdrop {
+    .sidebar.sidebar--open~.sidebar-backdrop,
+    .sidebar.sidebar--open+.sidebar-backdrop {
         opacity: 1;
         pointer-events: auto;
     }
