@@ -1,6 +1,6 @@
 # Cloudflare
 .wrangler/
-wrangler.toml
+# wrangler.toml is tracked - needed for Cloudflare Pages deployment
 
 # Local environment
 .env
