@@ -165,6 +165,9 @@ class WeatherRadar {
         this.createLayers();
         this.updateSlider();
         this.showControls(true);
+
+        // Wait for tiles to load before starting animation
+        await this.waitForTilesToLoad();
         this.play();
     }
 
@@ -174,15 +177,54 @@ class WeatherRadar {
 
         this.frames.forEach((frame, index) => {
             const layer = L.tileLayer(frame.url, {
-                opacity: 0,
+                tileSize: 256,
+                opacity: 0.01, // Small opacity to trigger tile loading
                 zIndex: 100 + index,
+                crossOrigin: 'anonymous',
+                updateWhenIdle: false,
+                updateWhenZooming: false,
+                keepBuffer: 2,
             });
             layer.addTo(this.map);
             this.layers.push(layer);
         });
 
         this.currentFrame = this.frames.length - 1;
-        this.showFrame(this.currentFrame);
+
+        // Force map to recalculate size
+        this.map.invalidateSize();
+    }
+
+    async waitForTilesToLoad() {
+        // Wait for the current frame's tiles to load
+        const currentLayer = this.layers[this.currentFrame];
+        if (!currentLayer) return;
+
+        return new Promise((resolve) => {
+            let resolved = false;
+
+            const onLoad = () => {
+                if (!resolved) {
+                    resolved = true;
+                    currentLayer.off('load', onLoad);
+                    // Set proper opacity after load
+                    this.showFrame(this.currentFrame);
+                    resolve();
+                }
+            };
+
+            currentLayer.on('load', onLoad);
+
+            // Timeout fallback (3 seconds)
+            setTimeout(() => {
+                if (!resolved) {
+                    resolved = true;
+                    currentLayer.off('load', onLoad);
+                    this.showFrame(this.currentFrame);
+                    resolve();
+                }
+            }, 3000);
+        });
     }
 
     showFrame(index) {
