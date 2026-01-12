@@ -7,3 +7,5 @@ compatibility_date = "2024-09-23"
 [assets]
 directory = "./public"
 binding = "ASSETS"
+# Enable SPA fallback - serve index.html for 404s instead of redirecting
+not_found_handling = "single-page-application"
