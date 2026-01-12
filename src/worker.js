@@ -3,7 +3,9 @@
  * 
  * Handles:
  * 1. API proxy requests to /api/f1/*
- * 2. Static asset serving for everything else
+ * 
+ * Static assets and SPA fallback are handled by Cloudflare's asset configuration
+ * via wrangler.toml's run_worker_first and not_found_handling settings.
  */
 
 export default {
@@ -11,30 +13,16 @@ export default {
     const url = new URL(request.url);
     const path = url.pathname;
 
-    // 1. Handle API requests
+    // Only /api/f1/* routes reach this worker (configured via run_worker_first)
     if (path.startsWith('/api/f1/')) {
       return handleApiRequest(request, env, ctx);
     }
 
-    // 2. Serve static assets
-    // Cloudflare "Workers with Assets" automatically binds the asset fetcher
-    // provided we configured 'assets' in wrangler.toml
-    if (env.ASSETS) {
-      // Check if this looks like a static file request (has extension)
-      const hasExtension = /\.[a-zA-Z0-9]+$/.test(path);
-
-      if (hasExtension) {
-        // Serve the static file directly
-        return env.ASSETS.fetch(request);
-      }
-
-      // SPA fallback: serve index.html for all other routes
-      // This enables client-side routing for paths like /f1/10/race
-      const indexRequest = new Request(new URL('/index.html', url), request);
-      return env.ASSETS.fetch(indexRequest);
-    }
-
-    return new Response('Not Found', { status: 404 });
+    // For any other /api/* routes, return 404
+    return new Response(JSON.stringify({ error: 'API endpoint not found' }), {
+      status: 404,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 };
 
