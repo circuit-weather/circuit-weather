@@ -180,7 +180,6 @@ class WeatherRadar {
                 tileSize: 256,
                 opacity: 0.01, // Small opacity to trigger tile loading
                 zIndex: 100 + index,
-                crossOrigin: 'anonymous',
                 updateWhenIdle: false,
                 updateWhenZooming: false,
                 keepBuffer: 2,
