@@ -179,15 +179,16 @@ binding = "ASSETS"
 ## Local Development
 
 ```bash
-# Serve static files
-cd public
-python -m http.server 3000
+# Recommended: Use Wrangler (supports SPA routing + Worker)
+npx wrangler dev
 
-# Or with npm
-npx serve public
+# Alternative: Use serve with SPA mode (-s flag)
+npx serve public -s -l 3000
 
 # Open browser
 # http://localhost:3000
 ```
+
+Note: Use `wrangler dev` for full SPA routing support (URL sharing, page refresh). The `-s` flag with `serve` enables single-page-app fallback mode. Avoid `python -m http.server` as it doesn't support SPA routing.
 
 Note: Local development fetches F1 data directly from Jolpica API. In production, it goes through the Worker proxy with caching.

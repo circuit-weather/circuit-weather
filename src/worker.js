@@ -20,7 +20,18 @@ export default {
     // Cloudflare "Workers with Assets" automatically binds the asset fetcher
     // provided we configured 'assets' in wrangler.toml
     if (env.ASSETS) {
-      return env.ASSETS.fetch(request);
+      // Check if this looks like a static file request (has extension)
+      const hasExtension = /\.[a-zA-Z0-9]+$/.test(path);
+
+      if (hasExtension) {
+        // Serve the static file directly
+        return env.ASSETS.fetch(request);
+      }
+
+      // SPA fallback: serve index.html for all other routes
+      // This enables client-side routing for paths like /f1/10/race
+      const indexRequest = new Request(new URL('/index.html', url), request);
+      return env.ASSETS.fetch(indexRequest);
     }
 
     return new Response('Not Found', { status: 404 });
