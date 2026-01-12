@@ -180,6 +180,8 @@ class WeatherRadar {
                 tileSize: 256,
                 opacity: 0.01, // Small opacity to trigger tile loading
                 zIndex: 100 + index,
+                maxNativeZoom: 10, // RainViewer free tier limits to zoom 10
+                maxZoom: 18,       // Allow zooming in, tiles will be upscaled
                 updateWhenIdle: false,
                 updateWhenZooming: false,
                 keepBuffer: 2,
