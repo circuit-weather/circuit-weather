@@ -1,6 +1,0 @@
-name = "circuit-weather"
-compatibility_date = "2026-01-12"
-pages_build_output_dir = "."
-
-# No build command needed - static HTML/CSS/JS
-# The /functions directory is auto-detected by Cloudflare Pages
