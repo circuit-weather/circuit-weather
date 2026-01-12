@@ -1,28 +1,52 @@
 /**
- * Cloudflare Pages Function - F1 API Proxy with Edge Caching
+ * Cloudflare Worker with Asset Handling
  * 
- * This function proxies requests to the Jolpica F1 API and caches
- * responses at Cloudflare's edge for improved performance.
- * 
- * Route: /api/f1/*
+ * Handles:
+ * 1. API proxy requests to /api/f1/*
+ * 2. Static asset serving for everything else
  */
 
-export async function onRequest(context) {
-  const { request, params, env } = context;
+export default {
+  async fetch(request, env, ctx) {
+    const url = new URL(request.url);
+    const path = url.pathname;
 
-  // Build the upstream URL
-  const path = params.path?.join('/') || 'current';
-  const upstreamUrl = `https://api.jolpi.ca/ergast/f1/${path}`;
+    // 1. Handle API requests
+    if (path.startsWith('/api/f1/')) {
+      return handleApiRequest(request, env, ctx);
+    }
 
-  // Cache key based on the path
+    // 2. Serve static assets
+    // Cloudflare "Workers with Assets" automatically binds the asset fetcher
+    // provided we configured 'assets' in wrangler.toml
+    if (env.ASSETS) {
+      return env.ASSETS.fetch(request);
+    }
+
+    return new Response('Not Found', { status: 404 });
+  }
+};
+
+/**
+ * Handle F1 API requests with caching
+ */
+async function handleApiRequest(request, env, ctx) {
+  const url = new URL(request.url);
+  // Extract path parameters after /api/f1/
+  // e.g. /api/f1/current -> current
+  const apiPath = url.pathname.replace('/api/f1/', '');
+
+  // Build upstream URL
+  const upstreamUrl = `https://api.jolpi.ca/ergast/f1/${apiPath}`;
+
+  // Cache key based on the full upstream URL
   const cacheKey = new Request(upstreamUrl, request);
   const cache = caches.default;
 
-  // Check cache first
+  // Check cache match
   let response = await cache.match(cacheKey);
 
   if (response) {
-    // Clone response and add cache header
     const headers = new Headers(response.headers);
     headers.set('X-Cache', 'HIT');
     headers.set('Access-Control-Allow-Origin', '*');
@@ -30,7 +54,7 @@ export async function onRequest(context) {
     return new Response(response.body, {
       status: response.status,
       statusText: response.statusText,
-      headers,
+      headers
     });
   }
 
@@ -56,10 +80,9 @@ export async function onRequest(context) {
       });
     }
 
-    // Clone response for caching
     const responseBody = await upstreamResponse.text();
 
-    // Create cacheable response with 1 hour TTL
+    // Create cacheable response (1 hour)
     response = new Response(responseBody, {
       status: 200,
       headers: {
@@ -70,33 +93,18 @@ export async function onRequest(context) {
       },
     });
 
-    // Store in cache (don't await - fire and forget)
-    context.waitUntil(cache.put(cacheKey, response.clone()));
+    // Save to cache
+    ctx.waitUntil(cache.put(cacheKey, response.clone()));
 
     return response;
 
   } catch (error) {
     return new Response(JSON.stringify({
       error: 'Failed to fetch from upstream',
-      message: error.message,
+      message: error.message
     }), {
       status: 502,
-      headers: {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-      },
+      headers: { 'Content-Type': 'application/json' }
     });
   }
-}
-
-// Handle CORS preflight
-export async function onRequestOptions() {
-  return new Response(null, {
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type',
-      'Access-Control-Max-Age': '86400',
-    },
-  });
 }
