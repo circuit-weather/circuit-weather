@@ -30,6 +30,17 @@
         <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
+                <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
+                    <svg class="icon-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="3" y1="6" x2="21" y2="6"></line>
+                        <line x1="3" y1="12" x2="21" y2="12"></line>
+                        <line x1="3" y1="18" x2="21" y2="18"></line>
+                    </svg>
+                    <svg class="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
                 <h1>Circuit Weather</h1>
                 <span class="header-badge">F1</span>
                 <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark/light mode">
@@ -97,6 +108,9 @@
                 <a href="https://github.com/yourusername/circuit-weather" target="_blank">GitHub</a>
             </div>
         </aside>
+
+        <!-- Sidebar Backdrop (for mobile overlay) -->
+        <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
 
         <!-- Main Content -->
         <main class="main-content">

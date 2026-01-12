@@ -64,6 +64,75 @@ class ThemeManager {
 }
 
 // ===================================
+// Sidebar Manager (Mobile)
+// ===================================
+
+class SidebarManager {
+    constructor() {
+        this.sidebar = document.getElementById('sidebar');
+        this.toggleBtn = document.getElementById('sidebarToggle');
+        this.backdrop = document.getElementById('sidebarBackdrop');
+        this.isOpen = false;
+        this.mobileBreakpoint = 480;
+        this.bindEvents();
+    }
+
+    bindEvents() {
+        // Toggle button click
+        if (this.toggleBtn) {
+            this.toggleBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.toggle();
+            });
+        }
+
+        // Backdrop click to close
+        if (this.backdrop) {
+            this.backdrop.addEventListener('click', () => this.close());
+        }
+
+        // Close on window resize to desktop
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > this.mobileBreakpoint && this.isOpen) {
+                this.close();
+            }
+        });
+
+        // Close on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.isOpen) {
+                this.close();
+            }
+        });
+    }
+
+    toggle() {
+        if (this.isOpen) {
+            this.close();
+        } else {
+            this.open();
+        }
+    }
+
+    open() {
+        if (this.sidebar) {
+            this.sidebar.classList.add('sidebar--open');
+            this.isOpen = true;
+            // Prevent body scroll when sidebar is open
+            document.body.style.overflow = 'hidden';
+        }
+    }
+
+    close() {
+        if (this.sidebar) {
+            this.sidebar.classList.remove('sidebar--open');
+            this.isOpen = false;
+            document.body.style.overflow = '';
+        }
+    }
+}
+
+// ===================================
 // F1 API Client
 // ===================================
 
@@ -570,6 +639,7 @@ class CircuitWeatherApp {
     constructor() {
         this.mapManager = new MapManager();
         this.themeManager = null;
+        this.sidebarManager = null;
         this.f1Api = new F1API();
         this.radar = null;
         this.rangeCircles = null;
@@ -590,6 +660,9 @@ class CircuitWeatherApp {
             this.themeManager = new ThemeManager((theme) => {
                 this.mapManager.setTheme(theme);
             });
+
+            // Sidebar manager for mobile
+            this.sidebarManager = new SidebarManager();
 
             this.rangeCircles = new RangeCircles(map);
             this.radar = new WeatherRadar(map);
