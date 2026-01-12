@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="Real-time weather radar for Formula 1 race circuits. Track precipitation and conditions at every F1 track.">
+    <meta name="keywords" content="F1, Formula 1, weather, radar, circuit, race, precipitation">
+    <meta property="og:title" content="Circuit Weather - F1 Race Circuit Weather Radar">
+    <meta property="og:description" content="Real-time weather radar for Formula 1 race circuits">
+    <meta property="og:type" content="website">
+    <title>Circuit Weather - F1 Race Circuit Weather Radar</title>
+
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+
+    <!-- App CSS -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+    <div class="app-layout">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <h1>Circuit Weather</h1>
+                <span class="header-badge">F1</span>
+                <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark/light mode">
+                    <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="5"></circle>
+                        <path
+                            d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42">
+                        </path>
+                    </svg>
+                    <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="sidebar-content">
+                <!-- Selection Controls -->
+                <div class="control-section">
+                    <div class="control-group">
+                        <label for="seriesSelect">Series</label>
+                        <select id="seriesSelect" class="select">
+                            <option value="f1">Formula 1</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label for="roundSelect">Round</label>
+                        <select id="roundSelect" class="select">
+                            <option value="">Select a round...</option>
+                        </select>
+                    </div>
+                    <div class="control-group">
+                        <label for="sessionSelect">Session</label>
+                        <select id="sessionSelect" class="select" disabled>
+                            <option value="">Select a session...</option>
+                        </select>
+                    </div>
+                    <div class="control-group control-group--units">
+                        <label>Units</label>
+                        <button class="unit-toggle" id="unitToggle">
+                            <span class="unit-option" data-unit="metric">km</span>
+                            <span class="unit-option active" data-unit="imperial">mi</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Session Countdown -->
+                <div class="countdown-card" id="countdownCard" style="display: none;">
+                    <div class="countdown-label">Session starts in</div>
+                    <div class="countdown-timer" id="countdownTimer">--:--:--</div>
+                    <div class="countdown-session" id="countdownSession"></div>
+                </div>
+
+                <!-- Weather Forecast -->
+                <div class="forecast-section" id="forecastSection" style="display: none;">
+                    <h3>Session Forecast</h3>
+                    <div class="forecast-content" id="forecastContent">
+                        <p class="forecast-unavailable">Forecast available closer to session</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-footer">
+                <a href="PRIVACY.md" target="_blank">Privacy</a>
+                <span>•</span>
+                <a href="https://github.com/yourusername/circuit-weather" target="_blank">GitHub</a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Map Container -->
+            <div id="map" class="map"></div>
+
+            <!-- Radar Timeline -->
+            <div class="radar-controls" id="radarControls" style="display: none;">
+                <button class="radar-play-btn" id="radarPlayBtn" aria-label="Play/Pause radar animation">
+                    <svg class="icon-play" viewBox="0 0 24 24" fill="currentColor">
+                        <polygon points="5,3 19,12 5,21"></polygon>
+                    </svg>
+                    <svg class="icon-pause" viewBox="0 0 24 24" fill="currentColor">
+                        <rect x="6" y="4" width="4" height="16"></rect>
+                        <rect x="14" y="4" width="4" height="16"></rect>
+                    </svg>
+                </button>
+                <div class="radar-timeline">
+                    <input type="range" id="radarSlider" class="radar-slider" min="0" max="100" value="100">
+                    <div class="radar-time-info">
+                        <span class="radar-time" id="radarTime">--:--</span>
+                        <span class="radar-relative" id="radarRelative"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Loading Overlay -->
+            <div class="loading-overlay" id="loadingOverlay">
+                <div class="loading-spinner"></div>
+                <p>Loading...</p>
+            </div>
+        </main>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <!-- App JS -->
+    <script src="app.js"></script>
+</body>
+
+</html>

@@ -1,3 +1,17 @@
+# Cloudflare
+.wrangler/
+wrangler.toml
+
+# Local environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.idea/
+.vscode/
+*.code-workspace
+
 # Logs
 logs
 *.log
