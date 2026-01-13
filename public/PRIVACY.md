@@ -29,10 +29,10 @@ This application uses the following third-party APIs and services:
 - **Data sent:** Your IP address (for rate limiting)
 - **Privacy policy:** [rainviewer.com/privacy](https://www.rainviewer.com/privacy.html)
 
-### OpenFreeMap
+### Carto (OpenStreetMap)
 - **Purpose:** Provides base map tiles
 - **Data sent:** Your IP address (standard web request)
-- **Privacy policy:** [openfreemap.org](https://openfreemap.org)
+- **Privacy policy:** [carto.com/privacy](https://carto.com/privacy/)
 
 ### Cloudflare Pages
 - **Purpose:** Hosts this website

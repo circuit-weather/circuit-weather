@@ -1,79 +1,41 @@
 # Circuit Weather 🌧️🏎️
 
-Real-time weather radar for Formula 1 race circuits.
+Circuit Weather is a real-time weather radar designed specifically for Formula 1 fans. It lets you track live precipitation and weather conditions at every circuit on the F1 calendar, helping you stay ahead of the strategy during race weekends.
 
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
+## What it does
 
-## Features
+The site provides a live weather radar overlay on top of the circuit map. You can see past weather movement and a short-term forecast to predict if rain is incoming. It automatically loads the schedule for the current F1 season, allowing you to jump between different rounds and sessions (like Qualifying or the Race).
 
-- **Live Weather Radar** - Animated precipitation overlay with 2-hour history and 30-minute forecast
-- **All 2026 F1 Circuits** - Automatic coordinates from official schedule data
-- **Range Circles** - Visual distance indicators (metric/imperial toggle)
-- **Dark/Light Mode** - Automatic system detection with manual override
-- **Shareable URLs** - Direct links to specific races and sessions (e.g., `/f1/8/qualifying`)
-- **Fully Responsive** - Optimized for mobile, tablet, and desktop
-- **No API Keys Required** - All data sources are free and open
+Key features include:
+*   **Live Radar:** Visualise rain moving across the track with a 2-hour history and 30-minute forecast.
+*   **Race Schedule:** Browse all circuits from the current F1 season with session start times.
+*   **Distance Markers:** Toggle range circles to gauge how far the rain is from the track (in km or miles).
+*   **Theme Support:** Automatically adapts to your system's dark or light mode, or you can toggle it manually.
+*   **Shareable Links:** Send a direct link to a specific race or session to your friends.
+*   **Responsive Design:** Works great on your phone, tablet, or desktop.
 
-## Tech Stack
+## How it works
 
-| Component | Technology |
-|-----------|------------|
-| Frontend | Vanilla HTML, CSS, JavaScript |
-| Maps | [Leaflet.js](https://leafletjs.com/) |
-| Map Tiles | [OpenFreeMap](https://openfreemap.org/) |
-| Weather Radar | [RainViewer API](https://www.rainviewer.com/api.html) |
-| F1 Data | [Jolpica F1 API](https://github.com/jolpica/jolpica-f1) |
-| Hosting | [Cloudflare Pages](https://pages.cloudflare.com/) |
-| Edge Caching | Cloudflare Pages Functions |
+The application is built with vanilla HTML, CSS, and JavaScript, keeping it lightweight and fast. It uses Leaflet.js for the interactive maps and fetches weather data from the RainViewer API. Race schedules and circuit locations are sourced from the Jolpica F1 API (an open-source alternative to Ergast).
 
-## Local Development
+The map tiles are provided by Carto (based on OpenStreetMap data), ensuring a clean look that works well with the weather overlays.
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/yourusername/circuit-weather.git
-   cd circuit-weather
-   ```
+## Running it locally
 
-2. Start a local server:
-   ```bash
-   # Using Python
-   python -m http.server 8000
-   
-   # Or using Node.js
-   npx serve
-   
-   # Or using Wrangler (for full Cloudflare Functions support)
-   npx wrangler pages dev .
-   ```
+If you want to run this project on your own machine:
 
-3. Open http://localhost:8000 in your browser
+1.  Clone the repository.
+2.  Start a simple local web server (e.g., `npx serve` or `python -m http.server`).
+3.  Open the local address in your browser.
 
-## Project Structure
+No API keys are required as all data sources are free and open.
 
-```
-circuit-weather/
-├── index.html          # Main HTML
-├── styles.css          # Design system & responsive styles
-├── app.js              # Application logic
-├── functions/          # Cloudflare Pages Functions
-│   └── api/f1/
-│       └── [[path]].js # F1 API proxy with edge caching
-├── PRIVACY.md          # Privacy policy
-├── LICENSE             # MIT License
-└── README.md           # This file
-```
+## Credits
 
-## API Credits
-
-This project is made possible by these fantastic free APIs:
-
-- **[Jolpica F1](https://github.com/jolpica/jolpica-f1)** - Open-source F1 data API (Ergast replacement)
-- **[RainViewer](https://www.rainviewer.com/)** - Global weather radar data
-- **[OpenFreeMap](https://openfreemap.org/)** - Free OpenStreetMap tiles
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
+Huge thanks to the free APIs that make this possible:
+*   **Jolpica F1** for the race data.
+*   **RainViewer** for the weather radar.
+*   **Carto & OpenStreetMap** for the map tiles.
 
 ## License
 
