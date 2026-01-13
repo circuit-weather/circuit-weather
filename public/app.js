@@ -56,9 +56,16 @@ class ThemeManager {
     }
 
     bindEvents() {
+        // Sidebar theme toggle
         const toggleBtn = document.getElementById('themeToggle');
         if (toggleBtn) {
             toggleBtn.addEventListener('click', () => this.toggle());
+        }
+
+        // Mobile header theme toggle
+        const mobileToggleBtn = document.getElementById('mobileThemeToggle');
+        if (mobileToggleBtn) {
+            mobileToggleBtn.addEventListener('click', () => this.toggle());
         }
     }
 }
@@ -71,16 +78,25 @@ class SidebarManager {
     constructor() {
         this.sidebar = document.getElementById('sidebar');
         this.toggleBtn = document.getElementById('sidebarToggle');
+        this.mobileMenuBtn = document.getElementById('mobileMenuBtn');
         this.backdrop = document.getElementById('sidebarBackdrop');
         this.isOpen = false;
-        this.mobileBreakpoint = 480;
+        this.mobileBreakpoint = 768;
         this.bindEvents();
     }
 
     bindEvents() {
-        // Toggle button click
+        // Toggle button click (inside sidebar)
         if (this.toggleBtn) {
             this.toggleBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.toggle();
+            });
+        }
+
+        // Mobile header menu button
+        if (this.mobileMenuBtn) {
+            this.mobileMenuBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 this.toggle();
             });

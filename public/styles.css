@@ -583,6 +583,73 @@ body {
 }
 
 /* ===================================
+   Mobile Header
+   =================================== */
+
+.mobile-header {
+    display: none;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 56px;
+    background: var(--sidebar-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border-bottom: 1px solid var(--color-border);
+    z-index: 500;
+    padding: 0 var(--spacing-md);
+    align-items: center;
+    gap: var(--spacing-sm);
+    box-shadow: var(--shadow-sm);
+}
+
+.mobile-menu-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border: none;
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    color: var(--color-text);
+    cursor: pointer;
+    transition: background-color var(--transition-fast);
+    flex-shrink: 0;
+}
+
+.mobile-menu-btn:hover {
+    background: var(--color-surface-elevated);
+}
+
+.mobile-menu-btn svg {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.mobile-header-brand {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    min-width: 0;
+}
+
+.mobile-header-brand h1 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.mobile-theme-toggle {
+    flex-shrink: 0;
+}
+
+/* ===================================
    Responsive Design
    =================================== */
 
@@ -646,6 +713,22 @@ body {
     /* Main content takes full width */
     .main-content {
         width: 100vw;
+        position: relative;
+    }
+
+    /* Show mobile header */
+    .mobile-header {
+        display: flex;
+    }
+
+    /* Offset map for mobile header */
+    .map {
+        position: absolute;
+        top: 56px;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: auto;
     }
 
     /* Compact header */
