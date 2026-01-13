@@ -35,6 +35,14 @@ async function handleApiRequest(request, env, ctx) {
   // e.g. /api/f1/current -> current
   const apiPath = url.pathname.replace('/api/f1/', '');
 
+  // Validate apiPath to prevent directory traversal
+  if (apiPath.includes('..') || apiPath.includes('//') || apiPath.startsWith('/') || decodeURIComponent(apiPath).includes('..')) {
+    return new Response(JSON.stringify({ error: 'Invalid API path' }), {
+      status: 400,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+
   // Build upstream URL
   const upstreamUrl = `https://api.jolpi.ca/ergast/f1/${apiPath}`;
 
@@ -89,6 +97,8 @@ async function handleApiRequest(request, env, ctx) {
         'Cache-Control': 'public, max-age=3600',
         'X-Cache': 'MISS',
         'Access-Control-Allow-Origin': '*',
+        'X-Content-Type-Options': 'nosniff',
+        'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
       },
     });
 
