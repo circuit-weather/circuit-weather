@@ -94,7 +94,9 @@ body {
     /* Fallback */
     height: 100dvh;
     width: 100vw;
-    overflow-x: hidden;
+    overflow: hidden;
+    /* Smooth transition when layout changes at breakpoint */
+    transition: gap 300ms ease;
 }
 
 /* ===================================
@@ -113,6 +115,8 @@ body {
     border-right: 1px solid var(--color-border);
     z-index: 100;
     flex-shrink: 0;
+    /* Smooth transition for responsive changes */
+    transition: transform 300ms ease, width 300ms ease, min-width 300ms ease, opacity 300ms ease;
 }
 
 .sidebar-header {
@@ -347,6 +351,9 @@ body {
     flex: 1;
     position: relative;
     min-width: 0;
+    overflow: hidden;
+    /* Smooth transition for responsive changes */
+    transition: margin 300ms ease, width 300ms ease;
 }
 
 .map {
@@ -396,26 +403,27 @@ body {
     transition: background var(--transition-fast);
 }
 
-/* Recentre button - same styling but display controlled by JS */
+/* Recentre button - styled exactly like zoom buttons, display controlled by JS */
 .leaflet-control-zoom-recentre {
-    align-items: center;
-    justify-content: center;
-    background: var(--sidebar-bg);
+    display: none;
+    /* JS will set to 'flex' when visible */
+    align-items: center !important;
+    justify-content: center !important;
+    background: var(--sidebar-bg) !important;
     backdrop-filter: var(--glass-blur);
     -webkit-backdrop-filter: var(--glass-blur);
-    color: var(--color-primary);
-    border: 1px solid var(--color-border);
+    color: var(--color-primary) !important;
+    border: 1px solid var(--color-border) !important;
     border-radius: var(--radius-md) !important;
-    width: 2.75rem;
-    height: 2.75rem;
-    line-height: 2.75rem;
-    font-size: 1.25rem;
+    width: 2.75rem !important;
+    height: 2.75rem !important;
+    line-height: 2.75rem !important;
+    font-size: 1.25rem !important;
     cursor: pointer;
     text-decoration: none;
     box-shadow: var(--shadow-md);
     transition: background var(--transition-fast);
     flex-shrink: 0;
-    /* display is controlled by JS: flex or none */
 }
 
 .recentre-icon {
@@ -719,29 +727,24 @@ body {
         position: relative;
     }
 
-    /* Sidebar becomes overlay on mobile */
+    /* 
+     * Sidebar uses margin-based hiding for smooth breakpoint transitions.
+     * Instead of position:fixed + transform, we keep it in flex flow but
+     * slide it off-screen with negative margin-left.
+     */
     .sidebar {
-        position: fixed;
-        left: 0;
-        top: 0;
-        bottom: 0;
-        width: var(--sidebar-width);
-        min-width: auto;
-        max-width: 85vw;
-        transform: translateX(-100%);
-        /* No transition by default - prevents awkward resize appearance */
-        /* Transition is added via .sidebar--animating class on user interaction */
+        /* Keep in flex flow - slide off via negative margin */
+        position: relative;
+        margin-left: calc(-1 * var(--sidebar-width));
         z-index: 2000;
         box-shadow: var(--shadow-lg);
+        /* Transition is always active for smooth resize behavior */
+        transition: margin-left 300ms ease, transform 300ms ease;
     }
 
-    /* Animation class - only applied during user-triggered open/close */
-    .sidebar.sidebar--animating {
-        transition: transform var(--transition-normal);
-    }
-
+    /* When sidebar is open on mobile, slide it back into view */
     .sidebar.sidebar--open {
-        transform: translateX(0);
+        margin-left: 0;
     }
 
     /* Show sidebar toggle button */
@@ -768,10 +771,14 @@ body {
         pointer-events: auto;
     }
 
-    /* Main content takes full width */
+    /* Main content fills remaining space */
     .main-content {
+        flex: 1;
         width: 100vw;
+        min-width: 100vw;
         position: relative;
+        /* Ensure content doesn't shift when sidebar hides */
+        margin-left: 0;
     }
 
     /* Show mobile header */

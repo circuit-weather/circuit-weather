@@ -147,35 +147,18 @@ class SidebarManager {
 
     open() {
         if (this.sidebar) {
-            // Enable transition animation for user interaction
-            this.sidebar.classList.add('sidebar--animating');
-            // Use requestAnimationFrame to ensure the class is applied before the open class
-            requestAnimationFrame(() => {
-                this.sidebar.classList.add('sidebar--open');
-            });
+            this.sidebar.classList.add('sidebar--open');
             this.isOpen = true;
             // Prevent body scroll when sidebar is open
             document.body.style.overflow = 'hidden';
-
-            // Remove animating class after transition completes
-            this.sidebar.addEventListener('transitionend', () => {
-                this.sidebar.classList.remove('sidebar--animating');
-            }, { once: true });
         }
     }
 
     close() {
         if (this.sidebar) {
-            // Enable transition animation for user interaction
-            this.sidebar.classList.add('sidebar--animating');
             this.sidebar.classList.remove('sidebar--open');
             this.isOpen = false;
             document.body.style.overflow = '';
-
-            // Remove animating class after transition completes
-            this.sidebar.addEventListener('transitionend', () => {
-                this.sidebar.classList.remove('sidebar--animating');
-            }, { once: true });
         }
     }
 }
@@ -827,6 +810,9 @@ class CircuitWeatherApp {
             // Sidebar manager for mobile
             this.sidebarManager = new SidebarManager();
 
+            // Handle resize events for mobile visibility
+            this.bindResizeHandler();
+
             // Recentre control (added to zoom control container)
             this.recentreControl = new RecentreControl(map);
 
@@ -883,6 +869,59 @@ class CircuitWeatherApp {
                 if (sessionSelect) sessionSelect.value = nextSession.id;
                 this.selectSession(nextSession.id);
             }
+        }
+    }
+
+    bindResizeHandler() {
+        let lastIsMobile = window.innerWidth <= 768;
+        let resizeTimeout = null;
+
+        window.addEventListener('resize', () => {
+            const isMobile = window.innerWidth <= 768;
+
+            // Always invalidate map size on resize (debounced)
+            if (resizeTimeout) clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                if (this.mapManager && this.mapManager.map) {
+                    this.mapManager.map.invalidateSize();
+                }
+            }, 150);
+
+            // Update visibility when crossing the breakpoint
+            if (isMobile !== lastIsMobile) {
+                lastIsMobile = isMobile;
+                this.updateMobileVisibility();
+            }
+        });
+    }
+
+    updateMobileVisibility() {
+        const isMobile = window.innerWidth <= 768;
+
+        // Update mobile race info visibility
+        const mobileRaceInfo = document.getElementById('mobileRaceInfo');
+        if (mobileRaceInfo && this.selectedRace) {
+            mobileRaceInfo.style.display = isMobile ? 'flex' : 'none';
+        }
+
+        // Update mobile countdown visibility
+        const mobileCountdown = document.getElementById('mobileCountdown');
+        if (mobileCountdown && this.selectedSession && this.countdown.targetTime) {
+            mobileCountdown.style.display = isMobile ? 'block' : 'none';
+        }
+
+        // Invalidate map size multiple times with staggered delays
+        // to ensure CSS transitions have completed
+        if (this.mapManager && this.mapManager.map) {
+            const map = this.mapManager.map;
+            // Immediate
+            map.invalidateSize();
+            // After short delay
+            setTimeout(() => map.invalidateSize(), 100);
+            // After medium delay (for CSS transitions)
+            setTimeout(() => map.invalidateSize(), 300);
+            // After longer delay (final cleanup)
+            setTimeout(() => map.invalidateSize(), 500);
         }
     }
 
