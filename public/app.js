@@ -638,7 +638,11 @@ class CountdownTimer {
         const card = document.getElementById('countdownCard');
         const mobileCard = document.getElementById('mobileCountdown');
         if (card) card.style.display = visible ? 'block' : 'none';
-        if (mobileCard) mobileCard.style.display = visible ? 'block' : 'none';
+        // Only show mobile countdown on mobile viewports
+        if (mobileCard) {
+            const isMobile = window.innerWidth <= 768;
+            mobileCard.style.display = (visible && isMobile) ? 'block' : 'none';
+        }
     }
 
     stop() {
@@ -977,7 +981,9 @@ class CircuitWeatherApp {
         const mobileCircuitEl = document.getElementById('mobileRaceInfoCircuit');
 
         if (mobileEl) {
-            mobileEl.style.display = race ? 'flex' : 'none';
+            // Only show mobile race info on mobile viewports
+            const isMobile = window.innerWidth <= 768;
+            mobileEl.style.display = (race && isMobile) ? 'flex' : 'none';
         }
         if (mobileFlagEl && flagUrl) {
             mobileFlagEl.src = flagUrl;
