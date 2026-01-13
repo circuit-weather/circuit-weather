@@ -22,8 +22,23 @@ const CONFIG = {
     circuitZoom: 11,
     radarOpacity: 0.65,
     radarAnimationSpeed: 600,
-    rangeCirclesMetric: [5, 10, 25, 50],
-    rangeCirclesImperial: [3, 6, 15, 30],
+    // Range circles by zoom level (metric/imperial)
+    rangeCirclesByZoom: {
+        close: { metric: [5, 10, 25], imperial: [3, 6, 15] },       // zoom >= 12
+        medium: { metric: [10, 25, 50], imperial: [6, 15, 30] },    // zoom 10-11
+        far: { metric: [25, 50, 100], imperial: [15, 30, 60] },     // zoom 8-9
+        veryFar: { metric: [50, 100], imperial: [30, 60] },         // zoom < 8
+    },
+};
+
+// Country code mappings for flags (ISO 3166-1 alpha-2)
+const COUNTRY_CODES = {
+    'Australia': 'au', 'Austria': 'at', 'Azerbaijan': 'az', 'Bahrain': 'bh',
+    'Belgium': 'be', 'Brazil': 'br', 'Canada': 'ca', 'China': 'cn',
+    'Hungary': 'hu', 'Italy': 'it', 'Japan': 'jp', 'Mexico': 'mx',
+    'Monaco': 'mc', 'Netherlands': 'nl', 'Qatar': 'qa', 'Saudi Arabia': 'sa',
+    'Singapore': 'sg', 'Spain': 'es', 'UAE': 'ae', 'UK': 'gb',
+    'USA': 'us', 'United States': 'us', 'Las Vegas': 'us', 'Miami': 'us',
 };
 
 // ===================================
@@ -132,18 +147,35 @@ class SidebarManager {
 
     open() {
         if (this.sidebar) {
-            this.sidebar.classList.add('sidebar--open');
+            // Enable transition animation for user interaction
+            this.sidebar.classList.add('sidebar--animating');
+            // Use requestAnimationFrame to ensure the class is applied before the open class
+            requestAnimationFrame(() => {
+                this.sidebar.classList.add('sidebar--open');
+            });
             this.isOpen = true;
             // Prevent body scroll when sidebar is open
             document.body.style.overflow = 'hidden';
+
+            // Remove animating class after transition completes
+            this.sidebar.addEventListener('transitionend', () => {
+                this.sidebar.classList.remove('sidebar--animating');
+            }, { once: true });
         }
     }
 
     close() {
         if (this.sidebar) {
+            // Enable transition animation for user interaction
+            this.sidebar.classList.add('sidebar--animating');
             this.sidebar.classList.remove('sidebar--open');
             this.isOpen = false;
             document.body.style.overflow = '';
+
+            // Remove animating class after transition completes
+            this.sidebar.addEventListener('transitionend', () => {
+                this.sidebar.classList.remove('sidebar--animating');
+            }, { once: true });
         }
     }
 }
@@ -412,10 +444,22 @@ class RangeCircles {
         this.map = map;
         this.circles = [];
         this.labels = [];
-        this.unit = localStorage.getItem('unit') || 'imperial';
+        this.unit = this.getInitialUnit();
         this.center = null;
+        this.visibleCount = 4; // How many circles to show based on zoom
         this.bindEvents();
         this.updateToggleUI();
+    }
+
+    getInitialUnit() {
+        const stored = localStorage.getItem('unit');
+        if (stored) return stored;
+        // Detect from locale (imperial countries: US, Liberia, Myanmar)
+        const lang = navigator.language || 'en-US';
+        const imperialLocales = ['en-US', 'en-LR', 'my-MM'];
+        return imperialLocales.some(l => lang.startsWith(l.split('-')[0]) && lang.includes(l.split('-')[1]))
+            ? 'imperial'
+            : 'metric';
     }
 
     bindEvents() {
@@ -426,6 +470,9 @@ class RangeCircles {
                 if (option) this.setUnit(option.dataset.unit);
             });
         }
+
+        // Adjust visible circles based on zoom
+        this.map.on('zoomend', () => this.updateVisibility());
     }
 
     setUnit(unit) {
@@ -445,8 +492,7 @@ class RangeCircles {
         this.clear();
         this.center = center;
 
-        const distances = this.unit === 'metric' ? CONFIG.rangeCirclesMetric : CONFIG.rangeCirclesImperial;
-        const unitLabel = this.unit === 'metric' ? 'km' : 'mi';
+        const distances = this.getDistancesForZoom();
         const multiplier = this.unit === 'metric' ? 1000 : 1609.34;
 
         distances.forEach((distance, index) => {
@@ -488,6 +534,17 @@ class RangeCircles {
         this.circles.push(marker);
     }
 
+    getDistancesForZoom() {
+        const zoom = this.map.getZoom();
+        const byZoom = CONFIG.rangeCirclesByZoom;
+        const unit = this.unit;
+
+        if (zoom >= 12) return byZoom.close[unit];
+        if (zoom >= 10) return byZoom.medium[unit];
+        if (zoom >= 8) return byZoom.far[unit];
+        return byZoom.veryFar[unit];
+    }
+
     getPointAtDistance(center, distance, bearing) {
         const R = 6371000; // Earth radius in meters
         const lat1 = center[0] * Math.PI / 180;
@@ -511,6 +568,13 @@ class RangeCircles {
         this.labels.forEach(l => this.map.removeLayer(l));
         this.circles = [];
         this.labels = [];
+    }
+
+    updateVisibility() {
+        // Redraw circles with appropriate distances for current zoom
+        if (this.center) {
+            this.draw(this.center);
+        }
     }
 }
 
@@ -539,11 +603,15 @@ class CountdownTimer {
         const now = new Date();
         const diff = this.targetTime - now;
 
+        // Update both sidebar and mobile countdown elements
         const timerEl = document.getElementById('countdownTimer');
         const sessionEl = document.getElementById('countdownSession');
+        const mobileTimerEl = document.getElementById('mobileCountdownTimer');
+        const mobileSessionEl = document.getElementById('mobileCountdownSession');
 
         if (diff <= 0) {
             if (timerEl) timerEl.textContent = 'NOW';
+            if (mobileTimerEl) mobileTimerEl.textContent = 'NOW';
             this.stop();
             return;
         }
@@ -552,20 +620,25 @@ class CountdownTimer {
         const mins = Math.floor((diff % 3600000) / 60000);
         const secs = Math.floor((diff % 60000) / 1000);
 
-        if (timerEl) {
-            if (hours > 24) {
-                const days = Math.floor(hours / 24);
-                timerEl.textContent = `${days}d ${hours % 24}h`;
-            } else {
-                timerEl.textContent = `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
-            }
+        let timeText;
+        if (hours > 24) {
+            const days = Math.floor(hours / 24);
+            timeText = `${days}d ${hours % 24}h`;
+        } else {
+            timeText = `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
         }
+
+        if (timerEl) timerEl.textContent = timeText;
+        if (mobileTimerEl) mobileTimerEl.textContent = timeText;
         if (sessionEl) sessionEl.textContent = this.sessionName;
+        if (mobileSessionEl) mobileSessionEl.textContent = this.sessionName;
     }
 
     show(visible) {
         const card = document.getElementById('countdownCard');
+        const mobileCard = document.getElementById('mobileCountdown');
         if (card) card.style.display = visible ? 'block' : 'none';
+        if (mobileCard) mobileCard.style.display = visible ? 'block' : 'none';
     }
 
     stop() {
@@ -573,6 +646,74 @@ class CountdownTimer {
             clearInterval(this.timer);
             this.timer = null;
         }
+    }
+}
+
+// ===================================
+// Recentre Control
+// ===================================
+
+class RecentreControl {
+    constructor(map) {
+        this.map = map;
+        this.circuitCenter = null;
+        this.circuitZoom = CONFIG.circuitZoom;
+        this.button = null;
+        this.init();
+    }
+
+    init() {
+        // Find the zoom control container
+        const zoomControl = document.querySelector('.leaflet-control-zoom');
+        if (!zoomControl) return;
+
+        // Create the recentre button as an anchor like zoom buttons
+        this.button = document.createElement('a');
+        this.button.className = 'leaflet-control-zoom-recentre';
+        this.button.href = '#';
+        this.button.title = 'Recentre on circuit';
+        this.button.setAttribute('role', 'button');
+        this.button.setAttribute('aria-label', 'Recentre on circuit');
+        this.button.innerHTML = `
+            <svg class="recentre-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>
+            </svg>
+        `;
+        this.button.style.display = 'none';
+
+        // Insert at the top of the zoom control (before zoom in)
+        zoomControl.insertBefore(this.button, zoomControl.firstChild);
+
+        // Prevent map click propagation
+        L.DomEvent.disableClickPropagation(this.button);
+
+        this.button.addEventListener('click', (e) => {
+            e.preventDefault();
+            if (this.circuitCenter) {
+                this.map.setView(this.circuitCenter, this.circuitZoom);
+            }
+        });
+
+        // Show/hide based on map movement
+        this.map.on('moveend', () => this.updateVisibility());
+    }
+
+    setCircuit(center, zoom = CONFIG.circuitZoom) {
+        this.circuitCenter = center;
+        this.circuitZoom = zoom;
+        this.updateVisibility();
+    }
+
+    updateVisibility() {
+        if (!this.circuitCenter || !this.map || !this.button) {
+            if (this.button) this.button.style.display = 'none';
+            return;
+        }
+        const mapCenter = this.map.getCenter();
+        const dist = this.map.distance(mapCenter, L.latLng(this.circuitCenter));
+        // Show button if more than 5km from circuit center
+        this.button.style.display = dist > 5000 ? 'flex' : 'none';
     }
 }
 
@@ -660,6 +801,8 @@ class CircuitWeatherApp {
         this.radar = null;
         this.rangeCircles = null;
         this.countdown = new CountdownTimer();
+        this.recentreControl = null;
+        this.currentCircuitCenter = null;
         this.races = [];
         this.selectedRace = null;
         this.selectedSession = null;
@@ -680,8 +823,14 @@ class CircuitWeatherApp {
             // Sidebar manager for mobile
             this.sidebarManager = new SidebarManager();
 
+            // Recentre control (added to zoom control container)
+            this.recentreControl = new RecentreControl(map);
+
             this.rangeCircles = new RangeCircles(map);
             this.radar = new WeatherRadar(map);
+
+            // Always load radar immediately
+            this.radar.load();
 
             const races = await this.f1Api.getSchedule();
             this.races = races.map(race => this.f1Api.parseRace(race));
@@ -689,12 +838,47 @@ class CircuitWeatherApp {
             this.bindEvents();
 
             const params = this.router.getParams();
-            if (params.round) await this.handleRoute(params);
+            if (params.round) {
+                await this.handleRoute(params);
+            } else {
+                // Auto-select next upcoming round and session
+                this.autoSelectNextRound();
+            }
 
             this.showLoading(false);
         } catch (error) {
             console.error('Failed to initialize:', error);
             this.showLoading(false);
+        }
+    }
+
+    autoSelectNextRound() {
+        const now = new Date();
+        // Find next race with a session in the future
+        const nextRace = this.races.find(race => {
+            const raceDate = new Date(race.date);
+            // Add 3 hours buffer for race duration
+            raceDate.setHours(raceDate.getHours() + 3);
+            return raceDate > now;
+        });
+
+        if (nextRace) {
+            const roundSelect = document.getElementById('roundSelect');
+            if (roundSelect) roundSelect.value = nextRace.round;
+            this.selectRound(nextRace.round);
+
+            // Find next upcoming session within this round
+            const nextSession = nextRace.sessions.find(session => {
+                if (!session.date || !session.time) return false;
+                const sessionTime = new Date(`${session.date}T${session.time}`);
+                return sessionTime > now;
+            });
+
+            if (nextSession) {
+                const sessionSelect = document.getElementById('sessionSelect');
+                if (sessionSelect) sessionSelect.value = nextSession.id;
+                this.selectSession(nextSession.id);
+            }
         }
     }
 
@@ -744,15 +928,63 @@ class CircuitWeatherApp {
         if (race.location) {
             const lat = parseFloat(race.location.lat);
             const lng = parseFloat(race.location.long);
+            this.currentCircuitCenter = [lat, lng];
             this.mapManager.setView(lat, lng);
             this.rangeCircles.draw([lat, lng]);
+
+            // Update recentre control
+            if (this.recentreControl) {
+                this.recentreControl.setCircuit([lat, lng]);
+            }
         }
 
-        // Hide radar until session selected
-        this.radar.destroy();
+        // Update race info banner
+        this.updateRaceInfo(race);
+
+        // Hide countdown until session selected (radar always shows)
         this.countdown.show(false);
 
         this.router.navigate('f1', round, null);
+    }
+
+    updateRaceInfo(race) {
+        const country = race.location?.country;
+        const code = COUNTRY_CODES[country];
+        const flagUrl = code ? `https://flagcdn.com/w80/${code}.png` : '';
+
+        // Sidebar banner
+        const bannerEl = document.getElementById('raceInfoBanner');
+        const flagEl = document.getElementById('countryFlag');
+        const countryEl = document.getElementById('raceInfoCountry');
+        const nameEl = document.getElementById('raceInfoName');
+        const circuitEl = document.getElementById('raceInfoCircuit');
+
+        if (bannerEl) {
+            bannerEl.style.display = race ? 'flex' : 'none';
+        }
+        if (flagEl && flagUrl) {
+            flagEl.src = flagUrl;
+            flagEl.alt = `${country} flag`;
+        }
+        if (countryEl) countryEl.textContent = country || '';
+        if (nameEl) nameEl.textContent = race.name || '';
+        if (circuitEl) circuitEl.textContent = race.circuit?.circuitName || '';
+
+        // Mobile overlay
+        const mobileEl = document.getElementById('mobileRaceInfo');
+        const mobileFlagEl = document.getElementById('mobileCountryFlag');
+        const mobileNameEl = document.getElementById('mobileRaceInfoName');
+        const mobileCircuitEl = document.getElementById('mobileRaceInfoCircuit');
+
+        if (mobileEl) {
+            mobileEl.style.display = race ? 'flex' : 'none';
+        }
+        if (mobileFlagEl && flagUrl) {
+            mobileFlagEl.src = flagUrl;
+            mobileFlagEl.alt = `${country} flag`;
+        }
+        if (mobileNameEl) mobileNameEl.textContent = race.name || '';
+        if (mobileCircuitEl) mobileCircuitEl.textContent = race.circuit?.circuitName || '';
     }
 
     populateSessionSelect(sessions) {

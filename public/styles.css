@@ -91,7 +91,10 @@ body {
 .app-layout {
     display: flex;
     height: 100vh;
+    /* Fallback */
+    height: 100dvh;
     width: 100vw;
+    overflow-x: hidden;
 }
 
 /* ===================================
@@ -109,6 +112,7 @@ body {
     -webkit-backdrop-filter: var(--glass-blur);
     border-right: 1px solid var(--color-border);
     z-index: 100;
+    flex-shrink: 0;
 }
 
 .sidebar-header {
@@ -354,26 +358,74 @@ body {
 /* Leaflet Customization */
 .leaflet-control-zoom {
     border: none !important;
-    box-shadow: var(--shadow-md) !important;
+    box-shadow: none !important;
+    background: transparent !important;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 0 !important;
 }
 
-.leaflet-control-zoom a {
-    background: var(--color-surface) !important;
+/* Move Zoom Controls to Bottom Right (Desktop Default) */
+.leaflet-top.leaflet-left {
+    top: auto;
+    left: auto;
+    right: 20px;
+    bottom: 20px;
+}
+
+.leaflet-control-zoom-in,
+.leaflet-control-zoom-out {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    background: var(--sidebar-bg) !important;
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
     color: var(--color-text) !important;
-    border: none !important;
-    width: 2rem !important;
-    height: 2rem !important;
-    line-height: 2rem !important;
-    font-size: 1rem !important;
+    border: 1px solid var(--color-border) !important;
+    border-radius: var(--radius-md) !important;
+    border-radius: var(--radius-md) !important;
+    width: 2.75rem !important;
+    height: 2.75rem !important;
+    line-height: 2.75rem !important;
+    font-size: 1.25rem !important;
+    cursor: pointer;
+    text-decoration: none;
+    box-shadow: var(--shadow-md);
+    transition: background var(--transition-fast);
 }
 
-.leaflet-control-zoom a:hover {
+/* Recentre button - same styling but display controlled by JS */
+.leaflet-control-zoom-recentre {
+    align-items: center;
+    justify-content: center;
+    background: var(--sidebar-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    color: var(--color-primary);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md) !important;
+    width: 2.75rem;
+    height: 2.75rem;
+    line-height: 2.75rem;
+    font-size: 1.25rem;
+    cursor: pointer;
+    text-decoration: none;
+    box-shadow: var(--shadow-md);
+    transition: background var(--transition-fast);
+    flex-shrink: 0;
+    /* display is controlled by JS: flex or none */
+}
+
+.recentre-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.leaflet-control-zoom a:hover,
+.leaflet-control-zoom-recentre:hover {
     background: var(--color-surface-elevated) !important;
-}
-
-[data-theme="dark"] .leaflet-control-zoom a {
-    background: var(--color-surface) !important;
-    color: var(--color-text) !important;
 }
 
 /* Range Circle Labels */
@@ -407,7 +459,7 @@ body {
     box-shadow: var(--shadow-lg);
     border: 1px solid var(--color-border);
     z-index: 500;
-    max-width: calc(100% - 2rem);
+    max-width: none;
     width: 350px;
 }
 
@@ -674,12 +726,18 @@ body {
         top: 0;
         bottom: 0;
         width: var(--sidebar-width);
-        min-width: var(--sidebar-width);
+        min-width: auto;
         max-width: 85vw;
         transform: translateX(-100%);
-        transition: transform var(--transition-normal);
-        z-index: 1000;
+        /* No transition by default - prevents awkward resize appearance */
+        /* Transition is added via .sidebar--animating class on user interaction */
+        z-index: 2000;
         box-shadow: var(--shadow-lg);
+    }
+
+    /* Animation class - only applied during user-triggered open/close */
+    .sidebar.sidebar--animating {
+        transition: transform var(--transition-normal);
     }
 
     .sidebar.sidebar--open {
@@ -826,43 +884,47 @@ body {
 
     /* Radar controls adjustments */
     .radar-controls {
-        width: calc(100% - 1rem);
-        left: 0.5rem;
-        right: 0.5rem;
+        width: auto;
+        left: 8px;
+        right: 8px;
         transform: none;
         padding: var(--spacing-xs) var(--spacing-sm);
-        bottom: var(--spacing-sm);
+        bottom: 20px;
     }
 
     .radar-play-btn {
-        width: 1.75rem;
-        height: 1.75rem;
+        width: 2.75rem;
+        height: 2.75rem;
     }
 
     .radar-play-btn svg {
-        width: 0.625rem;
-        height: 0.625rem;
+        width: 1rem;
+        height: 1rem;
     }
 
     .radar-time-info {
-        font-size: 0.6rem;
+        font-size: 0.75rem;
     }
 
-    /* Leaflet controls - move to right side, above radar */
+    /* Leaflet controls - move to bottom right on mobile */
     .leaflet-top.leaflet-left {
+        top: auto;
         left: auto;
         right: 8px;
+        bottom: 76px;
     }
 
-    .leaflet-bottom .leaflet-control {
-        margin-bottom: 60px;
+    .leaflet-control-zoom {
+        margin: 0 !important;
+        gap: 6px;
     }
 
-    .leaflet-control-zoom a {
-        width: 1.75rem !important;
-        height: 1.75rem !important;
-        line-height: 1.75rem !important;
-        font-size: 0.875rem !important;
+    .leaflet-control-zoom a,
+    .leaflet-control-zoom-recentre {
+        width: 2.75rem !important;
+        height: 2.75rem !important;
+        line-height: 2.75rem !important;
+        font-size: 1.25rem !important;
     }
 }
 
@@ -882,5 +944,185 @@ body {
 
     .select {
         font-size: 0.75rem;
+    }
+}
+
+/* ===================================
+   Race Info Banner
+   =================================== */
+
+.race-info-banner {
+    display: none;
+    align-items: center;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-md);
+    padding: var(--spacing-md);
+    background: linear-gradient(135deg, var(--color-surface) 0%, var(--color-surface-elevated) 100%);
+    border: 1px solid var(--color-border);
+    border-left: 3px solid var(--color-primary);
+    border-radius: var(--radius-lg);
+}
+
+.race-info-flag {
+    width: 48px;
+    height: auto;
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-sm);
+    flex-shrink: 0;
+}
+
+.race-info-details {
+    flex: 1;
+    min-width: 0;
+}
+
+.race-info-country {
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-text-secondary);
+}
+
+.race-info-name {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: var(--color-text);
+    line-height: 1.2;
+}
+
+.race-info-circuit {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Mobile Race Info Overlay */
+.mobile-race-info {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .race-info-banner {
+        padding: var(--spacing-sm) var(--spacing-md);
+        gap: var(--spacing-sm);
+    }
+
+    .race-info-flag {
+        width: 32px;
+    }
+
+    .race-info-country {
+        font-size: 0.55rem;
+    }
+
+    .race-info-name {
+        font-size: 0.8rem;
+    }
+
+    .race-info-circuit {
+        font-size: 0.65rem;
+    }
+
+    .mobile-race-info {
+        position: absolute;
+        top: 64px;
+        left: var(--spacing-sm);
+        right: var(--spacing-sm);
+        display: flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        background: var(--sidebar-bg);
+        backdrop-filter: var(--glass-blur);
+        -webkit-backdrop-filter: var(--glass-blur);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-lg);
+        padding: var(--spacing-xs) var(--spacing-sm);
+        box-shadow: var(--shadow-md);
+        z-index: 400;
+    }
+
+    .mobile-race-info-flag {
+        width: 24px;
+        height: auto;
+        border-radius: 2px;
+        flex-shrink: 0;
+    }
+
+    .mobile-race-info-text {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+    }
+
+    .mobile-race-info-text span:first-child {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: var(--color-text);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    .mobile-race-info-text span:last-child {
+        font-size: 0.7rem;
+        color: var(--color-text-secondary);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+}
+
+/* ===================================
+   Mobile Countdown Overlay
+   =================================== */
+
+.mobile-countdown {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .mobile-countdown {
+        position: absolute;
+        left: 8px;
+        bottom: 76px;
+        display: block;
+        background: var(--sidebar-bg);
+        backdrop-filter: var(--glass-blur);
+        -webkit-backdrop-filter: var(--glass-blur);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+        padding: var(--spacing-sm) var(--spacing-md);
+        box-shadow: var(--shadow-md);
+        z-index: 400;
+        text-align: center;
+        max-width: 160px;
+    }
+
+    .mobile-countdown-label {
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: var(--color-text-secondary);
+    }
+
+    .mobile-countdown-timer {
+        font-size: 1.25rem;
+        font-weight: 700;
+        font-variant-numeric: tabular-nums;
+        color: var(--color-primary);
+        margin: 4px 0;
+    }
+
+    .mobile-countdown-session {
+        font-size: 0.7rem;
+        color: var(--color-text-secondary);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 }

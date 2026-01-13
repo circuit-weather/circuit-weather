@@ -86,6 +86,16 @@
                     </div>
                 </div>
 
+                <!-- Race Info Banner -->
+                <div class="race-info-banner" id="raceInfoBanner" style="display: none;">
+                    <img id="countryFlag" class="race-info-flag" alt="">
+                    <div class="race-info-details">
+                        <div class="race-info-country" id="raceInfoCountry"></div>
+                        <div class="race-info-name" id="raceInfoName"></div>
+                        <div class="race-info-circuit" id="raceInfoCircuit"></div>
+                    </div>
+                </div>
+
                 <!-- Session Countdown -->
                 <div class="countdown-card" id="countdownCard" style="display: none;">
                     <div class="countdown-label">Session starts in</div>
@@ -161,6 +171,22 @@
                         <span class="radar-time" id="radarTime">--:--</span>
                         <span class="radar-relative" id="radarRelative"></span>
                     </div>
+                </div>
+            </div>
+
+            <!-- Mobile Countdown Overlay (visible only on mobile) -->
+            <div class="mobile-countdown" id="mobileCountdown" style="display: none;">
+                <div class="mobile-countdown-label">Starts in</div>
+                <div class="mobile-countdown-timer" id="mobileCountdownTimer">--:--:--</div>
+                <div class="mobile-countdown-session" id="mobileCountdownSession"></div>
+            </div>
+
+            <!-- Mobile Race Info Overlay (visible only on mobile) -->
+            <div class="mobile-race-info" id="mobileRaceInfo" style="display: none;">
+                <img id="mobileCountryFlag" class="mobile-race-info-flag" alt="">
+                <div class="mobile-race-info-text">
+                    <span id="mobileRaceInfoName"></span>
+                    <span id="mobileRaceInfoCircuit"></span>
                 </div>
             </div>
 
