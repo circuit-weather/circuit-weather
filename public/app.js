@@ -776,6 +776,108 @@ class MapManager {
 }
 
 // ===================================
+// Privacy Modal
+// ===================================
+
+class PrivacyModal {
+    constructor() {
+        this.backdrop = document.getElementById('privacyModalBackdrop');
+        this.content = document.getElementById('privacyModalContent');
+        this.closeBtn = document.getElementById('privacyModalClose');
+        this.privacyLink = document.getElementById('privacyLink');
+        this.loaded = false;
+        this.bindEvents();
+    }
+
+    bindEvents() {
+        if (this.privacyLink) {
+            this.privacyLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.open();
+            });
+        }
+
+        if (this.closeBtn) {
+            this.closeBtn.addEventListener('click', () => this.close());
+        }
+
+        if (this.backdrop) {
+            this.backdrop.addEventListener('click', (e) => {
+                if (e.target === this.backdrop) this.close();
+            });
+        }
+
+        // Close on Escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && this.backdrop?.classList.contains('visible')) {
+                this.close();
+            }
+        });
+    }
+
+    async open() {
+        if (!this.loaded) {
+            await this.loadContent();
+        }
+        if (this.backdrop) {
+            this.backdrop.classList.add('visible');
+            document.body.style.overflow = 'hidden';
+        }
+    }
+
+    close() {
+        if (this.backdrop) {
+            this.backdrop.classList.remove('visible');
+            document.body.style.overflow = '';
+        }
+    }
+
+    async loadContent() {
+        try {
+            const response = await fetch('/PRIVACY.md');
+            const markdown = await response.text();
+            if (this.content) {
+                this.content.innerHTML = this.parseMarkdown(markdown);
+            }
+            this.loaded = true;
+        } catch (error) {
+            console.error('Failed to load privacy policy:', error);
+            if (this.content) {
+                this.content.innerHTML = '<p>Failed to load privacy policy. Please try again later.</p>';
+            }
+        }
+    }
+
+    parseMarkdown(md) {
+        // Simple markdown parser for privacy policy content
+        return md
+            // Remove the main title (we have it in the header)
+            .replace(/^# Privacy Policy\s*\n*/m, '')
+            // Headers
+            .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+            .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+            // Bold
+            .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+            // Links
+            .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
+            // List items
+            .replace(/^- (.+)$/gm, '<li>$1</li>')
+            // Wrap consecutive list items in ul
+            .replace(/(<li>.*<\/li>\n?)+/g, '<ul>$&</ul>')
+            // Paragraphs (lines that aren't headers, lists, or empty)
+            .split('\n\n')
+            .map(block => {
+                block = block.trim();
+                if (!block) return '';
+                if (block.startsWith('<h') || block.startsWith('<ul')) return block;
+                if (!block.startsWith('<')) return `<p>${block}</p>`;
+                return block;
+            })
+            .join('\n');
+    }
+}
+
+// ===================================
 // Main Application
 // ===================================
 
@@ -1108,4 +1210,5 @@ class CircuitWeatherApp {
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
     new CircuitWeatherApp().init();
+    new PrivacyModal();
 });

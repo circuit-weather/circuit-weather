@@ -1133,3 +1133,142 @@ body {
         text-overflow: ellipsis;
     }
 }
+
+/* ===================================
+   Privacy Modal
+   =================================== */
+
+.privacy-modal-backdrop {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    z-index: 3000;
+    align-items: center;
+    justify-content: center;
+    padding: var(--spacing-md);
+    opacity: 0;
+    transition: opacity var(--transition-normal);
+}
+
+.privacy-modal-backdrop.visible {
+    display: flex;
+    opacity: 1;
+}
+
+.privacy-modal {
+    background: var(--color-surface);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    border: 1px solid var(--color-border);
+    max-width: 600px;
+    width: 100%;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    animation: modalSlideIn 0.3s ease;
+}
+
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.privacy-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--spacing-md) var(--spacing-lg);
+    border-bottom: 1px solid var(--color-border);
+}
+
+.privacy-modal-header h2 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--color-text);
+    margin: 0;
+}
+
+.privacy-modal-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border: none;
+    border-radius: var(--radius-md);
+    background: var(--color-surface-elevated);
+    color: var(--color-text);
+    cursor: pointer;
+    transition: background-color var(--transition-fast);
+}
+
+.privacy-modal-close:hover {
+    background: var(--color-border);
+}
+
+.privacy-modal-close svg {
+    width: 1rem;
+    height: 1rem;
+}
+
+.privacy-modal-content {
+    padding: var(--spacing-lg);
+    overflow-y: auto;
+    font-size: 0.875rem;
+    line-height: 1.6;
+}
+
+.privacy-modal-content h2 {
+    font-size: 1rem;
+    font-weight: 600;
+    margin: var(--spacing-md) 0 var(--spacing-sm);
+    color: var(--color-text);
+}
+
+.privacy-modal-content h3 {
+    font-size: 0.875rem;
+    font-weight: 600;
+    margin: var(--spacing-sm) 0 var(--spacing-xs);
+    color: var(--color-text);
+}
+
+.privacy-modal-content p {
+    margin: var(--spacing-sm) 0;
+    color: var(--color-text-secondary);
+}
+
+.privacy-modal-content ul {
+    margin: var(--spacing-sm) 0;
+    padding-left: var(--spacing-lg);
+}
+
+.privacy-modal-content li {
+    margin: var(--spacing-xs) 0;
+    color: var(--color-text-secondary);
+}
+
+.privacy-modal-content a {
+    color: var(--color-primary);
+    text-decoration: none;
+}
+
+.privacy-modal-content a:hover {
+    text-decoration: underline;
+}
+
+.privacy-modal-content strong {
+    color: var(--color-text);
+}

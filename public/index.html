@@ -113,9 +113,9 @@
             </div>
 
             <div class="sidebar-footer">
-                <a href="PRIVACY.md" target="_blank">Privacy</a>
+                <a href="#" id="privacyLink">Privacy</a>
                 <span>•</span>
-                <a href="https://github.com/yourusername/circuit-weather" target="_blank">GitHub</a>
+                <a href="https://github.com/circuit-weather/circuit-weather" target="_blank">GitHub</a>
             </div>
         </aside>
 
@@ -196,6 +196,24 @@
                 <p>Loading...</p>
             </div>
         </main>
+    </div>
+
+    <!-- Privacy Policy Modal -->
+    <div class="privacy-modal-backdrop" id="privacyModalBackdrop">
+        <div class="privacy-modal">
+            <div class="privacy-modal-header">
+                <h2>Privacy Policy</h2>
+                <button class="privacy-modal-close" id="privacyModalClose" aria-label="Close privacy policy">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="privacy-modal-content" id="privacyModalContent">
+                <!-- Privacy content loaded here -->
+            </div>
+        </div>
     </div>
 
     <!-- Leaflet JS -->

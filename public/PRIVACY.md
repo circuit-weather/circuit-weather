@@ -51,7 +51,7 @@ This data never leaves your device and can be cleared through your browser setti
 ## Open Source
 
 This project is open source. You can review all code at:
-[github.com/yourusername/circuit-weather](https://github.com/yourusername/circuit-weather)
+[github.com/circuit-weather/circuit-weather](https://github.com/circuit-weather/circuit-weather)
 
 ## Contact
 

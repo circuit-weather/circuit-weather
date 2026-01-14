@@ -11,3 +11,8 @@ binding = "ASSETS"
 not_found_handling = "single-page-application"
 # Only run the worker for API routes - all other routes use SPA fallback
 run_worker_first = ["/api/*"]
+[[routes]]
+pattern = "circuit-weather.racing"
+custom_domain = true
+[placement]
+mode = "smart"
