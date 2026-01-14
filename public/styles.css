@@ -137,11 +137,17 @@ body {
 .header-badge {
     background: var(--color-primary);
     color: white;
-    font-size: 0.65rem;
-    font-weight: 600;
-    padding: 0.1rem 0.4rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.25rem;
+    height: 1.25rem;
     border-radius: var(--radius-sm);
-    text-transform: uppercase;
+}
+
+.header-badge svg {
+    width: 70%;
+    height: 70%;
 }
 
 .theme-toggle {
@@ -831,8 +837,9 @@ body {
     }
 
     .header-badge {
-        font-size: 0.6rem;
-        padding: 0.05rem 0.3rem;
+        width: 1rem;
+        height: 1rem;
+        border-radius: 2px;
     }
 
     .theme-toggle {
