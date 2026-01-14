@@ -142,6 +142,7 @@ body {
     width: 2rem;
     height: 2rem;
     border-radius: var(--radius-sm);
+    margin-left: 0.25rem;
 }
 
 .header-badge svg {
@@ -844,6 +845,7 @@ body {
         height: 1.75rem;
         border-radius: var(--radius-md);
         margin-right: 0;
+        margin-left: 0;
     }
 
     .theme-toggle {
