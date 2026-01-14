@@ -48,6 +48,40 @@ const COUNTRY_CODES = {
     'USA': 'us', 'United States': 'us', 'Las Vegas': 'us', 'Miami': 'us',
 };
 
+// Circuit ID Mapping (Ergast -> bacinger/f1-circuits)
+// Keys must match Ergast Circuit IDs
+const CIRCUIT_MAP = {
+    'albert_park': 'au-1953',
+    'americas': 'us-2012',
+    'bahrain': 'bh-2002',
+    'baku': 'az-2016',
+    'catalunya': 'es-1991',
+    'hungaroring': 'hu-1986',
+    'imola': 'it-1953',
+    'interlagos': 'br-1940',
+    'jeddah': 'sa-2021',
+    'las_vegas': 'us-2023',
+    'losail': 'qa-2004',
+    'magny_cours': 'fr-1960', // Historic
+    'marina_bay': 'sg-2008',
+    'miami': 'us-2022',
+    'monaco': 'mc-1929',
+    'monza': 'it-1922',
+    'nurburgring': 'de-1927', // Historic
+    'red_bull_ring': 'at-1969',
+    'ricard': 'fr-1969', // Historic
+    'rodriguez': 'mx-1962',
+    'sepang': 'my-1999', // Historic
+    'shanghai': 'cn-2004',
+    'silverstone': 'gb-1948',
+    'sochi': 'ru-2014', // Historic
+    'spa': 'be-1925',
+    'suzuka': 'jp-1962',
+    'villeneuve': 'ca-1978',
+    'yas_marina': 'ae-2009',
+    'zandvoort': 'nl-1948'
+};
+
 // ===================================
 // Theme Manager
 // ===================================
@@ -212,6 +246,150 @@ class F1API {
             sessions,
             date: race.date,
         };
+    }
+}
+
+// ===================================
+// Weather Client
+// ===================================
+
+class WeatherClient {
+    constructor() {
+        this.baseUrl = 'https://api.open-meteo.com/v1/forecast';
+    }
+
+    async getForecast(lat, lon, sessionTime) {
+        // Check if session is too far in future (> 10 days)
+        // Open-Meteo free tier goes up to 14-16 days but accuracy drops
+        const now = new Date();
+        const diffDays = (sessionTime - now) / (1000 * 60 * 60 * 24);
+
+        if (diffDays > 14) {
+            return { available: false, reason: 'too_far' };
+        }
+
+        try {
+            const url = `${this.baseUrl}?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,precipitation_probability,wind_speed_10m,wind_direction_10m,weather_code&current=temperature_2m,wind_speed_10m,wind_direction_10m,precipitation&timeformat=unixtime&forecast_days=16`;
+
+            const response = await fetch(url);
+            if (!response.ok) throw new Error('Weather API error');
+
+            const data = await response.json();
+
+            return {
+                available: true,
+                current: data.current,
+                hourly: this.filterHourly(data.hourly, sessionTime),
+                units: data.current_units
+            };
+        } catch (error) {
+            console.error('Weather fetch failed:', error);
+            return { available: false, reason: 'error' };
+        }
+    }
+
+    filterHourly(hourly, sessionTime) {
+        const sessionTs = Math.floor(sessionTime.getTime() / 1000);
+        // Range: -1 hour to +3 hours relative to session start
+        const startTs = sessionTs - 3600;
+        const endTs = sessionTs + (3 * 3600);
+
+        const indices = hourly.time.reduce((acc, time, index) => {
+            if (time >= startTs && time <= endTs) acc.push(index);
+            return acc;
+        }, []);
+
+        return indices.map(i => ({
+            time: hourly.time[i],
+            temp: hourly.temperature_2m[i],
+            precipProb: hourly.precipitation_probability[i],
+            windSpeed: hourly.wind_speed_10m[i],
+            windDir: hourly.wind_direction_10m[i],
+            code: hourly.weather_code[i]
+        }));
+    }
+
+    getWeatherDescription(code) {
+        // WMO Weather interpretation codes (WW)
+        // https://open-meteo.com/en/docs
+        if (code === 0) return 'Clear sky';
+        if (code <= 3) return 'Partly cloudy';
+        if (code <= 48) return 'Fog';
+        if (code <= 55) return 'Drizzle';
+        if (code <= 67) return 'Rain';
+        if (code <= 77) return 'Snow grains';
+        if (code <= 82) return 'Rain showers';
+        if (code <= 86) return 'Snow showers';
+        if (code <= 99) return 'Thunderstorm';
+        return 'Unknown';
+    }
+
+    getRelativeTime(timestamp, sessionTime) {
+        const diffMins = (timestamp * 1000 - sessionTime.getTime()) / 60000;
+
+        if (Math.abs(diffMins) < 30) return 'Start';
+        if (diffMins < 0) return `${Math.round(diffMins/60)}h`;
+        return `+${Math.round(diffMins/60)}h`;
+    }
+}
+
+// ===================================
+// Track Layout Layer
+// ===================================
+
+class TrackLayer {
+    constructor(map) {
+        this.map = map;
+        this.layer = null;
+        this.currentCircuitId = null;
+    }
+
+    async loadTrack(circuitId) {
+        this.clear();
+        this.currentCircuitId = circuitId;
+
+        const geoJsonId = CIRCUIT_MAP[circuitId];
+        if (!geoJsonId) {
+            console.log(`No track map found for circuit: ${circuitId}`);
+            return;
+        }
+
+        try {
+            const url = `https://raw.githubusercontent.com/bacinger/f1-circuits/master/circuits/${geoJsonId}.geojson`;
+            const response = await fetch(url);
+
+            if (!response.ok) throw new Error(`Track fetch failed: ${response.status}`);
+
+            // Check if this is still the requested circuit
+            if (this.currentCircuitId !== circuitId) return;
+
+            const data = await response.json();
+
+            // Double check before rendering
+            if (this.currentCircuitId !== circuitId) return;
+
+            this.layer = L.geoJSON(data, {
+                style: {
+                    color: '#e10600',
+                    weight: 4,
+                    opacity: 0.8,
+                    fillOpacity: 0,
+                    lineCap: 'round',
+                    lineJoin: 'round'
+                }
+            }).addTo(this.map);
+
+        } catch (error) {
+            console.warn('Failed to load track layout:', error);
+        }
+    }
+
+    clear() {
+        if (this.layer) {
+            this.map.removeLayer(this.layer);
+            this.layer = null;
+        }
+        this.currentCircuitId = null;
     }
 }
 
@@ -928,7 +1106,9 @@ class CircuitWeatherApp {
         this.themeManager = null;
         this.sidebarManager = null;
         this.f1Api = new F1API();
+        this.weatherClient = new WeatherClient();
         this.radar = null;
+        this.trackLayer = null;
         this.rangeCircles = null;
         this.countdown = new CountdownTimer();
         this.recentreControl = null;
@@ -960,6 +1140,7 @@ class CircuitWeatherApp {
             this.recentreControl = new RecentreControl(map);
 
             this.rangeCircles = new RangeCircles(map);
+            this.trackLayer = new TrackLayer(map);
             this.radar = new WeatherRadar(map);
 
             // Always load radar immediately
@@ -1053,6 +1234,14 @@ class CircuitWeatherApp {
             mobileCountdown.style.display = isMobile ? 'block' : 'none';
         }
 
+        // Update mobile weather card visibility
+        const mobileWeather = document.getElementById('mobileWeatherCard');
+        // Only show if we have a selected session AND forecast content is NOT hidden (meaning data is available)
+        const weatherAvailable = document.getElementById('forecastContent')?.style.display !== 'none';
+        if (mobileWeather && this.selectedSession && weatherAvailable) {
+            mobileWeather.style.display = isMobile ? 'flex' : 'none';
+        }
+
         // Invalidate map size multiple times with staggered delays
         // to ensure CSS transitions have completed
         if (this.mapManager && this.mapManager.map) {
@@ -1117,6 +1306,11 @@ class CircuitWeatherApp {
             this.currentCircuitCenter = [lat, lng];
             this.mapManager.setView(lat, lng);
             this.rangeCircles.draw([lat, lng]);
+
+            // Load track layout
+            if (race.circuit && race.circuit.circuitId) {
+                this.trackLayer.loadTrack(race.circuit.circuitId);
+            }
 
             // Update recentre control
             if (this.recentreControl) {
@@ -1219,11 +1413,126 @@ class CircuitWeatherApp {
         // Load radar
         this.radar.load();
 
+        // Update Weather Dashboard
+        this.updateWeatherDashboard(sessionTime);
+
         // Show forecast section
         const forecastSection = document.getElementById('forecastSection');
         if (forecastSection) forecastSection.style.display = 'block';
 
         this.router.navigate('f1', this.selectedRace.round, sessionId);
+    }
+
+    async updateWeatherDashboard(sessionTime) {
+        if (!this.selectedRace || !this.selectedRace.location) return;
+
+        const { lat, long } = this.selectedRace.location;
+        const weather = await this.weatherClient.getForecast(lat, long, sessionTime);
+
+        this.renderWeather(weather, sessionTime);
+    }
+
+    renderWeather(weather, sessionTime) {
+        const content = document.getElementById('forecastContent');
+        const unavailable = document.getElementById('forecastUnavailable');
+        const mobileCard = document.getElementById('mobileWeatherCard');
+
+        if (!weather.available) {
+            if (content) content.style.display = 'none';
+            if (unavailable) unavailable.style.display = 'block';
+            if (mobileCard) mobileCard.style.display = 'none';
+            return;
+        }
+
+        if (content) content.style.display = 'block';
+        if (unavailable) unavailable.style.display = 'none';
+
+        // Show mobile card if we have data
+        const isMobile = window.innerWidth <= 768;
+        if (mobileCard) mobileCard.style.display = isMobile ? 'flex' : 'none';
+
+        // Update Current/Overview Metrics (using first hourly point or current if available)
+        // Prefer 'current' for the big numbers, but 'hourly' closest to session start is also good.
+        // Let's use 'current' for the big numbers to show "Right Now" at the track?
+        // Actually user asked for "forecast around the timings of the session".
+        // But "Current" implies right now. Let's use the current API data for the "Current" block.
+
+        const tempEl = document.getElementById('weatherTemp');
+        const rainEl = document.getElementById('weatherRain');
+        const windEl = document.getElementById('weatherWind');
+        const windDirEl = document.getElementById('weatherWindDir');
+
+        // Mobile elements
+        const mobTempEl = document.getElementById('mobileWeatherTemp');
+        const mobRainEl = document.getElementById('mobileWeatherRain');
+        const mobWindEl = document.getElementById('mobileWeatherWind');
+
+        if (weather.current) {
+            const temp = Math.round(weather.current.temperature_2m);
+            const rain = weather.current.precipitation || 0; // Current precip amount (mm) not prob.
+            // For probability, we might need to look at the hourly slot for "now"
+            // Let's use current wind and temp.
+            const wind = Math.round(weather.current.wind_speed_10m);
+            const dir = weather.current.wind_direction_10m;
+
+            if (tempEl) tempEl.textContent = `${temp}${weather.units.temperature_2m}`;
+            if (windEl) windEl.textContent = `${wind} ${weather.units.wind_speed_10m}`;
+            if (windDirEl) windDirEl.textContent = `${dir}°`;
+
+            // For rain % in the "Current" box, usually people want probability.
+            // Let's find the hourly slot closest to NOW.
+            const nowTs = Math.floor(Date.now() / 1000);
+            // Open-Meteo hourly.time is unixtime
+            // Note: weather.hourly is ALREADY filtered to session time in getForecast!
+            // We need to look at the raw data or just show the session average?
+            // Let's just use the max probability from the session window for the "Rain" metric
+            // to give a "Session Risk" overview? Or just --% if not in window?
+
+            // Actually, let's use the first available hourly point from our filtered list
+            // as the "start of session" condition, or if the session is active, the current time.
+
+            // Use the first filtered hourly point (closest to session start - 1h)
+            if (weather.hourly && weather.hourly.length > 0) {
+                 // Find max precip probability in the window
+                 const maxPrecip = Math.max(...weather.hourly.map(h => h.precipProb));
+                 if (rainEl) rainEl.textContent = `${maxPrecip}%`;
+                 if (mobRainEl) mobRainEl.textContent = `${maxPrecip}%`;
+            } else {
+                 if (rainEl) rainEl.textContent = '--%';
+                 if (mobRainEl) mobRainEl.textContent = '--%';
+            }
+
+            if (mobTempEl) mobTempEl.textContent = `${temp}${weather.units.temperature_2m}`;
+            if (mobWindEl) mobWindEl.textContent = `${wind} ${weather.units.wind_speed_10m}`;
+        }
+
+        // Render Timeline
+        const timelineEl = document.getElementById('weatherTimeline');
+        if (timelineEl && weather.hourly) {
+            timelineEl.innerHTML = '';
+
+            weather.hourly.forEach(hour => {
+                const item = document.createElement('div');
+                item.className = 'weather-timeline-item';
+
+                const relTime = this.weatherClient.getRelativeTime(hour.time, sessionTime);
+                const desc = this.weatherClient.getWeatherDescription(hour.code);
+
+                item.innerHTML = `
+                    <div class="weather-timeline-time">${relTime}</div>
+                    <div class="weather-timeline-condition">
+                        ${desc}
+                        <div style="font-size: 0.65em; color: var(--color-text-secondary);">${hour.windSpeed} km/h</div>
+                    </div>
+                    <div class="weather-timeline-temp">
+                        <div>${Math.round(hour.temp)}°</div>
+                        <div style="font-size: 0.8em; color: #3b82f6;">${hour.precipProb}%</div>
+                    </div>
+                `;
+
+                timelineEl.appendChild(item);
+            });
+        }
     }
 
     async handleRoute({ series, round, session }) {
