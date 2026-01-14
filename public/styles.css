@@ -140,14 +140,15 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 1.25rem;
-    height: 1.25rem;
+    width: 2rem;
+    height: 2rem;
     border-radius: var(--radius-sm);
+    margin-right: 0.75rem;
 }
 
 .header-badge svg {
-    width: 90%;
-    height: 90%;
+    width: 75%;
+    height: 75%;
 }
 
 .theme-toggle {
@@ -837,9 +838,10 @@ body {
     }
 
     .header-badge {
-        width: 1rem;
-        height: 1rem;
-        border-radius: 2px;
+        width: 1.75rem;
+        height: 1.75rem;
+        border-radius: var(--radius-md);
+        margin-right: 0;
     }
 
     .theme-toggle {
