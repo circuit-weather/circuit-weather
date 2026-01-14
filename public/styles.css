@@ -264,7 +264,6 @@ body {
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
     overflow: hidden;
-    cursor: pointer;
 }
 
 .unit-option {
@@ -272,12 +271,27 @@ body {
     font-size: 0.75rem;
     font-weight: 500;
     color: var(--color-text-secondary);
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
     transition: all var(--transition-fast);
+}
+
+.unit-option:hover {
+    background: var(--color-bg);
+    color: var(--color-text);
 }
 
 .unit-option.active {
     background: var(--color-primary);
     color: white;
+}
+
+.unit-option:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: -2px;
+    z-index: 1;
 }
 
 /* Countdown Card */

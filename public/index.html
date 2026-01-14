@@ -33,7 +33,7 @@
         <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
+                <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar" title="Toggle sidebar">
                     <svg class="icon-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="3" y1="6" x2="21" y2="6"></line>
                         <line x1="3" y1="12" x2="21" y2="12"></line>
@@ -51,7 +51,7 @@
                             d="M14.4,6L14,4H5V21H7V14H12.6L13,16H20V6H14.4M14,14H16V12H18V10H16V8H14V10L13,8V6H11V8H9V6H7V8H9V10H7V12H9V10H11V12H13V10L14,12V14M11,10V8H13V10H11M14,10H16V12H14V10Z" />
                     </svg>
                 </span>
-                <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark/light mode">
+                <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark/light mode" title="Toggle dark/light mode">
                     <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="12" r="5"></circle>
                         <path
@@ -87,10 +87,10 @@
                     </div>
                     <div class="control-group control-group--units">
                         <label>Units</label>
-                        <button class="unit-toggle" id="unitToggle">
-                            <span class="unit-option" data-unit="metric">km</span>
-                            <span class="unit-option active" data-unit="imperial">mi</span>
-                        </button>
+                        <div class="unit-toggle" id="unitToggle" role="group" aria-label="Measurement units">
+                            <button class="unit-option" data-unit="metric" type="button" aria-pressed="false">km</button>
+                            <button class="unit-option active" data-unit="imperial" type="button" aria-pressed="true">mi</button>
+                        </div>
                     </div>
                 </div>
 
@@ -192,7 +192,7 @@
 
             <!-- Radar Timeline -->
             <div class="radar-controls" id="radarControls" style="display: none;">
-                <button class="radar-play-btn" id="radarPlayBtn" aria-label="Play/Pause radar animation">
+                <button class="radar-play-btn" id="radarPlayBtn" aria-label="Play/Pause radar animation" title="Play/Pause radar animation">
                     <svg class="icon-play" viewBox="0 0 24 24" fill="currentColor">
                         <polygon points="5,3 19,12 5,21"></polygon>
                     </svg>
