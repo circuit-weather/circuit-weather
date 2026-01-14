@@ -342,6 +342,26 @@ class TrackLayer {
         this.map = map;
         this.layer = null;
         this.currentCircuitId = null;
+        this.bindEvents();
+    }
+
+    bindEvents() {
+        this.map.on('zoomend', () => this.updateStyle());
+    }
+
+    updateStyle() {
+        if (!this.layer) return;
+
+        const zoom = this.map.getZoom();
+        let weight = 4;
+
+        if (zoom >= 12) weight = 5;
+        else if (zoom >= 10) weight = 4;
+        else if (zoom >= 7) weight = 3;
+        else if (zoom >= 5) weight = 2;
+        else weight = 1;
+
+        this.layer.setStyle({ weight: weight });
     }
 
     async loadTrack(circuitId) {
@@ -371,13 +391,17 @@ class TrackLayer {
             this.layer = L.geoJSON(data, {
                 style: {
                     color: '#e10600',
-                    weight: 4,
+                    weight: 4, // Initial, will be updated immediately
                     opacity: 0.8,
                     fillOpacity: 0,
                     lineCap: 'round',
-                    lineJoin: 'round'
+                    lineJoin: 'round',
+                    className: 'track-path'
                 }
             }).addTo(this.map);
+
+            // Apply correct weight for current zoom
+            this.updateStyle();
 
             // Ensure track is below other overlays (like the center dot)
             this.layer.bringToBack();
