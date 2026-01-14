@@ -131,17 +131,26 @@ body {
     font-size: 1.1rem;
     font-weight: 700;
     letter-spacing: -0.025em;
-    flex: 1;
 }
 
 .header-badge {
     background: var(--color-primary);
     color: white;
-    font-size: 0.65rem;
-    font-weight: 600;
-    padding: 0.1rem 0.4rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
     border-radius: var(--radius-sm);
-    text-transform: uppercase;
+}
+
+.sidebar-header .header-badge {
+    margin-left: 0.75rem;
+}
+
+.header-badge svg {
+    width: 75%;
+    height: 75%;
 }
 
 .theme-toggle {
@@ -177,6 +186,10 @@ body {
 
 [data-theme="dark"] .theme-toggle .icon-moon {
     display: block;
+}
+
+.sidebar-header .theme-toggle {
+    margin-left: auto;
 }
 
 /* Sidebar Content */
@@ -831,8 +844,10 @@ body {
     }
 
     .header-badge {
-        font-size: 0.6rem;
-        padding: 0.05rem 0.3rem;
+        width: 1.75rem;
+        height: 1.75rem;
+        border-radius: var(--radius-md);
+        margin-right: 0;
     }
 
     .theme-toggle {
