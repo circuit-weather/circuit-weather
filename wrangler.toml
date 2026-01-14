@@ -1,6 +1,7 @@
 name = "circuit-weather"
 main = "src/worker.js"
 compatibility_date = "2024-09-23"
+preview_urls = true
 
 # Cloudflare Workers with Assets configuration
 # https://developers.cloudflare.com/workers/static-assets/routing/single-page-application/
