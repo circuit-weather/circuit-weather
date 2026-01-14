@@ -99,6 +99,8 @@ async function handleApiRequest(request, env, ctx) {
         'Access-Control-Allow-Origin': '*',
         'X-Content-Type-Options': 'nosniff',
         'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+        'Referrer-Policy': 'strict-origin-when-cross-origin',
+        'Content-Security-Policy': "default-src 'none'; frame-ancestors 'none';",
       },
     });
 
@@ -113,7 +115,11 @@ async function handleApiRequest(request, env, ctx) {
       message: error.message
     }), {
       status: 502,
-      headers: { 'Content-Type': 'application/json' }
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Content-Type-Options': 'nosniff',
+        'Content-Security-Policy': "default-src 'none'; frame-ancestors 'none';",
+      }
     });
   }
 }
