@@ -68,6 +68,17 @@ class ThemeManager {
 
     applyTheme() {
         document.documentElement.setAttribute('data-theme', this.theme);
+
+        // Update logos and favicon
+        const logoSrc = this.theme === 'dark' ? '/images/logo-dark.png' : '/images/logo-light.png';
+        const sidebarLogo = document.getElementById('sidebarLogo');
+        const mobileLogo = document.getElementById('mobileLogo');
+        const favicon = document.querySelector("link[rel~='icon']");
+
+        if (sidebarLogo) sidebarLogo.src = logoSrc;
+        if (mobileLogo) mobileLogo.src = logoSrc;
+        if (favicon) favicon.href = logoSrc;
+
         if (this.onThemeChange) this.onThemeChange(this.theme);
     }
 

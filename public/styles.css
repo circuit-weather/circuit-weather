@@ -134,14 +134,10 @@ body {
     flex: 1;
 }
 
-.header-badge {
-    background: var(--color-primary);
-    color: white;
-    font-size: 0.65rem;
-    font-weight: 600;
-    padding: 0.1rem 0.4rem;
-    border-radius: var(--radius-sm);
-    text-transform: uppercase;
+.header-logo {
+    height: 1.5rem;
+    width: auto;
+    object-fit: contain;
 }
 
 .theme-toggle {
