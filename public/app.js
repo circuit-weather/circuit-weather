@@ -729,7 +729,9 @@ class RangeCircles {
 
     updateToggleUI() {
         document.querySelectorAll('.unit-option').forEach(opt => {
-            opt.classList.toggle('active', opt.dataset.unit === this.unit);
+            const isActive = opt.dataset.unit === this.unit;
+            opt.classList.toggle('active', isActive);
+            opt.setAttribute('aria-pressed', isActive);
         });
     }
 
