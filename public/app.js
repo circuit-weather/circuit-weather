@@ -356,9 +356,9 @@ class TrackLayer {
         let weight = 4;
 
         if (zoom >= 12) weight = 5;
-        else if (zoom >= 10) weight = 4;
-        else if (zoom >= 7) weight = 3;
-        else if (zoom >= 5) weight = 2;
+        else if (zoom >= 11) weight = 4;
+        else if (zoom >= 10) weight = 3;
+        else if (zoom >= 8) weight = 2;
         else weight = 1;
 
         this.layer.setStyle({ weight: weight });
