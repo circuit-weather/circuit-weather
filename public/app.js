@@ -379,6 +379,9 @@ class TrackLayer {
                 }
             }).addTo(this.map);
 
+            // Ensure track is below other overlays (like the center dot)
+            this.layer.bringToBack();
+
         } catch (error) {
             console.warn('Failed to load track layout:', error);
         }
