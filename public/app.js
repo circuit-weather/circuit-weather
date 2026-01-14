@@ -256,6 +256,8 @@ class F1API {
 class WeatherClient {
     constructor() {
         this.baseUrl = 'https://api.open-meteo.com/v1/forecast';
+        this.cache = new Map();
+        this.cacheTTL = 15 * 60 * 1000; // 15 minutes
     }
 
     async getForecast(lat, lon, sessionTime) {
@@ -269,12 +271,26 @@ class WeatherClient {
         }
 
         try {
-            const url = `${this.baseUrl}?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,precipitation_probability,wind_speed_10m,wind_direction_10m,weather_code&current=temperature_2m,wind_speed_10m,wind_direction_10m,precipitation&timeformat=unixtime&forecast_days=16`;
+            // Check cache
+            const cacheKey = `${lat},${lon}`;
+            let data;
 
-            const response = await fetch(url);
-            if (!response.ok) throw new Error('Weather API error');
+            if (this.cache.has(cacheKey)) {
+                const entry = this.cache.get(cacheKey);
+                if (Date.now() - entry.timestamp < this.cacheTTL) {
+                    data = entry.data;
+                }
+            }
 
-            const data = await response.json();
+            if (!data) {
+                const url = `${this.baseUrl}?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,precipitation_probability,wind_speed_10m,wind_direction_10m,weather_code&current=temperature_2m,wind_speed_10m,wind_direction_10m,precipitation&timeformat=unixtime&forecast_days=16`;
+
+                const response = await fetch(url);
+                if (!response.ok) throw new Error('Weather API error');
+
+                data = await response.json();
+                this.cache.set(cacheKey, { timestamp: Date.now(), data });
+            }
 
             return {
                 available: true,
