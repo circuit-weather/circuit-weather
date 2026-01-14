@@ -115,6 +115,29 @@
                 <div class="forecast-section" id="forecastSection" style="display: none;">
                     <h3>Session Forecast</h3>
                     <div class="forecast-content" id="forecastContent">
+                        <!-- Content injected by JS -->
+                        <div class="weather-dashboard">
+                            <div class="weather-current">
+                                <div class="weather-metric">
+                                    <span class="weather-label">Temp</span>
+                                    <span class="weather-value" id="weatherTemp">--°</span>
+                                </div>
+                                <div class="weather-metric">
+                                    <span class="weather-label">Rain</span>
+                                    <span class="weather-value" id="weatherRain">--%</span>
+                                </div>
+                                <div class="weather-metric">
+                                    <span class="weather-label">Wind</span>
+                                    <span class="weather-value" id="weatherWind">--</span>
+                                    <span class="weather-sub" id="weatherWindDir">--</span>
+                                </div>
+                            </div>
+                            <div class="weather-timeline" id="weatherTimeline">
+                                <!-- Timeline items injected here -->
+                            </div>
+                        </div>
+                    </div>
+                    <div id="forecastUnavailable" style="display: none;">
                         <p class="forecast-unavailable">Forecast available closer to session</p>
                     </div>
                 </div>
@@ -204,6 +227,33 @@
                 <div class="mobile-race-info-text">
                     <span id="mobileRaceInfoName"></span>
                     <span id="mobileRaceInfoCircuit"></span>
+                </div>
+            </div>
+
+            <!-- Mobile Weather Card (visible only on mobile) -->
+            <div class="mobile-weather-card" id="mobileWeatherCard" style="display: none;">
+                <div class="mobile-weather-row">
+                    <span class="mobile-weather-metric">
+                        <svg class="icon-weather" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"></path>
+                        </svg>
+                        <span id="mobileWeatherTemp">--°</span>
+                    </span>
+                    <span class="mobile-weather-metric">
+                        <svg class="icon-weather" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M23 18l-6-9-6 9h12z"></path>
+                            <path d="M17 18v5"></path>
+                        </svg>
+                        <span id="mobileWeatherRain">--%</span>
+                    </span>
+                </div>
+                <div class="mobile-weather-row">
+                    <span class="mobile-weather-metric">
+                        <svg class="icon-weather" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"></path>
+                        </svg>
+                        <span id="mobileWeatherWind">--</span>
+                    </span>
                 </div>
             </div>
 

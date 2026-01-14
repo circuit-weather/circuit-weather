@@ -333,6 +333,83 @@ body {
     font-style: italic;
 }
 
+/* Weather Dashboard */
+.weather-dashboard {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-md);
+}
+
+.weather-current {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: var(--spacing-xs);
+}
+
+.weather-metric {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: var(--color-bg);
+    padding: var(--spacing-sm);
+    border-radius: var(--radius-md);
+    text-align: center;
+}
+
+.weather-label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
+    margin-bottom: 2px;
+}
+
+.weather-value {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--color-text);
+}
+
+.weather-sub {
+    font-size: 0.6rem;
+    color: var(--color-text-secondary);
+}
+
+.weather-timeline {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    max-height: 200px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.weather-timeline-item {
+    display: grid;
+    grid-template-columns: 40px 1fr auto;
+    align-items: center;
+    gap: var(--spacing-sm);
+    font-size: 0.75rem;
+    padding: 4px 0;
+    border-bottom: 1px solid var(--color-border);
+}
+
+.weather-timeline-item:last-child {
+    border-bottom: none;
+}
+
+.weather-timeline-time {
+    color: var(--color-text-secondary);
+    font-variant-numeric: tabular-nums;
+}
+
+.weather-timeline-condition {
+    font-weight: 500;
+}
+
+.weather-timeline-temp {
+    color: var(--color-text-secondary);
+}
+
 /* Sidebar Footer */
 .sidebar-footer {
     padding: var(--spacing-sm) var(--spacing-md);
@@ -1170,6 +1247,56 @@ body {
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+    }
+}
+
+/* ===================================
+   Mobile Weather Card
+   =================================== */
+
+.mobile-weather-card {
+    display: none;
+}
+
+@media (max-width: 768px) {
+    .mobile-weather-card {
+        position: absolute;
+        right: 8px;
+        bottom: 76px; /* Aligned with countdown */
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        background: var(--sidebar-bg);
+        backdrop-filter: var(--glass-blur);
+        -webkit-backdrop-filter: var(--glass-blur);
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-md);
+        padding: var(--spacing-sm);
+        box-shadow: var(--shadow-md);
+        z-index: 400;
+        min-width: 90px;
+    }
+
+    .mobile-weather-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: var(--spacing-md);
+    }
+
+    .mobile-weather-metric {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        color: var(--color-text);
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+
+    .icon-weather {
+        width: 14px;
+        height: 14px;
+        color: var(--color-text-secondary);
     }
 }
 
