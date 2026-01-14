@@ -21,7 +21,14 @@ const CONFIG = {
     defaultZoom: 4,
     circuitZoom: 11,
     radarOpacity: 0.65,
-    radarAnimationSpeed: 600,
+    radarAnimationSpeed: 1000, // Default to 1x speed (1000ms per frame)
+    // Speed options: slower = higher ms, faster = lower ms
+    radarSpeeds: [
+        { label: '0.5x', speed: 2000 },
+        { label: '1x', speed: 1000 },
+        { label: '2x', speed: 500 }
+    ],
+    defaultSpeedIndex: 1, // Start at 1x
     // Range circles by zoom level (metric/imperial)
     rangeCirclesByZoom: {
         close: { metric: [5, 10, 25], imperial: [3, 6, 15] },       // zoom >= 12
@@ -221,12 +228,14 @@ class WeatherRadar {
         this.isPlaying = false;
         this.animationTimer = null;
         this.sessionTime = null;
+        this.speedIndex = CONFIG.defaultSpeedIndex; // Track current speed
         this.bindEvents();
     }
 
     bindEvents() {
         const playBtn = document.getElementById('radarPlayBtn');
         const slider = document.getElementById('radarSlider');
+        const speedBtn = document.getElementById('radarSpeedBtn');
 
         if (playBtn) playBtn.addEventListener('click', () => this.togglePlay());
         if (slider) {
@@ -236,6 +245,32 @@ class WeatherRadar {
                 this.pause();
             });
         }
+        if (speedBtn) {
+            speedBtn.addEventListener('click', () => this.cycleSpeed());
+        }
+    }
+
+    cycleSpeed() {
+        // Cycle to the next speed
+        this.speedIndex = (this.speedIndex + 1) % CONFIG.radarSpeeds.length;
+        this.updateSpeedLabel();
+
+        // If playing, restart with the new speed
+        if (this.isPlaying) {
+            this.pause();
+            this.play();
+        }
+    }
+
+    updateSpeedLabel() {
+        const speedLabel = document.getElementById('radarSpeedLabel');
+        if (speedLabel) {
+            speedLabel.textContent = CONFIG.radarSpeeds[this.speedIndex].label;
+        }
+    }
+
+    getCurrentSpeed() {
+        return CONFIG.radarSpeeds[this.speedIndex].speed;
     }
 
     setSessionTime(sessionTime) {
@@ -380,6 +415,12 @@ class WeatherRadar {
     }
 
     play() {
+        // Clear any existing timer first to prevent double animations
+        if (this.animationTimer) {
+            clearInterval(this.animationTimer);
+            this.animationTimer = null;
+        }
+
         this.isPlaying = true;
         const playBtn = document.getElementById('radarPlayBtn');
         if (playBtn) playBtn.classList.add('playing');
@@ -387,7 +428,7 @@ class WeatherRadar {
         this.animationTimer = setInterval(() => {
             this.currentFrame = (this.currentFrame + 1) % this.frames.length;
             this.showFrame(this.currentFrame);
-        }, CONFIG.radarAnimationSpeed);
+        }, this.getCurrentSpeed());
     }
 
     pause() {

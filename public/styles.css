@@ -553,6 +553,30 @@ body {
     font-variant-numeric: tabular-nums;
 }
 
+/* Radar Speed Button */
+.radar-speed-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.5rem;
+    height: 2rem;
+    padding: 0 0.5rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface);
+    color: var(--color-text);
+    font-size: 0.7rem;
+    font-weight: 600;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: background-color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.radar-speed-btn:hover {
+    background: var(--color-surface-elevated);
+    border-color: var(--color-primary);
+}
+
 /* ===================================
    Loading Overlay
    =================================== */
