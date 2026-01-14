@@ -183,16 +183,13 @@ binding = "ASSETS"
 ## Local Development
 
 ```bash
-# Recommended: Use Wrangler (supports SPA routing + Worker)
-npx wrangler dev
-
-# Alternative: Use serve with SPA mode (-s flag)
-npx serve public -s -l 3000
-
-# Open browser
-# http://localhost:3000
+python -m http.server 8000 --directory public
+# Opens at http://localhost:8000
 ```
 
-Note: Use `wrangler dev` for full SPA routing support (URL sharing, page refresh). The `-s` flag with `serve` enables single-page-app fallback mode. Avoid `python -m http.server` as it doesn't support SPA routing.
+### Notes
+- This serves the static frontend files directly for quick testing
+- F1 data fetches go directly to the Jolpica API (no Worker proxy locally)
+- Deployment to Cloudflare handles the Worker/API proxy automatically via GitHub push
 
-Note: Local development fetches F1 data directly from Jolpica API. In production, it goes through the Worker proxy with caching.
+
