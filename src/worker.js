@@ -40,8 +40,12 @@ async function handleApiRequest(request, env, ctx) {
   // e.g. /api/f1/current -> current
   const apiPath = url.pathname.replace('/api/f1/', '');
 
-  // Validate apiPath to prevent directory traversal
-  if (apiPath.includes('..') || apiPath.includes('//') || apiPath.startsWith('/') || decodeURIComponent(apiPath).includes('..')) {
+  // Validate apiPath: Strict whitelist + structure check
+  // Allows: alphanumeric, dot, hyphen, underscore, slash
+  // Rejects: anything else (%, space, <, >, etc.), directory traversal (..), empty segments (//), absolute paths (/)
+  const validCharsRegex = /^[a-zA-Z0-9/._-]*$/;
+
+  if (!validCharsRegex.test(apiPath) || apiPath.includes('..') || apiPath.includes('//') || apiPath.startsWith('/')) {
     return new Response(JSON.stringify({ error: 'Invalid API path' }), {
       status: 400,
       headers: { 'Content-Type': 'application/json' }
