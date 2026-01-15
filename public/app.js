@@ -353,6 +353,7 @@ class TrackLayer {
         this.map = map;
         this.layer = null;
         this.currentCircuitId = null;
+        this.cache = new Map();
         this.bindEvents();
     }
 
@@ -386,15 +387,23 @@ class TrackLayer {
         }
 
         try {
-            const url = `https://raw.githubusercontent.com/bacinger/f1-circuits/master/circuits/${geoJsonId}.geojson`;
-            const response = await fetch(url);
+            let data;
 
-            if (!response.ok) throw new Error(`Track fetch failed: ${response.status}`);
+            // Check cache first
+            if (this.cache.has(circuitId)) {
+                data = this.cache.get(circuitId);
+            } else {
+                const url = `https://raw.githubusercontent.com/bacinger/f1-circuits/master/circuits/${geoJsonId}.geojson`;
+                const response = await fetch(url);
 
-            // Check if this is still the requested circuit
-            if (this.currentCircuitId !== circuitId) return;
+                if (!response.ok) throw new Error(`Track fetch failed: ${response.status}`);
 
-            const data = await response.json();
+                // Check if this is still the requested circuit
+                if (this.currentCircuitId !== circuitId) return;
+
+                data = await response.json();
+                this.cache.set(circuitId, data);
+            }
 
             // Double check before rendering
             if (this.currentCircuitId !== circuitId) return;
