@@ -14,6 +14,7 @@ const isLocal = window.location.hostname === 'localhost' ||
 const CONFIG = {
     f1ApiBase: isLocal ? 'https://api.jolpi.ca/ergast/f1' : '/api/f1',
     rainViewerApi: isLocal ? 'https://api.rainviewer.com/public/weather-maps.json' : '/api/radar',
+    trackApi: isLocal ? 'https://raw.githubusercontent.com/bacinger/f1-circuits/master/circuits' : '/api/track',
     // Use Carto basemaps (reliable, free, no key)
     mapTiles: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
     mapTilesDark: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
@@ -393,7 +394,15 @@ class TrackLayer {
             if (this.cache.has(circuitId)) {
                 data = this.cache.get(circuitId);
             } else {
-                const url = `https://raw.githubusercontent.com/bacinger/f1-circuits/master/circuits/${geoJsonId}.geojson`;
+                let url;
+                if (CONFIG.trackApi.startsWith('/')) {
+                    // Worker proxy (no extension)
+                    url = `${CONFIG.trackApi}/${geoJsonId}`;
+                } else {
+                    // Direct GitHub (needs extension)
+                    url = `${CONFIG.trackApi}/${geoJsonId}.geojson`;
+                }
+
                 const response = await fetch(url);
 
                 if (!response.ok) throw new Error(`Track fetch failed: ${response.status}`);
