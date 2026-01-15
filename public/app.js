@@ -18,7 +18,7 @@ const CONFIG = {
     mapTiles: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
     mapTilesDark: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
     defaultCenter: [48.8566, 2.3522],
-    defaultZoom: 4,
+    defaultZoom: 3,
     circuitZoom: 11,
     radarOpacity: 0.65,
     radarAnimationSpeed: 1000, // Default to 1x speed (1000ms per frame)
