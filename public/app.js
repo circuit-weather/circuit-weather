@@ -537,8 +537,8 @@ class WeatherRadar {
 
     startPolling() {
         this.stopPolling();
-        // Poll every 5 minutes (300,000 ms)
-        this.pollingInterval = setInterval(() => this.checkForUpdates(), 300000);
+        // Poll every 30 seconds to catch updates quickly
+        this.pollingInterval = setInterval(() => this.checkForUpdates(), 30000);
     }
 
     stopPolling() {
@@ -553,13 +553,11 @@ class WeatherRadar {
             const newFrames = await this.getFramesFromApi();
             if (!newFrames || newFrames.length === 0) return;
 
-            // Always attempt update - let applyFrameUpdate handle diffing
+            // Always attempt update - rebuild logic is cheap and robust
             if (this.isPlaying) {
-                console.log('Applying radar update:', newFrames.length, 'frames');
                 this.applyFrameUpdate(newFrames);
             } else {
                 // Defer update until played
-                console.log('Radar update pending (paused)');
                 this.pendingFrames = newFrames;
             }
         } catch (error) {
@@ -602,47 +600,19 @@ class WeatherRadar {
     }
 
     applyFrameUpdate(newFrames) {
-        const oldLayers = new Map();
-        this.layers.forEach(layer => {
-            // Key by timestamp + path to ensure uniqueness
-            const key = `${layer.frameTime}-${layer.framePath}`;
-            oldLayers.set(key, layer);
-        });
-
-        const newLayers = [];
-
-        // Build new layer list, reusing existing ones where possible
-        newFrames.forEach((frame, index) => {
-            const key = `${frame.time}-${frame.path}`;
-            if (oldLayers.has(key)) {
-                // Keep existing layer
-                const layer = oldLayers.get(key);
-                layer.setZIndex(100 + index); // Update z-index for new position
-                newLayers.push(layer);
-                // Remove from map of "old" layers so we know what to delete
-                oldLayers.delete(key);
-            } else {
-                // Create new layer
-                const layer = this.createLayer(frame, index);
-                newLayers.push(layer);
-            }
-        });
-
-        // Remove layers that are no longer in the list
-        oldLayers.forEach(layer => {
-            this.map.removeLayer(layer);
-        });
-
-        // Update state
+        // Store current timestamp to restore view
         const currentTimestamp = this.frames[this.currentFrame]?.time;
-        this.frames = newFrames;
-        this.layers = newLayers;
 
-        // Try to maintain current view position
+        // Update frames data
+        this.frames = newFrames;
+
+        // Full rebuild of layers to ensure consistency
+        // This eliminates "diffing bloat" and potential z-index bugs
+        this.createLayers();
+
+        // Restore view position
         if (currentTimestamp) {
-            // Find frame with closest timestamp
-            // Since frames are sorted, we could binary search, but list is small (<20)
-            let closestIndex = -1;
+            let closestIndex = 0;
             let minDiff = Infinity;
 
             this.frames.forEach((frame, i) => {
@@ -652,10 +622,6 @@ class WeatherRadar {
                     closestIndex = i;
                 }
             });
-
-            // If the closest frame is very far away (e.g. > 20 mins),
-            // maybe we should just reset to start or end?
-            // For now, snapping to closest is reasonably safe for seamless update.
             this.currentFrame = closestIndex;
         } else {
             this.currentFrame = 0;
