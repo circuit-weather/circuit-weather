@@ -516,17 +516,23 @@ class WeatherRadar {
 
     async load() {
         this.stopPolling();
-        await this.fetchAndFilter();
-        if (this.frames.length === 0) return;
+        try {
+            await this.fetchAndFilter();
+            if (this.frames.length === 0) return;
 
-        this.createLayers();
-        this.updateSlider();
-        this.showControls(true);
+            this.createLayers();
+            this.updateSlider();
+            this.showControls(true);
 
-        // Wait for tiles to load before starting animation
-        await this.waitForTilesToLoad();
-        this.play();
-        this.startPolling();
+            // Wait for tiles to load before starting animation
+            await this.waitForTilesToLoad();
+            this.play();
+        } catch (error) {
+            console.error('Radar load failed:', error);
+        } finally {
+            // Always start polling, even if initial load failed
+            this.startPolling();
+        }
     }
 
     startPolling() {
@@ -545,30 +551,20 @@ class WeatherRadar {
     async checkForUpdates() {
         try {
             const newFrames = await this.getFramesFromApi();
+            if (!newFrames || newFrames.length === 0) return;
 
-            // Check if we have changes
-            if (this.hasChanges(newFrames)) {
-                if (this.isPlaying) {
-                    this.applyFrameUpdate(newFrames);
-                } else {
-                    // Defer update until played
-                    this.pendingFrames = newFrames;
-                }
+            // Always attempt update - let applyFrameUpdate handle diffing
+            if (this.isPlaying) {
+                console.log('Applying radar update:', newFrames.length, 'frames');
+                this.applyFrameUpdate(newFrames);
+            } else {
+                // Defer update until played
+                console.log('Radar update pending (paused)');
+                this.pendingFrames = newFrames;
             }
         } catch (error) {
             console.error('Failed to check for radar updates:', error);
         }
-    }
-
-    hasChanges(newFrames) {
-        if (!this.frames || this.frames.length !== newFrames.length) return true;
-
-        // Simple check: compare timestamps of first and last
-        // If the window shifted, these will be different
-        if (this.frames[0].time !== newFrames[0].time) return true;
-        if (this.frames[this.frames.length-1].time !== newFrames[newFrames.length-1].time) return true;
-
-        return false;
     }
 
     createLayers() {
