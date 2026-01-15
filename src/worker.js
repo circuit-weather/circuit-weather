@@ -18,6 +18,11 @@ export default {
       return handleApiRequest(request, env, ctx);
     }
 
+    // Handle radar requests
+    if (path === '/api/radar') {
+      return handleRadarRequest(request, env, ctx);
+    }
+
     // For any other /api/* routes, return 404
     return new Response(JSON.stringify({ error: 'API endpoint not found' }), {
       status: 404,
@@ -119,6 +124,100 @@ async function handleApiRequest(request, env, ctx) {
         'Content-Type': 'application/json',
         'X-Content-Type-Options': 'nosniff',
         'Content-Security-Policy': "default-src 'none'; frame-ancestors 'none';",
+      }
+    });
+  }
+}
+
+/**
+ * Handle RainViewer API requests with caching
+ */
+async function handleRadarRequest(request, env, ctx) {
+  const upstreamUrl = 'https://api.rainviewer.com/public/weather-maps.json';
+  // Canonical cache key (ignore client headers/methods, just the URL)
+  const cacheKey = new Request(upstreamUrl);
+  const cache = caches.default;
+
+  // Check cache match
+  let response = await cache.match(cacheKey);
+
+  if (response) {
+    const headers = new Headers(response.headers);
+    headers.set('X-Cache', 'HIT');
+    headers.set('Access-Control-Allow-Origin', '*');
+    // Override Cache-Control for the client to ensure frequent checks (1 min)
+    headers.set('Cache-Control', 'public, max-age=60');
+
+    return new Response(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers
+    });
+  }
+
+  try {
+    const upstreamResponse = await fetch(upstreamUrl, {
+      headers: {
+        'Accept': 'application/json',
+        'User-Agent': 'CircuitWeather/1.0',
+      },
+    });
+
+    if (!upstreamResponse.ok) {
+      return new Response(JSON.stringify({
+        error: 'Upstream Radar API error',
+        status: upstreamResponse.status,
+      }), {
+        status: upstreamResponse.status,
+        headers: {
+          'Content-Type': 'application/json',
+          'Access-Control-Allow-Origin': '*',
+        },
+      });
+    }
+
+    const responseBody = await upstreamResponse.text();
+
+    // 1. Prepare Response for Cache (1 minute)
+    // We cache for only 1 minute to ensure we stay close to real-time.
+    // RainViewer updates every 10 mins, but we don't know the phase offset.
+    const cacheResponse = new Response(responseBody, {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'public, max-age=60', // Worker Cache TTL
+        'X-Cache': 'MISS',
+        'Access-Control-Allow-Origin': '*',
+        'X-Content-Type-Options': 'nosniff',
+        'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+        'Referrer-Policy': 'strict-origin-when-cross-origin',
+        'Content-Security-Policy': "default-src 'none'; frame-ancestors 'none';",
+      },
+    });
+
+    // Save to cache
+    ctx.waitUntil(cache.put(cacheKey, cacheResponse.clone()));
+
+    // 2. Prepare Response for Client (1 minute)
+    const clientResponse = new Response(responseBody, {
+        status: 200,
+        headers: {
+          ...Object.fromEntries(cacheResponse.headers),
+          'Cache-Control': 'public, max-age=60', // Client TTL
+        }
+    });
+
+    return clientResponse;
+
+  } catch (error) {
+    return new Response(JSON.stringify({
+      error: 'Failed to fetch radar data',
+      message: error.message
+    }), {
+      status: 502,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
       }
     });
   }

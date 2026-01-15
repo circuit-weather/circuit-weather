@@ -13,7 +13,7 @@ const isLocal = window.location.hostname === 'localhost' ||
 
 const CONFIG = {
     f1ApiBase: isLocal ? 'https://api.jolpi.ca/ergast/f1' : '/api/f1',
-    rainViewerApi: 'https://api.rainviewer.com/public/weather-maps.json',
+    rainViewerApi: isLocal ? 'https://api.rainviewer.com/public/weather-maps.json' : '/api/radar',
     // Use Carto basemaps (reliable, free, no key)
     mapTiles: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
     mapTilesDark: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
@@ -445,6 +445,8 @@ class WeatherRadar {
         this.animationTimer = null;
         this.sessionTime = null;
         this.speedIndex = CONFIG.defaultSpeedIndex; // Track current speed
+        this.pollingInterval = null;
+        this.pendingFrames = null;
         this.bindEvents();
     }
 
@@ -494,50 +496,82 @@ class WeatherRadar {
     }
 
     async fetchAndFilter() {
+        this.frames = await this.getFramesFromApi();
+        return this.frames;
+    }
+
+    async getFramesFromApi() {
         const response = await fetch(CONFIG.rainViewerApi);
         const data = await response.json();
 
         const past = data.radar?.past || [];
         const nowcast = data.radar?.nowcast || [];
 
-        this.frames = [...past, ...nowcast].map(frame => ({
+        return [...past, ...nowcast].map(frame => ({
             time: frame.time,
             path: frame.path,
             url: `${data.host}${frame.path}/256/{z}/{x}/{y}/2/1_1.png`,
         }));
-
-        return this.frames;
     }
 
     async load() {
-        await this.fetchAndFilter();
-        if (this.frames.length === 0) return;
+        this.stopPolling();
+        try {
+            await this.fetchAndFilter();
+            if (this.frames.length === 0) return;
 
-        this.createLayers();
-        this.updateSlider();
-        this.showControls(true);
+            this.createLayers();
+            this.updateSlider();
+            this.showControls(true);
 
-        // Wait for tiles to load before starting animation
-        await this.waitForTilesToLoad();
-        this.play();
+            // Wait for tiles to load before starting animation
+            await this.waitForTilesToLoad();
+            this.play();
+        } catch (error) {
+            console.error('Radar load failed:', error);
+        } finally {
+            // Always start polling, even if initial load failed
+            this.startPolling();
+        }
+    }
+
+    startPolling() {
+        this.stopPolling();
+        // Poll every 30 seconds to catch updates quickly
+        this.pollingInterval = setInterval(() => this.checkForUpdates(), 30000);
+    }
+
+    stopPolling() {
+        if (this.pollingInterval) {
+            clearInterval(this.pollingInterval);
+            this.pollingInterval = null;
+        }
+    }
+
+    async checkForUpdates() {
+        try {
+            const newFrames = await this.getFramesFromApi();
+            if (!newFrames || newFrames.length === 0) return;
+
+            // Always attempt update - rebuild logic is cheap and robust
+            if (this.isPlaying) {
+                this.applyFrameUpdate(newFrames);
+            } else {
+                // Defer update until played
+                this.pendingFrames = newFrames;
+            }
+        } catch (error) {
+            console.error('Failed to check for radar updates:', error);
+        }
     }
 
     createLayers() {
+        // Clear existing layers if any (full reset)
         this.layers.forEach(layer => this.map.removeLayer(layer));
         this.layers = [];
 
         this.frames.forEach((frame, index) => {
-            const layer = L.tileLayer(frame.url, {
-                tileSize: 256,
-                opacity: 0.01, // Small opacity to trigger tile loading
-                zIndex: 100 + index,
-                maxNativeZoom: 10, // RainViewer free tier limits to zoom 10
-                maxZoom: 18,       // Allow zooming in, tiles will be upscaled
-                updateWhenIdle: false,
-                updateWhenZooming: false,
-                keepBuffer: 2,
-            });
-            layer.addTo(this.map);
+            const layer = this.createLayer(frame, index);
             this.layers.push(layer);
         });
 
@@ -545,6 +579,57 @@ class WeatherRadar {
 
         // Force map to recalculate size
         this.map.invalidateSize();
+    }
+
+    createLayer(frame, index) {
+        const layer = L.tileLayer(frame.url, {
+            tileSize: 256,
+            opacity: 0.01, // Small opacity to trigger tile loading
+            zIndex: 100 + index, // Will be updated later
+            maxNativeZoom: 10,
+            maxZoom: 18,
+            updateWhenIdle: false,
+            updateWhenZooming: false,
+            keepBuffer: 2,
+        });
+        layer.addTo(this.map);
+        // Store frame info on the layer for easier matching later
+        layer.frameTime = frame.time;
+        layer.framePath = frame.path;
+        return layer;
+    }
+
+    applyFrameUpdate(newFrames) {
+        // Store current timestamp to restore view
+        const currentTimestamp = this.frames[this.currentFrame]?.time;
+
+        // Update frames data
+        this.frames = newFrames;
+
+        // Full rebuild of layers to ensure consistency
+        // This eliminates "diffing bloat" and potential z-index bugs
+        this.createLayers();
+
+        // Restore view position
+        if (currentTimestamp) {
+            let closestIndex = 0;
+            let minDiff = Infinity;
+
+            this.frames.forEach((frame, i) => {
+                const diff = Math.abs(frame.time - currentTimestamp);
+                if (diff < minDiff) {
+                    minDiff = diff;
+                    closestIndex = i;
+                }
+            });
+            this.currentFrame = closestIndex;
+        } else {
+            this.currentFrame = 0;
+        }
+
+        // Ensure UI is synced
+        this.updateSlider();
+        this.showFrame(this.currentFrame);
     }
 
     async waitForTilesToLoad() {
@@ -637,6 +722,12 @@ class WeatherRadar {
             this.animationTimer = null;
         }
 
+        // Apply any pending updates before starting
+        if (this.pendingFrames) {
+            this.applyFrameUpdate(this.pendingFrames);
+            this.pendingFrames = null;
+        }
+
         this.isPlaying = true;
         const playBtn = document.getElementById('radarPlayBtn');
         if (playBtn) playBtn.classList.add('playing');
@@ -668,6 +759,7 @@ class WeatherRadar {
     }
 
     destroy() {
+        this.stopPolling();
         this.pause();
         this.layers.forEach(layer => this.map.removeLayer(layer));
         this.layers = [];
