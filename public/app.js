@@ -783,6 +783,10 @@ class RangeCircles {
 
     getDistancesForZoom() {
         const zoom = this.map.getZoom();
+
+        // Hide range circles when zoomed out too far (avoid clutter)
+        if (zoom < 6) return [];
+
         const byZoom = CONFIG.rangeCirclesByZoom;
         const unit = this.unit;
 
@@ -1604,6 +1608,7 @@ class CircuitWeatherApp {
 
 // Initialize
 document.addEventListener('DOMContentLoaded', () => {
-    new CircuitWeatherApp().init();
+    const app = new CircuitWeatherApp();
+    app.init();
     new PrivacyModal();
 });
