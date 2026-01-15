@@ -30,12 +30,7 @@ const CONFIG = {
     ],
     defaultSpeedIndex: 1, // Start at 1x
     // Range circles by zoom level (metric/imperial)
-    rangeCirclesByZoom: {
-        close: { metric: [5, 10, 25], imperial: [3, 6, 15] },       // zoom >= 12
-        medium: { metric: [10, 25, 50], imperial: [6, 15, 30] },    // zoom 10-11
-        far: { metric: [25, 50, 100], imperial: [15, 30, 60] },     // zoom 8-9
-        veryFar: { metric: [50, 100], imperial: [30, 60] },         // zoom < 8
-    },
+    // Deprecated: Logic now dynamic in RangeCircles class
 };
 
 // Country code mappings for flags (ISO 3166-1 alpha-2)
@@ -739,10 +734,10 @@ class RangeCircles {
         this.clear();
         this.center = center;
 
-        const distances = this.getDistancesForZoom();
+        const steps = this.calculateSteps(center);
         const multiplier = this.unit === 'metric' ? 1000 : 1609.34;
 
-        distances.forEach((distance, index) => {
+        steps.forEach((distance, index) => {
             // Outline only - no fill
             const circle = L.circle(center, {
                 radius: distance * multiplier,
@@ -781,15 +776,48 @@ class RangeCircles {
         this.circles.push(marker);
     }
 
-    getDistancesForZoom() {
-        const zoom = this.map.getZoom();
-        const byZoom = CONFIG.rangeCirclesByZoom;
-        const unit = this.unit;
+    calculateSteps(center) {
+        // Calculate dynamic steps based on current view bounds
+        const bounds = this.map.getBounds();
+        const north = bounds.getNorth();
+        const centerLat = center[0];
 
-        if (zoom >= 12) return byZoom.close[unit];
-        if (zoom >= 10) return byZoom.medium[unit];
-        if (zoom >= 8) return byZoom.far[unit];
-        return byZoom.veryFar[unit];
+        // Approximate visible radius in meters (center to top edge)
+        // This is a rough heuristic to ensure rings fit on screen
+        const topLatLng = L.latLng(north, center[1]);
+        const visibleRadiusMeters = this.map.distance(center, topLatLng);
+
+        // Convert to current unit
+        const multiplier = this.unit === 'metric' ? 1000 : 1609.34;
+        const visibleRadius = visibleRadiusMeters / multiplier;
+
+        // Target around 3-4 rings
+        const targetStep = visibleRadius / 4;
+
+        // Find closest "nice" number
+        // 1, 2, 5, 10, 20, 25, 50, 100, 200, 500, 1000...
+        const magnitude = Math.pow(10, Math.floor(Math.log10(targetStep)));
+        const normalized = targetStep / magnitude;
+
+        let niceStep;
+        if (normalized < 1.5) niceStep = 1 * magnitude;
+        else if (normalized < 3.5) niceStep = 2 * magnitude; // or 2.5?
+        else if (normalized < 7.5) niceStep = 5 * magnitude;
+        else niceStep = 10 * magnitude;
+
+        // Ensure strictly positive
+        niceStep = Math.max(niceStep, 1);
+
+        // Generate steps: 1x, 2x, 3x until out of view (or max 5 rings)
+        const steps = [];
+        for (let i = 1; i <= 5; i++) {
+            const step = niceStep * i;
+            // Only add if it's somewhat visible (radius < visibleRadius * 1.5 to allow corners)
+            if (step > visibleRadius * 1.5) break;
+            steps.push(step);
+        }
+
+        return steps;
     }
 
     getPointAtDistance(center, distance, bearing) {
