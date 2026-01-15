@@ -212,7 +212,7 @@ class F1API {
         const cacheKey = 'schedule';
         if (this.cache.has(cacheKey)) return this.cache.get(cacheKey);
 
-        const response = await fetch(`${CONFIG.f1ApiBase}/current`);
+        const response = await fetch(`${CONFIG.f1ApiBase}/current.json`);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
         const data = await response.json();
