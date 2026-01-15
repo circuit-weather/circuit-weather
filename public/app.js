@@ -13,7 +13,7 @@ const isLocal = window.location.hostname === 'localhost' ||
 
 const CONFIG = {
     f1ApiBase: isLocal ? 'https://api.jolpi.ca/ergast/f1' : '/api/f1',
-    rainViewerApi: 'https://api.rainviewer.com/public/weather-maps.json',
+    rainViewerApi: isLocal ? 'https://api.rainviewer.com/public/weather-maps.json' : '/api/radar',
     // Use Carto basemaps (reliable, free, no key)
     mapTiles: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
     mapTilesDark: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
@@ -445,6 +445,8 @@ class WeatherRadar {
         this.animationTimer = null;
         this.sessionTime = null;
         this.speedIndex = CONFIG.defaultSpeedIndex; // Track current speed
+        this.pollingInterval = null;
+        this.pendingFrames = null;
         this.bindEvents();
     }
 
@@ -494,22 +496,26 @@ class WeatherRadar {
     }
 
     async fetchAndFilter() {
+        this.frames = await this.getFramesFromApi();
+        return this.frames;
+    }
+
+    async getFramesFromApi() {
         const response = await fetch(CONFIG.rainViewerApi);
         const data = await response.json();
 
         const past = data.radar?.past || [];
         const nowcast = data.radar?.nowcast || [];
 
-        this.frames = [...past, ...nowcast].map(frame => ({
+        return [...past, ...nowcast].map(frame => ({
             time: frame.time,
             path: frame.path,
             url: `${data.host}${frame.path}/256/{z}/{x}/{y}/2/1_1.png`,
         }));
-
-        return this.frames;
     }
 
     async load() {
+        this.stopPolling();
         await this.fetchAndFilter();
         if (this.frames.length === 0) return;
 
@@ -520,24 +526,58 @@ class WeatherRadar {
         // Wait for tiles to load before starting animation
         await this.waitForTilesToLoad();
         this.play();
+        this.startPolling();
+    }
+
+    startPolling() {
+        this.stopPolling();
+        // Poll every 5 minutes (300,000 ms)
+        this.pollingInterval = setInterval(() => this.checkForUpdates(), 300000);
+    }
+
+    stopPolling() {
+        if (this.pollingInterval) {
+            clearInterval(this.pollingInterval);
+            this.pollingInterval = null;
+        }
+    }
+
+    async checkForUpdates() {
+        try {
+            const newFrames = await this.getFramesFromApi();
+
+            // Check if we have changes
+            if (this.hasChanges(newFrames)) {
+                if (this.isPlaying) {
+                    this.applyFrameUpdate(newFrames);
+                } else {
+                    // Defer update until played
+                    this.pendingFrames = newFrames;
+                }
+            }
+        } catch (error) {
+            console.error('Failed to check for radar updates:', error);
+        }
+    }
+
+    hasChanges(newFrames) {
+        if (!this.frames || this.frames.length !== newFrames.length) return true;
+
+        // Simple check: compare timestamps of first and last
+        // If the window shifted, these will be different
+        if (this.frames[0].time !== newFrames[0].time) return true;
+        if (this.frames[this.frames.length-1].time !== newFrames[newFrames.length-1].time) return true;
+
+        return false;
     }
 
     createLayers() {
+        // Clear existing layers if any (full reset)
         this.layers.forEach(layer => this.map.removeLayer(layer));
         this.layers = [];
 
         this.frames.forEach((frame, index) => {
-            const layer = L.tileLayer(frame.url, {
-                tileSize: 256,
-                opacity: 0.01, // Small opacity to trigger tile loading
-                zIndex: 100 + index,
-                maxNativeZoom: 10, // RainViewer free tier limits to zoom 10
-                maxZoom: 18,       // Allow zooming in, tiles will be upscaled
-                updateWhenIdle: false,
-                updateWhenZooming: false,
-                keepBuffer: 2,
-            });
-            layer.addTo(this.map);
+            const layer = this.createLayer(frame, index);
             this.layers.push(layer);
         });
 
@@ -545,6 +585,89 @@ class WeatherRadar {
 
         // Force map to recalculate size
         this.map.invalidateSize();
+    }
+
+    createLayer(frame, index) {
+        const layer = L.tileLayer(frame.url, {
+            tileSize: 256,
+            opacity: 0.01, // Small opacity to trigger tile loading
+            zIndex: 100 + index, // Will be updated later
+            maxNativeZoom: 10,
+            maxZoom: 18,
+            updateWhenIdle: false,
+            updateWhenZooming: false,
+            keepBuffer: 2,
+        });
+        layer.addTo(this.map);
+        // Store frame info on the layer for easier matching later
+        layer.frameTime = frame.time;
+        layer.framePath = frame.path;
+        return layer;
+    }
+
+    applyFrameUpdate(newFrames) {
+        const oldLayers = new Map();
+        this.layers.forEach(layer => {
+            // Key by timestamp + path to ensure uniqueness
+            const key = `${layer.frameTime}-${layer.framePath}`;
+            oldLayers.set(key, layer);
+        });
+
+        const newLayers = [];
+
+        // Build new layer list, reusing existing ones where possible
+        newFrames.forEach((frame, index) => {
+            const key = `${frame.time}-${frame.path}`;
+            if (oldLayers.has(key)) {
+                // Keep existing layer
+                const layer = oldLayers.get(key);
+                layer.setZIndex(100 + index); // Update z-index for new position
+                newLayers.push(layer);
+                // Remove from map of "old" layers so we know what to delete
+                oldLayers.delete(key);
+            } else {
+                // Create new layer
+                const layer = this.createLayer(frame, index);
+                newLayers.push(layer);
+            }
+        });
+
+        // Remove layers that are no longer in the list
+        oldLayers.forEach(layer => {
+            this.map.removeLayer(layer);
+        });
+
+        // Update state
+        const currentTimestamp = this.frames[this.currentFrame]?.time;
+        this.frames = newFrames;
+        this.layers = newLayers;
+
+        // Try to maintain current view position
+        if (currentTimestamp) {
+            // Find frame with closest timestamp
+            // Since frames are sorted, we could binary search, but list is small (<20)
+            let closestIndex = -1;
+            let minDiff = Infinity;
+
+            this.frames.forEach((frame, i) => {
+                const diff = Math.abs(frame.time - currentTimestamp);
+                if (diff < minDiff) {
+                    minDiff = diff;
+                    closestIndex = i;
+                }
+            });
+
+            // If the closest frame is very far away (e.g. > 20 mins),
+            // maybe we should just reset to start or end?
+            // For now, snapping to closest is reasonably safe for seamless update.
+            this.currentFrame = closestIndex;
+        } else {
+            this.currentFrame = 0;
+        }
+
+        // Ensure UI is synced
+        this.updateSlider();
+        this.showFrame(this.currentFrame);
     }
 
     async waitForTilesToLoad() {
@@ -637,6 +760,12 @@ class WeatherRadar {
             this.animationTimer = null;
         }
 
+        // Apply any pending updates before starting
+        if (this.pendingFrames) {
+            this.applyFrameUpdate(this.pendingFrames);
+            this.pendingFrames = null;
+        }
+
         this.isPlaying = true;
         const playBtn = document.getElementById('radarPlayBtn');
         if (playBtn) playBtn.classList.add('playing');
@@ -668,6 +797,7 @@ class WeatherRadar {
     }
 
     destroy() {
+        this.stopPolling();
         this.pause();
         this.layers.forEach(layer => this.map.removeLayer(layer));
         this.layers = [];
