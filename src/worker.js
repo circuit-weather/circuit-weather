@@ -134,7 +134,8 @@ async function handleApiRequest(request, env, ctx) {
  */
 async function handleRadarRequest(request, env, ctx) {
   const upstreamUrl = 'https://api.rainviewer.com/public/weather-maps.json';
-  const cacheKey = new Request(upstreamUrl, request);
+  // Canonical cache key (ignore client headers/methods, just the URL)
+  const cacheKey = new Request(upstreamUrl);
   const cache = caches.default;
 
   // Check cache match
@@ -144,6 +145,9 @@ async function handleRadarRequest(request, env, ctx) {
     const headers = new Headers(response.headers);
     headers.set('X-Cache', 'HIT');
     headers.set('Access-Control-Allow-Origin', '*');
+    // Override Cache-Control for the client to ensure frequent checks (1 min)
+    headers.set('Cache-Control', 'public, max-age=60');
+
     return new Response(response.body, {
       status: response.status,
       statusText: response.statusText,
@@ -174,12 +178,14 @@ async function handleRadarRequest(request, env, ctx) {
 
     const responseBody = await upstreamResponse.text();
 
-    // Create cacheable response (10 minutes = 600 seconds)
-    response = new Response(responseBody, {
+    // 1. Prepare Response for Cache (1 minute)
+    // We cache for only 1 minute to ensure we stay close to real-time.
+    // RainViewer updates every 10 mins, but we don't know the phase offset.
+    const cacheResponse = new Response(responseBody, {
       status: 200,
       headers: {
         'Content-Type': 'application/json',
-        'Cache-Control': 'public, max-age=600',
+        'Cache-Control': 'public, max-age=60', // Worker Cache TTL
         'X-Cache': 'MISS',
         'Access-Control-Allow-Origin': '*',
         'X-Content-Type-Options': 'nosniff',
@@ -190,9 +196,18 @@ async function handleRadarRequest(request, env, ctx) {
     });
 
     // Save to cache
-    ctx.waitUntil(cache.put(cacheKey, response.clone()));
+    ctx.waitUntil(cache.put(cacheKey, cacheResponse.clone()));
 
-    return response;
+    // 2. Prepare Response for Client (1 minute)
+    const clientResponse = new Response(responseBody, {
+        status: 200,
+        headers: {
+          ...Object.fromEntries(cacheResponse.headers),
+          'Cache-Control': 'public, max-age=60', // Client TTL
+        }
+    });
+
+    return clientResponse;
 
   } catch (error) {
     return new Response(JSON.stringify({
