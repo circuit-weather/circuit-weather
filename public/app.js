@@ -797,6 +797,7 @@ class RangeCircles {
         this.unit = this.getInitialUnit();
         this.center = null;
         this.visibleCount = 4; // How many circles to show based on zoom
+        this.currentSteps = null;
         this.bindEvents();
         this.updateToggleUI();
     }
@@ -841,10 +842,24 @@ class RangeCircles {
     }
 
     draw(center) {
-        this.clear();
-        this.center = center;
+        // Check if center has changed
+        const centerChanged = !this.center || this.center[0] !== center[0] || this.center[1] !== center[1];
+        const unitChanged = this.unit !== this.currentUnit;
 
         const steps = this.calculateSteps(center);
+        const stepsChanged = !this.currentSteps || JSON.stringify(steps) !== JSON.stringify(this.currentSteps);
+
+        // Optimization: Only redraw if nothing material has changed
+        if (!centerChanged && !stepsChanged && !unitChanged) {
+            return;
+        }
+
+        this.center = [...center];
+        this.currentSteps = steps;
+        this.currentUnit = this.unit;
+
+        this.clear();
+
         const multiplier = this.unit === 'metric' ? 1000 : 1609.34;
 
         steps.forEach((distance, index) => {
