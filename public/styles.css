@@ -431,6 +431,25 @@ body {
     padding: var(--spacing-sm) var(--spacing-md);
 }
 
+.bmc-container .bmc-btn {
+    height: 32px !important;
+    min-width: auto !important;
+    font-size: 12px !important;
+    padding: 0 12px !important;
+    line-height: 32px !important;
+    border-radius: 6px !important;
+}
+
+.bmc-container .bmc-btn svg {
+    height: 18px !important;
+    width: auto !important;
+    margin-bottom: 0 !important;
+}
+
+.bmc-container .bmc-btn-text {
+    margin-left: 6px !important;
+}
+
 /* Sidebar Footer */
 .sidebar-footer {
     padding: var(--spacing-sm) var(--spacing-md);
