@@ -571,6 +571,11 @@ class WeatherRadar {
             const newFrames = await this.getFramesFromApi();
             if (!newFrames || newFrames.length === 0) return;
 
+            // Bolt Optimization: Check if frames have changed
+            if (this.areFramesEqual(this.frames, newFrames)) {
+                return;
+            }
+
             // Always attempt update - rebuild logic is cheap and robust
             if (this.isPlaying) {
                 this.applyFrameUpdate(newFrames);
@@ -581,6 +586,19 @@ class WeatherRadar {
         } catch (error) {
             console.error('Failed to check for radar updates:', error);
         }
+    }
+
+    areFramesEqual(a, b) {
+        if (!a || !b) return false;
+        if (a.length !== b.length) return false;
+
+        // Check timestamps and paths
+        for (let i = 0; i < a.length; i++) {
+            if (a[i].time !== b[i].time || a[i].path !== b[i].path) {
+                return false;
+            }
+        }
+        return true;
     }
 
     createLayers() {
