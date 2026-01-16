@@ -424,6 +424,13 @@ body {
     color: var(--color-text-secondary);
 }
 
+/* Buy Me a Coffee Button */
+.bmc-container {
+    display: flex;
+    justify-content: center;
+    padding: var(--spacing-sm) var(--spacing-md);
+}
+
 /* Sidebar Footer */
 .sidebar-footer {
     padding: var(--spacing-sm) var(--spacing-md);
