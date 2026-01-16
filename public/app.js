@@ -698,30 +698,38 @@ class WeatherRadar {
     updateTimeDisplay(timestamp) {
         const timeEl = document.getElementById('radarTime');
         const relEl = document.getElementById('radarRelative');
+        const slider = document.getElementById('radarSlider');
         if (!timeEl || !timestamp) return;
 
         const date = new Date(timestamp * 1000);
         const timeStr = date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false });
         timeEl.textContent = timeStr;
 
+        let relativeText = '';
+
         // Show relative to session if available
         if (relEl && this.sessionTime) {
             const diff = (timestamp * 1000 - this.sessionTime.getTime()) / 60000; // minutes
             if (Math.abs(diff) < 1) {
-                relEl.textContent = 'Session start';
+                relativeText = 'Session start';
             } else if (diff < 0) {
-                relEl.textContent = `${Math.abs(Math.round(diff))}m before`;
+                relativeText = `${Math.abs(Math.round(diff))}m before`;
             } else {
-                relEl.textContent = `${Math.round(diff)}m after`;
+                relativeText = `${Math.round(diff)}m after`;
             }
+            relEl.textContent = relativeText;
         } else if (relEl) {
             const now = Date.now() / 1000;
             const diff = timestamp - now;
             if (diff > 60) {
-                relEl.textContent = 'Forecast';
-            } else {
-                relEl.textContent = '';
+                relativeText = 'Forecast';
             }
+            relEl.textContent = relativeText;
+        }
+
+        if (slider) {
+            const ariaText = relativeText ? `${timeStr}, ${relativeText}` : timeStr;
+            slider.setAttribute('aria-valuetext', ariaText);
         }
     }
 
