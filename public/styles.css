@@ -881,24 +881,25 @@ body {
         position: relative;
     }
 
-    /* 
-     * Sidebar uses margin-based hiding for smooth breakpoint transitions.
-     * Instead of position:fixed + transform, we keep it in flex flow but
-     * slide it off-screen with negative margin-left.
+    /*
+     * Use transform for smoother animations on mobile.
+     * position: fixed takes the sidebar out of the document flow,
+     * preventing layout recalculations during animation.
      */
     .sidebar {
-        /* Keep in flex flow - slide off via negative margin */
-        position: relative;
-        margin-left: calc(-1 * var(--sidebar-width));
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100dvh;
+        transform: translateX(calc(-1 * var(--sidebar-width)));
         z-index: 2000;
         box-shadow: var(--shadow-lg);
-        /* Transition is always active for smooth resize behavior */
-        transition: margin-left 300ms ease, transform 300ms ease;
+        transition: transform 300ms ease;
     }
 
     /* When sidebar is open on mobile, slide it back into view */
     .sidebar.sidebar--open {
-        margin-left: 0;
+        transform: translateX(0);
     }
 
     /* Show sidebar toggle button */
