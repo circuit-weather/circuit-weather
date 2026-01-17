@@ -459,6 +459,7 @@ class WeatherRadar {
         this.frames = [];
         this.pastFrameCount = 0; // Track where the forecast starts
         this.currentFrame = 0;
+        this.visibleLayerIndex = -1; // Track currently visible layer for optimization
         this.layers = [];
         this.isPlaying = false;
         this.animationTimer = null;
@@ -609,6 +610,7 @@ class WeatherRadar {
         // Clear existing layers if any (full reset)
         this.layers.forEach(layer => this.map.removeLayer(layer));
         this.layers = [];
+        this.visibleLayerIndex = -1;
 
         this.frames.forEach((frame, index) => {
             const layer = this.createLayer(frame, index);
@@ -707,9 +709,20 @@ class WeatherRadar {
     showFrame(index) {
         if (index < 0 || index >= this.layers.length) return;
 
-        this.layers.forEach((layer, i) => {
-            layer.setOpacity(i === index ? CONFIG.radarOpacity : 0);
-        });
+        // Optimization: Only update layers that need changing
+        if (this.visibleLayerIndex === index) return; // No change needed
+
+        // Hide previous layer
+        if (this.visibleLayerIndex !== -1 && this.layers[this.visibleLayerIndex]) {
+            this.layers[this.visibleLayerIndex].setOpacity(0);
+        }
+
+        // Show new layer
+        if (this.layers[index]) {
+            this.layers[index].setOpacity(CONFIG.radarOpacity);
+        }
+
+        this.visibleLayerIndex = index;
 
         this.updateTimeDisplay(this.frames[index]?.time);
 

@@ -13,3 +13,7 @@
 **Action:** Implemented a dual-layer strategy:
 1. **Edge Cache:** Cloudflare Worker proxies and caches GitHub requests for 24 hours.
 2. **Client Cache:** In-memory `TrackLayer` cache avoids network requests entirely during a session.
+
+## 2025-02-14 - O(N) Leaflet Layer Operations
+**Learning:** The radar animation `showFrame` method was iterating through *all* loaded radar layers (16+) to set their opacity on every frame tick (60fps or less). This created O(N) DOM operations per frame, where N is the number of radar frames.
+**Action:** Optimized `WeatherRadar.showFrame` to track the `visibleLayerIndex` and only toggle the opacity of the specific layers that need to change (previous -> 0, current -> visible). Reduced DOM operations from ~80 to ~10 per 5-second cycle (O(1)).
