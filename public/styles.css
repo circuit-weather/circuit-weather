@@ -600,7 +600,7 @@ body {
     border: 1px solid var(--color-border);
     z-index: 500;
     max-width: none;
-    width: 350px;
+    width: 450px;
 }
 
 .radar-play-btn {
@@ -638,17 +638,50 @@ body {
     display: block;
 }
 
-.radar-timeline {
+.radar-timeline-container {
     flex: 1;
-    display: flex;
-    align-items: center;
-    gap: var(--spacing-sm);
+    position: relative;
     min-width: 0;
+    padding-top: 1.75rem; /* Space for the tooltip */
+    margin: 0 0.5rem;
 }
 
-.radar-slider-container {
-    position: relative;
-    flex: 1;
+.radar-tooltip {
+    position: absolute;
+    top: 0;
+    left: 0; /* Position is set by JS */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: var(--color-surface-elevated);
+    color: var(--color-text);
+    padding: 0.2rem 0.4rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.75rem;
+    font-weight: 600;
+    white-space: nowrap;
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--color-border);
+    transition: left 50ms linear; /* Smooth transition */
+    pointer-events: none; /* Allow clicks to pass through to slider */
+}
+
+.radar-tooltip-relative {
+    font-size: 0.65rem;
+    font-weight: 400;
+    color: var(--color-text-secondary);
+}
+
+.radar-timeline {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.radar-bound-time {
+    font-size: 0.65rem;
+    color: var(--color-text-secondary);
+    font-variant-numeric: tabular-nums;
 }
 
 .radar-slider {
@@ -658,8 +691,7 @@ body {
     background: var(--color-border);
     border-radius: var(--radius-full);
     cursor: pointer;
-    margin: 0;
-    padding: 0;
+    flex: 1;
 }
 
 .radar-slider::-webkit-slider-thumb {
@@ -678,53 +710,6 @@ body {
     border: none;
     border-radius: var(--radius-full);
     cursor: pointer;
-}
-
-.radar-time-label {
-    font-size: 0.7rem;
-    color: var(--color-text-secondary);
-    font-variant-numeric: tabular-nums;
-}
-
-.radar-slider-tooltip {
-    position: absolute;
-    bottom: calc(100% + 8px);
-    left: 50%; /* JS will update this */
-    transform: translateX(-50%);
-    background: var(--color-surface-elevated);
-    color: var(--color-text);
-    padding: var(--spacing-xs) var(--spacing-sm);
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow-md);
-    border: 1px solid var(--color-border);
-    font-size: 0.7rem;
-    font-weight: 500;
-    white-space: nowrap;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    line-height: 1.2;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity var(--transition-fast), visibility var(--transition-fast);
-    pointer-events: none; /* Ignore mouse events */
-}
-
-.radar-slider-container:hover .radar-slider-tooltip,
-.radar-slider:active + .radar-slider-tooltip,
-.radar-slider:focus + .radar-slider-tooltip {
-    opacity: 1;
-    visibility: visible;
-}
-
-
-.radar-tooltip-time {
-    font-variant-numeric: tabular-nums;
-}
-
-.radar-tooltip-relative {
-    font-size: 0.6rem;
-    color: var(--color-text-secondary);
 }
 
 /* Radar Speed Button */

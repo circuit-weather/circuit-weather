@@ -718,14 +718,19 @@ class WeatherRadar {
     }
 
     updateTimeDisplay(timestamp) {
+        const timeEl = document.getElementById('radarTime');
+        const relEl = document.getElementById('radarRelative');
         const slider = document.getElementById('radarSlider');
-        if (!slider || !timestamp) return;
+        if (!timeEl || !timestamp) return;
 
         const date = new Date(timestamp * 1000);
         const timeStr = date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false });
+        timeEl.textContent = timeStr;
 
         let relativeText = '';
-        if (this.sessionTime) {
+
+        // Show relative to session if available
+        if (relEl && this.sessionTime) {
             const diff = (timestamp * 1000 - this.sessionTime.getTime()) / 60000; // minutes
             if (Math.abs(diff) < 1) {
                 relativeText = 'Session start';
@@ -734,44 +739,20 @@ class WeatherRadar {
             } else {
                 relativeText = `${Math.round(diff)}m after`;
             }
-        } else {
+            relEl.textContent = relativeText;
+        } else if (relEl) {
             const now = Date.now() / 1000;
             const diff = timestamp - now;
-            if (diff > 60) relativeText = 'Forecast';
+            if (diff > 60) {
+                relativeText = 'Forecast';
+            }
+            relEl.textContent = relativeText;
         }
 
-        // Update tooltip content
-        const tooltipTime = document.getElementById('radarTooltipTime');
-        const tooltipRel = document.getElementById('radarTooltipRelative');
-        if (tooltipTime) tooltipTime.textContent = timeStr;
-        if (tooltipRel) tooltipRel.textContent = relativeText;
-
-        // Update tooltip position
-        this.updateTooltipPosition();
-
-
-        // Update ARIA value text for screen readers
-        const ariaText = relativeText ? `${timeStr}, ${relativeText}` : timeStr;
-        slider.setAttribute('aria-valuetext', ariaText);
-    }
-
-    updateTooltipPosition() {
-        const slider = document.getElementById('radarSlider');
-        const tooltip = document.getElementById('radarTooltip');
-        if (!slider || !tooltip) return;
-
-        const min = slider.min ? parseInt(slider.min, 10) : 0;
-        const max = slider.max ? parseInt(slider.max, 10) : 100;
-        const val = slider.value ? parseInt(slider.value, 10) : 0;
-
-        const percent = (val - min) / (max - min);
-        const thumbWidth = 12; // As defined in CSS
-        const sliderWidth = slider.offsetWidth;
-
-        // Calculate the position of the thumb
-        const thumbPos = percent * (sliderWidth - thumbWidth) + (thumbWidth / 2);
-
-        tooltip.style.left = `${thumbPos}px`;
+        if (slider) {
+            const ariaText = relativeText ? `${timeStr}, ${relativeText}` : timeStr;
+            slider.setAttribute('aria-valuetext', ariaText);
+        }
     }
 
     updateSlider() {
@@ -779,19 +760,6 @@ class WeatherRadar {
         if (slider) {
             slider.max = this.frames.length - 1;
             slider.value = this.currentFrame;
-
-            // Update start/end labels
-            const timeStart = document.getElementById('radarTimeStart');
-            const timeEnd = document.getElementById('radarTimeEnd');
-            if (timeStart && this.frames.length > 0) {
-                const date = new Date(this.frames[0].time * 1000);
-                timeStart.textContent = date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false });
-            }
-            if (timeEnd && this.frames.length > 0) {
-                const date = new Date(this.frames[this.frames.length - 1].time * 1000);
-                timeEnd.textContent = date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false });
-            }
-
 
             // Create a visual split between past and forecast frames
             if (this.frames.length > 1 && this.pastFrameCount > 0) {
@@ -809,7 +777,6 @@ class WeatherRadar {
                 slider.style.background = 'var(--color-border)';
             }
         }
-        this.updateTooltipPosition(); // Also update on load
     }
 
     play() {
