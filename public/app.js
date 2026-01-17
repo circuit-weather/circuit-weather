@@ -1229,6 +1229,7 @@ class PrivacyModal {
         this.closeBtn = document.getElementById('privacyModalClose');
         this.privacyLink = document.getElementById('privacyLink');
         this.loaded = false;
+        this.triggerElement = null;
         this.bindEvents();
     }
 
@@ -1259,12 +1260,15 @@ class PrivacyModal {
     }
 
     async open() {
+        this.triggerElement = document.activeElement;
         if (!this.loaded) {
             await this.loadContent();
         }
         if (this.backdrop) {
             this.backdrop.classList.add('visible');
             document.body.style.overflow = 'hidden';
+            // Move focus to close button for accessibility
+            if (this.closeBtn) this.closeBtn.focus();
         }
     }
 
@@ -1272,6 +1276,11 @@ class PrivacyModal {
         if (this.backdrop) {
             this.backdrop.classList.remove('visible');
             document.body.style.overflow = '';
+            // Restore focus to trigger element
+            if (this.triggerElement) {
+                this.triggerElement.focus();
+                this.triggerElement = null;
+            }
         }
     }
 
