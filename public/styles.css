@@ -600,6 +600,7 @@ body {
     border: 1px solid var(--color-border);
     z-index: 500;
     max-width: none;
+    /* Increased width to accommodate time bounds */
     width: 420px;
 }
 
