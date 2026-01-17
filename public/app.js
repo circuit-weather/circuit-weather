@@ -718,64 +718,90 @@ class WeatherRadar {
     }
 
     updateTimeDisplay(timestamp) {
-        const timeEl = document.getElementById('radarTime');
-        const relEl = document.getElementById('radarRelative');
+        const tooltip = document.getElementById('radar-slider-tooltip');
         const slider = document.getElementById('radarSlider');
-        if (!timeEl || !timestamp) return;
 
+        if (!tooltip || !slider || !timestamp) return;
+
+        // Content
         const date = new Date(timestamp * 1000);
         const timeStr = date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false });
-        timeEl.textContent = timeStr;
 
         let relativeText = '';
-
-        // Show relative to session if available
-        if (relEl && this.sessionTime) {
+        if (this.sessionTime) {
             const diff = (timestamp * 1000 - this.sessionTime.getTime()) / 60000; // minutes
-            if (Math.abs(diff) < 1) {
-                relativeText = 'Session start';
-            } else if (diff < 0) {
-                relativeText = `${Math.abs(Math.round(diff))}m before`;
-            } else {
-                relativeText = `${Math.round(diff)}m after`;
-            }
-            relEl.textContent = relativeText;
-        } else if (relEl) {
+            if (Math.abs(diff) < 1) relativeText = 'Session start';
+            else if (diff < 0) relativeText = `${Math.abs(Math.round(diff))}m before`;
+            else relativeText = `${Math.round(diff)}m after`;
+        } else {
             const now = Date.now() / 1000;
-            const diff = timestamp - now;
-            if (diff > 60) {
-                relativeText = 'Forecast';
-            }
-            relEl.textContent = relativeText;
+            if (timestamp - now > 60) relativeText = 'Forecast';
         }
 
-        if (slider) {
-            const ariaText = relativeText ? `${timeStr}, ${relativeText}` : timeStr;
-            slider.setAttribute('aria-valuetext', ariaText);
-        }
+        tooltip.querySelector('.tooltip-time').textContent = timeStr;
+        tooltip.querySelector('.tooltip-relative').textContent = relativeText;
+
+        // Positioning
+        requestAnimationFrame(() => {
+            if (!document.body.contains(slider)) return; // Element removed from DOM
+
+            const min = parseInt(slider.min, 10) || 0;
+            const max = parseInt(slider.max, 10);
+            const value = parseInt(slider.value, 10);
+
+            if (max > min) {
+                const percent = (value - min) / (max - min);
+                const sliderWidth = slider.offsetWidth;
+                const tooltipWidth = tooltip.offsetWidth;
+                // Position tooltip center over the thumb
+                const newLeft = percent * sliderWidth - (tooltipWidth / 2);
+                // Clamp to prevent overflow
+                tooltip.style.left = `${Math.min(Math.max(0, newLeft), sliderWidth - tooltipWidth)}px`;
+                tooltip.style.opacity = '1'; // Make it visible
+            }
+        });
+
+
+        const ariaText = relativeText ? `${timeStr}, ${relativeText}` : timeStr;
+        slider.setAttribute('aria-valuetext', ariaText);
     }
 
     updateSlider() {
         const slider = document.getElementById('radarSlider');
-        if (slider) {
+        const startTimeEl = document.getElementById('radar-time-start');
+        const endTimeEl = document.getElementById('radar-time-end');
+        const tooltip = document.getElementById('radar-slider-tooltip');
+
+        if (slider && this.frames.length > 0) {
             slider.max = this.frames.length - 1;
             slider.value = this.currentFrame;
+
+            if (startTimeEl) {
+                const startDate = new Date(this.frames[0].time * 1000);
+                startTimeEl.textContent = startDate.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false });
+            }
+            if (endTimeEl) {
+                const endDate = new Date(this.frames[this.frames.length - 1].time * 1000);
+                endTimeEl.textContent = endDate.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false });
+            }
 
             // Create a visual split between past and forecast frames
             if (this.frames.length > 1 && this.pastFrameCount > 0) {
                 const forecastStartIndex = this.pastFrameCount;
                 const splitPercentage = (forecastStartIndex / (this.frames.length - 1)) * 100;
 
-                // Apply a gradient background to the slider track
                 slider.style.background = `linear-gradient(to right,
                     var(--color-border) 0%,
                     var(--color-border) ${splitPercentage}%,
                     var(--color-forecast-track) ${splitPercentage}%,
                     var(--color-forecast-track) 100%)`;
             } else {
-                // Default style if no forecast frames
                 slider.style.background = 'var(--color-border)';
             }
+
+            // Initial tooltip update. Hide it until position is calculated.
+            if (tooltip) tooltip.style.opacity = '0';
+            this.updateTimeDisplay(this.frames[this.currentFrame].time);
         }
     }
 

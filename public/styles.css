@@ -621,6 +621,7 @@ body {
     background: var(--color-primary-hover);
 }
 
+
 .radar-play-btn svg {
     width: 0.75rem;
     height: 0.75rem;
@@ -706,6 +707,7 @@ body {
     border-radius: var(--radius-full);
     cursor: pointer;
 }
+
 
 .radar-slider::-webkit-slider-thumb {
     appearance: none;
