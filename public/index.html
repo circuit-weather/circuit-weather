@@ -195,43 +195,43 @@
             <!-- Map Container -->
             <div id="map" class="map"></div>
 
-            <!-- Radar Timeline -->
-            <div class="radar-controls" id="radarControls" style="display: none;">
-                <button class="radar-play-btn" id="radarPlayBtn" aria-label="Play/Pause radar animation" title="Play/Pause radar animation">
-                    <svg class="icon-play" viewBox="0 0 24 24" fill="currentColor">
-                        <polygon points="5,3 19,12 5,21"></polygon>
-                    </svg>
-                    <svg class="icon-pause" viewBox="0 0 24 24" fill="currentColor">
-                        <rect x="6" y="4" width="4" height="16"></rect>
-                        <rect x="14" y="4" width="4" height="16"></rect>
-                    </svg>
-                </button>
-                <div class="radar-timeline">
-                    <div class="radar-slider-wrapper">
-                        <input type="range" id="radarSlider" class="radar-slider" min="0" max="100" value="100"
-                            aria-label="Radar playback position">
-                        <div class="radar-time-tooltip" id="radarTimeTooltip">
-                            <span class="radar-time" id="radarTime">--:--</span>
-                            <span class="radar-relative" id="radarRelative"></span>
+            <div class="map-controls-container">
+                <!-- Mobile Countdown Overlay -->
+                <div class="mobile-countdown" id="mobileCountdown" style="display: none;">
+                </div>
+
+                <!-- Mobile Weather Card -->
+                <div class="mobile-weather-card" id="mobileWeatherCard" style="display: none;">
+                </div>
+
+                <!-- Radar Timeline -->
+                <div class="radar-controls" id="radarControls" style="display: none;">
+                    <button class="radar-play-btn" id="radarPlayBtn" aria-label="Play/Pause radar animation" title="Play/Pause radar animation">
+                        <svg class="icon-play" viewBox="0 0 24 24" fill="currentColor">
+                            <polygon points="5,3 19,12 5,21"></polygon>
+                        </svg>
+                        <svg class="icon-pause" viewBox="0 0 24 24" fill="currentColor">
+                            <rect x="6" y="4" width="4" height="16"></rect>
+                            <rect x="14" y="4" width="4" height="16"></rect>
+                        </svg>
+                    </button>
+                    <div class="radar-timeline">
+                        <div class="radar-slider-wrapper">
+                            <input type="range" class="radar-slider" id="radarSlider" min="0" max="12" value="12" aria-label="Radar animation timeline">
+                            <div class="radar-slider-tooltip" id="radarSliderTooltip">--:--</div>
+                        </div>
+                        <div class="radar-time-info">
+                            <span id="radar-time-start" class="radar-time">--:--</span>
+                            <span id="radar-time-end" class="radar-time">--:--</span>
                         </div>
                     </div>
-                    <div class="radar-time-bounds">
-                        <span id="radarStartTime">--:--</span>
-                        <span id="radarEndTime">--:--</span>
-                    </div>
+                    <button class="radar-speed-btn" id="radarSpeedBtn" aria-label="Change playback speed"
+                        title="Playback speed">
+                        <span id="radarSpeedLabel">1x</span>
+                    </button>
                 </div>
-                <button class="radar-speed-btn" id="radarSpeedBtn" aria-label="Change playback speed"
-                    title="Playback speed">
-                    <span id="radarSpeedLabel">1x</span>
-                </button>
             </div>
 
-            <!-- Mobile Countdown Overlay (visible only on mobile) -->
-            <div class="mobile-countdown" id="mobileCountdown" style="display: none;">
-                <div class="mobile-countdown-label">Starts in</div>
-                <div class="mobile-countdown-timer" id="mobileCountdownTimer">--:--:--</div>
-                <div class="mobile-countdown-session" id="mobileCountdownSession"></div>
-            </div>
 
             <!-- Mobile Race Info Overlay (visible only on mobile) -->
             <div class="mobile-race-info" id="mobileRaceInfo" style="display: none;">
@@ -239,33 +239,6 @@
                 <div class="mobile-race-info-text">
                     <span id="mobileRaceInfoName"></span>
                     <span id="mobileRaceInfoCircuit"></span>
-                </div>
-            </div>
-
-            <!-- Mobile Weather Card (visible only on mobile) -->
-            <div class="mobile-weather-card" id="mobileWeatherCard" style="display: none;">
-                <div class="mobile-weather-row">
-                    <span class="mobile-weather-metric">
-                        <svg class="icon-weather" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" role="img" aria-label="Temperature">
-                            <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z"></path>
-                        </svg>
-                        <span id="mobileWeatherTemp">--°</span>
-                    </span>
-                    <span class="mobile-weather-metric">
-                        <svg class="icon-weather" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" role="img" aria-label="Chance of rain">
-                            <path d="M23 18l-6-9-6 9h12z"></path>
-                            <path d="M17 18v5"></path>
-                        </svg>
-                        <span id="mobileWeatherRain">--%</span>
-                    </span>
-                </div>
-                <div class="mobile-weather-row">
-                    <span class="mobile-weather-metric">
-                        <svg class="icon-weather" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" role="img" aria-label="Wind speed">
-                            <path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2"></path>
-                        </svg>
-                        <span id="mobileWeatherWind">--</span>
-                    </span>
                 </div>
             </div>
 

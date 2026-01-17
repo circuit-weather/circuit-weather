@@ -494,6 +494,28 @@ body {
     background: var(--color-bg);
 }
 
+/* ===================================
+   Map Controls Container
+   =================================== */
+
+.map-controls-container {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    z-index: 400;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-end;
+    /* Prevent clicks from passing through the container gap */
+    pointer-events: none;
+}
+
+.map-controls-container > * {
+    /* Allow clicks on the children */
+    pointer-events: auto;
+}
+
 /* Leaflet Customization */
 .leaflet-control-zoom {
     border: none !important;
@@ -505,12 +527,10 @@ body {
     margin: 0 !important;
 }
 
-/* Move Zoom Controls to Bottom Right (Desktop Default) */
+/* Reset Leaflet's default positioning for the zoom controls */
 .leaflet-top.leaflet-left {
-    top: auto;
-    left: auto;
-    right: 20px;
-    bottom: 20px;
+    position: static; /* Let the flex container handle positioning */
+    margin: 0 !important;
 }
 
 .leaflet-control-zoom-in,
@@ -523,7 +543,6 @@ body {
     -webkit-backdrop-filter: var(--glass-blur);
     color: var(--color-text) !important;
     border: 1px solid var(--color-border) !important;
-    border-radius: var(--radius-md) !important;
     border-radius: var(--radius-md) !important;
     width: 2.75rem !important;
     height: 2.75rem !important;
@@ -584,22 +603,17 @@ body {
    =================================== */
 
 .radar-controls {
-    position: absolute;
-    bottom: var(--spacing-md);
-    left: 50%;
-    transform: translateX(-50%);
+    /* position, bottom, left, transform, and z-index are removed to allow flexbox positioning */
     display: flex;
     align-items: center;
     gap: var(--spacing-sm);
     background: var(--sidebar-bg);
     backdrop-filter: var(--glass-blur);
     -webkit-backdrop-filter: var(--glass-blur);
-    /* Add top padding to contain the tooltip */
-    padding: 24px var(--spacing-md) var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-lg);
     border: 1px solid var(--color-border);
-    z-index: 400;
     max-width: none;
     width: 350px;
 }
@@ -643,14 +657,38 @@ body {
     flex: 1;
     display: flex;
     flex-direction: column;
+    gap: 2px;
     min-width: 0;
 }
 
 .radar-slider-wrapper {
     position: relative;
-    /* No margin needed as parent padding handles spacing */
-    margin-top: 0;
-    margin-bottom: 4px;
+}
+
+.radar-slider-tooltip {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--color-surface-elevated);
+    color: var(--color-text);
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    font-size: 0.7rem;
+    font-weight: 600;
+    white-space: nowrap;
+    box-shadow: var(--shadow-md);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 150ms ease, visibility 150ms ease;
+    pointer-events: none; /* Important for not blocking thumb interaction */
+}
+
+.radar-slider-wrapper:hover .radar-slider-tooltip,
+.radar-slider:active ~ .radar-slider-tooltip,
+.radar-slider:focus ~ .radar-slider-tooltip {
+    opacity: 1;
+    visibility: visible;
 }
 
 .radar-slider {
@@ -660,9 +698,7 @@ body {
     background: var(--color-border);
     border-radius: var(--radius-full);
     cursor: pointer;
-    /* Ensure slider is above pseudo-elements but below thumb */
-    position: relative;
-    z-index: 2;
+    margin: 8px 0;
 }
 
 .radar-slider::-webkit-slider-thumb {
@@ -672,9 +708,6 @@ body {
     background: var(--color-primary);
     border-radius: var(--radius-full);
     cursor: pointer;
-    /* Ensure thumb is on top */
-    position: relative;
-    z-index: 3;
 }
 
 .radar-slider::-moz-range-thumb {
@@ -684,63 +717,18 @@ body {
     border: none;
     border-radius: var(--radius-full);
     cursor: pointer;
-    position: relative;
-    z-index: 3;
 }
 
-.radar-time-tooltip {
-    position: absolute;
-    bottom: 18px;
-    /* Position above thumb */
-    left: 50%;
-    /* Default, will be updated by JS */
-    transform: translateX(-50%);
-    background: var(--color-surface-elevated);
-    color: var(--color-text);
-    padding: 2px 6px;
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow-md);
-    border: 1px solid var(--color-border);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    white-space: nowrap;
-    z-index: 4;
-    pointer-events: none;
-    /* Prevent interference */
-    opacity: 0;
-    /* JS will manage visibility */
-    transition: opacity var(--transition-fast);
-}
-
-.radar-time-tooltip::after {
-    content: '';
-    position: absolute;
-    top: 100%;
-    left: 50%;
-    transform: translateX(-50%);
-    border-width: 4px;
-    border-style: solid;
-    border-color: var(--color-surface-elevated) transparent transparent transparent;
-}
-
-.radar-time-bounds {
+.radar-time-info {
     display: flex;
     justify-content: space-between;
     font-size: 0.65rem;
     color: var(--color-text-secondary);
-    padding: 0 2px;
-    /* Align with slider ends */
 }
 
 .radar-time {
-    font-weight: 600;
+    font-weight: 500;
     font-variant-numeric: tabular-nums;
-    font-size: 0.7rem;
-}
-
-.radar-relative {
-    font-size: 0.6rem;
 }
 
 /* Radar Speed Button */
@@ -1108,12 +1096,13 @@ body {
 
     /* Radar controls adjustments */
     .radar-controls {
+        position: static;
         width: auto;
-        left: 8px;
-        right: 8px;
+        left: auto;
+        right: auto;
         transform: none;
-        padding: 24px var(--spacing-sm) var(--spacing-xs);
-        bottom: 20px;
+        padding: var(--spacing-xs) var(--spacing-sm);
+        bottom: auto;
     }
 
     .radar-play-btn {
@@ -1126,23 +1115,17 @@ body {
         height: 1rem;
     }
 
-    .radar-time-bounds {
+    .radar-time-info {
         font-size: 0.75rem;
     }
 
     /* Leaflet controls - move to bottom right on mobile */
-    .leaflet-top.leaflet-left {
-        top: auto;
-        left: auto;
+    .map-controls-container {
         right: 8px;
-        /* Position above radar controls (20px + 56px) */
-        bottom: 76px;
-        z-index: 500;
-        /* Ensure it's above radar */
+        bottom: 8px;
     }
 
     .leaflet-control-zoom {
-        margin: 0 !important;
         gap: 6px;
     }
 
@@ -1314,10 +1297,7 @@ body {
 
 @media (max-width: 768px) {
     .mobile-countdown {
-        position: absolute;
-        left: 8px;
-        /* Position above radar controls */
-        bottom: 88px;
+        /* position, left, and bottom are removed */
         display: block;
         background: var(--sidebar-bg);
         backdrop-filter: var(--glass-blur);
@@ -1326,7 +1306,7 @@ body {
         border-radius: var(--radius-md);
         padding: var(--spacing-sm) var(--spacing-md);
         box-shadow: var(--shadow-md);
-        z-index: 500;
+        z-index: 400;
         text-align: center;
         max-width: 160px;
     }
@@ -1365,10 +1345,7 @@ body {
 
 @media (max-width: 768px) {
     .mobile-weather-card {
-        position: absolute;
-        right: 8px;
-        /* Position above radar controls */
-        bottom: 88px;
+        /* position, right, and bottom are removed */
         display: flex;
         flex-direction: column;
         gap: 8px;
@@ -1379,7 +1356,7 @@ body {
         border-radius: var(--radius-md);
         padding: var(--spacing-sm);
         box-shadow: var(--shadow-md);
-        z-index: 500;
+        z-index: 400;
         min-width: 90px;
     }
 

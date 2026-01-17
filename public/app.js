@@ -473,32 +473,18 @@ class WeatherRadar {
         const playBtn = document.getElementById('radarPlayBtn');
         const slider = document.getElementById('radarSlider');
         const speedBtn = document.getElementById('radarSpeedBtn');
-        const tooltip = document.getElementById('radarTimeTooltip');
 
         if (playBtn) playBtn.addEventListener('click', () => this.togglePlay());
-
         if (slider) {
-            const showTooltip = () => {
-                if (tooltip) tooltip.style.opacity = '1';
-            };
-            const hideTooltip = () => {
-                // Only hide if not actively playing
-                if (tooltip && !this.isPlaying) tooltip.style.opacity = '0';
-            };
-
-            slider.addEventListener('input', (e) => {
+            const handleSliderInput = (e) => {
                 this.currentFrame = parseInt(e.target.value, 10);
                 this.showFrame(this.currentFrame);
+                this.updateTooltip(this.currentFrame);
                 this.pause();
-            });
-
-            // Handle hover and focus for accessibility and usability
-            slider.addEventListener('mouseenter', showTooltip);
-            slider.addEventListener('focus', showTooltip);
-            slider.addEventListener('mouseleave', hideTooltip);
-            slider.addEventListener('blur', hideTooltip);
+            };
+            slider.addEventListener('input', handleSliderInput);
+            slider.addEventListener('touchstart', handleSliderInput, { passive: true });
         }
-
         if (speedBtn) {
             speedBtn.addEventListener('click', () => this.cycleSpeed());
         }
@@ -561,6 +547,7 @@ class WeatherRadar {
 
             this.createLayers();
             this.updateSlider();
+            this.updateBoundaryTimes();
             this.showControls(true);
 
             // Wait for tiles to load before starting animation
@@ -687,6 +674,7 @@ class WeatherRadar {
         // Ensure UI is synced
         this.updateSlider();
         this.showFrame(this.currentFrame);
+        this.updateBoundaryTimes();
     }
 
     async waitForTilesToLoad() {
@@ -728,98 +716,92 @@ class WeatherRadar {
             layer.setOpacity(i === index ? CONFIG.radarOpacity : 0);
         });
 
-        this.updateTimeDisplay(this.frames[index]?.time, index);
+        this.updateTooltip(index);
 
         const slider = document.getElementById('radarSlider');
         if (slider) slider.value = index;
     }
 
-    updateTimeDisplay(timestamp, index) {
-        const timeEl = document.getElementById('radarTime');
-        const relEl = document.getElementById('radarRelative');
+    updateTooltip(index) {
+        const tooltip = document.getElementById('radarSliderTooltip');
         const slider = document.getElementById('radarSlider');
-        const tooltip = document.getElementById('radarTimeTooltip');
+        const frame = this.frames[index];
 
-        if (!timeEl || !timestamp) return;
+        if (!tooltip || !slider || !frame) return;
 
-        // Update main tooltip time
-        const date = new Date(timestamp * 1000);
+        const date = new Date(frame.time * 1000);
         const timeStr = date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false });
-        timeEl.textContent = timeStr;
 
-        // Update relative time
         let relativeText = '';
-        if (relEl && this.sessionTime) {
-            const diff = (timestamp * 1000 - this.sessionTime.getTime()) / 60000;
-            if (Math.abs(diff) < 1) relativeText = 'Session start';
-            else if (diff < 0) relativeText = `${Math.abs(Math.round(diff))}m before`;
-            else relativeText = `${Math.round(diff)}m after`;
-        } else if (relEl) {
-            const now = Date.now() / 1000;
-            const diff = timestamp - now;
-            if (diff > 60) relativeText = 'Forecast';
+        if (this.sessionTime) {
+            const diff = (frame.time * 1000 - this.sessionTime.getTime()) / 60000; // minutes
+            if (Math.abs(diff) < 1) {
+                relativeText = 'now';
+            } else if (diff < 0) {
+                relativeText = `${Math.abs(Math.round(diff))}m before`;
+            } else {
+                relativeText = `${Math.round(diff)}m after`;
+            }
         }
-        relEl.textContent = relativeText;
+        tooltip.textContent = timeStr;
 
-        // Update ARIA label
-        if (slider) {
-            const ariaText = relativeText ? `${timeStr}, ${relativeText}` : timeStr;
-            slider.setAttribute('aria-valuetext', ariaText);
-        }
+        // Position the tooltip
+        const percent = (index / (this.frames.length - 1));
+        const sliderWidth = slider.offsetWidth;
+        const thumbWidth = 12; // From CSS
+        const offset = percent * (sliderWidth - thumbWidth);
+        tooltip.style.left = `${offset + (thumbWidth / 2)}px`;
 
-        // Update tooltip position
-        if (tooltip && slider) {
-            const min = parseInt(slider.min, 10);
-            const max = parseInt(slider.max, 10);
-            const percent = (index - min) / (max - min);
-            // Calculate pixel offset, accounting for thumb width (12px)
-            const sliderWidth = slider.offsetWidth;
-            const thumbOffset = 12 * (0.5 - percent);
-            const newLeft = (percent * sliderWidth) + thumbOffset;
-            tooltip.style.left = `${newLeft}px`;
-        }
+        // Update aria-valuetext for screen readers
+        const ariaText = relativeText ? `${timeStr}, ${relativeText}` : timeStr;
+        slider.setAttribute('aria-valuetext', ariaText);
+    }
+
+    updateBoundaryTimes() {
+        const startEl = document.getElementById('radar-time-start');
+        const endEl = document.getElementById('radar-time-end');
+
+        if (!startEl || !endEl || this.frames.length === 0) return;
+
+        const startTime = new Date(this.frames[0].time * 1000);
+        const endTime = new Date(this.frames[this.frames.length - 1].time * 1000);
+
+        startEl.textContent = startTime.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false });
+        endEl.textContent = endTime.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false });
     }
 
     updateSlider() {
         const slider = document.getElementById('radarSlider');
-        const startTimeEl = document.getElementById('radarStartTime');
-        const endTimeEl = document.getElementById('radarEndTime');
-
         if (slider) {
             slider.max = this.frames.length - 1;
             slider.value = this.currentFrame;
 
+            // Create a visual split between past and forecast frames
             if (this.frames.length > 1 && this.pastFrameCount > 0) {
                 const forecastStartIndex = this.pastFrameCount;
                 const splitPercentage = (forecastStartIndex / (this.frames.length - 1)) * 100;
 
+                // Apply a gradient background to the slider track
                 slider.style.background = `linear-gradient(to right,
                     var(--color-border) 0%,
                     var(--color-border) ${splitPercentage}%,
                     var(--color-forecast-track) ${splitPercentage}%,
                     var(--color-forecast-track) 100%)`;
             } else {
+                // Default style if no forecast frames
                 slider.style.background = 'var(--color-border)';
             }
-        }
-
-        // Update start and end time labels
-        if (startTimeEl && this.frames.length > 0) {
-            const date = new Date(this.frames[0].time * 1000);
-            startTimeEl.textContent = date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false });
-        }
-        if (endTimeEl && this.frames.length > 0) {
-            const date = new Date(this.frames[this.frames.length - 1].time * 1000);
-            endTimeEl.textContent = date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false });
         }
     }
 
     play() {
+        // Clear any existing timer first to prevent double animations
         if (this.animationTimer) {
             clearInterval(this.animationTimer);
             this.animationTimer = null;
         }
 
+        // Apply any pending updates before starting
         if (this.pendingFrames) {
             this.applyFrameUpdate(this.pendingFrames);
             this.pendingFrames = null;
@@ -828,9 +810,6 @@ class WeatherRadar {
         this.isPlaying = true;
         const playBtn = document.getElementById('radarPlayBtn');
         if (playBtn) playBtn.classList.add('playing');
-
-        const tooltip = document.getElementById('radarTimeTooltip');
-        if (tooltip) tooltip.style.opacity = '1';
 
         this.animationTimer = setInterval(() => {
             this.currentFrame = (this.currentFrame + 1) % this.frames.length;
@@ -842,17 +821,9 @@ class WeatherRadar {
         this.isPlaying = false;
         const playBtn = document.getElementById('radarPlayBtn');
         if (playBtn) playBtn.classList.remove('playing');
-
         if (this.animationTimer) {
             clearInterval(this.animationTimer);
             this.animationTimer = null;
-        }
-
-        const tooltip = document.getElementById('radarTimeTooltip');
-        const slider = document.getElementById('radarSlider');
-        // Hide tooltip only if the slider isn't focused/hovered
-        if (tooltip && slider && !slider.matches(':hover, :focus')) {
-            tooltip.style.opacity = '0';
         }
     }
 
