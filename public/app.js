@@ -711,10 +711,11 @@ class WeatherRadar {
             layer.setOpacity(i === index ? CONFIG.radarOpacity : 0);
         });
 
-        this.updateTimeDisplay(this.frames[index]?.time);
-
         const slider = document.getElementById('radarSlider');
         if (slider) slider.value = index;
+
+        // This must be called *after* slider value is set for positioning
+        this.updateSliderTooltip(this.frames[index]?.time);
     }
 
     updateTimeDisplay(timestamp) {
