@@ -457,6 +457,7 @@ class WeatherRadar {
     constructor(map) {
         this.map = map;
         this.frames = [];
+        this.pastFrameCount = 0; // Track where the forecast starts
         this.currentFrame = 0;
         this.layers = [];
         this.isPlaying = false;
@@ -524,6 +525,9 @@ class WeatherRadar {
 
         const past = data.radar?.past || [];
         const nowcast = data.radar?.nowcast || [];
+
+        // Store the count of past frames to identify the forecast start
+        this.pastFrameCount = past.length;
 
         return [...past, ...nowcast].map(frame => ({
             time: frame.time,
@@ -756,6 +760,22 @@ class WeatherRadar {
         if (slider) {
             slider.max = this.frames.length - 1;
             slider.value = this.currentFrame;
+
+            // Create a visual split between past and forecast frames
+            if (this.frames.length > 1 && this.pastFrameCount > 0) {
+                const forecastStartIndex = this.pastFrameCount;
+                const splitPercentage = (forecastStartIndex / (this.frames.length - 1)) * 100;
+
+                // Apply a gradient background to the slider track
+                slider.style.background = `linear-gradient(to right,
+                    var(--color-border) 0%,
+                    var(--color-border) ${splitPercentage}%,
+                    var(--color-forecast-track) ${splitPercentage}%,
+                    var(--color-forecast-track) 100%)`;
+            } else {
+                // Default style if no forecast frames
+                slider.style.background = 'var(--color-border)';
+            }
         }
     }
 
