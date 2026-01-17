@@ -11,6 +11,7 @@
     --color-text: #0f172a;
     --color-text-secondary: #64748b;
     --color-border: #e2e8f0;
+    --color-forecast-track: #dbeafe; /* Light blue for forecast */
     --color-primary: #e10600;
     --color-primary-hover: #b30500;
     --color-accent: #15803d;
@@ -55,6 +56,7 @@
     --color-text: #f1f5f9;
     --color-text-secondary: #94a3b8;
     --color-border: #334155;
+    --color-forecast-track: #1e40af; /* Dark blue for forecast */
     --sidebar-bg: rgba(30, 41, 59, 0.92);
 }
 
