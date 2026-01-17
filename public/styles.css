@@ -494,28 +494,6 @@ body {
     background: var(--color-bg);
 }
 
-/* ===================================
-   Map Controls Container
-   =================================== */
-
-.map-controls-container {
-    position: absolute;
-    bottom: 20px;
-    right: 20px;
-    z-index: 400;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    align-items: flex-end;
-    /* Prevent clicks from passing through the container gap */
-    pointer-events: none;
-}
-
-.map-controls-container > * {
-    /* Allow clicks on the children */
-    pointer-events: auto;
-}
-
 /* Leaflet Customization */
 .leaflet-control-zoom {
     border: none !important;
@@ -527,10 +505,12 @@ body {
     margin: 0 !important;
 }
 
-/* Reset Leaflet's default positioning for the zoom controls */
+/* Move Zoom Controls to Bottom Right (Desktop Default) */
 .leaflet-top.leaflet-left {
-    position: static; /* Let the flex container handle positioning */
-    margin: 0 !important;
+    top: auto;
+    left: auto;
+    right: 20px;
+    bottom: 20px;
 }
 
 .leaflet-control-zoom-in,
@@ -543,6 +523,7 @@ body {
     -webkit-backdrop-filter: var(--glass-blur);
     color: var(--color-text) !important;
     border: 1px solid var(--color-border) !important;
+    border-radius: var(--radius-md) !important;
     border-radius: var(--radius-md) !important;
     width: 2.75rem !important;
     height: 2.75rem !important;
@@ -603,7 +584,10 @@ body {
    =================================== */
 
 .radar-controls {
-    /* position, bottom, left, transform, and z-index are removed to allow flexbox positioning */
+    position: absolute;
+    bottom: var(--spacing-md);
+    left: 50%;
+    transform: translateX(-50%);
     display: flex;
     align-items: center;
     gap: var(--spacing-sm);
@@ -614,6 +598,7 @@ body {
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-lg);
     border: 1px solid var(--color-border);
+    z-index: 500;
     max-width: none;
     width: 350px;
 }
@@ -656,39 +641,14 @@ body {
 .radar-timeline {
     flex: 1;
     display: flex;
-    flex-direction: column;
-    gap: 2px;
+    align-items: center;
+    gap: var(--spacing-sm);
     min-width: 0;
 }
 
-.radar-slider-wrapper {
+.radar-slider-container {
     position: relative;
-}
-
-.radar-slider-tooltip {
-    position: absolute;
-    bottom: calc(100% + 8px);
-    left: 50%;
-    transform: translateX(-50%);
-    background: var(--color-surface-elevated);
-    color: var(--color-text);
-    padding: 4px 8px;
-    border-radius: var(--radius-sm);
-    font-size: 0.7rem;
-    font-weight: 600;
-    white-space: nowrap;
-    box-shadow: var(--shadow-md);
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 150ms ease, visibility 150ms ease;
-    pointer-events: none; /* Important for not blocking thumb interaction */
-}
-
-.radar-slider-wrapper:hover .radar-slider-tooltip,
-.radar-slider:active ~ .radar-slider-tooltip,
-.radar-slider:focus ~ .radar-slider-tooltip {
-    opacity: 1;
-    visibility: visible;
+    flex: 1;
 }
 
 .radar-slider {
@@ -698,7 +658,8 @@ body {
     background: var(--color-border);
     border-radius: var(--radius-full);
     cursor: pointer;
-    margin: 8px 0;
+    margin: 0;
+    padding: 0;
 }
 
 .radar-slider::-webkit-slider-thumb {
@@ -719,16 +680,51 @@ body {
     cursor: pointer;
 }
 
-.radar-time-info {
-    display: flex;
-    justify-content: space-between;
-    font-size: 0.65rem;
+.radar-time-label {
+    font-size: 0.7rem;
     color: var(--color-text-secondary);
+    font-variant-numeric: tabular-nums;
 }
 
-.radar-time {
+.radar-slider-tooltip {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 50%; /* JS will update this */
+    transform: translateX(-50%);
+    background: var(--color-surface-elevated);
+    color: var(--color-text);
+    padding: var(--spacing-xs) var(--spacing-sm);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--color-border);
+    font-size: 0.7rem;
     font-weight: 500;
+    white-space: nowrap;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1.2;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity var(--transition-fast), visibility var(--transition-fast);
+    pointer-events: none; /* Ignore mouse events */
+}
+
+.radar-slider-container:hover .radar-slider-tooltip,
+.radar-slider:active + .radar-slider-tooltip,
+.radar-slider:focus + .radar-slider-tooltip {
+    opacity: 1;
+    visibility: visible;
+}
+
+
+.radar-tooltip-time {
     font-variant-numeric: tabular-nums;
+}
+
+.radar-tooltip-relative {
+    font-size: 0.6rem;
+    color: var(--color-text-secondary);
 }
 
 /* Radar Speed Button */
@@ -1096,13 +1092,12 @@ body {
 
     /* Radar controls adjustments */
     .radar-controls {
-        position: static;
         width: auto;
-        left: auto;
-        right: auto;
+        left: 8px;
+        right: 8px;
         transform: none;
         padding: var(--spacing-xs) var(--spacing-sm);
-        bottom: auto;
+        bottom: 20px;
     }
 
     .radar-play-btn {
@@ -1120,12 +1115,15 @@ body {
     }
 
     /* Leaflet controls - move to bottom right on mobile */
-    .map-controls-container {
+    .leaflet-top.leaflet-left {
+        top: auto;
+        left: auto;
         right: 8px;
-        bottom: 8px;
+        bottom: 76px;
     }
 
     .leaflet-control-zoom {
+        margin: 0 !important;
         gap: 6px;
     }
 
@@ -1297,7 +1295,9 @@ body {
 
 @media (max-width: 768px) {
     .mobile-countdown {
-        /* position, left, and bottom are removed */
+        position: absolute;
+        left: 8px;
+        bottom: 76px;
         display: block;
         background: var(--sidebar-bg);
         backdrop-filter: var(--glass-blur);
@@ -1345,7 +1345,9 @@ body {
 
 @media (max-width: 768px) {
     .mobile-weather-card {
-        /* position, right, and bottom are removed */
+        position: absolute;
+        right: 8px;
+        bottom: 76px; /* Aligned with countdown */
         display: flex;
         flex-direction: column;
         gap: 8px;

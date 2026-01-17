@@ -476,14 +476,11 @@ class WeatherRadar {
 
         if (playBtn) playBtn.addEventListener('click', () => this.togglePlay());
         if (slider) {
-            const handleSliderInput = (e) => {
+            slider.addEventListener('input', (e) => {
                 this.currentFrame = parseInt(e.target.value, 10);
                 this.showFrame(this.currentFrame);
-                this.updateTooltip(this.currentFrame);
                 this.pause();
-            };
-            slider.addEventListener('input', handleSliderInput);
-            slider.addEventListener('touchstart', handleSliderInput, { passive: true });
+            });
         }
         if (speedBtn) {
             speedBtn.addEventListener('click', () => this.cycleSpeed());
@@ -547,7 +544,6 @@ class WeatherRadar {
 
             this.createLayers();
             this.updateSlider();
-            this.updateBoundaryTimes();
             this.showControls(true);
 
             // Wait for tiles to load before starting animation
@@ -674,7 +670,6 @@ class WeatherRadar {
         // Ensure UI is synced
         this.updateSlider();
         this.showFrame(this.currentFrame);
-        this.updateBoundaryTimes();
     }
 
     async waitForTilesToLoad() {
@@ -716,58 +711,67 @@ class WeatherRadar {
             layer.setOpacity(i === index ? CONFIG.radarOpacity : 0);
         });
 
-        this.updateTooltip(index);
+        this.updateTimeDisplay(this.frames[index]?.time);
 
         const slider = document.getElementById('radarSlider');
         if (slider) slider.value = index;
     }
 
-    updateTooltip(index) {
-        const tooltip = document.getElementById('radarSliderTooltip');
+    updateTimeDisplay(timestamp) {
         const slider = document.getElementById('radarSlider');
-        const frame = this.frames[index];
+        if (!slider || !timestamp) return;
 
-        if (!tooltip || !slider || !frame) return;
-
-        const date = new Date(frame.time * 1000);
+        const date = new Date(timestamp * 1000);
         const timeStr = date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false });
 
         let relativeText = '';
         if (this.sessionTime) {
-            const diff = (frame.time * 1000 - this.sessionTime.getTime()) / 60000; // minutes
+            const diff = (timestamp * 1000 - this.sessionTime.getTime()) / 60000; // minutes
             if (Math.abs(diff) < 1) {
-                relativeText = 'now';
+                relativeText = 'Session start';
             } else if (diff < 0) {
                 relativeText = `${Math.abs(Math.round(diff))}m before`;
             } else {
                 relativeText = `${Math.round(diff)}m after`;
             }
+        } else {
+            const now = Date.now() / 1000;
+            const diff = timestamp - now;
+            if (diff > 60) relativeText = 'Forecast';
         }
-        tooltip.textContent = timeStr;
 
-        // Position the tooltip
-        const percent = (index / (this.frames.length - 1));
-        const sliderWidth = slider.offsetWidth;
-        const thumbWidth = 12; // From CSS
-        const offset = percent * (sliderWidth - thumbWidth);
-        tooltip.style.left = `${offset + (thumbWidth / 2)}px`;
+        // Update tooltip content
+        const tooltipTime = document.getElementById('radarTooltipTime');
+        const tooltipRel = document.getElementById('radarTooltipRelative');
+        if (tooltipTime) tooltipTime.textContent = timeStr;
+        if (tooltipRel) tooltipRel.textContent = relativeText;
 
-        // Update aria-valuetext for screen readers
+        // Update tooltip position
+        this.updateTooltipPosition();
+
+
+        // Update ARIA value text for screen readers
         const ariaText = relativeText ? `${timeStr}, ${relativeText}` : timeStr;
         slider.setAttribute('aria-valuetext', ariaText);
     }
 
-    updateBoundaryTimes() {
-        const startEl = document.getElementById('radar-time-start');
-        const endEl = document.getElementById('radar-time-end');
+    updateTooltipPosition() {
+        const slider = document.getElementById('radarSlider');
+        const tooltip = document.getElementById('radarTooltip');
+        if (!slider || !tooltip) return;
 
-        if (!startEl || !endEl || this.frames.length === 0) return;
+        const min = slider.min ? parseInt(slider.min, 10) : 0;
+        const max = slider.max ? parseInt(slider.max, 10) : 100;
+        const val = slider.value ? parseInt(slider.value, 10) : 0;
 
-        const startTime = new Date(this.frames[0].time * 1000);
-        const endTime = new Date(this.frames[this.frames.length - 1].time * 1000);
+        const percent = (val - min) / (max - min);
+        const thumbWidth = 12; // As defined in CSS
+        const sliderWidth = slider.offsetWidth;
 
-        startEl.textContent = startTime.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false });
-        endEl.textContent = endTime.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false });
+        // Calculate the position of the thumb
+        const thumbPos = percent * (sliderWidth - thumbWidth) + (thumbWidth / 2);
+
+        tooltip.style.left = `${thumbPos}px`;
     }
 
     updateSlider() {
@@ -775,6 +779,19 @@ class WeatherRadar {
         if (slider) {
             slider.max = this.frames.length - 1;
             slider.value = this.currentFrame;
+
+            // Update start/end labels
+            const timeStart = document.getElementById('radarTimeStart');
+            const timeEnd = document.getElementById('radarTimeEnd');
+            if (timeStart && this.frames.length > 0) {
+                const date = new Date(this.frames[0].time * 1000);
+                timeStart.textContent = date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false });
+            }
+            if (timeEnd && this.frames.length > 0) {
+                const date = new Date(this.frames[this.frames.length - 1].time * 1000);
+                timeEnd.textContent = date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false });
+            }
+
 
             // Create a visual split between past and forecast frames
             if (this.frames.length > 1 && this.pastFrameCount > 0) {
@@ -792,6 +809,7 @@ class WeatherRadar {
                 slider.style.background = 'var(--color-border)';
             }
         }
+        this.updateTooltipPosition(); // Also update on load
     }
 
     play() {
