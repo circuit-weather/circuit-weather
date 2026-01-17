@@ -678,29 +678,10 @@ class WeatherRadar {
         if (!currentLayer) return;
 
         return new Promise((resolve) => {
-            let resolved = false;
-
-            const onLoad = () => {
-                if (!resolved) {
-                    resolved = true;
-                    currentLayer.off('load', onLoad);
-                    // Set proper opacity after load
-                    this.showFrame(this.currentFrame);
-                    resolve();
-                }
-            };
-
-            currentLayer.on('load', onLoad);
-
-            // Timeout fallback (3 seconds)
             setTimeout(() => {
-                if (!resolved) {
-                    resolved = true;
-                    currentLayer.off('load', onLoad);
-                    this.showFrame(this.currentFrame);
-                    resolve();
-                }
-            }, 3000);
+                this.showFrame(this.currentFrame);
+                resolve();
+            }, 1000);
         });
     }
 
