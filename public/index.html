@@ -207,10 +207,17 @@
                     </svg>
                 </button>
                 <div class="radar-timeline">
-                    <input type="range" id="radarSlider" class="radar-slider" min="0" max="100" value="100" aria-label="Radar playback position">
-                    <div class="radar-time-info">
-                        <span class="radar-time" id="radarTime">--:--</span>
-                        <span class="radar-relative" id="radarRelative"></span>
+                    <div class="radar-slider-wrapper">
+                        <input type="range" id="radarSlider" class="radar-slider" min="0" max="100" value="100"
+                            aria-label="Radar playback position">
+                        <div class="radar-time-tooltip" id="radarTimeTooltip">
+                            <span class="radar-time" id="radarTime">--:--</span>
+                            <span class="radar-relative" id="radarRelative"></span>
+                        </div>
+                    </div>
+                    <div class="radar-time-bounds">
+                        <span id="radarStartTime">--:--</span>
+                        <span id="radarEndTime">--:--</span>
                     </div>
                 </div>
                 <button class="radar-speed-btn" id="radarSpeedBtn" aria-label="Change playback speed"
