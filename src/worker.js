@@ -37,6 +37,28 @@ export default {
 };
 
 /**
+ * Helper to determine allowed CORS origin
+ * Returns the origin string if allowed, or null if forbidden.
+ */
+function getAllowedOrigin(request) {
+  const origin = request.headers.get('Origin');
+  if (!origin) return null; // No Origin header, no CORS headers needed (same-origin or non-browser)
+
+  // Whitelist:
+  // 1. Production domain
+  // 2. Localhost/127.0.0.1 for development
+  if (
+    origin === 'https://circuit-weather.racing' ||
+    /^http:\/\/localhost(:\d+)?$/.test(origin) ||
+    /^http:\/\/127\.0\.0\.1(:\d+)?$/.test(origin)
+  ) {
+    return origin;
+  }
+
+  return null;
+}
+
+/**
  * Handle F1 API requests with caching
  */
 async function handleApiRequest(request, env, ctx) {
@@ -70,7 +92,15 @@ async function handleApiRequest(request, env, ctx) {
   if (response) {
     const headers = new Headers(response.headers);
     headers.set('X-Cache', 'HIT');
-    headers.set('Access-Control-Allow-Origin', '*');
+
+    // Apply strict CORS
+    const allowedOrigin = getAllowedOrigin(request);
+    if (allowedOrigin) {
+      headers.set('Access-Control-Allow-Origin', allowedOrigin);
+      headers.set('Vary', 'Origin');
+    } else {
+      headers.delete('Access-Control-Allow-Origin');
+    }
 
     return new Response(response.body, {
       status: response.status,
@@ -96,7 +126,9 @@ async function handleApiRequest(request, env, ctx) {
         status: upstreamResponse.status,
         headers: {
           'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
+          // We don't expose CORS on error pages unless necessary?
+          // Better to keep it consistent.
+          ...(getAllowedOrigin(request) ? { 'Access-Control-Allow-Origin': getAllowedOrigin(request) } : {}),
         },
       });
     }
@@ -104,13 +136,14 @@ async function handleApiRequest(request, env, ctx) {
     const responseBody = await upstreamResponse.text();
 
     // Create cacheable response (1 hour)
+    // We store '*' in cache as a fallback, but we always override on delivery
     response = new Response(responseBody, {
       status: 200,
       headers: {
         'Content-Type': 'application/json',
         'Cache-Control': 'public, max-age=3600',
         'X-Cache': 'MISS',
-        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Origin': '*', // Store permissive, override on delivery
         'X-Content-Type-Options': 'nosniff',
         'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
         'Referrer-Policy': 'strict-origin-when-cross-origin',
@@ -121,18 +154,34 @@ async function handleApiRequest(request, env, ctx) {
     // Save to cache
     ctx.waitUntil(cache.put(cacheKey, response.clone()));
 
-    return response;
+    // Prepare response for client with strict CORS
+    const clientHeaders = new Headers(response.headers);
+    const allowedOrigin = getAllowedOrigin(request);
+    if (allowedOrigin) {
+      clientHeaders.set('Access-Control-Allow-Origin', allowedOrigin);
+      clientHeaders.set('Vary', 'Origin');
+    } else {
+      clientHeaders.delete('Access-Control-Allow-Origin');
+    }
+
+    return new Response(response.body, {
+        status: response.status,
+        statusText: response.statusText,
+        headers: clientHeaders
+    });
 
   } catch (error) {
+    console.error('API Fetch Error:', error); // Log internal details
     return new Response(JSON.stringify({
       error: 'Failed to fetch from upstream',
-      message: error.message
+      // SEC: Do not leak error.message
     }), {
       status: 502,
       headers: {
         'Content-Type': 'application/json',
         'X-Content-Type-Options': 'nosniff',
         'Content-Security-Policy': "default-src 'none'; frame-ancestors 'none';",
+        ...(getAllowedOrigin(request) ? { 'Access-Control-Allow-Origin': getAllowedOrigin(request) } : {}),
       }
     });
   }
@@ -157,7 +206,6 @@ async function handleTrackRequest(request, env, ctx) {
   const upstreamUrl = `https://raw.githubusercontent.com/bacinger/f1-circuits/master/circuits/${trackId}.geojson`;
 
   // Use a canonical cache key based on the upstream URL
-  // This ensures the cache is shared regardless of client query params
   const cacheKey = new Request(upstreamUrl);
   const cache = caches.default;
 
@@ -167,7 +215,16 @@ async function handleTrackRequest(request, env, ctx) {
   if (response) {
     const headers = new Headers(response.headers);
     headers.set('X-Cache', 'HIT');
-    headers.set('Access-Control-Allow-Origin', '*');
+
+    // Apply strict CORS
+    const allowedOrigin = getAllowedOrigin(request);
+    if (allowedOrigin) {
+      headers.set('Access-Control-Allow-Origin', allowedOrigin);
+      headers.set('Vary', 'Origin');
+    } else {
+      headers.delete('Access-Control-Allow-Origin');
+    }
+
     // Ensure client caches this for a long time too (24h)
     headers.set('Cache-Control', 'public, max-age=86400');
 
@@ -193,7 +250,7 @@ async function handleTrackRequest(request, env, ctx) {
         status: upstreamResponse.status === 404 ? 404 : 502,
         headers: {
           'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
+          ...(getAllowedOrigin(request) ? { 'Access-Control-Allow-Origin': getAllowedOrigin(request) } : {}),
         },
       });
     }
@@ -218,17 +275,32 @@ async function handleTrackRequest(request, env, ctx) {
     // Save to cache
     ctx.waitUntil(cache.put(cacheKey, response.clone()));
 
-    return response;
+    // Prepare response for client with strict CORS
+    const clientHeaders = new Headers(response.headers);
+    const allowedOrigin = getAllowedOrigin(request);
+    if (allowedOrigin) {
+      clientHeaders.set('Access-Control-Allow-Origin', allowedOrigin);
+      clientHeaders.set('Vary', 'Origin');
+    } else {
+      clientHeaders.delete('Access-Control-Allow-Origin');
+    }
+
+    return new Response(response.body, {
+        status: response.status,
+        statusText: response.statusText,
+        headers: clientHeaders
+    });
 
   } catch (error) {
+    console.error('Track Fetch Error:', error);
     return new Response(JSON.stringify({
       error: 'Failed to fetch track data',
-      message: error.message
+      // SEC: Do not leak error.message
     }), {
       status: 502,
       headers: {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
+        ...(getAllowedOrigin(request) ? { 'Access-Control-Allow-Origin': getAllowedOrigin(request) } : {}),
       }
     });
   }
@@ -239,7 +311,7 @@ async function handleTrackRequest(request, env, ctx) {
  */
 async function handleRadarRequest(request, env, ctx) {
   const upstreamUrl = 'https://api.rainviewer.com/public/weather-maps.json';
-  // Canonical cache key (ignore client headers/methods, just the URL)
+  // Canonical cache key
   const cacheKey = new Request(upstreamUrl);
   const cache = caches.default;
 
@@ -249,7 +321,16 @@ async function handleRadarRequest(request, env, ctx) {
   if (response) {
     const headers = new Headers(response.headers);
     headers.set('X-Cache', 'HIT');
-    headers.set('Access-Control-Allow-Origin', '*');
+
+    // Apply strict CORS
+    const allowedOrigin = getAllowedOrigin(request);
+    if (allowedOrigin) {
+      headers.set('Access-Control-Allow-Origin', allowedOrigin);
+      headers.set('Vary', 'Origin');
+    } else {
+      headers.delete('Access-Control-Allow-Origin');
+    }
+
     // Override Cache-Control for the client to ensure frequent checks (1 min)
     headers.set('Cache-Control', 'public, max-age=60');
 
@@ -276,7 +357,7 @@ async function handleRadarRequest(request, env, ctx) {
         status: upstreamResponse.status,
         headers: {
           'Content-Type': 'application/json',
-          'Access-Control-Allow-Origin': '*',
+          ...(getAllowedOrigin(request) ? { 'Access-Control-Allow-Origin': getAllowedOrigin(request) } : {}),
         },
       });
     }
@@ -284,8 +365,6 @@ async function handleRadarRequest(request, env, ctx) {
     const responseBody = await upstreamResponse.text();
 
     // 1. Prepare Response for Cache (1 minute)
-    // We cache for only 1 minute to ensure we stay close to real-time.
-    // RainViewer updates every 10 mins, but we don't know the phase offset.
     const cacheResponse = new Response(responseBody, {
       status: 200,
       headers: {
@@ -304,25 +383,32 @@ async function handleRadarRequest(request, env, ctx) {
     ctx.waitUntil(cache.put(cacheKey, cacheResponse.clone()));
 
     // 2. Prepare Response for Client (1 minute)
-    const clientResponse = new Response(responseBody, {
+    const clientHeaders = new Headers(cacheResponse.headers);
+    const allowedOrigin = getAllowedOrigin(request);
+    if (allowedOrigin) {
+      clientHeaders.set('Access-Control-Allow-Origin', allowedOrigin);
+      clientHeaders.set('Vary', 'Origin');
+    } else {
+      clientHeaders.delete('Access-Control-Allow-Origin');
+    }
+    // Set client cache control
+    clientHeaders.set('Cache-Control', 'public, max-age=60');
+
+    return new Response(responseBody, {
         status: 200,
-        headers: {
-          ...Object.fromEntries(cacheResponse.headers),
-          'Cache-Control': 'public, max-age=60', // Client TTL
-        }
+        headers: clientHeaders
     });
 
-    return clientResponse;
-
   } catch (error) {
+    console.error('Radar Fetch Error:', error);
     return new Response(JSON.stringify({
       error: 'Failed to fetch radar data',
-      message: error.message
+      // SEC: Do not leak error.message
     }), {
       status: 502,
       headers: {
         'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
+        ...(getAllowedOrigin(request) ? { 'Access-Control-Allow-Origin': getAllowedOrigin(request) } : {}),
       }
     });
   }
