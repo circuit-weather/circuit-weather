@@ -209,8 +209,12 @@
                 <div class="radar-timeline">
                     <input type="range" id="radarSlider" class="radar-slider" min="0" max="100" value="100" aria-label="Radar playback position">
                     <div class="radar-time-info">
-                        <span class="radar-time" id="radarTime">--:--</span>
-                        <span class="radar-relative" id="radarRelative"></span>
+                        <span class="radar-time-start" id="radarTimeStart">--:--</span>
+                        <div class="radar-time-current">
+                            <span class="radar-time" id="radarTime">--:--</span>
+                            <span class="radar-relative" id="radarRelative"></span>
+                        </div>
+                        <span class="radar-time-end" id="radarTimeEnd">--:--</span>
                     </div>
                 </div>
                 <button class="radar-speed-btn" id="radarSpeedBtn" aria-label="Change playback speed"

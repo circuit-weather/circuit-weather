@@ -676,13 +676,27 @@ body {
 .radar-time-info {
     display: flex;
     justify-content: space-between;
-    font-size: 0.65rem;
+    align-items: center;
+    font-size: 0.7rem;
     color: var(--color-text-secondary);
 }
 
-.radar-time {
+.radar-time,
+.radar-time-start,
+.radar-time-end {
     font-weight: 500;
     font-variant-numeric: tabular-nums;
+}
+
+.radar-time-current {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 1.1;
+}
+
+.radar-relative {
+    font-size: 0.6rem;
 }
 
 /* Radar Speed Button */

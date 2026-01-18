@@ -786,6 +786,9 @@ class WeatherRadar {
 
     updateSlider() {
         const slider = document.getElementById('radarSlider');
+        const timeStartEl = document.getElementById('radarTimeStart');
+        const timeEndEl = document.getElementById('radarTimeEnd');
+
         if (slider) {
             slider.max = this.frames.length - 1;
             slider.value = this.currentFrame;
@@ -805,6 +808,17 @@ class WeatherRadar {
                 // Default style if no forecast frames
                 slider.style.background = 'var(--color-border)';
             }
+        }
+
+        if (timeStartEl && timeEndEl && this.frames.length > 0) {
+            const formatTime = (timestamp) => new Date(timestamp * 1000).toLocaleTimeString(undefined, {
+                hour: '2-digit', minute: '2-digit', hour12: false
+            });
+            timeStartEl.textContent = formatTime(this.frames[0].time);
+            timeEndEl.textContent = formatTime(this.frames[this.frames.length - 1].time);
+        } else if (timeStartEl && timeEndEl) {
+            timeStartEl.textContent = '--:--';
+            timeEndEl.textContent = '--:--';
         }
     }
 
