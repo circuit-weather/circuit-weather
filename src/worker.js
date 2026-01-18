@@ -36,6 +36,16 @@ export default {
   }
 };
 
+// Common security headers for all responses
+const DEFAULT_SECURITY_HEADERS = {
+  'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'DENY',
+  'Permissions-Policy': 'interest-cohort=()',
+  'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+  'Content-Security-Policy': "default-src 'none'; frame-ancestors 'none';",
+};
+
 /**
  * Helper to determine allowed CORS origin
  * Returns the origin string if allowed, or null if forbidden.
@@ -72,10 +82,24 @@ async function handleApiRequest(request, env, ctx) {
   // Rejects: anything else (%, space, <, >, etc.), directory traversal (..), empty segments (//), absolute paths (/)
   const validCharsRegex = /^[a-zA-Z0-9/._-]*$/;
 
+  // SEC: Input length limit to prevent DoS/resource exhaustion
+  if (apiPath.length > 255) {
+    return new Response(JSON.stringify({ error: 'Path too long' }), {
+      status: 400,
+      headers: {
+        'Content-Type': 'application/json',
+        ...DEFAULT_SECURITY_HEADERS
+      }
+    });
+  }
+
   if (!validCharsRegex.test(apiPath) || apiPath.includes('..') || apiPath.includes('//') || apiPath.startsWith('/')) {
     return new Response(JSON.stringify({ error: 'Invalid API path' }), {
       status: 400,
-      headers: { 'Content-Type': 'application/json' }
+      headers: {
+        'Content-Type': 'application/json',
+        ...DEFAULT_SECURITY_HEADERS
+      }
     });
   }
 
@@ -144,10 +168,7 @@ async function handleApiRequest(request, env, ctx) {
         'Cache-Control': 'public, max-age=3600',
         'X-Cache': 'MISS',
         'Access-Control-Allow-Origin': '*', // Store permissive, override on delivery
-        'X-Content-Type-Options': 'nosniff',
-        'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
-        'Referrer-Policy': 'strict-origin-when-cross-origin',
-        'Content-Security-Policy': "default-src 'none'; frame-ancestors 'none';",
+        ...DEFAULT_SECURITY_HEADERS
       },
     });
 
@@ -179,8 +200,7 @@ async function handleApiRequest(request, env, ctx) {
       status: 502,
       headers: {
         'Content-Type': 'application/json',
-        'X-Content-Type-Options': 'nosniff',
-        'Content-Security-Policy': "default-src 'none'; frame-ancestors 'none';",
+        ...DEFAULT_SECURITY_HEADERS,
         ...(getAllowedOrigin(request) ? { 'Access-Control-Allow-Origin': getAllowedOrigin(request) } : {}),
       }
     });
@@ -196,10 +216,14 @@ async function handleTrackRequest(request, env, ctx) {
   const trackId = url.pathname.replace('/api/track/', '');
 
   // Validation
-  if (!trackId || trackId.includes('..') || trackId.includes('/') || !/^[a-z0-9-]+$/.test(trackId)) {
+  // SEC: Check length (50 chars max) and format
+  if (!trackId || trackId.length > 50 || trackId.includes('..') || trackId.includes('/') || !/^[a-z0-9-]+$/.test(trackId)) {
     return new Response(JSON.stringify({ error: 'Invalid track ID' }), {
       status: 400,
-      headers: { 'Content-Type': 'application/json' }
+      headers: {
+        'Content-Type': 'application/json',
+        ...DEFAULT_SECURITY_HEADERS
+      }
     });
   }
 
@@ -265,10 +289,7 @@ async function handleTrackRequest(request, env, ctx) {
         'Cache-Control': 'public, max-age=86400',
         'X-Cache': 'MISS',
         'Access-Control-Allow-Origin': '*',
-        'X-Content-Type-Options': 'nosniff',
-        'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
-        'Referrer-Policy': 'strict-origin-when-cross-origin',
-        'Content-Security-Policy': "default-src 'none'; frame-ancestors 'none';",
+        ...DEFAULT_SECURITY_HEADERS
       },
     });
 
@@ -372,10 +393,7 @@ async function handleRadarRequest(request, env, ctx) {
         'Cache-Control': 'public, max-age=60', // Worker Cache TTL
         'X-Cache': 'MISS',
         'Access-Control-Allow-Origin': '*',
-        'X-Content-Type-Options': 'nosniff',
-        'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
-        'Referrer-Policy': 'strict-origin-when-cross-origin',
-        'Content-Security-Policy': "default-src 'none'; frame-ancestors 'none';",
+        ...DEFAULT_SECURITY_HEADERS
       },
     });
 
@@ -408,6 +426,7 @@ async function handleRadarRequest(request, env, ctx) {
       status: 502,
       headers: {
         'Content-Type': 'application/json',
+        ...DEFAULT_SECURITY_HEADERS,
         ...(getAllowedOrigin(request) ? { 'Access-Control-Allow-Origin': getAllowedOrigin(request) } : {}),
       }
     });
