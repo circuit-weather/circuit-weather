@@ -510,7 +510,7 @@ body {
     top: auto;
     left: auto;
     right: 20px;
-    bottom: 20px;
+    bottom: 28px;
 }
 
 .leaflet-control-zoom-in,
@@ -594,7 +594,7 @@ body {
     background: var(--sidebar-bg);
     backdrop-filter: var(--glass-blur);
     -webkit-backdrop-filter: var(--glass-blur);
-    padding: var(--spacing-sm) var(--spacing-md);
+    padding: var(--spacing-md);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-lg);
     border: 1px solid var(--color-border);
@@ -1068,7 +1068,7 @@ body {
         left: 8px;
         right: 8px;
         transform: none;
-        padding: var(--spacing-xs) var(--spacing-sm);
+        padding: var(--spacing-sm);
         bottom: 20px;
     }
 
@@ -1091,7 +1091,7 @@ body {
         top: auto;
         left: auto;
         right: 8px;
-        bottom: 76px;
+        bottom: 84px;
     }
 
     .leaflet-control-zoom {
@@ -1269,7 +1269,7 @@ body {
     .mobile-countdown {
         position: absolute;
         left: 8px;
-        bottom: 76px;
+        bottom: 84px;
         display: block;
         background: var(--sidebar-bg);
         backdrop-filter: var(--glass-blur);
@@ -1319,7 +1319,7 @@ body {
     .mobile-weather-card {
         position: absolute;
         right: 8px;
-        bottom: 76px; /* Aligned with countdown */
+        bottom: 84px; /* Aligned with countdown */
         display: flex;
         flex-direction: column;
         gap: 8px;
