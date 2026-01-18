@@ -2,6 +2,8 @@
 
 [![License](https://img.shields.io/github/license/circuit-weather/circuit-weather)](LICENSE)
 ![Top Language](https://img.shields.io/github/languages/top/circuit-weather/circuit-weather)
+![HTML](https://img.shields.io/badge/-HTML-E34F26)
+![CSS](https://img.shields.io/badge/-CSS-1572B6)
 
 Circuit Weather is a real-time weather radar designed specifically for Formula 1 fans. It lets you track live precipitation and weather conditions at every circuit on the F1 calendar, helping you stay ahead of the strategy during race weekends.
 
