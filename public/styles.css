@@ -1068,7 +1068,7 @@ body {
         left: 8px;
         right: 8px;
         transform: none;
-        padding: var(--spacing-xs) var(--spacing-sm);
+        padding: var(--spacing-sm);
         bottom: 20px;
     }
 
