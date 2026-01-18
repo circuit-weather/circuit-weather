@@ -1495,3 +1495,44 @@ body {
 .privacy-modal-content strong {
     color: var(--color-text);
 }
+
+/* ===================================
+   Accessibility
+   =================================== */
+
+/* Global Focus Styles */
+:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
+/* Interactive Elements Overrides */
+.radar-play-btn:focus-visible {
+    outline: none;
+    /* Double ring: gap (bg color) + primary ring */
+    box-shadow: 0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-primary);
+}
+
+/* Ensure focus ring is visible on toggle buttons */
+.theme-toggle:focus-visible,
+.sidebar-toggle:focus-visible,
+.mobile-menu-btn:focus-visible,
+.privacy-modal-close:focus-visible,
+.radar-speed-btn:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+    z-index: 10; /* Ensure ring is on top */
+}
+
+/* Radar Slider Focus */
+.radar-slider:focus-visible {
+    outline: none; /* We style the thumb instead */
+}
+
+.radar-slider:focus-visible::-webkit-slider-thumb {
+    box-shadow: 0 0 0 6px rgba(225, 6, 0, 0.3);
+}
+
+.radar-slider:focus-visible::-moz-range-thumb {
+    box-shadow: 0 0 0 6px rgba(225, 6, 0, 0.3);
+}
