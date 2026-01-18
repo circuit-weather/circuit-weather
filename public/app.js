@@ -486,6 +486,22 @@ class WeatherRadar {
         if (speedBtn) {
             speedBtn.addEventListener('click', () => this.cycleSpeed());
         }
+
+        // Global shortcut: Space to toggle play/pause
+        document.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') {
+                const active = document.activeElement;
+                const tag = active.tagName.toLowerCase();
+
+                // Prevent conflict with inputs or focused buttons (which use Space to click)
+                if (tag === 'input' || tag === 'textarea' || tag === 'select' || tag === 'button') {
+                    return;
+                }
+
+                e.preventDefault();
+                this.togglePlay();
+            }
+        });
     }
 
     cycleSpeed() {
