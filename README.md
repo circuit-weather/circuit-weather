@@ -1,6 +1,11 @@
 # Circuit Weather 🌧️🏎️
 
+[![License](https://img.shields.io/github/license/circuit-weather/circuit-weather)](LICENSE)
+![Top Language](https://img.shields.io/github/languages/top/circuit-weather/circuit-weather)
+
 Circuit Weather is a real-time weather radar designed specifically for Formula 1 fans. It lets you track live precipitation and weather conditions at every circuit on the F1 calendar, helping you stay ahead of the strategy during race weekends.
+
+This web app is completely and unashamedly vibe coded primarily with the use of Google antigravity and Google Jules, using anthropic opus 4.5 and Google Gemini 3. I created it as an exercise to investigate their capabilities and see how it goes.
 
 ## What it does
 
