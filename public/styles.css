@@ -510,7 +510,7 @@ body {
     top: auto;
     left: auto;
     right: 20px;
-    bottom: 20px;
+    bottom: 28px;
 }
 
 .leaflet-control-zoom-in,
@@ -594,7 +594,7 @@ body {
     background: var(--sidebar-bg);
     backdrop-filter: var(--glass-blur);
     -webkit-backdrop-filter: var(--glass-blur);
-    padding: var(--spacing-sm) var(--spacing-md);
+    padding: 12px var(--spacing-md);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-lg);
     border: 1px solid var(--color-border);
@@ -1091,7 +1091,7 @@ body {
         top: auto;
         left: auto;
         right: 8px;
-        bottom: 76px;
+        bottom: 84px;
     }
 
     .leaflet-control-zoom {
