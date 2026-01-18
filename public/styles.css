@@ -1269,7 +1269,7 @@ body {
     .mobile-countdown {
         position: absolute;
         left: 8px;
-        bottom: 76px;
+        bottom: 84px;
         display: block;
         background: var(--sidebar-bg);
         backdrop-filter: var(--glass-blur);
@@ -1319,7 +1319,7 @@ body {
     .mobile-weather-card {
         position: absolute;
         right: 8px;
-        bottom: 76px; /* Aligned with countdown */
+        bottom: 84px; /* Aligned with countdown */
         display: flex;
         flex-direction: column;
         gap: 8px;
