@@ -34,7 +34,7 @@
         <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
-                <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar" title="Toggle sidebar">
+                <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar" title="Toggle sidebar" aria-expanded="false" aria-controls="sidebar">
                     <svg class="icon-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="3" y1="6" x2="21" y2="6"></line>
                         <line x1="3" y1="12" x2="21" y2="12"></line>
@@ -162,7 +162,7 @@
         <main class="main-content">
             <!-- Mobile Header (visible only on tablet/mobile) -->
             <header class="mobile-header" id="mobileHeader">
-                <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open menu" title="Open menu">
+                <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open menu" title="Open menu" aria-expanded="false" aria-controls="sidebar">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="3" y1="6" x2="21" y2="6"></line>
                         <line x1="3" y1="12" x2="21" y2="12"></line>
@@ -267,7 +267,7 @@
             </div>
 
             <!-- Loading Overlay -->
-            <div class="loading-overlay" id="loadingOverlay">
+            <div class="loading-overlay" id="loadingOverlay" aria-live="polite" aria-atomic="true">
                 <div class="loading-spinner"></div>
                 <p>Loading...</p>
             </div>

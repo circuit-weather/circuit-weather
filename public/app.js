@@ -188,6 +188,16 @@ class SidebarManager {
             this.isOpen = true;
             // Prevent body scroll when sidebar is open
             document.body.style.overflow = 'hidden';
+
+            // Update ARIA states
+            if (this.mobileMenuBtn) this.mobileMenuBtn.setAttribute('aria-expanded', 'true');
+            if (this.toggleBtn) this.toggleBtn.setAttribute('aria-expanded', 'true');
+
+            // Move focus to close button inside sidebar for accessibility
+            if (this.toggleBtn) {
+                // Small timeout to allow transition/display change
+                setTimeout(() => this.toggleBtn.focus(), 50);
+            }
         }
     }
 
@@ -196,6 +206,16 @@ class SidebarManager {
             this.sidebar.classList.remove('sidebar--open');
             this.isOpen = false;
             document.body.style.overflow = '';
+
+            // Update ARIA states
+            if (this.mobileMenuBtn) this.mobileMenuBtn.setAttribute('aria-expanded', 'false');
+            if (this.toggleBtn) this.toggleBtn.setAttribute('aria-expanded', 'false');
+
+            // Return focus to menu button if it's visible (mobile)
+            // This restores context to the user after closing the menu
+            if (this.mobileMenuBtn && window.getComputedStyle(this.mobileMenuBtn).display !== 'none') {
+                this.mobileMenuBtn.focus();
+            }
         }
     }
 }
