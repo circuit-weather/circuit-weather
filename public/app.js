@@ -644,19 +644,32 @@ class WeatherRadar {
 
     createLayers() {
         // Clear existing layers if any (full reset)
-        this.layers.forEach(layer => this.map.removeLayer(layer));
-        this.layers = [];
-        this.visibleLayerIndex = -1;
-
-        this.frames.forEach((frame, index) => {
-            const layer = this.createLayer(frame, index);
-            this.layers.push(layer);
+        this.layers.forEach(layer => {
+            if (layer) this.map.removeLayer(layer);
         });
+        // Bolt Optimization: Lazy initialize layers array with nulls
+        // We only create the Leaflet layer when it's needed (or preloaded)
+        this.layers = new Array(this.frames.length).fill(null);
+        this.visibleLayerIndex = -1;
 
         this.currentFrame = this.frames.length - 1;
 
         // Force map to recalculate size
         this.map.invalidateSize();
+
+        // Create the current (latest) frame immediately so it's ready
+        if (this.currentFrame >= 0) {
+            this.getLayer(this.currentFrame);
+        }
+    }
+
+    getLayer(index) {
+        if (index < 0 || index >= this.frames.length) return null;
+
+        if (!this.layers[index]) {
+            this.layers[index] = this.createLayer(this.frames[index], index);
+        }
+        return this.layers[index];
     }
 
     createLayer(frame, index) {
@@ -712,7 +725,7 @@ class WeatherRadar {
 
     async waitForTilesToLoad() {
         // Wait for the current frame's tiles to load
-        const currentLayer = this.layers[this.currentFrame];
+        const currentLayer = this.getLayer(this.currentFrame);
         if (!currentLayer) return;
 
         return new Promise((resolve) => {
@@ -743,7 +756,7 @@ class WeatherRadar {
     }
 
     showFrame(index) {
-        if (index < 0 || index >= this.layers.length) return;
+        if (index < 0 || index >= this.frames.length) return;
 
         // Optimization: Only update layers that need changing
         if (this.visibleLayerIndex === index) return; // No change needed
@@ -753,9 +766,12 @@ class WeatherRadar {
             this.layers[this.visibleLayerIndex].setOpacity(0);
         }
 
+        // Get or create new layer
+        const layer = this.getLayer(index);
+
         // Show new layer
-        if (this.layers[index]) {
-            this.layers[index].setOpacity(CONFIG.radarOpacity);
+        if (layer) {
+            layer.setOpacity(CONFIG.radarOpacity);
         }
 
         this.visibleLayerIndex = index;
@@ -764,6 +780,10 @@ class WeatherRadar {
 
         const slider = document.getElementById('radarSlider');
         if (slider) slider.value = index;
+
+        // Bolt Optimization: Preload next frame for smooth animation
+        const nextIndex = (index + 1) % this.frames.length;
+        this.getLayer(nextIndex);
     }
 
     updateTimeDisplay(timestamp) {
@@ -888,7 +908,9 @@ class WeatherRadar {
     destroy() {
         this.stopPolling();
         this.pause();
-        this.layers.forEach(layer => this.map.removeLayer(layer));
+        this.layers.forEach(layer => {
+            if (layer) this.map.removeLayer(layer);
+        });
         this.layers = [];
         this.showControls(false);
     }
