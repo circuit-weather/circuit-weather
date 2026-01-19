@@ -1765,35 +1765,43 @@ class CircuitWeatherApp {
         });
     }
 
-    selectSession(sessionId) {
+    async selectSession(sessionId) {
         const session = this.selectedRace?.sessions.find(s => s.id === sessionId);
         if (!session) return;
 
-        this.selectedSession = session;
+        this.showLoading(true);
 
-        // Calculate session time
-        const sessionTime = new Date(`${session.date}T${session.time}`);
+        try {
+            this.selectedSession = session;
 
-        // Start countdown
-        this.countdown.start(sessionTime, `${this.selectedRace.name} - ${session.name}`);
+            // Calculate session time
+            const sessionTime = new Date(`${session.date}T${session.time}`);
 
-        // Set session time for radar relative display
-        this.radar.setSessionTime(sessionTime);
+            // Start countdown
+            this.countdown.start(sessionTime, `${this.selectedRace.name} - ${session.name}`);
 
-        // Load radar
-        this.radar.load();
+            // Set session time for radar relative display
+            this.radar.setSessionTime(sessionTime);
 
-        // Update Weather Dashboard
-        this.updateWeatherDashboard(sessionTime);
+            // Load radar and weather in parallel
+            await Promise.all([
+                this.radar.load(),
+                this.updateWeatherDashboard(sessionTime)
+            ]);
 
-        // Show forecast section
-        const forecastSection = document.getElementById('forecastSection');
-        if (forecastSection) forecastSection.style.display = 'block';
+            // Show forecast section
+            const forecastSection = document.getElementById('forecastSection');
+            if (forecastSection) forecastSection.style.display = 'block';
 
-        // Ensure mobile elements are visible
-        this.updateMobileVisibility();
+            // Ensure mobile elements are visible
+            this.updateMobileVisibility();
 
-        this.router.navigate('f1', this.selectedRace.round, sessionId);
+            this.router.navigate('f1', this.selectedRace.round, sessionId);
+        } catch (error) {
+            console.error('Error selecting session:', error);
+        } finally {
+            this.showLoading(false);
+        }
     }
 
     async updateWeatherDashboard(sessionTime) {
