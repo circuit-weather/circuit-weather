@@ -1569,14 +1569,15 @@ class CircuitWeatherApp {
 
         // Update mobile race info visibility
         const mobileRaceInfo = document.getElementById('mobileRaceInfo');
-        if (mobileRaceInfo && this.selectedRace) {
-            mobileRaceInfo.style.display = isMobile ? 'flex' : 'none';
+        if (mobileRaceInfo) {
+            mobileRaceInfo.style.display = (this.selectedRace && isMobile) ? 'flex' : 'none';
         }
 
         // Update mobile countdown visibility
         const mobileCountdown = document.getElementById('mobileCountdown');
-        if (mobileCountdown && this.selectedSession && this.countdown.targetTime) {
-            mobileCountdown.style.display = isMobile ? 'block' : 'none';
+        if (mobileCountdown) {
+            const shouldShow = this.selectedSession && this.countdown.targetTime;
+            mobileCountdown.style.display = (shouldShow && isMobile) ? 'block' : 'none';
         }
 
         // Update mobile weather card visibility
@@ -1668,6 +1669,7 @@ class CircuitWeatherApp {
 
         // Hide countdown until session selected (radar always shows)
         this.countdown.show(false);
+        this.updateMobileVisibility();
 
         this.router.navigate('f1', round, null);
     }
@@ -1764,6 +1766,9 @@ class CircuitWeatherApp {
         // Show forecast section
         const forecastSection = document.getElementById('forecastSection');
         if (forecastSection) forecastSection.style.display = 'block';
+
+        // Ensure mobile elements are visible
+        this.updateMobileVisibility();
 
         this.router.navigate('f1', this.selectedRace.round, sessionId);
     }
