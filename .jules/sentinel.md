@@ -1,19 +1,4 @@
-# Sentinel Journal
-
-This journal documents CRITICAL security learnings found during security reviews.
-
-## Format
-## YYYY-MM-DD - [Title]
-**Vulnerability:** [What you found]
-**Learning:** [Why it existed]
-**Prevention:** [How to avoid next time]
-
-## 2025-02-18 - Cloudflare Worker CORS Permissiveness
-**Vulnerability:** The API proxy was configured with `Access-Control-Allow-Origin: *`, allowing any third-party site to consume the worker's resources and quota.
-**Learning:** Cloudflare Workers acting as proxies often default to global access unless restricted. Unlike traditional backends behind a gateway, they are directly exposed.
-**Prevention:** Implement a strict origin whitelist (`getAllowedOrigin` helper) and apply it dynamically to `Access-Control-Allow-Origin` headers, ensuring `Vary: Origin` is set for correct caching.
-
-## 2025-02-18 - Unbounded Input Processing
-**Vulnerability:** The API proxy accepted input segments of arbitrary length, which could be used to cause excessive resource consumption (DoS) or potential upstream issues.
-**Learning:** Regex validation `/^[a-zA-Z0-9]*$/` checks content but not length. Explicit length checks are required for robustness.
-**Prevention:** Always combine regex validation with explicit `.length` checks for user inputs, especially when constructing upstream URLs.
+## 2026-01-19 - API Proxy Rate Limiting Gap
+**Vulnerability:** The API proxy in `src/worker.js` acts as an open proxy for the Ergast F1 API (via `/api/f1/*`) without any application-level rate limiting. While it has input validation, it does not prevent a user from flooding the upstream service by requesting valid but distinct paths.
+**Learning:** Even serverless functions (Cloudflare Workers) that are protected by platform-level DDOS mitigation can still be abused to exhaust upstream API quotas or cause costs if not explicitly rate-limited at the application logic level.
+**Prevention:** Implement rate limiting using Cloudflare Workers KV or Durable Objects to track request counts per IP, or configure Cloudflare's WAF Rate Limiting rules if available on the plan.
