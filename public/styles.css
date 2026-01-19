@@ -64,6 +64,27 @@
    Base Styles
    =================================== */
 
+/* Skip Link */
+.skip-link {
+    position: absolute;
+    top: -9999px;
+    left: var(--spacing-md);
+    background: var(--color-primary);
+    color: white;
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-md);
+    z-index: 9999;
+    text-decoration: none;
+    font-weight: 600;
+    transition: top var(--transition-fast);
+}
+
+.skip-link:focus {
+    top: var(--spacing-md);
+    outline: 2px solid white;
+    outline-offset: 2px;
+}
+
 *,
 *::before,
 *::after {
