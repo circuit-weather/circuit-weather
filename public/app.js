@@ -489,7 +489,9 @@ class WeatherRadar {
         this.visibleLayerIndex = -1; // Track currently visible layer for optimization
         this.layers = [];
         this.isPlaying = false;
-        this.animationTimer = null;
+        this.animationTimer = null; // Deprecated: kept for cleanup safety
+        this.animationFrameId = null;
+        this.lastFrameTime = 0;
         this.sessionTime = null;
         this.speedIndex = CONFIG.defaultSpeedIndex; // Track current speed
         this.pollingInterval = null;
@@ -870,11 +872,8 @@ class WeatherRadar {
     }
 
     play() {
-        // Clear any existing timer first to prevent double animations
-        if (this.animationTimer) {
-            clearInterval(this.animationTimer);
-            this.animationTimer = null;
-        }
+        // Clear any existing timer/loop first to prevent double animations
+        this.pause();
 
         // Apply any pending updates before starting
         if (this.pendingFrames) {
@@ -886,16 +885,40 @@ class WeatherRadar {
         const playBtn = document.getElementById('radarPlayBtn');
         if (playBtn) playBtn.classList.add('playing');
 
-        this.animationTimer = setInterval(() => {
+        // Bolt Optimization: Use requestAnimationFrame instead of setInterval
+        // Prevents drift and saves battery in background tabs
+        this.lastFrameTime = performance.now();
+        this.loop();
+    }
+
+    loop() {
+        if (!this.isPlaying) return;
+
+        const now = performance.now();
+        const elapsed = now - this.lastFrameTime;
+        const speed = this.getCurrentSpeed();
+
+        if (elapsed >= speed) {
             this.currentFrame = (this.currentFrame + 1) % this.frames.length;
             this.showFrame(this.currentFrame);
-        }, this.getCurrentSpeed());
+            // Adjust for drift while preserving the interval grid
+            this.lastFrameTime = now - (elapsed % speed);
+        }
+
+        this.animationFrameId = requestAnimationFrame(() => this.loop());
     }
 
     pause() {
         this.isPlaying = false;
         const playBtn = document.getElementById('radarPlayBtn');
         if (playBtn) playBtn.classList.remove('playing');
+
+        if (this.animationFrameId) {
+            cancelAnimationFrame(this.animationFrameId);
+            this.animationFrameId = null;
+        }
+
+        // Legacy cleanup (safe to keep)
         if (this.animationTimer) {
             clearInterval(this.animationTimer);
             this.animationTimer = null;
