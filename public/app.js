@@ -123,6 +123,49 @@ class ThemeManager {
 }
 
 // ===================================
+// Share Manager
+// ===================================
+
+class ShareManager {
+    constructor() {
+        this.btn = document.getElementById('shareBtn');
+        this.timeout = null;
+        this.bindEvents();
+    }
+
+    bindEvents() {
+        if (this.btn) {
+            this.btn.addEventListener('click', () => this.share());
+        }
+    }
+
+    async share() {
+        try {
+            await navigator.clipboard.writeText(window.location.href);
+            this.showSuccess();
+        } catch (err) {
+            console.error('Failed to copy link:', err);
+        }
+    }
+
+    showSuccess() {
+        if (!this.btn) return;
+
+        this.btn.classList.add('copied');
+        this.btn.setAttribute('aria-label', 'Link copied');
+        this.btn.setAttribute('title', 'Link copied');
+
+        if (this.timeout) clearTimeout(this.timeout);
+
+        this.timeout = setTimeout(() => {
+            this.btn.classList.remove('copied');
+            this.btn.setAttribute('aria-label', 'Copy link');
+            this.btn.setAttribute('title', 'Copy link');
+        }, 2000);
+    }
+}
+
+// ===================================
 // Sidebar Manager (Mobile)
 // ===================================
 
@@ -1474,6 +1517,9 @@ class CircuitWeatherApp {
             this.themeManager = new ThemeManager((theme) => {
                 this.mapManager.setTheme(theme);
             });
+
+            // Share manager
+            this.shareManager = new ShareManager();
 
             // Sidebar manager for mobile
             this.sidebarManager = new SidebarManager();
