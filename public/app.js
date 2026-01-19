@@ -159,9 +159,16 @@ class SidebarManager {
             this.backdrop.addEventListener('click', () => this.close());
         }
 
-        // Close on window resize to desktop
-        window.addEventListener('resize', () => {
-            if (window.innerWidth > this.mobileBreakpoint && this.isOpen) {
+        // Bolt Optimization: Use matchMedia for zero-overhead breakpoint detection
+        // instead of a resize listener (even debounced). Fires only when state changes.
+        const desktopQuery = window.matchMedia(`(min-width: ${this.mobileBreakpoint + 1}px)`);
+
+        // Handle initial state if needed (optional, but safe)
+        // Note: matchMedia doesn't fire on init, so we rely on current state,
+        // but since sidebar starts closed, we only care about transitions while open.
+
+        desktopQuery.addEventListener('change', (e) => {
+            if (e.matches && this.isOpen) {
                 this.close();
             }
         });
