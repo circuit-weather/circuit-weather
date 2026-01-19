@@ -123,49 +123,6 @@ class ThemeManager {
 }
 
 // ===================================
-// Share Manager
-// ===================================
-
-class ShareManager {
-    constructor() {
-        this.btn = document.getElementById('shareBtn');
-        this.timeout = null;
-        this.bindEvents();
-    }
-
-    bindEvents() {
-        if (this.btn) {
-            this.btn.addEventListener('click', () => this.share());
-        }
-    }
-
-    async share() {
-        try {
-            await navigator.clipboard.writeText(window.location.href);
-            this.showSuccess();
-        } catch (err) {
-            console.error('Failed to copy link:', err);
-        }
-    }
-
-    showSuccess() {
-        if (!this.btn) return;
-
-        this.btn.classList.add('copied');
-        this.btn.setAttribute('aria-label', 'Link copied');
-        this.btn.setAttribute('title', 'Link copied');
-
-        if (this.timeout) clearTimeout(this.timeout);
-
-        this.timeout = setTimeout(() => {
-            this.btn.classList.remove('copied');
-            this.btn.setAttribute('aria-label', 'Copy link');
-            this.btn.setAttribute('title', 'Copy link');
-        }, 2000);
-    }
-}
-
-// ===================================
 // Sidebar Manager (Mobile)
 // ===================================
 
@@ -551,6 +508,12 @@ class WeatherRadar {
                 this.currentFrame = parseInt(e.target.value, 10);
                 this.showFrame(this.currentFrame);
                 this.pause();
+                this.updateTooltipPosition();
+            });
+
+            // Also update tooltip position on window resize to keep alignment
+            window.addEventListener('resize', () => {
+                if (this.frames.length > 0) this.updateTooltipPosition();
             });
         }
         if (speedBtn) {
@@ -829,7 +792,10 @@ class WeatherRadar {
         this.updateTimeDisplay(this.frames[index]?.time);
 
         const slider = document.getElementById('radarSlider');
-        if (slider) slider.value = index;
+        if (slider) {
+            slider.value = index;
+            this.updateTooltipPosition();
+        }
 
         // Bolt Optimization: Preload next frame for smooth animation
         const nextIndex = (index + 1) % this.frames.length;
@@ -840,11 +806,16 @@ class WeatherRadar {
         const timeEl = document.getElementById('radarTime');
         const relEl = document.getElementById('radarRelative');
         const slider = document.getElementById('radarSlider');
+        const tooltip = document.getElementById('radarTooltip');
+
         if (!timeEl || !timestamp) return;
 
         const date = new Date(timestamp * 1000);
         const timeStr = date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false });
         timeEl.textContent = timeStr;
+
+        // Update tooltip text
+        if (tooltip) tooltip.textContent = timeStr;
 
         let relativeText = '';
 
@@ -872,6 +843,29 @@ class WeatherRadar {
             const ariaText = relativeText ? `${timeStr}, ${relativeText}` : timeStr;
             slider.setAttribute('aria-valuetext', ariaText);
         }
+    }
+
+    updateTooltipPosition() {
+        const slider = document.getElementById('radarSlider');
+        const tooltip = document.getElementById('radarTooltip');
+        if (!slider || !tooltip) return;
+
+        requestAnimationFrame(() => {
+            const min = parseFloat(slider.min);
+            const max = parseFloat(slider.max);
+            const val = parseFloat(slider.value);
+            const width = slider.clientWidth;
+
+            // Calculate percentage
+            const percent = (val - min) / (max - min);
+
+            // Adjust for thumb width (approx 12px)
+            // The thumb center moves from 6px to width-6px
+            const thumbWidth = 12;
+            const offset = percent * (width - thumbWidth) + (thumbWidth / 2);
+
+            tooltip.style.left = `${offset}px`;
+        });
     }
 
     updateSlider() {
@@ -1517,9 +1511,6 @@ class CircuitWeatherApp {
             this.themeManager = new ThemeManager((theme) => {
                 this.mapManager.setTheme(theme);
             });
-
-            // Share manager
-            this.shareManager = new ShareManager();
 
             // Sidebar manager for mobile
             this.sidebarManager = new SidebarManager();
