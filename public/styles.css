@@ -1180,6 +1180,10 @@ body {
 }
 
 /* Mobile Race Info Overlay */
+.mobile-ui-layout {
+    display: none;
+}
+
 .mobile-race-info {
     display: none;
 }
@@ -1206,12 +1210,22 @@ body {
         font-size: 0.65rem;
     }
 
-    .mobile-race-info {
-        position: absolute;
-        top: 64px;
-        left: var(--spacing-sm);
-        right: var(--spacing-sm);
+    /* Mobile UI Layout Container */
+    .mobile-ui-layout {
         display: flex;
+        position: absolute;
+        top: 56px;
+        left: 0;
+        right: 0;
+        flex-direction: column;
+        gap: var(--spacing-sm);
+        padding: var(--spacing-sm);
+        pointer-events: none;
+        z-index: 400;
+    }
+
+    .mobile-race-info {
+        display: flex; /* overridden by JS toggle */
         align-items: center;
         gap: var(--spacing-sm);
         background: var(--sidebar-bg);
@@ -1221,7 +1235,9 @@ body {
         border-radius: var(--radius-lg);
         padding: var(--spacing-xs) var(--spacing-sm);
         box-shadow: var(--shadow-md);
-        z-index: 400;
+        /* Flex child props */
+        width: 100%;
+        pointer-events: auto;
     }
 
     .mobile-race-info-flag {
@@ -1317,11 +1333,7 @@ body {
 
 @media (max-width: 768px) {
     .mobile-weather-card {
-        position: absolute;
-        /* top is set dynamically by JS to follow banner */
-        top: 124px;
-        right: 8px;
-        display: flex;
+        display: flex; /* overridden by JS toggle */
         flex-direction: column;
         align-items: center;
         width: 2.75rem;
@@ -1333,7 +1345,9 @@ body {
         border-radius: var(--radius-md);
         padding: var(--spacing-sm) 0;
         box-shadow: var(--shadow-md);
-        z-index: 400;
+        /* Flex child props */
+        align-self: flex-end;
+        pointer-events: auto;
     }
 
     /* Hide rows container structure from previous layout */

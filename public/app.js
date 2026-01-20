@@ -123,56 +123,6 @@ class ThemeManager {
     }
 }
 
-// ===================================
-// Mobile Layout Manager
-// ===================================
-
-class MobileLayoutManager {
-    constructor() {
-        this.raceInfo = document.getElementById('mobileRaceInfo');
-        this.weatherCard = document.getElementById('mobileWeatherCard');
-        this.gap = 8; // px (var(--spacing-sm))
-        this.observer = null;
-        this.init();
-    }
-
-    init() {
-        if (!this.raceInfo || !this.weatherCard) return;
-
-        // Observe the race info banner for height changes (text wrap, etc)
-        if (window.ResizeObserver) {
-            this.observer = new ResizeObserver(() => this.updateLayout());
-            this.observer.observe(this.raceInfo);
-        }
-
-        // Also update on window resize (handled by app, but good safety)
-        window.addEventListener('resize', () => this.updateLayout());
-
-        // Initial update
-        this.updateLayout();
-    }
-
-    updateLayout() {
-        if (!this.raceInfo || !this.weatherCard) return;
-
-        // Only run if both are visible
-        const isInfoVisible = window.getComputedStyle(this.raceInfo).display !== 'none';
-        const isWeatherVisible = window.getComputedStyle(this.weatherCard).display !== 'none';
-
-        if (!isInfoVisible || !isWeatherVisible) return;
-
-        // Calculate position
-        const infoRect = this.raceInfo.getBoundingClientRect();
-        // Since raceInfo is absolute positioned relative to container (or body),
-        // we use its offsetTop + height if it's in the same context.
-        // Both are children of <main> (relative) or body.
-        // Let's use offsetTop to be safe within the parent context.
-
-        const top = this.raceInfo.offsetTop + this.raceInfo.offsetHeight + this.gap;
-
-        this.weatherCard.style.top = `${top}px`;
-    }
-}
 
 // ===================================
 // Sidebar Manager (Mobile)
@@ -1610,7 +1560,6 @@ class CircuitWeatherApp {
         this.mapManager = new MapManager();
         this.themeManager = null;
         this.sidebarManager = null;
-        this.layoutManager = null;
         this.f1Api = new F1API();
         this.weatherClient = new WeatherClient();
         this.radar = null;
@@ -1639,9 +1588,6 @@ class CircuitWeatherApp {
 
             // Sidebar manager for mobile
             this.sidebarManager = new SidebarManager();
-
-            // Mobile Layout Manager
-            this.layoutManager = new MobileLayoutManager();
 
             // Handle resize events for mobile visibility
             this.bindResizeHandler();
@@ -1748,12 +1694,6 @@ class CircuitWeatherApp {
         }
 
         // Note: Map resizing is handled by ResizeObserver in MapManager
-
-        // Trigger layout update after visibility changes
-        if (this.layoutManager) {
-            // Small delay to allow DOM to render display:flex before measuring
-            requestAnimationFrame(() => this.layoutManager.updateLayout());
-        }
     }
 
     bindEvents() {
