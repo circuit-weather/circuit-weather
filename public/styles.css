@@ -1318,6 +1318,7 @@ body {
 @media (max-width: 768px) {
     .mobile-weather-card {
         position: absolute;
+        /* top is set dynamically by JS to follow banner */
         top: 124px;
         right: 8px;
         display: flex;
