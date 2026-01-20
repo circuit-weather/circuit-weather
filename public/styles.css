@@ -1512,12 +1512,15 @@ body {
     top: 20px;
     right: 20px;
     display: none; /* JS will toggle flex */
-    gap: var(--spacing-md);
+    flex-direction: column;
+    align-items: center;
+    width: 2.75rem;
+    gap: var(--spacing-sm);
     background: var(--sidebar-bg);
     backdrop-filter: var(--glass-blur);
     -webkit-backdrop-filter: var(--glass-blur);
-    padding: var(--spacing-sm) var(--spacing-md);
-    border-radius: var(--radius-full);
+    padding: var(--spacing-sm) 0;
+    border-radius: var(--radius-md);
     box-shadow: var(--shadow-md);
     border: 1px solid var(--color-border);
     z-index: 500;
@@ -1525,17 +1528,21 @@ body {
 
 .weather-widget-metric {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 6px;
-    font-size: 0.85rem;
+    gap: 2px;
+    font-size: 0.7rem;
     font-weight: 600;
     color: var(--color-text);
+    width: 100%;
+    text-align: center;
+    line-height: 1;
 }
 
 .weather-widget-metric .icon-weather {
-    width: 16px;
-    height: 16px;
-    color: var(--color-text-secondary);
+    width: 18px;
+    height: 18px;
+    color: var(--color-text); /* Higher fidelity implies main text color or specific */
 }
 
 /* Hide Desktop Widget on Mobile */
