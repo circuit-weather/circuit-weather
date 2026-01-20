@@ -1643,32 +1643,6 @@ class CircuitWeatherApp {
                 }
             });
         }
-
-        const shareBtn = document.getElementById('shareBtn');
-        if (shareBtn) {
-            shareBtn.addEventListener('click', () => this.handleShare());
-        }
-    }
-
-    async handleShare() {
-        const shareBtn = document.getElementById('shareBtn');
-        if (!shareBtn) return;
-
-        try {
-            await navigator.clipboard.writeText(window.location.href);
-
-            // Visual feedback
-            shareBtn.classList.add('copied');
-            const originalLabel = shareBtn.getAttribute('aria-label');
-            shareBtn.setAttribute('aria-label', 'Link copied!');
-
-            setTimeout(() => {
-                shareBtn.classList.remove('copied');
-                shareBtn.setAttribute('aria-label', originalLabel);
-            }, 2000);
-        } catch (err) {
-            console.error('Failed to copy link:', err);
-        }
     }
 
     populateRoundSelect() {
