@@ -1331,9 +1331,14 @@ body {
     display: none;
 }
 
+/* This class is toggled by JS to hide the card when no data is available */
+.mobile-weather-card.--no-data {
+    display: none;
+}
+
 @media (max-width: 768px) {
     .mobile-weather-card {
-        display: flex; /* overridden by JS toggle */
+        display: flex;
         flex-direction: column;
         align-items: center;
         width: 2.75rem;
@@ -1541,7 +1546,7 @@ body {
     position: absolute;
     top: 20px;
     right: 20px;
-    display: none; /* JS will toggle flex */
+    display: flex;
     flex-direction: column;
     align-items: center;
     width: 2.75rem;
@@ -1554,6 +1559,10 @@ body {
     box-shadow: var(--shadow-md);
     border: 1px solid var(--color-border);
     z-index: 500;
+}
+
+.weather-widget.--no-data {
+    display: none;
 }
 
 .weather-widget-metric {

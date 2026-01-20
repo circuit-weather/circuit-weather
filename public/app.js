@@ -1237,7 +1237,7 @@ class WeatherWidget {
         if (!container) return;
 
         this.el = document.createElement('div');
-        this.el.className = 'weather-widget';
+        this.el.className = 'weather-widget --no-data';
         // HTML injected by JS
         this.el.innerHTML = `
             <div class="weather-widget-metric" title="Temperature">
@@ -1266,19 +1266,10 @@ class WeatherWidget {
     update(weather) {
         if (!this.el) return;
 
-        // Ensure the widget is always visible, controlled by CSS media queries
-        this.el.style.display = 'flex';
+        const hasData = weather && weather.current;
+        this.el.classList.toggle('--no-data', !hasData);
 
-        if (!weather || !weather.current) {
-            // Clear content if no data is available, but keep widget visible
-            const tempEl = document.getElementById('widgetTemp');
-            const humidEl = document.getElementById('widgetHumidity');
-            const windEl = document.getElementById('widgetWind');
-            if (tempEl) tempEl.textContent = '--';
-            if (humidEl) humidEl.textContent = '--';
-            if (windEl) windEl.textContent = '--';
-            return;
-        }
+        if (!hasData) return;
 
         const temp = Math.round(weather.current.temperature_2m);
         const humidity = Math.round(weather.current.relative_humidity_2m || 0);
@@ -1691,27 +1682,8 @@ class CircuitWeatherApp {
             mobileCountdown.style.display = (shouldShow && isMobile) ? 'block' : 'none';
         }
 
-        // Update mobile weather card visibility
-        const mobileWeather = document.getElementById('mobileWeatherCard');
-        // Mobile card is now "Live Weather", so show if we have a race selected
-        // We check if content is populated by checking one of its children or just ensure updateLiveWeather was called
-        // Ideally, we hide it if the widget is hidden.
-        // Let's rely on the element's style.display being set by renderLiveWeather,
-        // but here we enforce the mobile/desktop media query logic.
-
-        if (mobileWeather) {
-            // Check if we have valid data (renderLiveWeather sets display to none if not)
-            // But renderLiveWeather is async.
-            // For now, let's assume if we have a selected race, we want to show it (unless data failed).
-            // Actually, best to let renderLiveWeather handle the "if data exists" part,
-            // and here we just handle the "if mobile" part.
-            // But if renderLiveWeather hid it, we shouldn't show it.
-
-            const hasData = mobileWeather.style.display !== 'none';
-            if (hasData) {
-                mobileWeather.style.display = isMobile ? 'flex' : 'none';
-            }
-        }
+        // Mobile weather card visibility is now handled by CSS media queries
+        // and the '--no-data' class, which is toggled in `renderLiveWeather`.
 
         // Note: Map resizing is handled by ResizeObserver in MapManager
     }
@@ -1927,24 +1899,28 @@ class CircuitWeatherApp {
 
     renderLiveWeather(weather) {
         // Updates Desktop Widget and Mobile Card (Live)
+        // Independent of session forecast availability
+
+        const mobileCard = document.getElementById('mobileWeatherCard');
+        const hasData = weather.available && weather.current;
 
         // Update Desktop Widget
-        this.weatherWidget.update(weather);
+        if (this.weatherWidget) {
+            this.weatherWidget.update(weather);
+        }
 
         // Update Mobile Card
-        const mobileCard = document.getElementById('mobileWeatherCard');
+        if (mobileCard) {
+            mobileCard.classList.toggle('--no-data', !hasData);
+        }
+
+        if (!hasData) {
+            return;
+        }
+
         const mobTempEl = document.getElementById('mobileWeatherTemp');
         const mobWindEl = document.getElementById('mobileWeatherWind');
         const mobHumidEl = document.getElementById('mobileWeatherHumidity');
-
-        if (!weather.available || !weather.current) {
-            // Clear content if no data is available, but keep card visible
-            if (mobTempEl) mobTempEl.textContent = '--';
-            if (mobWindEl) mobWindEl.textContent = '--';
-            if (mobHumidEl) mobHumidEl.textContent = '--';
-            // Visibility is handled by updateMobileVisibility
-            return;
-        }
 
         const temp = Math.round(weather.current.temperature_2m);
         const wind = Math.round(weather.current.wind_speed_10m);
@@ -1953,9 +1929,6 @@ class CircuitWeatherApp {
         if (mobTempEl) mobTempEl.textContent = `${temp}${weather.units.temperature_2m}`;
         if (mobWindEl) mobWindEl.textContent = `${wind} ${weather.units.wind_speed_10m}`;
         if (mobHumidEl) mobHumidEl.textContent = `${humidity}%`;
-
-        // Ensure visibility is updated
-        this.updateMobileVisibility();
     }
 
     renderForecast(weather, sessionTime, sessionId) {
