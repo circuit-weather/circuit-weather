@@ -1319,7 +1319,7 @@ body {
     .mobile-weather-card {
         position: absolute;
         right: 8px;
-        bottom: 84px; /* Aligned with countdown */
+        bottom: 188px; /* Stacked above zoom controls */
         display: flex;
         flex-direction: column;
         gap: 8px;
@@ -1504,6 +1504,45 @@ body {
 :focus-visible {
     outline: 2px solid var(--color-primary);
     outline-offset: 2px;
+}
+
+/* Weather Widget (Desktop) */
+.weather-widget {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    display: none; /* JS will toggle flex */
+    gap: var(--spacing-md);
+    background: var(--sidebar-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    padding: var(--spacing-sm) var(--spacing-md);
+    border-radius: var(--radius-full);
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--color-border);
+    z-index: 500;
+}
+
+.weather-widget-metric {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.weather-widget-metric .icon-weather {
+    width: 16px;
+    height: 16px;
+    color: var(--color-text-secondary);
+}
+
+/* Hide Desktop Widget on Mobile */
+@media (max-width: 768px) {
+    .weather-widget {
+        display: none !important;
+    }
 }
 
 /* Interactive Elements Overrides */
