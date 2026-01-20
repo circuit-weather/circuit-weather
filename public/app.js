@@ -123,6 +123,7 @@ class ThemeManager {
     }
 }
 
+
 // ===================================
 // Sidebar Manager (Mobile)
 // ===================================
@@ -309,7 +310,7 @@ class WeatherClient {
             if (!data) {
                 let url;
                 if (isLocal) {
-                    url = `${this.baseUrl}?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,precipitation_probability,wind_speed_10m,wind_direction_10m,weather_code&current=temperature_2m,wind_speed_10m,wind_direction_10m,precipitation&timeformat=unixtime&forecast_days=16`;
+                    url = `${this.baseUrl}?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,wind_speed_10m,wind_direction_10m,weather_code&current=temperature_2m,relative_humidity_2m,wind_speed_10m,wind_direction_10m,precipitation&timeformat=unixtime&forecast_days=16`;
                 } else {
                     url = `${this.baseUrl}?lat=${lat}&lon=${lon}`;
                 }
@@ -347,6 +348,7 @@ class WeatherClient {
         return indices.map(i => ({
             time: hourly.time[i],
             temp: hourly.temperature_2m[i],
+            humidity: hourly.relative_humidity_2m ? hourly.relative_humidity_2m[i] : null,
             precipProb: hourly.precipitation_probability[i],
             windSpeed: hourly.wind_speed_10m[i],
             windDir: hourly.wind_direction_10m[i],
@@ -1221,6 +1223,72 @@ class CountdownTimer {
 }
 
 // ===================================
+// Weather Widget (Desktop)
+// ===================================
+
+class WeatherWidget {
+    constructor() {
+        this.el = null;
+        this.create();
+    }
+
+    create() {
+        const container = document.querySelector('.main-content');
+        if (!container) return;
+
+        this.el = document.createElement('div');
+        this.el.className = 'weather-widget';
+        // HTML injected by JS
+        this.el.innerHTML = `
+            <div class="weather-widget-metric" title="Temperature">
+                <svg class="icon-weather icon-temp" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z" />
+                </svg>
+                <span id="widgetTemp">--</span>
+            </div>
+            <div class="weather-widget-metric" title="Humidity">
+                <svg class="icon-weather icon-humidity" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
+                </svg>
+                <span id="widgetHumidity">--</span>
+            </div>
+            <div class="weather-widget-metric" title="Wind Speed">
+                 <svg class="icon-weather icon-wind" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2" />
+                </svg>
+                <span id="widgetWind">--</span>
+            </div>
+        `;
+
+        container.appendChild(this.el);
+    }
+
+    update(weather) {
+        if (!this.el) return;
+
+        if (!weather || !weather.current) {
+            this.el.style.display = 'none';
+            return;
+        }
+
+        // Only toggle flex, visibility controlled by CSS media query (hidden on mobile)
+        this.el.style.display = 'flex';
+
+        const temp = Math.round(weather.current.temperature_2m);
+        const humidity = Math.round(weather.current.relative_humidity_2m || 0);
+        const wind = Math.round(weather.current.wind_speed_10m);
+
+        const tempEl = document.getElementById('widgetTemp');
+        const humidEl = document.getElementById('widgetHumidity');
+        const windEl = document.getElementById('widgetWind');
+
+        if (tempEl) tempEl.textContent = `${temp}${weather.units.temperature_2m}`;
+        if (humidEl) humidEl.textContent = `${humidity}%`;
+        if (windEl) windEl.textContent = `${wind} ${weather.units.wind_speed_10m}`;
+    }
+}
+
+// ===================================
 // Recentre Control
 // ===================================
 
@@ -1497,6 +1565,7 @@ class CircuitWeatherApp {
         this.radar = null;
         this.trackLayer = null;
         this.rangeCircles = null;
+        this.weatherWidget = null;
         this.countdown = new CountdownTimer();
         this.recentreControl = null;
         this.currentCircuitCenter = null;
@@ -1529,6 +1598,7 @@ class CircuitWeatherApp {
             this.rangeCircles = new RangeCircles(map);
             this.trackLayer = new TrackLayer(map);
             this.radar = new WeatherRadar(map);
+            this.weatherWidget = new WeatherWidget();
 
             // Always load radar immediately
             this.radar.load();
@@ -1692,6 +1762,10 @@ class CircuitWeatherApp {
 
         // Hide countdown until session selected (radar always shows)
         this.countdown.show(false);
+
+        // Fetch current weather for the circuit immediately (using "now" as reference)
+        this.updateWeatherDashboard(new Date());
+
         this.updateMobileVisibility();
 
         this.router.navigate('f1', round, null);
@@ -1838,6 +1912,11 @@ class CircuitWeatherApp {
         // Actually user asked for "forecast around the timings of the session".
         // But "Current" implies right now. Let's use the current API data for the "Current" block.
 
+        // Update Desktop Widget
+        if (this.weatherWidget) {
+            this.weatherWidget.update(weather);
+        }
+
         const tempEl = document.getElementById('weatherTemp');
         const rainEl = document.getElementById('weatherRain');
         const windEl = document.getElementById('weatherWind');
@@ -1847,6 +1926,7 @@ class CircuitWeatherApp {
         const mobTempEl = document.getElementById('mobileWeatherTemp');
         const mobRainEl = document.getElementById('mobileWeatherRain');
         const mobWindEl = document.getElementById('mobileWeatherWind');
+        const mobHumidEl = document.getElementById('mobileWeatherHumidity');
 
         if (weather.current) {
             const temp = Math.round(weather.current.temperature_2m);
@@ -1855,6 +1935,7 @@ class CircuitWeatherApp {
             // Let's use current wind and temp.
             const wind = Math.round(weather.current.wind_speed_10m);
             const dir = weather.current.wind_direction_10m;
+            const humidity = Math.round(weather.current.relative_humidity_2m || 0);
 
             if (tempEl) tempEl.textContent = `${temp}${weather.units.temperature_2m}`;
             if (windEl) windEl.textContent = `${wind} ${weather.units.wind_speed_10m}`;
@@ -1885,6 +1966,7 @@ class CircuitWeatherApp {
 
             if (mobTempEl) mobTempEl.textContent = `${temp}${weather.units.temperature_2m}`;
             if (mobWindEl) mobWindEl.textContent = `${wind} ${weather.units.wind_speed_10m}`;
+            if (mobHumidEl) mobHumidEl.textContent = `${humidity}%`;
         }
 
         // Render Timeline

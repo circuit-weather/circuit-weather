@@ -1180,6 +1180,10 @@ body {
 }
 
 /* Mobile Race Info Overlay */
+.mobile-ui-layout {
+    display: none;
+}
+
 .mobile-race-info {
     display: none;
 }
@@ -1206,12 +1210,22 @@ body {
         font-size: 0.65rem;
     }
 
-    .mobile-race-info {
-        position: absolute;
-        top: 64px;
-        left: var(--spacing-sm);
-        right: var(--spacing-sm);
+    /* Mobile UI Layout Container */
+    .mobile-ui-layout {
         display: flex;
+        position: absolute;
+        top: 56px;
+        left: 0;
+        right: 0;
+        flex-direction: column;
+        gap: var(--spacing-sm);
+        padding: var(--spacing-sm);
+        pointer-events: none;
+        z-index: 400;
+    }
+
+    .mobile-race-info {
+        display: flex; /* overridden by JS toggle */
         align-items: center;
         gap: var(--spacing-sm);
         background: var(--sidebar-bg);
@@ -1221,7 +1235,9 @@ body {
         border-radius: var(--radius-lg);
         padding: var(--spacing-xs) var(--spacing-sm);
         box-shadow: var(--shadow-md);
-        z-index: 400;
+        /* Flex child props */
+        width: 100%;
+        pointer-events: auto;
     }
 
     .mobile-race-info-flag {
@@ -1317,44 +1333,58 @@ body {
 
 @media (max-width: 768px) {
     .mobile-weather-card {
-        position: absolute;
-        right: 8px;
-        bottom: 84px; /* Aligned with countdown */
-        display: flex;
+        display: flex; /* overridden by JS toggle */
         flex-direction: column;
-        gap: 8px;
+        align-items: center;
+        width: 2.75rem;
+        gap: var(--spacing-sm);
         background: var(--sidebar-bg);
         backdrop-filter: var(--glass-blur);
         -webkit-backdrop-filter: var(--glass-blur);
         border: 1px solid var(--color-border);
         border-radius: var(--radius-md);
-        padding: var(--spacing-sm);
+        padding: var(--spacing-sm) 0;
         box-shadow: var(--shadow-md);
-        z-index: 400;
-        min-width: 90px;
+        /* Flex child props */
+        align-self: flex-end;
+        pointer-events: auto;
     }
 
+    /* Hide rows container structure from previous layout */
     .mobile-weather-row {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        gap: var(--spacing-md);
+        display: contents;
     }
 
     .mobile-weather-metric {
         display: flex;
+        flex-direction: column;
         align-items: center;
-        gap: 4px;
+        gap: 2px;
         color: var(--color-text);
-        font-size: 0.8rem;
+        font-size: 0.7rem;
         font-weight: 600;
+        width: 100%;
+        text-align: center;
+        line-height: 1;
     }
 
     .icon-weather {
-        width: 14px;
-        height: 14px;
-        color: var(--color-text-secondary);
+        width: 18px;
+        height: 18px;
     }
+}
+
+/* Weather Icon Colors */
+.icon-temp {
+    color: #ef4444; /* Red-500 */
+}
+
+.icon-humidity {
+    color: #3b82f6; /* Blue-500 */
+}
+
+.icon-wind {
+    color: #64748b; /* Slate-500 */
 }
 
 /* ===================================
@@ -1504,6 +1534,52 @@ body {
 :focus-visible {
     outline: 2px solid var(--color-primary);
     outline-offset: 2px;
+}
+
+/* Weather Widget (Desktop) */
+.weather-widget {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    display: none; /* JS will toggle flex */
+    flex-direction: column;
+    align-items: center;
+    width: 2.75rem;
+    gap: var(--spacing-sm);
+    background: var(--sidebar-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    padding: var(--spacing-sm) 0;
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--color-border);
+    z-index: 500;
+}
+
+.weather-widget-metric {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--color-text);
+    width: 100%;
+    text-align: center;
+    line-height: 1;
+}
+
+.weather-widget-metric .icon-weather {
+    width: 18px;
+    height: 18px;
+    color: var(--color-text); /* Higher fidelity implies main text color or specific */
+}
+
+/* Hide Desktop Widget on Mobile */
+@media (max-width: 768px) {
+    .weather-widget {
+        display: none !important;
+    }
 }
 
 /* Interactive Elements Overrides */
