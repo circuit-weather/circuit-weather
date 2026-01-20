@@ -1524,10 +1524,22 @@ class PrivacyModal {
 
     parseMarkdown(md) {
         // Simple markdown parser for privacy policy content
-        return md
+        // SEC: Escape HTML characters to prevent XSS injection
+        const escapeHtml = (str) => {
+            return str
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        };
+
+        return escapeHtml(md)
             // Remove the main title (we have it in the header)
             .replace(/^# Privacy Policy\s*\n*/m, '')
-            // Headers
+            // Headers (Escaped chars mean we look for escaped # if they were escaped, but # is safe)
+            // Note: Since we escaped first, we must match safe content.
+            // Standard markdown # is safe from escapeHtml unless it was &#... but # is not escaped.
             .replace(/^### (.+)$/gm, '<h3>$1</h3>')
             .replace(/^## (.+)$/gm, '<h2>$1</h2>')
             // Bold
@@ -1543,8 +1555,22 @@ class PrivacyModal {
             .map(block => {
                 block = block.trim();
                 if (!block) return '';
+                // Since we generate safe HTML tags above (h3, h2, strong, a, li, ul)
+                // we can trust lines starting with these tags.
+                // The inputs $1, $2 are already escaped.
                 if (block.startsWith('<h') || block.startsWith('<ul')) return block;
+                // If it doesn't start with a generated tag, wrap it in p
+                // Note: The original check `block.startsWith('<')` would fail for escaped content like &lt;
+                // so we just check against our known safe tags.
                 if (!block.startsWith('<')) return `<p>${block}</p>`;
+                // If it starts with < but isn't one of ours (shouldn't happen due to escape), treat as text?
+                // But wait, if I have `&lt;img...` it starts with `&`.
+                // So the `startsWith('<')` check is actually tricky now.
+
+                // Let's refine:
+                // If I escaped everything, the ONLY things starting with < are the ones I just replaced.
+                // So if it starts with <, it's safe.
+                // If it starts with &lt;, it's text.
                 return block;
             })
             .join('\n');
