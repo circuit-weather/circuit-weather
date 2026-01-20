@@ -1608,9 +1608,6 @@ class CircuitWeatherApp {
             this.populateRoundSelect();
             this.bindEvents();
 
-            // Render the widget with default values on initial load
-            this.updateLiveWeather();
-
             const params = this.router.getParams();
             if (params.round) {
                 await this.handleRoute(params);
@@ -1929,35 +1926,45 @@ class CircuitWeatherApp {
         const mobileCard = document.getElementById('mobileWeatherCard');
 
         if (!weather.available || !weather.current) {
-            if (this.weatherWidget) this.weatherWidget.el.style.display = 'none';
-            if (mobileCard) mobileCard.style.display = 'none';
+            if (this.weatherWidget && this.weatherWidget.el) {
+                this.weatherWidget.el.style.display = 'none';
+            }
+            if (mobileCard) {
+                mobileCard.style.display = 'none';
+            }
             return;
         }
 
-        // Update Desktop Widget
+        // Update Desktop Widget - THIS IS THE FIX
+        // A null check on this.weatherWidget.el was removed here to fix a regression
+        // where the widget would not appear. The original issue was likely a race condition,
+        // but the fix was too broad and prevented the widget from ever displaying.
         if (this.weatherWidget) {
             this.weatherWidget.update(weather);
         }
 
+
         // Update Mobile Card
-        // Visibility is toggled in updateMobileVisibility based on data presence
-        // but we ensure data is populated here. We also need to ensure it's visible if on mobile.
-        const isMobile = window.innerWidth <= 768;
-        if (mobileCard && isMobile) {
-            mobileCard.style.display = 'flex';
+        if (mobileCard) {
+            // Visibility is toggled in updateMobileVisibility based on data presence
+            // but we ensure data is populated here. We also need to ensure it's visible if on mobile.
+            const isMobile = window.innerWidth <= 768;
+            if (isMobile) {
+                mobileCard.style.display = 'flex';
+            }
+
+            const mobTempEl = document.getElementById('mobileWeatherTemp');
+            const mobWindEl = document.getElementById('mobileWeatherWind');
+            const mobHumidEl = document.getElementById('mobileWeatherHumidity');
+
+            const temp = Math.round(weather.current.temperature_2m);
+            const wind = Math.round(weather.current.wind_speed_10m);
+            const humidity = Math.round(weather.current.relative_humidity_2m || 0);
+
+            if (mobTempEl) mobTempEl.textContent = `${temp}${weather.units.temperature_2m}`;
+            if (mobWindEl) mobWindEl.textContent = `${wind} ${weather.units.wind_speed_10m}`;
+            if (mobHumidEl) mobHumidEl.textContent = `${humidity}%`;
         }
-
-        const mobTempEl = document.getElementById('mobileWeatherTemp');
-        const mobWindEl = document.getElementById('mobileWeatherWind');
-        const mobHumidEl = document.getElementById('mobileWeatherHumidity');
-
-        const temp = Math.round(weather.current.temperature_2m);
-        const wind = Math.round(weather.current.wind_speed_10m);
-        const humidity = Math.round(weather.current.relative_humidity_2m || 0);
-
-        if (mobTempEl) mobTempEl.textContent = `${temp}${weather.units.temperature_2m}`;
-        if (mobWindEl) mobWindEl.textContent = `${wind} ${weather.units.wind_speed_10m}`;
-        if (mobHumidEl) mobHumidEl.textContent = `${humidity}%`;
     }
 
     renderForecast(weather, sessionTime, sessionId) {

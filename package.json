@@ -1,0 +1,16 @@
+{
+  "name": "weather-widget-verification",
+  "version": "1.0.0",
+  "description": "Verification script for weather widget",
+  "main": "verify_widget.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node verify_widget.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "playwright": "^1.45.1"
+  }
+}
