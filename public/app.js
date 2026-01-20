@@ -1687,10 +1687,24 @@ class CircuitWeatherApp {
 
         // Update mobile weather card visibility
         const mobileWeather = document.getElementById('mobileWeatherCard');
-        // Only show if we have a selected session AND forecast content is NOT hidden (meaning data is available)
-        const weatherAvailable = document.getElementById('forecastContent')?.style.display !== 'none';
-        if (mobileWeather && this.selectedSession && weatherAvailable) {
-            mobileWeather.style.display = isMobile ? 'flex' : 'none';
+        // Mobile card is now "Live Weather", so show if we have a race selected
+        // We check if content is populated by checking one of its children or just ensure updateLiveWeather was called
+        // Ideally, we hide it if the widget is hidden.
+        // Let's rely on the element's style.display being set by renderLiveWeather,
+        // but here we enforce the mobile/desktop media query logic.
+
+        if (mobileWeather) {
+            // Check if we have valid data (renderLiveWeather sets display to none if not)
+            // But renderLiveWeather is async.
+            // For now, let's assume if we have a selected race, we want to show it (unless data failed).
+            // Actually, best to let renderLiveWeather handle the "if data exists" part,
+            // and here we just handle the "if mobile" part.
+            // But if renderLiveWeather hid it, we shouldn't show it.
+
+            const hasData = mobileWeather.style.display !== 'none';
+            if (hasData) {
+                mobileWeather.style.display = isMobile ? 'flex' : 'none';
+            }
         }
 
         // Note: Map resizing is handled by ResizeObserver in MapManager
@@ -1763,8 +1777,14 @@ class CircuitWeatherApp {
         // Hide countdown until session selected (radar always shows)
         this.countdown.show(false);
 
-        // Fetch current weather for the circuit immediately (using "now" as reference)
-        this.updateWeatherDashboard(new Date());
+        // Hide forecast section since no session is selected yet
+        const forecastSection = document.getElementById('forecastSection');
+        if (forecastSection) {
+            forecastSection.style.display = 'none';
+        }
+
+        // Fetch current "Live" weather for the widgets
+        this.updateLiveWeather();
 
         this.updateMobileVisibility();
 
@@ -1857,13 +1877,15 @@ class CircuitWeatherApp {
             // Set session time for radar relative display
             this.radar.setSessionTime(sessionTime);
 
-            // Load radar and weather in parallel
+            // Load radar and session forecast in parallel
+            // Note: We don't force a "Live" weather update here, as that's handled by selectRound
+            // or by the initial load. However, we could refresh it if needed.
             await Promise.all([
                 this.radar.load(),
-                this.updateWeatherDashboard(sessionTime)
+                this.updateSessionForecast(sessionTime, session.id)
             ]);
 
-            // Show forecast section
+            // Show forecast section container
             const forecastSection = document.getElementById('forecastSection');
             if (forecastSection) forecastSection.style.display = 'block';
 
@@ -1878,95 +1900,103 @@ class CircuitWeatherApp {
         }
     }
 
-    async updateWeatherDashboard(sessionTime) {
+    async updateLiveWeather() {
+        if (!this.selectedRace || !this.selectedRace.location) return;
+
+        const { lat, long } = this.selectedRace.location;
+        // Use a "now" date to ensure we get current weather, even if for a future session
+        const weather = await this.weatherClient.getForecast(lat, long, new Date());
+
+        this.renderLiveWeather(weather);
+    }
+
+    async updateSessionForecast(sessionTime, sessionId) {
         if (!this.selectedRace || !this.selectedRace.location) return;
 
         const { lat, long } = this.selectedRace.location;
         const weather = await this.weatherClient.getForecast(lat, long, sessionTime);
 
-        this.renderWeather(weather, sessionTime);
+        this.renderForecast(weather, sessionTime, sessionId);
     }
 
-    renderWeather(weather, sessionTime) {
-        const content = document.getElementById('forecastContent');
-        const unavailable = document.getElementById('forecastUnavailable');
+    renderLiveWeather(weather) {
+        // Updates Desktop Widget and Mobile Card (Live)
+        // Independent of session forecast availability
+
         const mobileCard = document.getElementById('mobileWeatherCard');
 
-        if (!weather.available) {
-            if (content) content.style.display = 'none';
-            if (unavailable) unavailable.style.display = 'block';
+        if (!weather.available || !weather.current) {
+            if (this.weatherWidget) this.weatherWidget.el.style.display = 'none';
             if (mobileCard) mobileCard.style.display = 'none';
             return;
         }
-
-        if (content) content.style.display = 'block';
-        if (unavailable) unavailable.style.display = 'none';
-
-        // Show mobile card if we have data
-        const isMobile = window.innerWidth <= 768;
-        if (mobileCard) mobileCard.style.display = isMobile ? 'flex' : 'none';
-
-        // Update Current/Overview Metrics (using first hourly point or current if available)
-        // Prefer 'current' for the big numbers, but 'hourly' closest to session start is also good.
-        // Let's use 'current' for the big numbers to show "Right Now" at the track?
-        // Actually user asked for "forecast around the timings of the session".
-        // But "Current" implies right now. Let's use the current API data for the "Current" block.
 
         // Update Desktop Widget
         if (this.weatherWidget) {
             this.weatherWidget.update(weather);
         }
 
+        // Update Mobile Card
+        // Visibility is toggled in updateMobileVisibility based on data presence
+        // but we ensure data is populated here. We also need to ensure it's visible if on mobile.
+        const isMobile = window.innerWidth <= 768;
+        if (mobileCard && isMobile) {
+            mobileCard.style.display = 'flex';
+        }
+
+        const mobTempEl = document.getElementById('mobileWeatherTemp');
+        const mobWindEl = document.getElementById('mobileWeatherWind');
+        const mobHumidEl = document.getElementById('mobileWeatherHumidity');
+
+        const temp = Math.round(weather.current.temperature_2m);
+        const wind = Math.round(weather.current.wind_speed_10m);
+        const humidity = Math.round(weather.current.relative_humidity_2m || 0);
+
+        if (mobTempEl) mobTempEl.textContent = `${temp}${weather.units.temperature_2m}`;
+        if (mobWindEl) mobWindEl.textContent = `${wind} ${weather.units.wind_speed_10m}`;
+        if (mobHumidEl) mobHumidEl.textContent = `${humidity}%`;
+    }
+
+    renderForecast(weather, sessionTime, sessionId) {
+        // Updates Sidebar Forecast Panel ONLY
+
+        // Guard: If no session is currently selected (e.g., user switched rounds while fetching),
+        // or if the session ID doesn't match the requested one, do not render.
+        if (!this.selectedSession || (sessionId && this.selectedSession.id !== sessionId)) {
+            return;
+        }
+
+        const content = document.getElementById('forecastContent');
+        const unavailable = document.getElementById('forecastUnavailable');
+
+        if (!weather.available) {
+            if (content) content.style.display = 'none';
+            if (unavailable) unavailable.style.display = 'block';
+            return;
+        }
+
+        if (content) content.style.display = 'block';
+        if (unavailable) unavailable.style.display = 'none';
+
         const tempEl = document.getElementById('weatherTemp');
         const rainEl = document.getElementById('weatherRain');
         const windEl = document.getElementById('weatherWind');
         const windDirEl = document.getElementById('weatherWindDir');
 
-        // Mobile elements
-        const mobTempEl = document.getElementById('mobileWeatherTemp');
-        const mobRainEl = document.getElementById('mobileWeatherRain');
-        const mobWindEl = document.getElementById('mobileWeatherWind');
-        const mobHumidEl = document.getElementById('mobileWeatherHumidity');
-
         if (weather.current) {
             const temp = Math.round(weather.current.temperature_2m);
-            const rain = weather.current.precipitation || 0; // Current precip amount (mm) not prob.
-            // For probability, we might need to look at the hourly slot for "now"
-            // Let's use current wind and temp.
             const wind = Math.round(weather.current.wind_speed_10m);
             const dir = weather.current.wind_direction_10m;
-            const humidity = Math.round(weather.current.relative_humidity_2m || 0);
+            // For session forecast, we look at the hourly data to find max precip probability
+            let maxPrecip = 0;
+            if (weather.hourly && weather.hourly.length > 0) {
+                 maxPrecip = Math.max(...weather.hourly.map(h => h.precipProb));
+            }
 
             if (tempEl) tempEl.textContent = `${temp}${weather.units.temperature_2m}`;
             if (windEl) windEl.textContent = `${wind} ${weather.units.wind_speed_10m}`;
             if (windDirEl) windDirEl.textContent = `${dir}°`;
-
-            // For rain % in the "Current" box, usually people want probability.
-            // Let's find the hourly slot closest to NOW.
-            const nowTs = Math.floor(Date.now() / 1000);
-            // Open-Meteo hourly.time is unixtime
-            // Note: weather.hourly is ALREADY filtered to session time in getForecast!
-            // We need to look at the raw data or just show the session average?
-            // Let's just use the max probability from the session window for the "Rain" metric
-            // to give a "Session Risk" overview? Or just --% if not in window?
-
-            // Actually, let's use the first available hourly point from our filtered list
-            // as the "start of session" condition, or if the session is active, the current time.
-
-            // Use the first filtered hourly point (closest to session start - 1h)
-            if (weather.hourly && weather.hourly.length > 0) {
-                 // Find max precip probability in the window
-                 const maxPrecip = Math.max(...weather.hourly.map(h => h.precipProb));
-                 if (rainEl) rainEl.textContent = `${maxPrecip}%`;
-                 if (mobRainEl) mobRainEl.textContent = `${maxPrecip}%`;
-            } else {
-                 if (rainEl) rainEl.textContent = '--%';
-                 if (mobRainEl) mobRainEl.textContent = '--%';
-            }
-
-            if (mobTempEl) mobTempEl.textContent = `${temp}${weather.units.temperature_2m}`;
-            if (mobWindEl) mobWindEl.textContent = `${wind} ${weather.units.wind_speed_10m}`;
-            if (mobHumidEl) mobHumidEl.textContent = `${humidity}%`;
+            if (rainEl) rainEl.textContent = `${maxPrecip}%`;
         }
 
         // Render Timeline
