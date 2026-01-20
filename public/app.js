@@ -1266,21 +1266,24 @@ class WeatherWidget {
     update(weather) {
         if (!this.el) return;
 
-        if (!weather || !weather.current) {
-            this.el.style.display = 'none';
-            return;
-        }
-
-        // Only toggle flex, visibility controlled by CSS media query (hidden on mobile)
+        // Always ensure the widget is visible as a flex container
         this.el.style.display = 'flex';
-
-        const temp = Math.round(weather.current.temperature_2m);
-        const humidity = Math.round(weather.current.relative_humidity_2m || 0);
-        const wind = Math.round(weather.current.wind_speed_10m);
 
         const tempEl = document.getElementById('widgetTemp');
         const humidEl = document.getElementById('widgetHumidity');
         const windEl = document.getElementById('widgetWind');
+
+        if (!weather || !weather.current) {
+            // Reset to placeholders if weather data is unavailable
+            if (tempEl) tempEl.textContent = '--';
+            if (humidEl) humidEl.textContent = '--';
+            if (windEl) windEl.textContent = '--';
+            return;
+        }
+
+        const temp = Math.round(weather.current.temperature_2m);
+        const humidity = Math.round(weather.current.relative_humidity_2m || 0);
+        const wind = Math.round(weather.current.wind_speed_10m);
 
         if (tempEl) tempEl.textContent = `${temp}${weather.units.temperature_2m}`;
         if (humidEl) humidEl.textContent = `${humidity}%`;
@@ -1922,18 +1925,17 @@ class CircuitWeatherApp {
     renderLiveWeather(weather) {
         // Updates Desktop Widget and Mobile Card (Live)
         // Independent of session forecast availability
-
         const mobileCard = document.getElementById('mobileWeatherCard');
 
-        if (!weather.available || !weather.current) {
-            if (this.weatherWidget) this.weatherWidget.el.style.display = 'none';
-            if (mobileCard) mobileCard.style.display = 'none';
-            return;
-        }
-
-        // Update Desktop Widget
+        // Always update the desktop widget, regardless of data availability
         if (this.weatherWidget) {
             this.weatherWidget.update(weather);
+        }
+
+        // Handle mobile card visibility separately
+        if (!weather.available || !weather.current) {
+            if (mobileCard) mobileCard.style.display = 'none';
+            return;
         }
 
         // Update Mobile Card
