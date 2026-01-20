@@ -28,6 +28,11 @@ export default {
       return handleTrackRequest(request, env, ctx);
     }
 
+    // Handle weather requests
+    if (path === '/api/weather') {
+      return handleWeatherRequest(request, env, ctx);
+    }
+
     // For any other /api/* routes, return 404
     return new Response(JSON.stringify({ error: 'API endpoint not found' }), {
       status: 404,
@@ -321,6 +326,126 @@ async function handleTrackRequest(request, env, ctx) {
       status: 502,
       headers: {
         'Content-Type': 'application/json',
+        ...(getAllowedOrigin(request) ? { 'Access-Control-Allow-Origin': getAllowedOrigin(request) } : {}),
+      }
+    });
+  }
+}
+
+/**
+ * Handle Open Meteo Weather API requests with caching
+ */
+async function handleWeatherRequest(request, env, ctx) {
+  const url = new URL(request.url);
+  const lat = url.searchParams.get('lat');
+  const lon = url.searchParams.get('lon');
+
+  // SEC: Validate inputs (Strict regex to prevent parameter pollution)
+  const validCoordRegex = /^-?\d+(\.\d+)?$/;
+  if (!lat || !lon || !validCoordRegex.test(lat) || !validCoordRegex.test(lon)) {
+    return new Response(JSON.stringify({ error: 'Invalid latitude or longitude' }), {
+      status: 400,
+      headers: {
+        'Content-Type': 'application/json',
+        ...DEFAULT_SECURITY_HEADERS
+      }
+    });
+  }
+
+  // Construct upstream URL with hardcoded fields to prevent abuse
+  const upstreamUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,precipitation_probability,wind_speed_10m,wind_direction_10m,weather_code&current=temperature_2m,wind_speed_10m,wind_direction_10m,precipitation&timeformat=unixtime&forecast_days=16`;
+
+  // Canonical cache key
+  const cacheKey = new Request(upstreamUrl);
+  const cache = caches.default;
+
+  // Check cache match
+  let response = await cache.match(cacheKey);
+
+  if (response) {
+    const headers = new Headers(response.headers);
+    headers.set('X-Cache', 'HIT');
+
+    const allowedOrigin = getAllowedOrigin(request);
+    if (allowedOrigin) {
+      headers.set('Access-Control-Allow-Origin', allowedOrigin);
+      headers.set('Vary', 'Origin');
+    } else {
+      headers.delete('Access-Control-Allow-Origin');
+    }
+
+    // Set client cache control (15 mins)
+    headers.set('Cache-Control', 'public, max-age=900');
+
+    return new Response(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers
+    });
+  }
+
+  try {
+    const upstreamResponse = await fetch(upstreamUrl, {
+      headers: {
+        'Accept': 'application/json',
+        'User-Agent': 'CircuitWeather/1.0',
+      },
+    });
+
+    if (!upstreamResponse.ok) {
+      return new Response(JSON.stringify({
+        error: 'Upstream Weather API error',
+        status: upstreamResponse.status,
+      }), {
+        status: upstreamResponse.status,
+        headers: {
+          'Content-Type': 'application/json',
+          ...(getAllowedOrigin(request) ? { 'Access-Control-Allow-Origin': getAllowedOrigin(request) } : {}),
+        },
+      });
+    }
+
+    const responseBody = await upstreamResponse.text();
+
+    // Cache for 15 minutes (900 seconds)
+    const cacheResponse = new Response(responseBody, {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'public, max-age=900',
+        'X-Cache': 'MISS',
+        'Access-Control-Allow-Origin': '*',
+        ...DEFAULT_SECURITY_HEADERS
+      },
+    });
+
+    // Save to cache
+    ctx.waitUntil(cache.put(cacheKey, cacheResponse.clone()));
+
+    // Prepare client response
+    const clientHeaders = new Headers(cacheResponse.headers);
+    const allowedOrigin = getAllowedOrigin(request);
+    if (allowedOrigin) {
+      clientHeaders.set('Access-Control-Allow-Origin', allowedOrigin);
+      clientHeaders.set('Vary', 'Origin');
+    } else {
+      clientHeaders.delete('Access-Control-Allow-Origin');
+    }
+
+    return new Response(responseBody, {
+        status: 200,
+        headers: clientHeaders
+    });
+
+  } catch (error) {
+    console.error('Weather Fetch Error:', error);
+    return new Response(JSON.stringify({
+      error: 'Failed to fetch weather data',
+    }), {
+      status: 502,
+      headers: {
+        'Content-Type': 'application/json',
+        ...DEFAULT_SECURITY_HEADERS,
         ...(getAllowedOrigin(request) ? { 'Access-Control-Allow-Origin': getAllowedOrigin(request) } : {}),
       }
     });
