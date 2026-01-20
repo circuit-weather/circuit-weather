@@ -1237,7 +1237,7 @@ class WeatherWidget {
         if (!container) return;
 
         this.el = document.createElement('div');
-        this.el.className = 'weather-widget --no-data';
+        this.el.className = 'weather-widget';
         // HTML injected by JS
         this.el.innerHTML = `
             <div class="weather-widget-metric" title="Temperature">
@@ -1266,10 +1266,13 @@ class WeatherWidget {
     update(weather) {
         if (!this.el) return;
 
-        const hasData = weather && weather.current;
-        this.el.classList.toggle('--no-data', !hasData);
+        if (!weather || !weather.current) {
+            this.el.style.display = 'none';
+            return;
+        }
 
-        if (!hasData) return;
+        // Only toggle flex, visibility controlled by CSS media query (hidden on mobile)
+        this.el.style.display = 'flex';
 
         const temp = Math.round(weather.current.temperature_2m);
         const humidity = Math.round(weather.current.relative_humidity_2m || 0);
@@ -1605,6 +1608,9 @@ class CircuitWeatherApp {
             this.populateRoundSelect();
             this.bindEvents();
 
+            // Render the widget with default values on initial load
+            this.updateLiveWeather();
+
             const params = this.router.getParams();
             if (params.round) {
                 await this.handleRoute(params);
@@ -1682,8 +1688,27 @@ class CircuitWeatherApp {
             mobileCountdown.style.display = (shouldShow && isMobile) ? 'block' : 'none';
         }
 
-        // Mobile weather card visibility is now handled by CSS media queries
-        // and the '--no-data' class, which is toggled in `renderLiveWeather`.
+        // Update mobile weather card visibility
+        const mobileWeather = document.getElementById('mobileWeatherCard');
+        // Mobile card is now "Live Weather", so show if we have a race selected
+        // We check if content is populated by checking one of its children or just ensure updateLiveWeather was called
+        // Ideally, we hide it if the widget is hidden.
+        // Let's rely on the element's style.display being set by renderLiveWeather,
+        // but here we enforce the mobile/desktop media query logic.
+
+        if (mobileWeather) {
+            // Check if we have valid data (renderLiveWeather sets display to none if not)
+            // But renderLiveWeather is async.
+            // For now, let's assume if we have a selected race, we want to show it (unless data failed).
+            // Actually, best to let renderLiveWeather handle the "if data exists" part,
+            // and here we just handle the "if mobile" part.
+            // But if renderLiveWeather hid it, we shouldn't show it.
+
+            const hasData = mobileWeather.style.display !== 'none';
+            if (hasData) {
+                mobileWeather.style.display = isMobile ? 'flex' : 'none';
+            }
+        }
 
         // Note: Map resizing is handled by ResizeObserver in MapManager
     }
@@ -1902,7 +1927,12 @@ class CircuitWeatherApp {
         // Independent of session forecast availability
 
         const mobileCard = document.getElementById('mobileWeatherCard');
-        const hasData = weather.available && weather.current;
+
+        if (!weather.available || !weather.current) {
+            if (this.weatherWidget) this.weatherWidget.el.style.display = 'none';
+            if (mobileCard) mobileCard.style.display = 'none';
+            return;
+        }
 
         // Update Desktop Widget
         if (this.weatherWidget) {
@@ -1910,12 +1940,11 @@ class CircuitWeatherApp {
         }
 
         // Update Mobile Card
-        if (mobileCard) {
-            mobileCard.classList.toggle('--no-data', !hasData);
-        }
-
-        if (!hasData) {
-            return;
+        // Visibility is toggled in updateMobileVisibility based on data presence
+        // but we ensure data is populated here. We also need to ensure it's visible if on mobile.
+        const isMobile = window.innerWidth <= 768;
+        if (mobileCard && isMobile) {
+            mobileCard.style.display = 'flex';
         }
 
         const mobTempEl = document.getElementById('mobileWeatherTemp');
