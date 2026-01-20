@@ -1210,7 +1210,7 @@ body {
         position: absolute;
         top: 64px;
         left: var(--spacing-sm);
-        right: 3.5rem; /* Make room for weather widget */
+        right: var(--spacing-sm);
         display: flex;
         align-items: center;
         gap: var(--spacing-sm);
@@ -1318,7 +1318,7 @@ body {
 @media (max-width: 768px) {
     .mobile-weather-card {
         position: absolute;
-        top: 64px;
+        top: 124px;
         right: 8px;
         display: flex;
         flex-direction: column;
@@ -1356,8 +1356,20 @@ body {
     .icon-weather {
         width: 18px;
         height: 18px;
-        color: var(--color-text);
     }
+}
+
+/* Weather Icon Colors */
+.icon-temp {
+    color: #ef4444; /* Red-500 */
+}
+
+.icon-humidity {
+    color: #3b82f6; /* Blue-500 */
+}
+
+.icon-wind {
+    color: #64748b; /* Slate-500 */
 }
 
 /* ===================================
