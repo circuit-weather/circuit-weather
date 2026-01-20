@@ -1761,6 +1761,10 @@ class CircuitWeatherApp {
 
         // Hide countdown until session selected (radar always shows)
         this.countdown.show(false);
+
+        // Fetch current weather for the circuit immediately (using "now" as reference)
+        this.updateWeatherDashboard(new Date());
+
         this.updateMobileVisibility();
 
         this.router.navigate('f1', round, null);
