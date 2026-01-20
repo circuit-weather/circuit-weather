@@ -1327,6 +1327,7 @@ class MapManager {
         this.map = null;
         this.tileLayer = null;
         this.currentTheme = 'light';
+        this.resizeObserver = null;
     }
 
     init() {
@@ -1335,6 +1336,18 @@ class MapManager {
             zoom: CONFIG.defaultZoom,
             zoomControl: true,
         });
+
+        // Bolt Optimization: Use ResizeObserver to automatically handle map resizing
+        // This is more efficient than window.resize listeners and manual timeouts
+        const mapContainer = document.getElementById('map');
+        if (mapContainer && window.ResizeObserver) {
+            this.resizeObserver = new ResizeObserver(() => {
+                if (this.map) {
+                    this.map.invalidateSize();
+                }
+            });
+            this.resizeObserver.observe(mapContainer);
+        }
 
         this.setTheme(document.documentElement.getAttribute('data-theme') || 'light');
         return this.map;
@@ -1572,18 +1585,11 @@ class CircuitWeatherApp {
 
     bindResizeHandler() {
         let lastIsMobile = window.innerWidth <= 768;
-        let resizeTimeout = null;
 
         window.addEventListener('resize', () => {
             const isMobile = window.innerWidth <= 768;
 
-            // Always invalidate map size on resize (debounced)
-            if (resizeTimeout) clearTimeout(resizeTimeout);
-            resizeTimeout = setTimeout(() => {
-                if (this.mapManager && this.mapManager.map) {
-                    this.mapManager.map.invalidateSize();
-                }
-            }, 150);
+            // Note: Map resizing is handled by ResizeObserver in MapManager
 
             // Update visibility when crossing the breakpoint
             if (isMobile !== lastIsMobile) {
@@ -1617,19 +1623,7 @@ class CircuitWeatherApp {
             mobileWeather.style.display = isMobile ? 'flex' : 'none';
         }
 
-        // Invalidate map size multiple times with staggered delays
-        // to ensure CSS transitions have completed
-        if (this.mapManager && this.mapManager.map) {
-            const map = this.mapManager.map;
-            // Immediate
-            map.invalidateSize();
-            // After short delay
-            setTimeout(() => map.invalidateSize(), 100);
-            // After medium delay (for CSS transitions)
-            setTimeout(() => map.invalidateSize(), 300);
-            // After longer delay (final cleanup)
-            setTimeout(() => map.invalidateSize(), 500);
-        }
+        // Note: Map resizing is handled by ResizeObserver in MapManager
     }
 
     bindEvents() {
