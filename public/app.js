@@ -1266,13 +1266,19 @@ class WeatherWidget {
     update(weather) {
         if (!this.el) return;
 
+        // Ensure the widget is always visible, controlled by CSS media queries
+        this.el.style.display = 'flex';
+
         if (!weather || !weather.current) {
-            this.el.style.display = 'none';
+            // Clear content if no data is available, but keep widget visible
+            const tempEl = document.getElementById('widgetTemp');
+            const humidEl = document.getElementById('widgetHumidity');
+            const windEl = document.getElementById('widgetWind');
+            if (tempEl) tempEl.textContent = '--';
+            if (humidEl) humidEl.textContent = '--';
+            if (windEl) windEl.textContent = '--';
             return;
         }
-
-        // Only toggle flex, visibility controlled by CSS media query (hidden on mobile)
-        this.el.style.display = 'flex';
 
         const temp = Math.round(weather.current.temperature_2m);
         const humidity = Math.round(weather.current.relative_humidity_2m || 0);
@@ -1921,32 +1927,24 @@ class CircuitWeatherApp {
 
     renderLiveWeather(weather) {
         // Updates Desktop Widget and Mobile Card (Live)
-        // Independent of session forecast availability
-
-        const mobileCard = document.getElementById('mobileWeatherCard');
-
-        if (!weather.available || !weather.current) {
-            if (this.weatherWidget) this.weatherWidget.update(weather);
-            if (mobileCard) mobileCard.style.display = 'none';
-            return;
-        }
 
         // Update Desktop Widget
-        if (this.weatherWidget) {
-            this.weatherWidget.update(weather);
-        }
+        this.weatherWidget.update(weather);
 
         // Update Mobile Card
-        // Visibility is toggled in updateMobileVisibility based on data presence
-        // but we ensure data is populated here. We also need to ensure it's visible if on mobile.
-        const isMobile = window.innerWidth <= 768;
-        if (mobileCard && isMobile) {
-            mobileCard.style.display = 'flex';
-        }
-
+        const mobileCard = document.getElementById('mobileWeatherCard');
         const mobTempEl = document.getElementById('mobileWeatherTemp');
         const mobWindEl = document.getElementById('mobileWeatherWind');
         const mobHumidEl = document.getElementById('mobileWeatherHumidity');
+
+        if (!weather.available || !weather.current) {
+            // Clear content if no data is available, but keep card visible
+            if (mobTempEl) mobTempEl.textContent = '--';
+            if (mobWindEl) mobWindEl.textContent = '--';
+            if (mobHumidEl) mobHumidEl.textContent = '--';
+            // Visibility is handled by updateMobileVisibility
+            return;
+        }
 
         const temp = Math.round(weather.current.temperature_2m);
         const wind = Math.round(weather.current.wind_speed_10m);
@@ -1955,6 +1953,9 @@ class CircuitWeatherApp {
         if (mobTempEl) mobTempEl.textContent = `${temp}${weather.units.temperature_2m}`;
         if (mobWindEl) mobWindEl.textContent = `${wind} ${weather.units.wind_speed_10m}`;
         if (mobHumidEl) mobHumidEl.textContent = `${humidity}%`;
+
+        // Ensure visibility is updated
+        this.updateMobileVisibility();
     }
 
     renderForecast(weather, sessionTime, sessionId) {
@@ -1983,23 +1984,15 @@ class CircuitWeatherApp {
         const windEl = document.getElementById('weatherWind');
         const windDirEl = document.getElementById('weatherWindDir');
 
-        // Find the hourly data closest to the session start time for the main display
-        const sessionTs = Math.floor(sessionTime.getTime() / 1000);
-        let closestHour = null;
-        if (weather.hourly && weather.hourly.length > 0) {
-            closestHour = weather.hourly.reduce((prev, curr) => {
-                const prevDiff = Math.abs(prev.time - sessionTs);
-                const currDiff = Math.abs(curr.time - sessionTs);
-                return (currDiff < prevDiff) ? curr : prev;
-            });
-        }
-
-        if (closestHour) {
-            const temp = Math.round(closestHour.temp);
-            const wind = Math.round(closestHour.windSpeed);
-            const dir = closestHour.windDir;
+        if (weather.current) {
+            const temp = Math.round(weather.current.temperature_2m);
+            const wind = Math.round(weather.current.wind_speed_10m);
+            const dir = weather.current.wind_direction_10m;
             // For session forecast, we look at the hourly data to find max precip probability
-            const maxPrecip = Math.max(...weather.hourly.map(h => h.precipProb));
+            let maxPrecip = 0;
+            if (weather.hourly && weather.hourly.length > 0) {
+                 maxPrecip = Math.max(...weather.hourly.map(h => h.precipProb));
+            }
 
             if (tempEl) tempEl.textContent = `${temp}${weather.units.temperature_2m}`;
             if (windEl) windEl.textContent = `${wind} ${weather.units.wind_speed_10m}`;
