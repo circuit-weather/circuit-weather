@@ -162,26 +162,29 @@ async function handleApiRequest(request, env, ctx) {
       });
     }
 
-    const responseBody = await upstreamResponse.text();
+    // Bolt Optimization: Stream response instead of buffering text
+    const [cacheBody, clientBody] = upstreamResponse.body.tee();
 
     // Create cacheable response (1 hour)
     // We store '*' in cache as a fallback, but we always override on delivery
-    response = new Response(responseBody, {
-      status: 200,
-      headers: {
+    const cacheHeaders = new Headers({
         'Content-Type': 'application/json',
         'Cache-Control': 'public, max-age=3600',
         'X-Cache': 'MISS',
         'Access-Control-Allow-Origin': '*', // Store permissive, override on delivery
         ...DEFAULT_SECURITY_HEADERS
-      },
+    });
+
+    const cacheResponse = new Response(cacheBody, {
+      status: 200,
+      headers: cacheHeaders,
     });
 
     // Save to cache
-    ctx.waitUntil(cache.put(cacheKey, response.clone()));
+    ctx.waitUntil(cache.put(cacheKey, cacheResponse));
 
     // Prepare response for client with strict CORS
-    const clientHeaders = new Headers(response.headers);
+    const clientHeaders = new Headers(cacheHeaders);
     const allowedOrigin = getAllowedOrigin(request);
     if (allowedOrigin) {
       clientHeaders.set('Access-Control-Allow-Origin', allowedOrigin);
@@ -190,9 +193,8 @@ async function handleApiRequest(request, env, ctx) {
       clientHeaders.delete('Access-Control-Allow-Origin');
     }
 
-    return new Response(response.body, {
-        status: response.status,
-        statusText: response.statusText,
+    return new Response(clientBody, {
+        status: 200,
         headers: clientHeaders
     });
 
@@ -284,25 +286,28 @@ async function handleTrackRequest(request, env, ctx) {
       });
     }
 
-    const responseBody = await upstreamResponse.text();
+    // Bolt Optimization: Stream response instead of buffering text
+    const [cacheBody, clientBody] = upstreamResponse.body.tee();
 
     // Create cacheable response (24 hours - tracks are static)
-    response = new Response(responseBody, {
-      status: 200,
-      headers: {
+    const cacheHeaders = new Headers({
         'Content-Type': 'application/json',
         'Cache-Control': 'public, max-age=86400',
         'X-Cache': 'MISS',
         'Access-Control-Allow-Origin': '*',
         ...DEFAULT_SECURITY_HEADERS
-      },
+    });
+
+    const cacheResponse = new Response(cacheBody, {
+      status: 200,
+      headers: cacheHeaders,
     });
 
     // Save to cache
-    ctx.waitUntil(cache.put(cacheKey, response.clone()));
+    ctx.waitUntil(cache.put(cacheKey, cacheResponse));
 
     // Prepare response for client with strict CORS
-    const clientHeaders = new Headers(response.headers);
+    const clientHeaders = new Headers(cacheHeaders);
     const allowedOrigin = getAllowedOrigin(request);
     if (allowedOrigin) {
       clientHeaders.set('Access-Control-Allow-Origin', allowedOrigin);
@@ -311,9 +316,8 @@ async function handleTrackRequest(request, env, ctx) {
       clientHeaders.delete('Access-Control-Allow-Origin');
     }
 
-    return new Response(response.body, {
-        status: response.status,
-        statusText: response.statusText,
+    return new Response(clientBody, {
+        status: 200,
         headers: clientHeaders
     });
 
@@ -405,25 +409,28 @@ async function handleWeatherRequest(request, env, ctx) {
       });
     }
 
-    const responseBody = await upstreamResponse.text();
+    // Bolt Optimization: Stream response instead of buffering text
+    const [cacheBody, clientBody] = upstreamResponse.body.tee();
 
     // Cache for 15 minutes (900 seconds)
-    const cacheResponse = new Response(responseBody, {
-      status: 200,
-      headers: {
+    const cacheHeaders = new Headers({
         'Content-Type': 'application/json',
         'Cache-Control': 'public, max-age=900',
         'X-Cache': 'MISS',
         'Access-Control-Allow-Origin': '*',
         ...DEFAULT_SECURITY_HEADERS
-      },
+    });
+
+    const cacheResponse = new Response(cacheBody, {
+      status: 200,
+      headers: cacheHeaders,
     });
 
     // Save to cache
-    ctx.waitUntil(cache.put(cacheKey, cacheResponse.clone()));
+    ctx.waitUntil(cache.put(cacheKey, cacheResponse));
 
     // Prepare client response
-    const clientHeaders = new Headers(cacheResponse.headers);
+    const clientHeaders = new Headers(cacheHeaders);
     const allowedOrigin = getAllowedOrigin(request);
     if (allowedOrigin) {
       clientHeaders.set('Access-Control-Allow-Origin', allowedOrigin);
@@ -432,7 +439,7 @@ async function handleWeatherRequest(request, env, ctx) {
       clientHeaders.delete('Access-Control-Allow-Origin');
     }
 
-    return new Response(responseBody, {
+    return new Response(clientBody, {
         status: 200,
         headers: clientHeaders
     });
@@ -508,25 +515,28 @@ async function handleRadarRequest(request, env, ctx) {
       });
     }
 
-    const responseBody = await upstreamResponse.text();
+    // Bolt Optimization: Stream response instead of buffering text
+    const [cacheBody, clientBody] = upstreamResponse.body.tee();
 
     // 1. Prepare Response for Cache (1 minute)
-    const cacheResponse = new Response(responseBody, {
-      status: 200,
-      headers: {
+    const cacheHeaders = new Headers({
         'Content-Type': 'application/json',
         'Cache-Control': 'public, max-age=60', // Worker Cache TTL
         'X-Cache': 'MISS',
         'Access-Control-Allow-Origin': '*',
         ...DEFAULT_SECURITY_HEADERS
-      },
+    });
+
+    const cacheResponse = new Response(cacheBody, {
+      status: 200,
+      headers: cacheHeaders,
     });
 
     // Save to cache
-    ctx.waitUntil(cache.put(cacheKey, cacheResponse.clone()));
+    ctx.waitUntil(cache.put(cacheKey, cacheResponse));
 
     // 2. Prepare Response for Client (1 minute)
-    const clientHeaders = new Headers(cacheResponse.headers);
+    const clientHeaders = new Headers(cacheHeaders);
     const allowedOrigin = getAllowedOrigin(request);
     if (allowedOrigin) {
       clientHeaders.set('Access-Control-Allow-Origin', allowedOrigin);
@@ -537,7 +547,7 @@ async function handleRadarRequest(request, env, ctx) {
     // Set client cache control
     clientHeaders.set('Cache-Control', 'public, max-age=60');
 
-    return new Response(responseBody, {
+    return new Response(clientBody, {
         status: 200,
         headers: clientHeaders
     });
