@@ -1926,7 +1926,7 @@ class CircuitWeatherApp {
         const mobileCard = document.getElementById('mobileWeatherCard');
 
         if (!weather.available || !weather.current) {
-            if (this.weatherWidget) this.weatherWidget.el.style.display = 'none';
+            if (this.weatherWidget) this.weatherWidget.update(weather);
             if (mobileCard) mobileCard.style.display = 'none';
             return;
         }
@@ -1983,15 +1983,23 @@ class CircuitWeatherApp {
         const windEl = document.getElementById('weatherWind');
         const windDirEl = document.getElementById('weatherWindDir');
 
-        if (weather.current) {
-            const temp = Math.round(weather.current.temperature_2m);
-            const wind = Math.round(weather.current.wind_speed_10m);
-            const dir = weather.current.wind_direction_10m;
+        // Find the hourly data closest to the session start time for the main display
+        const sessionTs = Math.floor(sessionTime.getTime() / 1000);
+        let closestHour = null;
+        if (weather.hourly && weather.hourly.length > 0) {
+            closestHour = weather.hourly.reduce((prev, curr) => {
+                const prevDiff = Math.abs(prev.time - sessionTs);
+                const currDiff = Math.abs(curr.time - sessionTs);
+                return (currDiff < prevDiff) ? curr : prev;
+            });
+        }
+
+        if (closestHour) {
+            const temp = Math.round(closestHour.temp);
+            const wind = Math.round(closestHour.windSpeed);
+            const dir = closestHour.windDir;
             // For session forecast, we look at the hourly data to find max precip probability
-            let maxPrecip = 0;
-            if (weather.hourly && weather.hourly.length > 0) {
-                 maxPrecip = Math.max(...weather.hourly.map(h => h.precipProb));
-            }
+            const maxPrecip = Math.max(...weather.hourly.map(h => h.precipProb));
 
             if (tempEl) tempEl.textContent = `${temp}${weather.units.temperature_2m}`;
             if (windEl) windEl.textContent = `${wind} ${weather.units.wind_speed_10m}`;
