@@ -1337,6 +1337,58 @@ body {
     color: #64748b; /* Slate-500 */
 }
 
+.icon-precip {
+    color: #3b82f6; /* Blue-500 for rain/precip */
+}
+
+/* ===================================
+   Map Weather Widget
+   =================================== */
+
+.leaflet-control-weather {
+    background: var(--sidebar-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-md);
+    padding: var(--spacing-sm);
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+}
+
+.weather-widget-metric {
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    color: var(--color-text);
+}
+
+.weather-widget-metric .icon-weather {
+    width: 1rem;
+    height: 1rem;
+    flex-shrink: 0;
+}
+
+.weather-widget-metric span {
+    font-size: 0.75rem;
+    font-weight: 600;
+    min-width: 40px; /* Align text */
+    text-align: left;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Reposition weather widget on mobile */
+@media (max-width: 768px) {
+    .leaflet-top.leaflet-right {
+        /* Position below header (56px) + layout padding */
+        top: calc(56px + var(--spacing-sm));
+        right: var(--spacing-sm);
+        left: auto;
+    }
+}
+
 /* ===================================
    Privacy Modal
    =================================== */
