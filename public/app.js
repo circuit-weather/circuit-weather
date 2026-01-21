@@ -1168,6 +1168,9 @@ class RangeCircles {
     }
 }
 
+// ===================================
+// Countdown Timer
+// ===================================
 
 class CountdownTimer {
     constructor() {
@@ -1560,6 +1563,7 @@ class CircuitWeatherApp {
         this.radar = null;
         this.trackLayer = null;
         this.rangeCircles = null;
+        this.weatherWidget = null;
         this.countdown = new CountdownTimer();
         this.recentreControl = null;
         this.currentCircuitCenter = null;
@@ -1593,11 +1597,11 @@ class CircuitWeatherApp {
             mobileCountryFlag: document.getElementById('mobileCountryFlag'),
             mobileRaceInfoName: document.getElementById('mobileRaceInfoName'),
             mobileRaceInfoCircuit: document.getElementById('mobileRaceInfoCircuit'),
-            // Unified Weather Widget (Live)
-            weatherWidget: document.getElementById('weatherWidget'),
-            weatherTemp: document.getElementById('widgetTemp'),
-            weatherWind: document.getElementById('widgetWind'),
-            weatherHumidity: document.getElementById('widgetHumidity'),
+            // Mobile Weather Card (Live)
+            mobileWeatherCard: document.getElementById('mobileWeatherCard'),
+            mobileWeatherTemp: document.getElementById('mobileWeatherTemp'),
+            mobileWeatherWind: document.getElementById('mobileWeatherWind'),
+            mobileWeatherHumidity: document.getElementById('mobileWeatherHumidity'),
         };
     }
 
@@ -1624,6 +1628,8 @@ class CircuitWeatherApp {
             this.rangeCircles = new RangeCircles(map);
             this.trackLayer = new TrackLayer(map);
             this.radar = new WeatherRadar(map);
+            this.weatherWidget = new MapWeatherWidget({ position: 'topright' });
+            this.mapManager.map.addControl(this.weatherWidget);
 
 
             // Always load radar immediately
@@ -1712,6 +1718,20 @@ class CircuitWeatherApp {
             mobileCountdown.style.display = (shouldShow && isMobile) ? 'block' : 'none';
         }
 
+        // Update mobile weather card visibility
+        if (this.ui.mobileWeatherCard) {
+            // Check if we have valid data (renderLiveWeather sets display to none if not)
+            // But renderLiveWeather is async.
+            // For now, let's assume if we have a selected race, we want to show it (unless data failed).
+            // Actually, best to let renderLiveWeather handle the "if data exists" part,
+            // and here we just handle the "if mobile" part.
+            // But if renderLiveWeather hid it, we shouldn't show it.
+
+            const hasData = this.ui.mobileWeatherCard.style.display !== 'none';
+            if (hasData) {
+                this.ui.mobileWeatherCard.style.display = isMobile ? 'flex' : 'none';
+            }
+        }
 
         // Note: Map resizing is handled by ResizeObserver in MapManager
     }
@@ -1895,7 +1915,8 @@ class CircuitWeatherApp {
     async updateLiveWeatherForMapCenter() {
         const center = this.mapManager.map.getCenter();
         const weather = await this.weatherClient.getForecast(center.lat, center.lng, new Date());
-        this.renderLiveWeather(weather);
+        this.weatherWidget.update(weather);
+        this.renderLiveWeather(weather); // Also update mobile card
     }
 
 
@@ -1909,25 +1930,32 @@ class CircuitWeatherApp {
     }
 
     renderLiveWeather(weather) {
-        const { weatherWidget, weatherTemp, weatherWind, weatherHumidity } = this.ui;
+        // Updates Desktop Widget and Mobile Card (Live)
+        // Independent of session forecast availability
 
-        const hasData = weather.available && weather.current;
+        const mobileCard = this.ui.mobileWeatherCard;
 
-        if (weatherWidget) {
-            weatherWidget.style.display = hasData ? '' : 'none';
+        if (!weather.available || !weather.current) {
+            if (mobileCard) mobileCard.style.display = 'none';
+            return;
         }
 
-        if (!hasData) return;
+        const isMobile = window.innerWidth <= 768;
+        if (mobileCard && isMobile) {
+            mobileCard.style.display = 'flex';
+        } else if (mobileCard) {
+            mobileCard.style.display = 'none';
+        }
 
         const temp = Math.round(weather.current.temperature_2m);
         const wind = Math.round(weather.current.wind_speed_10m);
         const humidity = Math.round(weather.current.relative_humidity_2m || 0);
-        const tempUnit = weather.units.temperature_2m;
-        const windUnit = weather.units.wind_speed_10m;
+        const precip = Math.round(weather.current.precipitation_probability || 0);
 
-        if (weatherTemp) weatherTemp.textContent = `${temp}${tempUnit}`;
-        if (weatherWind) weatherWind.textContent = `${wind} ${windUnit}`;
-        if (weatherHumidity) weatherHumidity.textContent = `${humidity}%`;
+
+        if (this.ui.mobileWeatherTemp) this.ui.mobileWeatherTemp.textContent = `${temp}${weather.units.temperature_2m}`;
+        if (this.ui.mobileWeatherWind) this.ui.mobileWeatherWind.textContent = `${wind} ${weather.units.wind_speed_10m}`;
+        if (this.ui.mobileWeatherHumidity) this.ui.mobileWeatherHumidity.textContent = `${humidity}%`;
     }
 
     renderForecast(weather, sessionTime, sessionId) {
