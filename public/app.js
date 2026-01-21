@@ -1168,87 +1168,6 @@ class RangeCircles {
     }
 }
 
-// ===================================
-// Countdown Timer
-// ===================================
-
-const MapWeatherWidget = L.Control.extend({
-    onAdd: function (map) {
-        this._div = L.DomUtil.create('div', 'leaflet-control-weather');
-        this.update(null); // Initial placeholder state
-        return this._div;
-    },
-
-    onRemove: function (map) {
-        // Nothing to do here
-    },
-
-    update: function (weather) {
-        if (!this._div) return;
-
-        if (!weather || !weather.current) {
-            this._div.innerHTML = `
-                <div class="weather-widget-metric" title="Temperature">
-                    <svg class="icon-weather icon-temp" viewBox="0 0 24 24"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z" /></svg>
-                    <span>--</span>
-                </div>
-                <div class="weather-widget-metric" title="Humidity">
-                    <svg class="icon-weather icon-humidity" viewBox="0 0 24 24"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" /></svg>
-                    <span>--%</span>
-                </div>
-                <div class="weather-widget-metric" title="Wind">
-                     <svg class="icon-weather icon-wind" viewBox="0 0 24 24"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2" /></svg>
-                    <span>--</span>
-                </div>
-                 <div class="weather-widget-metric" title="Precipitation">
-                    <svg class="icon-weather icon-precip" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25" />
-                        <path d="M8 14v1" />
-                        <path d="M8 19v1" />
-                        <path d="M12 15v1" />
-                        <path d="M12 20v1" />
-                        <path d="M16 14v1" />
-                        <path d="M16 19v1" />
-                    </svg>
-                    <span>--%</span>
-                </div>
-            `;
-            return;
-        }
-
-        const temp = Math.round(weather.current.temperature_2m);
-        const humidity = Math.round(weather.current.relative_humidity_2m || 0);
-        const wind = Math.round(weather.current.wind_speed_10m);
-        const precip = Math.round(weather.current.precipitation_probability || 0);
-
-        this._div.innerHTML = `
-            <div class="weather-widget-metric" title="Temperature">
-                <svg class="icon-weather icon-temp" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z" /></svg>
-                <span>${temp}${weather.units.temperature_2m}</span>
-            </div>
-            <div class="weather-widget-metric" title="Humidity">
-                <svg class="icon-weather icon-humidity" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" /></svg>
-                <span>${humidity}%</span>
-            </div>
-            <div class="weather-widget-metric" title="Wind">
-                 <svg class="icon-weather icon-wind" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2" /></svg>
-                <span>${wind} ${weather.units.wind_speed_10m}</span>
-            </div>
-             <div class="weather-widget-metric" title="Precipitation">
-                <svg class="icon-weather icon-precip" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25" />
-                    <path d="M8 14v1" />
-                    <path d="M8 19v1" />
-                    <path d="M12 15v1" />
-                    <path d="M12 20v1" />
-                    <path d="M16 14v1" />
-                    <path d="M16 19v1" />
-                </svg>
-                <span>${precip}%</span>
-            </div>
-        `;
-    }
-});
 
 class CountdownTimer {
     constructor() {
@@ -1322,6 +1241,7 @@ class CountdownTimer {
         }
     }
 }
+
 
 // ===================================
 // Recentre Control
@@ -1640,7 +1560,6 @@ class CircuitWeatherApp {
         this.radar = null;
         this.trackLayer = null;
         this.rangeCircles = null;
-        this.weatherWidget = null;
         this.countdown = new CountdownTimer();
         this.recentreControl = null;
         this.currentCircuitCenter = null;
@@ -1674,11 +1593,11 @@ class CircuitWeatherApp {
             mobileCountryFlag: document.getElementById('mobileCountryFlag'),
             mobileRaceInfoName: document.getElementById('mobileRaceInfoName'),
             mobileRaceInfoCircuit: document.getElementById('mobileRaceInfoCircuit'),
-            // Mobile Weather Card (Live)
-            mobileWeatherCard: document.getElementById('mobileWeatherCard'),
-            mobileWeatherTemp: document.getElementById('mobileWeatherTemp'),
-            mobileWeatherWind: document.getElementById('mobileWeatherWind'),
-            mobileWeatherHumidity: document.getElementById('mobileWeatherHumidity'),
+            // Unified Weather Widget (Live)
+            weatherWidget: document.getElementById('weatherWidget'),
+            weatherTemp: document.getElementById('widgetTemp'),
+            weatherWind: document.getElementById('widgetWind'),
+            weatherHumidity: document.getElementById('widgetHumidity'),
         };
     }
 
@@ -1696,14 +1615,15 @@ class CircuitWeatherApp {
             // Sidebar manager for mobile
             this.sidebarManager = new SidebarManager();
 
+            // Handle resize events for mobile visibility
+            this.bindResizeHandler();
+
             // Recentre control (added to zoom control container)
             this.recentreControl = new RecentreControl(map);
 
             this.rangeCircles = new RangeCircles(map);
             this.trackLayer = new TrackLayer(map);
             this.radar = new WeatherRadar(map);
-            this.weatherWidget = new MapWeatherWidget({ position: 'topright' });
-            this.mapManager.map.addControl(this.weatherWidget);
 
 
             // Always load radar immediately
@@ -1759,6 +1679,41 @@ class CircuitWeatherApp {
                 this.selectSession(nextSession.id);
             }
         }
+    }
+
+    bindResizeHandler() {
+        let lastIsMobile = window.innerWidth <= 768;
+
+        window.addEventListener('resize', () => {
+            const isMobile = window.innerWidth <= 768;
+
+            // Note: Map resizing is handled by ResizeObserver in MapManager
+
+            // Update visibility when crossing the breakpoint
+            if (isMobile !== lastIsMobile) {
+                lastIsMobile = isMobile;
+                this.updateMobileVisibility();
+            }
+        });
+    }
+
+    updateMobileVisibility() {
+        const isMobile = window.innerWidth <= 768;
+
+        // Update mobile race info visibility
+        if (this.ui.mobileRaceInfo) {
+            this.ui.mobileRaceInfo.style.display = (this.selectedRace && isMobile) ? 'flex' : 'none';
+        }
+
+        // Update mobile countdown visibility
+        const mobileCountdown = document.getElementById('mobileCountdown');
+        if (mobileCountdown) {
+            const shouldShow = this.selectedSession && this.countdown.targetTime;
+            mobileCountdown.style.display = (shouldShow && isMobile) ? 'block' : 'none';
+        }
+
+
+        // Note: Map resizing is handled by ResizeObserver in MapManager
     }
 
     bindEvents() {
@@ -1834,6 +1789,8 @@ class CircuitWeatherApp {
 
         // Fetch current "Live" weather for the widgets
         this.updateLiveWeatherForMapCenter();
+
+        this.updateMobileVisibility();
 
         this.router.navigate('f1', round, null);
     }
@@ -1914,6 +1871,8 @@ class CircuitWeatherApp {
             this.radar.setSessionTime(sessionTime);
 
             // Load radar and session forecast in parallel
+            // Note: We don't force a "Live" weather update here, as that's handled by selectRound
+            // or by the initial load. However, we could refresh it if needed.
             await Promise.all([
                 this.radar.load(),
                 this.updateSessionForecast(sessionTime, session.id)
@@ -1921,6 +1880,9 @@ class CircuitWeatherApp {
 
             // Show forecast section container
             if (this.ui.forecastSection) this.ui.forecastSection.style.display = 'block';
+
+            // Ensure mobile elements are visible
+            this.updateMobileVisibility();
 
             this.router.navigate('f1', this.selectedRace.round, sessionId);
         } catch (error) {
@@ -1936,6 +1898,7 @@ class CircuitWeatherApp {
         this.renderLiveWeather(weather);
     }
 
+
     async updateSessionForecast(sessionTime, sessionId) {
         if (!this.selectedRace || !this.selectedRace.location) return;
 
@@ -1946,31 +1909,25 @@ class CircuitWeatherApp {
     }
 
     renderLiveWeather(weather) {
-        // Unified function to update BOTH desktop and mobile live weather widgets.
-        // Visibility is controlled by CSS media queries.
+        const { weatherWidget, weatherTemp, weatherWind, weatherHumidity } = this.ui;
 
-        // Update desktop widget (Leaflet Control)
-        this.weatherWidget.update(weather);
+        const hasData = weather.available && weather.current;
 
-        // Update mobile card (Standard DOM element)
-        const mobileCard = this.ui.mobileWeatherCard;
-        if (!mobileCard) return;
-
-        if (!weather.available || !weather.current) {
-            mobileCard.style.display = 'none'; // Hide if no data
-            return;
+        if (weatherWidget) {
+            weatherWidget.style.display = hasData ? '' : 'none';
         }
 
-        // If we have data, ensure the card is visible
-        mobileCard.style.display = 'flex';
+        if (!hasData) return;
 
         const temp = Math.round(weather.current.temperature_2m);
         const wind = Math.round(weather.current.wind_speed_10m);
         const humidity = Math.round(weather.current.relative_humidity_2m || 0);
+        const tempUnit = weather.units.temperature_2m;
+        const windUnit = weather.units.wind_speed_10m;
 
-        if (this.ui.mobileWeatherTemp) this.ui.mobileWeatherTemp.textContent = `${temp}${weather.units.temperature_2m}`;
-        if (this.ui.mobileWeatherWind) this.ui.mobileWeatherWind.textContent = `${wind} ${weather.units.wind_speed_10m}`;
-        if (this.ui.mobileWeatherHumidity) this.ui.mobileWeatherHumidity.textContent = `${humidity}%`;
+        if (weatherTemp) weatherTemp.textContent = `${temp}${tempUnit}`;
+        if (weatherWind) weatherWind.textContent = `${wind} ${windUnit}`;
+        if (weatherHumidity) weatherHumidity.textContent = `${humidity}%`;
     }
 
     renderForecast(weather, sessionTime, sessionId) {
