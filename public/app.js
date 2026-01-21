@@ -1324,72 +1324,6 @@ class CountdownTimer {
 }
 
 // ===================================
-// Weather Widget (Desktop)
-// ===================================
-
-class WeatherWidget {
-    constructor() {
-        this.el = null;
-        this.create();
-    }
-
-    create() {
-        const container = document.querySelector('.main-content');
-        if (!container) return;
-
-        this.el = document.createElement('div');
-        this.el.className = 'weather-widget';
-        // HTML injected by JS
-        this.el.innerHTML = `
-            <div class="weather-widget-metric" title="Temperature">
-                <svg class="icon-weather icon-temp" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z" />
-                </svg>
-                <span id="widgetTemp">--</span>
-            </div>
-            <div class="weather-widget-metric" title="Humidity">
-                <svg class="icon-weather icon-humidity" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
-                </svg>
-                <span id="widgetHumidity">--</span>
-            </div>
-            <div class="weather-widget-metric" title="Wind Speed">
-                 <svg class="icon-weather icon-wind" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2" />
-                </svg>
-                <span id="widgetWind">--</span>
-            </div>
-        `;
-
-        container.appendChild(this.el);
-    }
-
-    update(weather) {
-        if (!this.el) return;
-
-        if (!weather || !weather.current) {
-            this.el.style.display = 'none';
-            return;
-        }
-
-        // Only toggle flex, visibility controlled by CSS media query (hidden on mobile)
-        this.el.style.display = 'flex';
-
-        const temp = Math.round(weather.current.temperature_2m);
-        const humidity = Math.round(weather.current.relative_humidity_2m || 0);
-        const wind = Math.round(weather.current.wind_speed_10m);
-
-        const tempEl = document.getElementById('widgetTemp');
-        const humidEl = document.getElementById('widgetHumidity');
-        const windEl = document.getElementById('widgetWind');
-
-        if (tempEl) tempEl.textContent = `${temp}${weather.units.temperature_2m}`;
-        if (humidEl) humidEl.textContent = `${humidity}%`;
-        if (windEl) windEl.textContent = `${wind} ${weather.units.wind_speed_10m}`;
-    }
-}
-
-// ===================================
 // Recentre Control
 // ===================================
 
@@ -1713,7 +1647,6 @@ class CircuitWeatherApp {
         this.races = [];
         this.selectedRace = null;
         this.selectedSession = null;
-        this.lastLiveWeather = null;
         this.router = new Router(params => this.handleRoute(params));
 
         // Bolt Optimization: Cache frequently accessed DOM elements
@@ -1762,9 +1695,6 @@ class CircuitWeatherApp {
 
             // Sidebar manager for mobile
             this.sidebarManager = new SidebarManager();
-
-            // Handle resize events for mobile visibility
-            this.bindResizeHandler();
 
             // Recentre control (added to zoom control container)
             this.recentreControl = new RecentreControl(map);
@@ -1829,46 +1759,6 @@ class CircuitWeatherApp {
                 this.selectSession(nextSession.id);
             }
         }
-    }
-
-    bindResizeHandler() {
-        let lastIsMobile = window.innerWidth <= 768;
-
-        window.addEventListener('resize', () => {
-            const isMobile = window.innerWidth <= 768;
-
-            // Note: Map resizing is handled by ResizeObserver in MapManager
-
-            // Update visibility when crossing the breakpoint
-            if (isMobile !== lastIsMobile) {
-                lastIsMobile = isMobile;
-                this.updateMobileVisibility();
-            }
-        });
-    }
-
-    updateMobileVisibility() {
-        const isMobile = window.innerWidth <= 768;
-
-        // Update mobile race info visibility
-        if (this.ui.mobileRaceInfo) {
-            this.ui.mobileRaceInfo.style.display = (this.selectedRace && isMobile) ? 'flex' : 'none';
-        }
-
-        // Update mobile countdown visibility
-        const mobileCountdown = document.getElementById('mobileCountdown');
-        if (mobileCountdown) {
-            const shouldShow = this.selectedSession && this.countdown.targetTime;
-            mobileCountdown.style.display = (shouldShow && isMobile) ? 'block' : 'none';
-        }
-
-        // Update mobile weather card visibility
-        if (this.ui.mobileWeatherCard) {
-            const hasData = this.lastLiveWeather && this.lastLiveWeather.available && this.lastLiveWeather.current;
-            this.ui.mobileWeatherCard.style.display = (hasData && isMobile) ? 'flex' : 'none';
-        }
-
-        // Note: Map resizing is handled by ResizeObserver in MapManager
     }
 
     bindEvents() {
@@ -1944,8 +1834,6 @@ class CircuitWeatherApp {
 
         // Fetch current "Live" weather for the widgets
         this.updateLiveWeatherForMapCenter();
-
-        this.updateMobileVisibility();
 
         this.router.navigate('f1', round, null);
     }
@@ -2026,8 +1914,6 @@ class CircuitWeatherApp {
             this.radar.setSessionTime(sessionTime);
 
             // Load radar and session forecast in parallel
-            // Note: We don't force a "Live" weather update here, as that's handled by selectRound
-            // or by the initial load. However, we could refresh it if needed.
             await Promise.all([
                 this.radar.load(),
                 this.updateSessionForecast(sessionTime, session.id)
@@ -2035,9 +1921,6 @@ class CircuitWeatherApp {
 
             // Show forecast section container
             if (this.ui.forecastSection) this.ui.forecastSection.style.display = 'block';
-
-            // Ensure mobile elements are visible
-            this.updateMobileVisibility();
 
             this.router.navigate('f1', this.selectedRace.round, sessionId);
         } catch (error) {
@@ -2050,10 +1933,8 @@ class CircuitWeatherApp {
     async updateLiveWeatherForMapCenter() {
         const center = this.mapManager.map.getCenter();
         const weather = await this.weatherClient.getForecast(center.lat, center.lng, new Date());
-        this.weatherWidget.update(weather);
-        this.renderLiveWeather(weather); // Also update mobile card
+        this.renderLiveWeather(weather);
     }
-
 
     async updateSessionForecast(sessionTime, sessionId) {
         if (!this.selectedRace || !this.selectedRace.location) return;
@@ -2065,20 +1946,31 @@ class CircuitWeatherApp {
     }
 
     renderLiveWeather(weather) {
-        // Always update the cache. This is the new source of truth.
-        this.lastLiveWeather = weather;
+        // Unified function to update BOTH desktop and mobile live weather widgets.
+        // Visibility is controlled by CSS media queries.
 
-        // Updates Desktop Widget and Mobile Card (Live)
-        // Independent of session forecast availability
-        const hasData = weather && weather.available && weather.current;
+        // Update desktop widget (Leaflet Control)
+        this.weatherWidget.update(weather);
 
-        if (this.ui.mobileWeatherTemp) this.ui.mobileWeatherTemp.textContent = hasData ? `${Math.round(weather.current.temperature_2m)}${weather.units.temperature_2m}`: '--';
-        if (this.ui.mobileWeatherWind) this.ui.mobileWeatherWind.textContent = hasData ? `${Math.round(weather.current.wind_speed_10m)} ${weather.units.wind_speed_10m}` : '--';
-        if (this.ui.mobileWeatherHumidity) this.ui.mobileWeatherHumidity.textContent = hasData ? `${Math.round(weather.current.relative_humidity_2m || 0)}%` : '--';
+        // Update mobile card (Standard DOM element)
+        const mobileCard = this.ui.mobileWeatherCard;
+        if (!mobileCard) return;
 
-        // After rendering, update visibility for all mobile components.
-        // This is now the single point of control.
-        this.updateMobileVisibility();
+        if (!weather.available || !weather.current) {
+            mobileCard.style.display = 'none'; // Hide if no data
+            return;
+        }
+
+        // If we have data, ensure the card is visible
+        mobileCard.style.display = 'flex';
+
+        const temp = Math.round(weather.current.temperature_2m);
+        const wind = Math.round(weather.current.wind_speed_10m);
+        const humidity = Math.round(weather.current.relative_humidity_2m || 0);
+
+        if (this.ui.mobileWeatherTemp) this.ui.mobileWeatherTemp.textContent = `${temp}${weather.units.temperature_2m}`;
+        if (this.ui.mobileWeatherWind) this.ui.mobileWeatherWind.textContent = `${wind} ${weather.units.wind_speed_10m}`;
+        if (this.ui.mobileWeatherHumidity) this.ui.mobileWeatherHumidity.textContent = `${humidity}%`;
     }
 
     renderForecast(weather, sessionTime, sessionId) {
