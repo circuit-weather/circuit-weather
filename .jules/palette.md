@@ -5,3 +5,11 @@
 ## 2025-02-18 - Share Button Rejected
 **Learning:** The user explicitly rejected the addition of a "Share" button to the race info banner. This indicates a preference against cluttering the UI with sharing utilities, possibly because the URL is already easily shareable or the focus should remain strictly on weather/race data.
 **Action:** Avoid adding social sharing or URL copying buttons to the interface unless explicitly requested.
+
+## 2025-02-18 - Semantic Labels on Toggles
+**Learning:** Changing a toggle button's `aria-label` to match its active state (e.g., "Close sidebar" instead of "Toggle sidebar") was rejected as semantically incorrect. This highlights the importance of keeping labels generic for dual-state controls to avoid confusion or state mismatch.
+**Action:** Use neutral verbs like "Toggle" or static nouns for `aria-label` on dual-state buttons, relying on `aria-expanded` to communicate state.
+
+## 2025-02-18 - Hidden Functionality Discovery
+**Learning:** 'Escape' key functionality for closing modals existed in the code but was completely invisible to users. This "hidden utility" pattern is an anti-pattern.
+**Action:** Always verify if keyboard logic exists before implementing it, and ensure existing shortcuts are advertised via tooltips (`title`) or `aria-keyshortcuts`.
