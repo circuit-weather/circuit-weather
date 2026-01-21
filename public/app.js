@@ -1317,9 +1317,10 @@ class RecentreControl {
         this.button = document.createElement('a');
         this.button.className = 'leaflet-control-zoom-recentre';
         this.button.href = '#';
-        this.button.title = 'Recentre on circuit';
+        this.button.title = 'Recentre on circuit (C)';
         this.button.setAttribute('role', 'button');
         this.button.setAttribute('aria-label', 'Recentre on circuit');
+        this.button.setAttribute('aria-keyshortcuts', 'c');
         this.button.innerHTML = `
             <svg class="recentre-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                 <circle cx="12" cy="12" r="3"/>
@@ -1338,6 +1339,19 @@ class RecentreControl {
             e.preventDefault();
             if (this.circuitCenter) {
                 this.map.setView(this.circuitCenter, this.circuitZoom);
+            }
+        });
+
+        // Global shortcut: C to recentre
+        document.addEventListener('keydown', (e) => {
+            if ((e.key === 'c' || e.key === 'C') && !e.ctrlKey && !e.metaKey && !e.altKey) {
+                // Check if we are focusing an input
+                const tag = document.activeElement.tagName.toLowerCase();
+                if (tag === 'input' || tag === 'textarea' || tag === 'select') return;
+
+                if (this.circuitCenter) {
+                    this.map.setView(this.circuitCenter, this.circuitZoom);
+                }
             }
         });
 
