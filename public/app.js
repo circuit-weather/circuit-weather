@@ -1807,11 +1807,6 @@ class CircuitWeatherApp {
             mobileCountryFlag: document.getElementById('mobileCountryFlag'),
             mobileRaceInfoName: document.getElementById('mobileRaceInfoName'),
             mobileRaceInfoCircuit: document.getElementById('mobileRaceInfoCircuit'),
-            // Mobile Weather Card (Live)
-            mobileWeatherCard: document.getElementById('mobileWeatherCard'),
-            mobileWeatherTemp: document.getElementById('mobileWeatherTemp'),
-            mobileWeatherWind: document.getElementById('mobileWeatherWind'),
-            mobileWeatherHumidity: document.getElementById('mobileWeatherHumidity'),
         };
     }
 
