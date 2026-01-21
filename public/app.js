@@ -94,105 +94,6 @@ function debounce(func, wait) {
     };
 }
 
-// ===================================
-// Forecast
-// ===================================
-
-class Forecast {
-    constructor(weatherClient) {
-        this.weatherClient = weatherClient;
-        this.ui = {
-            section: document.getElementById('forecastSection'),
-            content: document.getElementById('forecastContent'),
-            unavailable: document.getElementById('forecastUnavailable'),
-            temp: document.getElementById('weatherTemp'),
-            rain: document.getElementById('weatherRain'),
-            wind: document.getElementById('weatherWind'),
-            windDir: document.getElementById('weatherWindDir'),
-            timeline: document.getElementById('weatherTimeline'),
-        };
-    }
-
-    update(weather, sessionTime, selectedSessionId, currentSessionId) {
-        // Guard: If no session is currently selected, or if the session ID doesn't match
-        // the requested one (to prevent race conditions), do not render.
-        if (!currentSessionId || (selectedSessionId && currentSessionId !== selectedSessionId)) {
-            this.hide();
-            return;
-        }
-
-        if (!weather.available) {
-            this.showUnavailable();
-            return;
-        }
-
-        this.show();
-        this.renderCurrent(weather, sessionTime);
-        this.renderTimeline(weather, sessionTime);
-    }
-
-    renderCurrent(weather, sessionTime) {
-        if (!weather.current) return;
-
-        const temp = Math.round(weather.current.temperature_2m);
-        const wind = Math.round(weather.current.wind_speed_10m);
-        const dir = weather.current.wind_direction_10m;
-
-        let maxPrecip = 0;
-        if (weather.hourly && weather.hourly.length > 0) {
-            maxPrecip = Math.max(...weather.hourly.map(h => h.precipProb));
-        }
-
-        if (this.ui.temp) this.ui.temp.textContent = `${temp}${weather.units.temperature_2m}`;
-        if (this.ui.wind) this.ui.wind.textContent = `${wind} ${weather.units.wind_speed_10m}`;
-        if (this.ui.windDir) this.ui.windDir.textContent = `${dir}°`;
-        if (this.ui.rain) this.ui.rain.textContent = `${maxPrecip}%`;
-    }
-
-    renderTimeline(weather, sessionTime) {
-        const timelineEl = this.ui.timeline;
-        if (!timelineEl || !weather.hourly) return;
-
-        timelineEl.innerHTML = '';
-        weather.hourly.forEach(hour => {
-            const item = document.createElement('div');
-            item.className = 'weather-timeline-item';
-
-            const relTime = this.weatherClient.getRelativeTime(hour.time, sessionTime);
-            const desc = this.weatherClient.getWeatherDescription(hour.code);
-
-            item.innerHTML = `
-                <div class="weather-timeline-time">${relTime}</div>
-                <div class="weather-timeline-condition">
-                    ${desc}
-                    <div style="font-size: 0.65em; color: var(--color-text-secondary);">${hour.windSpeed} km/h</div>
-                </div>
-                <div class="weather-timeline-temp">
-                    <div>${Math.round(hour.temp)}°</div>
-                    <div style="font-size: 0.8em; color: #3b82f6;">${hour.precipProb}%</div>
-                </div>
-            `;
-            timelineEl.appendChild(item);
-        });
-    }
-
-    show() {
-        if (this.ui.section) this.ui.section.style.display = 'block';
-        if (this.ui.content) this.ui.content.style.display = 'block';
-        if (this.ui.unavailable) this.ui.unavailable.style.display = 'none';
-    }
-
-    showUnavailable() {
-        if (this.ui.section) this.ui.section.style.display = 'block';
-        if (this.ui.content) this.ui.content.style.display = 'none';
-        if (this.ui.unavailable) this.ui.unavailable.style.display = 'block';
-    }
-
-    hide() {
-        if (this.ui.section) this.ui.section.style.display = 'none';
-    }
-}
-
 
 // ===================================
 // Theme Manager
@@ -1268,118 +1169,86 @@ class RangeCircles {
 }
 
 // ===================================
-// Live Weather
+// Countdown Timer
 // ===================================
 
-class LiveWeather {
-    constructor(map) {
-        this.desktopWidget = this.createDesktopWidget(map);
-        this.ui = {
-            // Mobile elements
-            mobileCard: document.getElementById('mobileWeatherCard'),
-            mobileTemp: document.getElementById('mobileWeatherTemp'),
-            mobileWind: document.getElementById('mobileWeatherWind'),
-            mobileHumidity: document.getElementById('mobileWeatherHumidity'),
-        };
-    }
+const MapWeatherWidget = L.Control.extend({
+    onAdd: function (map) {
+        this._div = L.DomUtil.create('div', 'leaflet-control-weather');
+        this.update(null); // Initial placeholder state
+        return this._div;
+    },
 
-    createDesktopWidget(map) {
-        const widget = L.Control.extend({
-            onAdd: function () {
-                this._div = L.DomUtil.create('div', 'leaflet-control-weather');
-                this.update(null); // Initial state
-                return this._div;
-            },
-            update: function (weather) {
-                if (!this._div) return;
-                this._div.innerHTML = this.getContentHtml(weather);
-            },
-            getContentHtml: function(weather) {
-                if (!weather || !weather.current) {
-                    return `
-                        <div class="weather-widget-metric" title="Temperature">
-                            <svg class="icon-weather icon-temp" viewBox="0 0 24 24"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z" /></svg>
-                            <span>--</span>
-                        </div>
-                        <div class="weather-widget-metric" title="Humidity">
-                            <svg class="icon-weather icon-humidity" viewBox="0 0 24 24"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" /></svg>
-                            <span>--%</span>
-                        </div>
-                        <div class="weather-widget-metric" title="Wind">
-                            <svg class="icon-weather icon-wind" viewBox="0 0 24 24"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2" /></svg>
-                            <span>--</span>
-                        </div>
-                         <div class="weather-widget-metric" title="Precipitation">
-                            <svg class="icon-weather icon-precip" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                <path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25" />
-                                <path d="M8 14v1" /><path d="M8 19v1" /><path d="M12 15v1" /><path d="M12 20v1" /><path d="M16 14v1" /><path d="M16 19v1" />
-                            </svg>
-                            <span>--%</span>
-                        </div>
-                    `;
-                }
-                const temp = Math.round(weather.current.temperature_2m);
-                const humidity = Math.round(weather.current.relative_humidity_2m || 0);
-                const wind = Math.round(weather.current.wind_speed_10m);
-                const precip = Math.round(weather.current.precipitation_probability || 0);
-                return `
-                    <div class="weather-widget-metric" title="Temperature">
-                        <svg class="icon-weather icon-temp" viewBox="0 0 24 24"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z" /></svg>
-                        <span>${temp}${weather.units.temperature_2m}</span>
-                    </div>
-                    <div class="weather-widget-metric" title="Humidity">
-                        <svg class="icon-weather icon-humidity" viewBox="0 0 24 24"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" /></svg>
-                        <span>${humidity}%</span>
-                    </div>
-                    <div class="weather-widget-metric" title="Wind">
-                        <svg class="icon-weather icon-wind" viewBox="0 0 24 24"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2" /></svg>
-                        <span>${wind} ${weather.units.wind_speed_10m}</span>
-                    </div>
-                    <div class="weather-widget-metric" title="Precipitation">
-                        <svg class="icon-weather icon-precip" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25" />
-                            <path d="M8 14v1" /><path d="M8 19v1" /><path d="M12 15v1" /><path d="M12 20v1" /><path d="M16 14v1" /><path d="M16 19v1" />
-                        </svg>
-                        <span>${precip}%</span>
-                    </div>
-                `;
-            }
-        });
-        const instance = new widget({ position: 'topright' });
-        map.addControl(instance);
-        return instance;
-    }
+    onRemove: function (map) {
+        // Nothing to do here
+    },
 
-    update(weather) {
-        // Update Desktop Widget
-        this.desktopWidget.update(weather);
+    update: function (weather) {
+        if (!this._div) return;
 
-        // Update Mobile Card
-        const { mobileCard, mobileTemp, mobileWind, mobileHumidity } = this.ui;
-        if (!mobileCard) return;
-
-        if (!weather || !weather.available || !weather.current) {
-            mobileCard.style.display = 'none';
+        if (!weather || !weather.current) {
+            this._div.innerHTML = `
+                <div class="weather-widget-metric" title="Temperature">
+                    <svg class="icon-weather icon-temp" viewBox="0 0 24 24"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z" /></svg>
+                    <span>--</span>
+                </div>
+                <div class="weather-widget-metric" title="Humidity">
+                    <svg class="icon-weather icon-humidity" viewBox="0 0 24 24"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" /></svg>
+                    <span>--%</span>
+                </div>
+                <div class="weather-widget-metric" title="Wind">
+                     <svg class="icon-weather icon-wind" viewBox="0 0 24 24"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2" /></svg>
+                    <span>--</span>
+                </div>
+                 <div class="weather-widget-metric" title="Precipitation">
+                    <svg class="icon-weather icon-precip" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25" />
+                        <path d="M8 14v1" />
+                        <path d="M8 19v1" />
+                        <path d="M12 15v1" />
+                        <path d="M12 20v1" />
+                        <path d="M16 14v1" />
+                        <path d="M16 19v1" />
+                    </svg>
+                    <span>--%</span>
+                </div>
+            `;
             return;
         }
 
-        const isMobile = window.innerWidth <= 768;
-        mobileCard.style.display = isMobile ? 'flex' : 'none';
-
         const temp = Math.round(weather.current.temperature_2m);
-        const wind = Math.round(weather.current.wind_speed_10m);
         const humidity = Math.round(weather.current.relative_humidity_2m || 0);
+        const wind = Math.round(weather.current.wind_speed_10m);
+        const precip = Math.round(weather.current.precipitation_probability || 0);
 
-        if (mobileTemp) mobileTemp.textContent = `${temp}${weather.units.temperature_2m}`;
-        if (mobileWind) mobileWind.textContent = `${wind} ${weather.units.wind_speed_10m}`;
-        if (mobileHumidity) mobileHumidity.textContent = `${humidity}%`;
+        this._div.innerHTML = `
+            <div class="weather-widget-metric" title="Temperature">
+                <svg class="icon-weather icon-temp" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z" /></svg>
+                <span>${temp}${weather.units.temperature_2m}</span>
+            </div>
+            <div class="weather-widget-metric" title="Humidity">
+                <svg class="icon-weather icon-humidity" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" /></svg>
+                <span>${humidity}%</span>
+            </div>
+            <div class="weather-widget-metric" title="Wind">
+                 <svg class="icon-weather icon-wind" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2" /></svg>
+                <span>${wind} ${weather.units.wind_speed_10m}</span>
+            </div>
+             <div class="weather-widget-metric" title="Precipitation">
+                <svg class="icon-weather icon-precip" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25" />
+                    <path d="M8 14v1" />
+                    <path d="M8 19v1" />
+                    <path d="M12 15v1" />
+                    <path d="M12 20v1" />
+                    <path d="M16 14v1" />
+                    <path d="M16 19v1" />
+                </svg>
+                <span>${precip}%</span>
+            </div>
+        `;
     }
-}
-
-
-// ===================================
-// Countdown Timer
-// ===================================
+});
 
 class CountdownTimer {
     constructor() {
@@ -1451,6 +1320,72 @@ class CountdownTimer {
             clearInterval(this.timer);
             this.timer = null;
         }
+    }
+}
+
+// ===================================
+// Weather Widget (Desktop)
+// ===================================
+
+class WeatherWidget {
+    constructor() {
+        this.el = null;
+        this.create();
+    }
+
+    create() {
+        const container = document.querySelector('.main-content');
+        if (!container) return;
+
+        this.el = document.createElement('div');
+        this.el.className = 'weather-widget';
+        // HTML injected by JS
+        this.el.innerHTML = `
+            <div class="weather-widget-metric" title="Temperature">
+                <svg class="icon-weather icon-temp" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z" />
+                </svg>
+                <span id="widgetTemp">--</span>
+            </div>
+            <div class="weather-widget-metric" title="Humidity">
+                <svg class="icon-weather icon-humidity" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
+                </svg>
+                <span id="widgetHumidity">--</span>
+            </div>
+            <div class="weather-widget-metric" title="Wind Speed">
+                 <svg class="icon-weather icon-wind" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2" />
+                </svg>
+                <span id="widgetWind">--</span>
+            </div>
+        `;
+
+        container.appendChild(this.el);
+    }
+
+    update(weather) {
+        if (!this.el) return;
+
+        if (!weather || !weather.current) {
+            this.el.style.display = 'none';
+            return;
+        }
+
+        // Only toggle flex, visibility controlled by CSS media query (hidden on mobile)
+        this.el.style.display = 'flex';
+
+        const temp = Math.round(weather.current.temperature_2m);
+        const humidity = Math.round(weather.current.relative_humidity_2m || 0);
+        const wind = Math.round(weather.current.wind_speed_10m);
+
+        const tempEl = document.getElementById('widgetTemp');
+        const humidEl = document.getElementById('widgetHumidity');
+        const windEl = document.getElementById('widgetWind');
+
+        if (tempEl) tempEl.textContent = `${temp}${weather.units.temperature_2m}`;
+        if (humidEl) humidEl.textContent = `${humidity}%`;
+        if (windEl) windEl.textContent = `${wind} ${weather.units.wind_speed_10m}`;
     }
 }
 
@@ -1771,15 +1706,14 @@ class CircuitWeatherApp {
         this.radar = null;
         this.trackLayer = null;
         this.rangeCircles = null;
-        this.liveWeather = null;
-        this.forecast = null;
+        this.weatherWidget = null;
         this.countdown = new CountdownTimer();
         this.recentreControl = null;
         this.currentCircuitCenter = null;
-        this.lastLiveWeather = null;
         this.races = [];
         this.selectedRace = null;
         this.selectedSession = null;
+        this.lastLiveWeather = null;
         this.router = new Router(params => this.handleRoute(params));
 
         // Bolt Optimization: Cache frequently accessed DOM elements
@@ -1807,6 +1741,11 @@ class CircuitWeatherApp {
             mobileCountryFlag: document.getElementById('mobileCountryFlag'),
             mobileRaceInfoName: document.getElementById('mobileRaceInfoName'),
             mobileRaceInfoCircuit: document.getElementById('mobileRaceInfoCircuit'),
+            // Mobile Weather Card (Live)
+            mobileWeatherCard: document.getElementById('mobileWeatherCard'),
+            mobileWeatherTemp: document.getElementById('mobileWeatherTemp'),
+            mobileWeatherWind: document.getElementById('mobileWeatherWind'),
+            mobileWeatherHumidity: document.getElementById('mobileWeatherHumidity'),
         };
     }
 
@@ -1833,8 +1772,8 @@ class CircuitWeatherApp {
             this.rangeCircles = new RangeCircles(map);
             this.trackLayer = new TrackLayer(map);
             this.radar = new WeatherRadar(map);
-            this.liveWeather = new LiveWeather(map);
-            this.forecast = new Forecast(this.weatherClient);
+            this.weatherWidget = new MapWeatherWidget({ position: 'topright' });
+            this.mapManager.map.addControl(this.weatherWidget);
 
 
             // Always load radar immediately
@@ -1924,8 +1863,9 @@ class CircuitWeatherApp {
         }
 
         // Update mobile weather card visibility
-        if (this.liveWeather) {
-            this.liveWeather.update(this.lastLiveWeather);
+        if (this.ui.mobileWeatherCard) {
+            const hasData = this.lastLiveWeather && this.lastLiveWeather.available && this.lastLiveWeather.current;
+            this.ui.mobileWeatherCard.style.display = (hasData && isMobile) ? 'flex' : 'none';
         }
 
         // Note: Map resizing is handled by ResizeObserver in MapManager
@@ -1998,7 +1938,9 @@ class CircuitWeatherApp {
         this.countdown.show(false);
 
         // Hide forecast section since no session is selected yet
-        this.forecast.hide();
+        if (this.ui.forecastSection) {
+            this.ui.forecastSection.style.display = 'none';
+        }
 
         // Fetch current "Live" weather for the widgets
         this.updateLiveWeatherForMapCenter();
@@ -2108,8 +2050,8 @@ class CircuitWeatherApp {
     async updateLiveWeatherForMapCenter() {
         const center = this.mapManager.map.getCenter();
         const weather = await this.weatherClient.getForecast(center.lat, center.lng, new Date());
-        this.lastLiveWeather = weather;
-        this.liveWeather.update(weather);
+        this.weatherWidget.update(weather);
+        this.renderLiveWeather(weather); // Also update mobile card
     }
 
 
@@ -2119,7 +2061,90 @@ class CircuitWeatherApp {
         const { lat, long } = this.selectedRace.location;
         const weather = await this.weatherClient.getForecast(lat, long, sessionTime);
 
-        this.forecast.update(weather, sessionTime, sessionId, this.selectedSession?.id);
+        this.renderForecast(weather, sessionTime, sessionId);
+    }
+
+    renderLiveWeather(weather) {
+        // Always update the cache. This is the new source of truth.
+        this.lastLiveWeather = weather;
+
+        // Updates Desktop Widget and Mobile Card (Live)
+        // Independent of session forecast availability
+        const hasData = weather && weather.available && weather.current;
+
+        if (this.ui.mobileWeatherTemp) this.ui.mobileWeatherTemp.textContent = hasData ? `${Math.round(weather.current.temperature_2m)}${weather.units.temperature_2m}`: '--';
+        if (this.ui.mobileWeatherWind) this.ui.mobileWeatherWind.textContent = hasData ? `${Math.round(weather.current.wind_speed_10m)} ${weather.units.wind_speed_10m}` : '--';
+        if (this.ui.mobileWeatherHumidity) this.ui.mobileWeatherHumidity.textContent = hasData ? `${Math.round(weather.current.relative_humidity_2m || 0)}%` : '--';
+
+        // After rendering, update visibility for all mobile components.
+        // This is now the single point of control.
+        this.updateMobileVisibility();
+    }
+
+    renderForecast(weather, sessionTime, sessionId) {
+        // Updates Sidebar Forecast Panel ONLY
+
+        // Guard: If no session is currently selected (e.g., user switched rounds while fetching),
+        // or if the session ID doesn't match the requested one, do not render.
+        if (!this.selectedSession || (sessionId && this.selectedSession.id !== sessionId)) {
+            return;
+        }
+
+        const content = this.ui.forecastContent;
+        const unavailable = this.ui.forecastUnavailable;
+
+        if (!weather.available) {
+            if (content) content.style.display = 'none';
+            if (unavailable) unavailable.style.display = 'block';
+            return;
+        }
+
+        if (content) content.style.display = 'block';
+        if (unavailable) unavailable.style.display = 'none';
+
+        if (weather.current) {
+            const temp = Math.round(weather.current.temperature_2m);
+            const wind = Math.round(weather.current.wind_speed_10m);
+            const dir = weather.current.wind_direction_10m;
+            // For session forecast, we look at the hourly data to find max precip probability
+            let maxPrecip = 0;
+            if (weather.hourly && weather.hourly.length > 0) {
+                 maxPrecip = Math.max(...weather.hourly.map(h => h.precipProb));
+            }
+
+            if (this.ui.weatherTemp) this.ui.weatherTemp.textContent = `${temp}${weather.units.temperature_2m}`;
+            if (this.ui.weatherWind) this.ui.weatherWind.textContent = `${wind} ${weather.units.wind_speed_10m}`;
+            if (this.ui.weatherWindDir) this.ui.weatherWindDir.textContent = `${dir}°`;
+            if (this.ui.weatherRain) this.ui.weatherRain.textContent = `${maxPrecip}%`;
+        }
+
+        // Render Timeline
+        const timelineEl = this.ui.weatherTimeline;
+        if (timelineEl && weather.hourly) {
+            timelineEl.innerHTML = '';
+
+            weather.hourly.forEach(hour => {
+                const item = document.createElement('div');
+                item.className = 'weather-timeline-item';
+
+                const relTime = this.weatherClient.getRelativeTime(hour.time, sessionTime);
+                const desc = this.weatherClient.getWeatherDescription(hour.code);
+
+                item.innerHTML = `
+                    <div class="weather-timeline-time">${relTime}</div>
+                    <div class="weather-timeline-condition">
+                        ${desc}
+                        <div style="font-size: 0.65em; color: var(--color-text-secondary);">${hour.windSpeed} km/h</div>
+                    </div>
+                    <div class="weather-timeline-temp">
+                        <div>${Math.round(hour.temp)}°</div>
+                        <div style="font-size: 0.8em; color: #3b82f6;">${hour.precipProb}%</div>
+                    </div>
+                `;
+
+                timelineEl.appendChild(item);
+            });
+        }
     }
 
     async handleRoute({ series, round, session }) {
