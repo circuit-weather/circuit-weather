@@ -504,24 +504,41 @@ class WeatherRadar {
         this.speedIndex = CONFIG.defaultSpeedIndex; // Track current speed
         this.pollingInterval = null;
         this.pendingFrames = null;
+
+        // Bolt Optimization: Cache DOM elements
+        this.ui = {
+            playBtn: document.getElementById('radarPlayBtn'),
+            slider: document.getElementById('radarSlider'),
+            speedBtn: document.getElementById('radarSpeedBtn'),
+            speedLabel: document.getElementById('radarSpeedLabel'),
+            time: document.getElementById('radarTime'),
+            relative: document.getElementById('radarRelative'),
+            timeStart: document.getElementById('radarTimeStart'),
+            timeEnd: document.getElementById('radarTimeEnd'),
+            controls: document.getElementById('radarControls')
+        };
+
+        // Bolt Optimization: Reuse DateTimeFormat
+        this.timeFormatter = new Intl.DateTimeFormat(undefined, {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        });
+
         this.bindEvents();
     }
 
     bindEvents() {
-        const playBtn = document.getElementById('radarPlayBtn');
-        const slider = document.getElementById('radarSlider');
-        const speedBtn = document.getElementById('radarSpeedBtn');
-
-        if (playBtn) playBtn.addEventListener('click', () => this.togglePlay());
-        if (slider) {
-            slider.addEventListener('input', (e) => {
+        if (this.ui.playBtn) this.ui.playBtn.addEventListener('click', () => this.togglePlay());
+        if (this.ui.slider) {
+            this.ui.slider.addEventListener('input', (e) => {
                 this.currentFrame = parseInt(e.target.value, 10);
                 this.showFrame(this.currentFrame);
                 this.pause();
             });
         }
-        if (speedBtn) {
-            speedBtn.addEventListener('click', () => this.cycleSpeed());
+        if (this.ui.speedBtn) {
+            this.ui.speedBtn.addEventListener('click', () => this.cycleSpeed());
         }
 
         // Global shortcut: Space to toggle play/pause
@@ -554,9 +571,8 @@ class WeatherRadar {
     }
 
     updateSpeedLabel() {
-        const speedLabel = document.getElementById('radarSpeedLabel');
-        if (speedLabel) {
-            speedLabel.textContent = CONFIG.radarSpeeds[this.speedIndex].label;
+        if (this.ui.speedLabel) {
+            this.ui.speedLabel.textContent = CONFIG.radarSpeeds[this.speedIndex].label;
         }
     }
 
@@ -795,8 +811,7 @@ class WeatherRadar {
 
         this.updateTimeDisplay(this.frames[index]?.time);
 
-        const slider = document.getElementById('radarSlider');
-        if (slider) slider.value = index;
+        if (this.ui.slider) this.ui.slider.value = index;
 
         // Bolt Optimization: Preload next frame for smooth animation
         const nextIndex = (index + 1) % this.frames.length;
@@ -804,19 +819,19 @@ class WeatherRadar {
     }
 
     updateTimeDisplay(timestamp) {
-        const timeEl = document.getElementById('radarTime');
-        const relEl = document.getElementById('radarRelative');
-        const slider = document.getElementById('radarSlider');
-        if (!timeEl || !timestamp) return;
+        if (!this.ui.time || !timestamp) return;
 
+        // Bolt Optimization: Use shared formatter and cached elements
+        // This runs every animation frame, so efficiency matters.
         const date = new Date(timestamp * 1000);
-        const timeStr = date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', hour12: false });
-        timeEl.textContent = timeStr;
+        const timeStr = this.timeFormatter.format(date);
+
+        this.ui.time.textContent = timeStr;
 
         let relativeText = '';
 
         // Show relative to session if available
-        if (relEl && this.sessionTime) {
+        if (this.ui.relative && this.sessionTime) {
             const diff = (timestamp * 1000 - this.sessionTime.getTime()) / 60000; // minutes
             if (Math.abs(diff) < 1) {
                 relativeText = 'Session start';
@@ -825,30 +840,26 @@ class WeatherRadar {
             } else {
                 relativeText = `${Math.round(diff)}m after`;
             }
-            relEl.textContent = relativeText;
-        } else if (relEl) {
+            this.ui.relative.textContent = relativeText;
+        } else if (this.ui.relative) {
             const now = Date.now() / 1000;
             const diff = timestamp - now;
             if (diff > 60) {
                 relativeText = 'Forecast';
             }
-            relEl.textContent = relativeText;
+            this.ui.relative.textContent = relativeText;
         }
 
-        if (slider) {
+        if (this.ui.slider) {
             const ariaText = relativeText ? `${timeStr}, ${relativeText}` : timeStr;
-            slider.setAttribute('aria-valuetext', ariaText);
+            this.ui.slider.setAttribute('aria-valuetext', ariaText);
         }
     }
 
     updateSlider() {
-        const slider = document.getElementById('radarSlider');
-        const timeStartEl = document.getElementById('radarTimeStart');
-        const timeEndEl = document.getElementById('radarTimeEnd');
-
-        if (slider) {
-            slider.max = this.frames.length - 1;
-            slider.value = this.currentFrame;
+        if (this.ui.slider) {
+            this.ui.slider.max = this.frames.length - 1;
+            this.ui.slider.value = this.currentFrame;
 
             // Create a visual split between past and forecast frames
             if (this.frames.length > 1 && this.pastFrameCount > 0) {
@@ -856,26 +867,23 @@ class WeatherRadar {
                 const splitPercentage = (forecastStartIndex / (this.frames.length - 1)) * 100;
 
                 // Apply a gradient background to the slider track
-                slider.style.background = `linear-gradient(to right,
+                this.ui.slider.style.background = `linear-gradient(to right,
                     var(--color-border) 0%,
                     var(--color-border) ${splitPercentage}%,
                     var(--color-forecast-track) ${splitPercentage}%,
                     var(--color-forecast-track) 100%)`;
             } else {
                 // Default style if no forecast frames
-                slider.style.background = 'var(--color-border)';
+                this.ui.slider.style.background = 'var(--color-border)';
             }
         }
 
-        if (timeStartEl && timeEndEl && this.frames.length > 0) {
-            const formatTime = (timestamp) => new Date(timestamp * 1000).toLocaleTimeString(undefined, {
-                hour: '2-digit', minute: '2-digit', hour12: false
-            });
-            timeStartEl.textContent = formatTime(this.frames[0].time);
-            timeEndEl.textContent = formatTime(this.frames[this.frames.length - 1].time);
-        } else if (timeStartEl && timeEndEl) {
-            timeStartEl.textContent = '--:--';
-            timeEndEl.textContent = '--:--';
+        if (this.ui.timeStart && this.ui.timeEnd && this.frames.length > 0) {
+            this.ui.timeStart.textContent = this.timeFormatter.format(new Date(this.frames[0].time * 1000));
+            this.ui.timeEnd.textContent = this.timeFormatter.format(new Date(this.frames[this.frames.length - 1].time * 1000));
+        } else if (this.ui.timeStart && this.ui.timeEnd) {
+            this.ui.timeStart.textContent = '--:--';
+            this.ui.timeEnd.textContent = '--:--';
         }
     }
 
@@ -890,8 +898,7 @@ class WeatherRadar {
         }
 
         this.isPlaying = true;
-        const playBtn = document.getElementById('radarPlayBtn');
-        if (playBtn) playBtn.classList.add('playing');
+        if (this.ui.playBtn) this.ui.playBtn.classList.add('playing');
 
         // Bolt Optimization: Use requestAnimationFrame instead of setInterval
         // Prevents drift and saves battery in background tabs
@@ -918,8 +925,7 @@ class WeatherRadar {
 
     pause() {
         this.isPlaying = false;
-        const playBtn = document.getElementById('radarPlayBtn');
-        if (playBtn) playBtn.classList.remove('playing');
+        if (this.ui.playBtn) this.ui.playBtn.classList.remove('playing');
 
         if (this.animationFrameId) {
             cancelAnimationFrame(this.animationFrameId);
@@ -939,8 +945,7 @@ class WeatherRadar {
     }
 
     showControls(visible) {
-        const controls = document.getElementById('radarControls');
-        if (controls) controls.style.display = visible ? 'flex' : 'none';
+        if (this.ui.controls) this.ui.controls.style.display = visible ? 'flex' : 'none';
     }
 
     destroy() {
@@ -1156,6 +1161,16 @@ class CountdownTimer {
         this.timer = null;
         this.targetTime = null;
         this.sessionName = '';
+
+        // Bolt Optimization: Cache DOM elements
+        this.ui = {
+            timer: document.getElementById('countdownTimer'),
+            session: document.getElementById('countdownSession'),
+            mobileTimer: document.getElementById('mobileCountdownTimer'),
+            mobileSession: document.getElementById('mobileCountdownSession'),
+            card: document.getElementById('countdownCard'),
+            mobileCard: document.getElementById('mobileCountdown')
+        };
     }
 
     start(targetTime, sessionName) {
@@ -1172,15 +1187,9 @@ class CountdownTimer {
         const now = new Date();
         const diff = this.targetTime - now;
 
-        // Update both sidebar and mobile countdown elements
-        const timerEl = document.getElementById('countdownTimer');
-        const sessionEl = document.getElementById('countdownSession');
-        const mobileTimerEl = document.getElementById('mobileCountdownTimer');
-        const mobileSessionEl = document.getElementById('mobileCountdownSession');
-
         if (diff <= 0) {
-            if (timerEl) timerEl.textContent = 'NOW';
-            if (mobileTimerEl) mobileTimerEl.textContent = 'NOW';
+            if (this.ui.timer) this.ui.timer.textContent = 'NOW';
+            if (this.ui.mobileTimer) this.ui.mobileTimer.textContent = 'NOW';
             this.stop();
             return;
         }
@@ -1197,20 +1206,18 @@ class CountdownTimer {
             timeText = `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
         }
 
-        if (timerEl) timerEl.textContent = timeText;
-        if (mobileTimerEl) mobileTimerEl.textContent = timeText;
-        if (sessionEl) sessionEl.textContent = this.sessionName;
-        if (mobileSessionEl) mobileSessionEl.textContent = this.sessionName;
+        if (this.ui.timer) this.ui.timer.textContent = timeText;
+        if (this.ui.mobileTimer) this.ui.mobileTimer.textContent = timeText;
+        if (this.ui.session) this.ui.session.textContent = this.sessionName;
+        if (this.ui.mobileSession) this.ui.mobileSession.textContent = this.sessionName;
     }
 
     show(visible) {
-        const card = document.getElementById('countdownCard');
-        const mobileCard = document.getElementById('mobileCountdown');
-        if (card) card.style.display = visible ? 'block' : 'none';
+        if (this.ui.card) this.ui.card.style.display = visible ? 'block' : 'none';
         // Only show mobile countdown on mobile viewports
-        if (mobileCard) {
+        if (this.ui.mobileCard) {
             const isMobile = window.innerWidth <= 768;
-            mobileCard.style.display = (visible && isMobile) ? 'block' : 'none';
+            this.ui.mobileCard.style.display = (visible && isMobile) ? 'block' : 'none';
         }
     }
 
