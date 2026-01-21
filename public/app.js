@@ -1606,6 +1606,38 @@ class CircuitWeatherApp {
         this.selectedRace = null;
         this.selectedSession = null;
         this.router = new Router(params => this.handleRoute(params));
+
+        // Bolt Optimization: Cache frequently accessed DOM elements
+        this.ui = {
+            loadingOverlay: document.getElementById('loadingOverlay'),
+            roundSelect: document.getElementById('roundSelect'),
+            sessionSelect: document.getElementById('sessionSelect'),
+            // Race Info Banner (Sidebar)
+            raceInfoBanner: document.getElementById('raceInfoBanner'),
+            countryFlag: document.getElementById('countryFlag'),
+            raceInfoCountry: document.getElementById('raceInfoCountry'),
+            raceInfoName: document.getElementById('raceInfoName'),
+            raceInfoCircuit: document.getElementById('raceInfoCircuit'),
+            // Forecast Section (Sidebar)
+            forecastSection: document.getElementById('forecastSection'),
+            forecastContent: document.getElementById('forecastContent'),
+            forecastUnavailable: document.getElementById('forecastUnavailable'),
+            weatherTemp: document.getElementById('weatherTemp'),
+            weatherRain: document.getElementById('weatherRain'),
+            weatherWind: document.getElementById('weatherWind'),
+            weatherWindDir: document.getElementById('weatherWindDir'),
+            weatherTimeline: document.getElementById('weatherTimeline'),
+            // Mobile Race Info
+            mobileRaceInfo: document.getElementById('mobileRaceInfo'),
+            mobileCountryFlag: document.getElementById('mobileCountryFlag'),
+            mobileRaceInfoName: document.getElementById('mobileRaceInfoName'),
+            mobileRaceInfoCircuit: document.getElementById('mobileRaceInfoCircuit'),
+            // Mobile Weather Card (Live)
+            mobileWeatherCard: document.getElementById('mobileWeatherCard'),
+            mobileWeatherTemp: document.getElementById('mobileWeatherTemp'),
+            mobileWeatherWind: document.getElementById('mobileWeatherWind'),
+            mobileWeatherHumidity: document.getElementById('mobileWeatherHumidity'),
+        };
     }
 
     async init() {
@@ -1667,8 +1699,7 @@ class CircuitWeatherApp {
         });
 
         if (nextRace) {
-            const roundSelect = document.getElementById('roundSelect');
-            if (roundSelect) roundSelect.value = nextRace.round;
+            if (this.ui.roundSelect) this.ui.roundSelect.value = nextRace.round;
             this.selectRound(nextRace.round);
 
             // Find next upcoming session within this round
@@ -1679,8 +1710,7 @@ class CircuitWeatherApp {
             });
 
             if (nextSession) {
-                const sessionSelect = document.getElementById('sessionSelect');
-                if (sessionSelect) sessionSelect.value = nextSession.id;
+                if (this.ui.sessionSelect) this.ui.sessionSelect.value = nextSession.id;
                 this.selectSession(nextSession.id);
             }
         }
@@ -1706,9 +1736,8 @@ class CircuitWeatherApp {
         const isMobile = window.innerWidth <= 768;
 
         // Update mobile race info visibility
-        const mobileRaceInfo = document.getElementById('mobileRaceInfo');
-        if (mobileRaceInfo) {
-            mobileRaceInfo.style.display = (this.selectedRace && isMobile) ? 'flex' : 'none';
+        if (this.ui.mobileRaceInfo) {
+            this.ui.mobileRaceInfo.style.display = (this.selectedRace && isMobile) ? 'flex' : 'none';
         }
 
         // Update mobile countdown visibility
@@ -1719,14 +1748,7 @@ class CircuitWeatherApp {
         }
 
         // Update mobile weather card visibility
-        const mobileWeather = document.getElementById('mobileWeatherCard');
-        // Mobile card is now "Live Weather", so show if we have a race selected
-        // We check if content is populated by checking one of its children or just ensure updateLiveWeather was called
-        // Ideally, we hide it if the widget is hidden.
-        // Let's rely on the element's style.display being set by renderLiveWeather,
-        // but here we enforce the mobile/desktop media query logic.
-
-        if (mobileWeather) {
+        if (this.ui.mobileWeatherCard) {
             // Check if we have valid data (renderLiveWeather sets display to none if not)
             // But renderLiveWeather is async.
             // For now, let's assume if we have a selected race, we want to show it (unless data failed).
@@ -1734,9 +1756,9 @@ class CircuitWeatherApp {
             // and here we just handle the "if mobile" part.
             // But if renderLiveWeather hid it, we shouldn't show it.
 
-            const hasData = mobileWeather.style.display !== 'none';
+            const hasData = this.ui.mobileWeatherCard.style.display !== 'none';
             if (hasData) {
-                mobileWeather.style.display = isMobile ? 'flex' : 'none';
+                this.ui.mobileWeatherCard.style.display = isMobile ? 'flex' : 'none';
             }
         }
 
@@ -1744,17 +1766,14 @@ class CircuitWeatherApp {
     }
 
     bindEvents() {
-        const roundSelect = document.getElementById('roundSelect');
-        const sessionSelect = document.getElementById('sessionSelect');
-
-        if (roundSelect) {
-            roundSelect.addEventListener('change', (e) => {
+        if (this.ui.roundSelect) {
+            this.ui.roundSelect.addEventListener('change', (e) => {
                 if (e.target.value) this.selectRound(e.target.value);
             });
         }
 
-        if (sessionSelect) {
-            sessionSelect.addEventListener('change', (e) => {
+        if (this.ui.sessionSelect) {
+            this.ui.sessionSelect.addEventListener('change', (e) => {
                 if (e.target.value && this.selectedRace) {
                     this.selectSession(e.target.value);
                 }
@@ -1763,7 +1782,7 @@ class CircuitWeatherApp {
     }
 
     populateRoundSelect() {
-        const select = document.getElementById('roundSelect');
+        const select = this.ui.roundSelect;
         if (!select) return;
 
         select.innerHTML = '<option value="">Select round...</option>';
@@ -1811,9 +1830,8 @@ class CircuitWeatherApp {
         this.countdown.show(false);
 
         // Hide forecast section since no session is selected yet
-        const forecastSection = document.getElementById('forecastSection');
-        if (forecastSection) {
-            forecastSection.style.display = 'none';
+        if (this.ui.forecastSection) {
+            this.ui.forecastSection.style.display = 'none';
         }
 
         // Fetch current "Live" weather for the widgets
@@ -1830,44 +1848,33 @@ class CircuitWeatherApp {
         const flagUrl = code ? `https://flagcdn.com/w80/${code}.png` : '';
 
         // Sidebar banner
-        const bannerEl = document.getElementById('raceInfoBanner');
-        const flagEl = document.getElementById('countryFlag');
-        const countryEl = document.getElementById('raceInfoCountry');
-        const nameEl = document.getElementById('raceInfoName');
-        const circuitEl = document.getElementById('raceInfoCircuit');
-
-        if (bannerEl) {
-            bannerEl.style.display = race ? 'flex' : 'none';
+        if (this.ui.raceInfoBanner) {
+            this.ui.raceInfoBanner.style.display = race ? 'flex' : 'none';
         }
-        if (flagEl && flagUrl) {
-            flagEl.src = flagUrl;
-            flagEl.alt = `${country} flag`;
+        if (this.ui.countryFlag && flagUrl) {
+            this.ui.countryFlag.src = flagUrl;
+            this.ui.countryFlag.alt = `${country} flag`;
         }
-        if (countryEl) countryEl.textContent = country || '';
-        if (nameEl) nameEl.textContent = race.name || '';
-        if (circuitEl) circuitEl.textContent = race.circuit?.circuitName || '';
+        if (this.ui.raceInfoCountry) this.ui.raceInfoCountry.textContent = country || '';
+        if (this.ui.raceInfoName) this.ui.raceInfoName.textContent = race.name || '';
+        if (this.ui.raceInfoCircuit) this.ui.raceInfoCircuit.textContent = race.circuit?.circuitName || '';
 
         // Mobile overlay
-        const mobileEl = document.getElementById('mobileRaceInfo');
-        const mobileFlagEl = document.getElementById('mobileCountryFlag');
-        const mobileNameEl = document.getElementById('mobileRaceInfoName');
-        const mobileCircuitEl = document.getElementById('mobileRaceInfoCircuit');
-
-        if (mobileEl) {
+        if (this.ui.mobileRaceInfo) {
             // Only show mobile race info on mobile viewports
             const isMobile = window.innerWidth <= 768;
-            mobileEl.style.display = (race && isMobile) ? 'flex' : 'none';
+            this.ui.mobileRaceInfo.style.display = (race && isMobile) ? 'flex' : 'none';
         }
-        if (mobileFlagEl && flagUrl) {
-            mobileFlagEl.src = flagUrl;
-            mobileFlagEl.alt = `${country} flag`;
+        if (this.ui.mobileCountryFlag && flagUrl) {
+            this.ui.mobileCountryFlag.src = flagUrl;
+            this.ui.mobileCountryFlag.alt = `${country} flag`;
         }
-        if (mobileNameEl) mobileNameEl.textContent = race.name || '';
-        if (mobileCircuitEl) mobileCircuitEl.textContent = race.circuit?.circuitName || '';
+        if (this.ui.mobileRaceInfoName) this.ui.mobileRaceInfoName.textContent = race.name || '';
+        if (this.ui.mobileRaceInfoCircuit) this.ui.mobileRaceInfoCircuit.textContent = race.circuit?.circuitName || '';
     }
 
     populateSessionSelect(sessions) {
-        const select = document.getElementById('sessionSelect');
+        const select = this.ui.sessionSelect;
         if (!select) return;
 
         select.disabled = false;
@@ -1919,8 +1926,7 @@ class CircuitWeatherApp {
             ]);
 
             // Show forecast section container
-            const forecastSection = document.getElementById('forecastSection');
-            if (forecastSection) forecastSection.style.display = 'block';
+            if (this.ui.forecastSection) this.ui.forecastSection.style.display = 'block';
 
             // Ensure mobile elements are visible
             this.updateMobileVisibility();
@@ -1956,7 +1962,7 @@ class CircuitWeatherApp {
         // Updates Desktop Widget and Mobile Card (Live)
         // Independent of session forecast availability
 
-        const mobileCard = document.getElementById('mobileWeatherCard');
+        const mobileCard = this.ui.mobileWeatherCard;
 
         if (!weather.available || !weather.current) {
             if (this.weatherWidget) this.weatherWidget.el.style.display = 'none';
@@ -1977,17 +1983,13 @@ class CircuitWeatherApp {
             mobileCard.style.display = 'flex';
         }
 
-        const mobTempEl = document.getElementById('mobileWeatherTemp');
-        const mobWindEl = document.getElementById('mobileWeatherWind');
-        const mobHumidEl = document.getElementById('mobileWeatherHumidity');
-
         const temp = Math.round(weather.current.temperature_2m);
         const wind = Math.round(weather.current.wind_speed_10m);
         const humidity = Math.round(weather.current.relative_humidity_2m || 0);
 
-        if (mobTempEl) mobTempEl.textContent = `${temp}${weather.units.temperature_2m}`;
-        if (mobWindEl) mobWindEl.textContent = `${wind} ${weather.units.wind_speed_10m}`;
-        if (mobHumidEl) mobHumidEl.textContent = `${humidity}%`;
+        if (this.ui.mobileWeatherTemp) this.ui.mobileWeatherTemp.textContent = `${temp}${weather.units.temperature_2m}`;
+        if (this.ui.mobileWeatherWind) this.ui.mobileWeatherWind.textContent = `${wind} ${weather.units.wind_speed_10m}`;
+        if (this.ui.mobileWeatherHumidity) this.ui.mobileWeatherHumidity.textContent = `${humidity}%`;
     }
 
     renderForecast(weather, sessionTime, sessionId) {
@@ -1999,8 +2001,8 @@ class CircuitWeatherApp {
             return;
         }
 
-        const content = document.getElementById('forecastContent');
-        const unavailable = document.getElementById('forecastUnavailable');
+        const content = this.ui.forecastContent;
+        const unavailable = this.ui.forecastUnavailable;
 
         if (!weather.available) {
             if (content) content.style.display = 'none';
@@ -2010,11 +2012,6 @@ class CircuitWeatherApp {
 
         if (content) content.style.display = 'block';
         if (unavailable) unavailable.style.display = 'none';
-
-        const tempEl = document.getElementById('weatherTemp');
-        const rainEl = document.getElementById('weatherRain');
-        const windEl = document.getElementById('weatherWind');
-        const windDirEl = document.getElementById('weatherWindDir');
 
         if (weather.current) {
             const temp = Math.round(weather.current.temperature_2m);
@@ -2026,14 +2023,14 @@ class CircuitWeatherApp {
                  maxPrecip = Math.max(...weather.hourly.map(h => h.precipProb));
             }
 
-            if (tempEl) tempEl.textContent = `${temp}${weather.units.temperature_2m}`;
-            if (windEl) windEl.textContent = `${wind} ${weather.units.wind_speed_10m}`;
-            if (windDirEl) windDirEl.textContent = `${dir}°`;
-            if (rainEl) rainEl.textContent = `${maxPrecip}%`;
+            if (this.ui.weatherTemp) this.ui.weatherTemp.textContent = `${temp}${weather.units.temperature_2m}`;
+            if (this.ui.weatherWind) this.ui.weatherWind.textContent = `${wind} ${weather.units.wind_speed_10m}`;
+            if (this.ui.weatherWindDir) this.ui.weatherWindDir.textContent = `${dir}°`;
+            if (this.ui.weatherRain) this.ui.weatherRain.textContent = `${maxPrecip}%`;
         }
 
         // Render Timeline
-        const timelineEl = document.getElementById('weatherTimeline');
+        const timelineEl = this.ui.weatherTimeline;
         if (timelineEl && weather.hourly) {
             timelineEl.innerHTML = '';
 
@@ -2065,21 +2062,18 @@ class CircuitWeatherApp {
         if (series !== 'f1') return;
 
         if (round) {
-            const roundSelect = document.getElementById('roundSelect');
-            if (roundSelect) roundSelect.value = round;
+            if (this.ui.roundSelect) this.ui.roundSelect.value = round;
             this.selectRound(round);
 
             if (session) {
-                const sessionSelect = document.getElementById('sessionSelect');
-                if (sessionSelect) sessionSelect.value = session;
+                if (this.ui.sessionSelect) this.ui.sessionSelect.value = session;
                 this.selectSession(session);
             }
         }
     }
 
     showLoading(visible) {
-        const overlay = document.getElementById('loadingOverlay');
-        if (overlay) overlay.classList.toggle('visible', visible);
+        if (this.ui.loadingOverlay) this.ui.loadingOverlay.classList.toggle('visible', visible);
     }
 }
 
