@@ -1219,7 +1219,7 @@ const MapWeatherWidget = L.Control.extend({
         const temp = Math.round(weather.current.temperature_2m);
         const humidity = Math.round(weather.current.relative_humidity_2m || 0);
         const wind = Math.round(weather.current.wind_speed_10m);
-        const precip = Math.round(weather.current.precipitation_probability || 0);
+        const precip = (weather.hourly && weather.hourly.length > 0) ? Math.round(weather.hourly[0].precipProb || 0) : 0;
 
         this._div.innerHTML = `
             <div class="weather-widget-metric" title="Temperature">
@@ -2093,7 +2093,7 @@ class CircuitWeatherApp {
         const temp = Math.round(weather.current.temperature_2m);
         const wind = Math.round(weather.current.wind_speed_10m);
         const humidity = Math.round(weather.current.relative_humidity_2m || 0);
-        const precip = Math.round(weather.current.precipitation_probability || 0);
+        const precip = (weather.hourly && weather.hourly.length > 0) ? Math.round(weather.hourly[0].precipProb || 0) : 0;
 
 
         if (this.ui.mobileWeatherTemp) this.ui.mobileWeatherTemp.textContent = `${temp}${weather.units.temperature_2m}`;
