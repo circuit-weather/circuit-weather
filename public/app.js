@@ -338,12 +338,23 @@ class WeatherClient {
                 this.cache.set(cacheKey, { timestamp: Date.now(), data });
             }
 
-            // Find the closest hour and overwrite the current precipitation with the hourly probability
-            if (data.current && data.hourly) {
-                const closestHour = this.findCurrentHour(data.hourly);
-                if (closestHour) {
-                    // Use a different name to avoid confusion with the precipitation measurement
-                    data.current.precipitation_probability = closestHour.precipProb;
+
+            // Augment current weather with precipitation probability from the nearest hour
+            if (data.current && data.hourly && data.hourly.time && data.hourly.precipitation_probability) {
+                const now = data.current.time;
+                let closestHourIndex = -1;
+                let smallestDiff = Infinity;
+
+                data.hourly.time.forEach((time, index) => {
+                    const diff = Math.abs(now - time);
+                    if (diff < smallestDiff) {
+                        smallestDiff = diff;
+                        closestHourIndex = index;
+                    }
+                });
+
+                if (closestHourIndex !== -1) {
+                    data.current.precipitation_probability = data.hourly.precipitation_probability[closestHourIndex];
                 }
             }
 
@@ -357,39 +368,6 @@ class WeatherClient {
             console.error('Weather fetch failed:', error);
             return { available: false, reason: 'error' };
         }
-    }
-
-    findCurrentHour(hourly) {
-        if (!hourly || !hourly.time || hourly.time.length === 0) {
-            return null;
-        }
-
-        const nowTs = Math.floor(Date.now() / 1000);
-        let closestIndex = -1;
-        let minDiff = Infinity;
-
-        hourly.time.forEach((time, index) => {
-            const diff = Math.abs(nowTs - time);
-            if (diff < minDiff) {
-                minDiff = diff;
-                closestIndex = index;
-            }
-        });
-
-        if (closestIndex === -1) {
-            return null;
-        }
-
-        const i = closestIndex;
-        return {
-            time: hourly.time[i],
-            temp: hourly.temperature_2m[i],
-            humidity: hourly.relative_humidity_2m ? hourly.relative_humidity_2m[i] : null,
-            precipProb: hourly.precipitation_probability[i],
-            windSpeed: hourly.wind_speed_10m[i],
-            windDir: hourly.wind_direction_10m[i],
-            code: hourly.weather_code[i]
-        };
     }
 
     filterHourly(hourly, sessionTime) {
