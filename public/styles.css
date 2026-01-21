@@ -1323,56 +1323,6 @@ body {
     }
 }
 
-/* ===================================
-   Mobile Weather Card
-   =================================== */
-
-.mobile-weather-card {
-    display: none;
-}
-
-@media (max-width: 768px) {
-    .mobile-weather-card {
-        display: flex; /* overridden by JS toggle */
-        flex-direction: column;
-        align-items: center;
-        width: 2.75rem;
-        gap: var(--spacing-sm);
-        background: var(--sidebar-bg);
-        backdrop-filter: var(--glass-blur);
-        -webkit-backdrop-filter: var(--glass-blur);
-        border: 1px solid var(--color-border);
-        border-radius: var(--radius-md);
-        padding: var(--spacing-sm) 0;
-        box-shadow: var(--shadow-md);
-        /* Flex child props */
-        align-self: flex-end;
-        pointer-events: auto;
-    }
-
-    /* Hide rows container structure from previous layout */
-    .mobile-weather-row {
-        display: contents;
-    }
-
-    .mobile-weather-metric {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 2px;
-        color: var(--color-text);
-        font-size: 0.7rem;
-        font-weight: 600;
-        width: 100%;
-        text-align: center;
-        line-height: 1;
-    }
-
-    .icon-weather {
-        width: 18px;
-        height: 18px;
-    }
-}
 
 /* Weather Icon Colors */
 .icon-temp {
@@ -1534,52 +1484,6 @@ body {
 :focus-visible {
     outline: 2px solid var(--color-primary);
     outline-offset: 2px;
-}
-
-/* Weather Widget (Desktop) */
-.weather-widget {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    display: none; /* JS will toggle flex */
-    flex-direction: column;
-    align-items: center;
-    width: 2.75rem;
-    gap: var(--spacing-sm);
-    background: var(--sidebar-bg);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    padding: var(--spacing-sm) 0;
-    border-radius: var(--radius-md);
-    box-shadow: var(--shadow-md);
-    border: 1px solid var(--color-border);
-    z-index: 500;
-}
-
-.weather-widget-metric {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 2px;
-    font-size: 0.7rem;
-    font-weight: 600;
-    color: var(--color-text);
-    width: 100%;
-    text-align: center;
-    line-height: 1;
-}
-
-.weather-widget-metric .icon-weather {
-    width: 18px;
-    height: 18px;
-    color: var(--color-text); /* Higher fidelity implies main text color or specific */
-}
-
-/* Hide Desktop Widget on Mobile */
-@media (max-width: 768px) {
-    .weather-widget {
-        display: none !important;
-    }
 }
 
 /* Interactive Elements Overrides */
