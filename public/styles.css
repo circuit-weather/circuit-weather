@@ -1382,15 +1382,21 @@ body {
 /* Reposition weather widget on mobile */
 @media (max-width: 768px) {
     .leaflet-top.leaflet-right {
-        /* Position below header (56px) + layout padding */
-        top: calc(56px + var(--spacing-sm));
-        right: var(--spacing-sm);
-        left: auto;
+        /* Make it a full-width flex container to control alignment and padding */
+        display: flex;
+        justify-content: flex-end;
+        top: 56px;
+        left: 0;
+        right: 0;
+        padding: var(--spacing-sm);
+        /* Disable pointer events on the container so map is interactive */
+        pointer-events: none;
     }
 
-    /* Override default Leaflet margin for consistent alignment */
+    /* Override default Leaflet margin and re-enable pointer events on the control itself */
     .leaflet-top.leaflet-right .leaflet-control {
         margin: 0;
+        pointer-events: auto;
     }
 }
 
