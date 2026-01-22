@@ -13,11 +13,11 @@ def verify_weather_widget():
 
         # Wait for the weather widget to be visible
         weather_widget = page.locator(".leaflet-control-weather")
-        expect(weather_widget).to_be_visible(timeout=10000) # Increased timeout
+        expect(weather_widget).to_be_visible(timeout=10000)
 
         # Wait for the precipitation data to be populated, indicating the API call has finished
         precip_value = weather_widget.locator('div[title="Precipitation"] span')
-        expect(precip_value).not_to_have_text("--%", timeout=10000) # Increased timeout
+        expect(precip_value).not_to_have_text("--%", timeout=10000)
 
         # Take a screenshot of just the weather widget for verification
         weather_widget.screenshot(path="verification.png")
