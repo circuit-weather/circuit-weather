@@ -1387,6 +1387,11 @@ body {
         right: var(--spacing-sm);
         left: auto;
     }
+
+    /* Override default Leaflet margin for consistent alignment */
+    .leaflet-top.leaflet-right .leaflet-control {
+        margin: 0;
+    }
 }
 
 /* ===================================
