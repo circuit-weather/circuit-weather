@@ -1409,6 +1409,11 @@ body {
         right: var(--spacing-sm);
         left: auto;
     }
+
+    /* Remove default top margin from Leaflet controls to align with banner */
+    .leaflet-top.leaflet-right .leaflet-control {
+        margin: 0 !important;
+    }
 }
 
 /* ===================================
