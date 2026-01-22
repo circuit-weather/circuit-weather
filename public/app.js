@@ -338,7 +338,11 @@ class WeatherClient {
 
         try {
             // Check cache
-            const cacheKey = `${lat},${lon}`;
+            // Bolt Optimization: Round coordinates to increase cache hit rate during map panning
+            // 2 decimal places is approx 1.1km, sufficient for general weather accuracy
+            const rLat = Number(lat).toFixed(2);
+            const rLon = Number(lon).toFixed(2);
+            const cacheKey = `${rLat},${rLon}`;
             let data;
 
             if (this.cache.has(cacheKey)) {
