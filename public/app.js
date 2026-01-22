@@ -1625,6 +1625,16 @@ class PrivacyModal {
                 .replace(/'/g, '&#039;');
         };
 
+        // SEC: Sanitize URLs to prevent XSS (e.g. javascript: links)
+        const sanitizeUrl = (url) => {
+            const clean = url.trim();
+            // Block dangerous protocols
+            if (/^(?:javascript|vbscript|data):/i.test(clean)) {
+                return '#unsafe-url';
+            }
+            return clean;
+        };
+
         return escapeHtml(md)
             // Remove the main title (we have it in the header)
             .replace(/^# Privacy Policy\s*\n*/m, '')
@@ -1636,7 +1646,9 @@ class PrivacyModal {
             // Bold
             .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
             // Links
-            .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener">$1</a>')
+            .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, text, url) => {
+                return `<a href="${sanitizeUrl(url)}" target="_blank" rel="noopener">${text}</a>`;
+            })
             // List items
             .replace(/^- (.+)$/gm, '<li>$1</li>')
             // Wrap consecutive list items in ul
