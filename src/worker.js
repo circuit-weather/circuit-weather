@@ -446,9 +446,24 @@ async function handleWeatherRequest(request, env, ctx) {
 
   } catch (error) {
     console.error('Weather Fetch Error:', error);
-    return new Response(JSON.stringify({
+    // Return a valid, empty-like structure on error that the frontend can safely parse
+    const errorResponse = {
       error: 'Failed to fetch weather data',
-    }), {
+      current: {
+        temperature_2m: null,
+        relative_humidity_2m: null,
+        wind_speed_10m: null,
+        precipitation_probability: null,
+      },
+      hourly: {
+        time: [],
+        temperature_2m: [],
+        precipitation_probability: []
+      },
+      current_units: {}
+    };
+
+    return new Response(JSON.stringify(errorResponse), {
       status: 502,
       headers: {
         'Content-Type': 'application/json',
