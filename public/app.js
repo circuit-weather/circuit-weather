@@ -94,6 +94,21 @@ function debounce(func, wait) {
     };
 }
 
+/**
+ * Escapes HTML characters to prevent XSS injection
+ * @param {string} str
+ * @returns {string}
+ */
+function escapeHtml(str) {
+    if (typeof str !== 'string') return str;
+    return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
 
 // ===================================
 // Theme Manager
@@ -1212,7 +1227,7 @@ const MapWeatherWidget = L.Control.extend({
         this._div.innerHTML = `
             <div class="weather-widget-metric" title="Temperature">
                 <svg class="icon-weather icon-temp" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z" /></svg>
-                <span>${temp}${weather.units.temperature_2m}</span>
+                <span>${temp}${escapeHtml(weather.units.temperature_2m)}</span>
             </div>
             <div class="weather-widget-metric" title="Humidity">
                 <svg class="icon-weather icon-humidity" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" /></svg>
@@ -1220,7 +1235,7 @@ const MapWeatherWidget = L.Control.extend({
             </div>
             <div class="weather-widget-metric" title="Wind">
                  <svg class="icon-weather icon-wind" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2" /></svg>
-                <span>${wind} ${weather.units.wind_speed_10m}</span>
+                <span>${wind} ${escapeHtml(weather.units.wind_speed_10m)}</span>
             </div>
         `;
     }
@@ -1615,15 +1630,6 @@ class PrivacyModal {
 
     parseMarkdown(md) {
         // Simple markdown parser for privacy policy content
-        // SEC: Escape HTML characters to prevent XSS injection
-        const escapeHtml = (str) => {
-            return str
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#039;');
-        };
 
         // SEC: Sanitize URLs to prevent XSS (e.g. javascript: links)
         const sanitizeUrl = (url) => {
