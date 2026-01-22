@@ -51,6 +51,32 @@ const DEFAULT_SECURITY_HEADERS = {
   'Content-Security-Policy': "default-src 'none'; frame-ancestors 'none';",
 };
 
+// Helper to generate a generic, empty-like response to prevent frontend errors
+function getEmptyWeatherResponse(request) {
+  const errorResponse = {
+    error: 'Failed to fetch weather data',
+    current: {
+      temperature_2m: null,
+      relative_humidity_2m: null,
+      wind_speed_10m: null,
+    },
+    hourly: {
+      time: [],
+      temperature_2m: [],
+      precipitation_probability: []
+    },
+    current_units: {}
+  };
+  return new Response(JSON.stringify(errorResponse), {
+    status: 502,
+    headers: {
+      'Content-Type': 'application/json',
+      ...DEFAULT_SECURITY_HEADERS,
+      ...(getAllowedOrigin(request) ? { 'Access-Control-Allow-Origin': getAllowedOrigin(request) } : {}),
+    }
+  });
+}
+
 /**
  * Helper to determine allowed CORS origin
  * Returns the origin string if allowed, or null if forbidden.
@@ -139,6 +165,31 @@ async function handleApiRequest(request, env, ctx) {
   }
 
   // Fetch from upstream
+  const emptyResponse = () => {
+    const errorResponse = {
+      error: 'Failed to fetch weather data',
+      current: {
+        temperature_2m: null,
+        relative_humidity_2m: null,
+        wind_speed_10m: null,
+      },
+      hourly: {
+        time: [],
+        temperature_2m: [],
+        precipitation_probability: []
+      },
+      current_units: {}
+    };
+    return new Response(JSON.stringify(errorResponse), {
+      status: 502,
+      headers: {
+        'Content-Type': 'application/json',
+        ...DEFAULT_SECURITY_HEADERS,
+        ...(getAllowedOrigin(request) ? { 'Access-Control-Allow-Origin': getAllowedOrigin(request) } : {}),
+      }
+    });
+  };
+
   try {
     const upstreamResponse = await fetch(upstreamUrl, {
       headers: {
@@ -397,16 +448,8 @@ async function handleWeatherRequest(request, env, ctx) {
     });
 
     if (!upstreamResponse.ok) {
-      return new Response(JSON.stringify({
-        error: 'Upstream Weather API error',
-        status: upstreamResponse.status,
-      }), {
-        status: upstreamResponse.status,
-        headers: {
-          'Content-Type': 'application/json',
-          ...(getAllowedOrigin(request) ? { 'Access-Control-Allow-Origin': getAllowedOrigin(request) } : {}),
-        },
-      });
+      console.error(`Upstream Weather API Error: Status ${upstreamResponse.status}`);
+      return emptyResponse();
     }
 
     // Bolt Optimization: Stream response instead of buffering text
@@ -446,16 +489,7 @@ async function handleWeatherRequest(request, env, ctx) {
 
   } catch (error) {
     console.error('Weather Fetch Error:', error);
-    return new Response(JSON.stringify({
-      error: 'Failed to fetch weather data',
-    }), {
-      status: 502,
-      headers: {
-        'Content-Type': 'application/json',
-        ...DEFAULT_SECURITY_HEADERS,
-        ...(getAllowedOrigin(request) ? { 'Access-Control-Allow-Origin': getAllowedOrigin(request) } : {}),
-      }
-    });
+    return emptyResponse();
   }
 }
 
@@ -503,16 +537,8 @@ async function handleRadarRequest(request, env, ctx) {
     });
 
     if (!upstreamResponse.ok) {
-      return new Response(JSON.stringify({
-        error: 'Upstream Radar API error',
-        status: upstreamResponse.status,
-      }), {
-        status: upstreamResponse.status,
-        headers: {
-          'Content-Type': 'application/json',
-          ...(getAllowedOrigin(request) ? { 'Access-Control-Allow-Origin': getAllowedOrigin(request) } : {}),
-        },
-      });
+      console.error(`Upstream Weather API Error: Status ${upstreamResponse.status}`);
+      return getEmptyWeatherResponse(request);
     }
 
     // Bolt Optimization: Stream response instead of buffering text
