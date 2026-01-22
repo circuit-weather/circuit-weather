@@ -338,26 +338,6 @@ class WeatherClient {
                 this.cache.set(cacheKey, { timestamp: Date.now(), data });
             }
 
-
-            // Augment current weather with precipitation probability from the nearest hour
-            if (data.current && data.hourly && data.hourly.time && data.hourly.precipitation_probability) {
-                const now = data.current.time;
-                let closestHourIndex = -1;
-                let smallestDiff = Infinity;
-
-                data.hourly.time.forEach((time, index) => {
-                    const diff = Math.abs(now - time);
-                    if (diff < smallestDiff) {
-                        smallestDiff = diff;
-                        closestHourIndex = index;
-                    }
-                });
-
-                if (closestHourIndex !== -1) {
-                    data.current.precipitation_probability = data.hourly.precipitation_probability[closestHourIndex];
-                }
-            }
-
             return {
                 available: true,
                 current: data.current,
@@ -1220,18 +1200,6 @@ const MapWeatherWidget = L.Control.extend({
                      <svg class="icon-weather icon-wind" viewBox="0 0 24 24"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2" /></svg>
                     <span>--</span>
                 </div>
-                 <div class="weather-widget-metric" title="Precipitation">
-                    <svg class="icon-weather icon-precip" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25" />
-                        <path d="M8 14v1" />
-                        <path d="M8 19v1" />
-                        <path d="M12 15v1" />
-                        <path d="M12 20v1" />
-                        <path d="M16 14v1" />
-                        <path d="M16 19v1" />
-                    </svg>
-                    <span>--%</span>
-                </div>
             `;
             return;
         }
@@ -1253,18 +1221,6 @@ const MapWeatherWidget = L.Control.extend({
             <div class="weather-widget-metric" title="Wind">
                  <svg class="icon-weather icon-wind" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2" /></svg>
                 <span>${wind} ${weather.units.wind_speed_10m}</span>
-            </div>
-             <div class="weather-widget-metric" title="Precipitation">
-                <svg class="icon-weather icon-precip" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M20 16.58A5 5 0 0 0 18 7h-1.26A8 8 0 1 0 4 15.25" />
-                    <path d="M8 14v1" />
-                    <path d="M8 19v1" />
-                    <path d="M12 15v1" />
-                    <path d="M12 20v1" />
-                    <path d="M16 14v1" />
-                    <path d="M16 19v1" />
-                </svg>
-                <span>${precip}%</span>
             </div>
         `;
     }
