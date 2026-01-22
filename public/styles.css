@@ -1065,8 +1065,8 @@ body {
     /* Radar controls adjustments */
     .radar-controls {
         width: auto;
-        left: 8px;
-        right: 8px;
+        left: var(--spacing-md);
+        right: var(--spacing-md);
         transform: none;
         padding: var(--spacing-sm);
         bottom: 20px;
@@ -1090,7 +1090,7 @@ body {
     .leaflet-top.leaflet-left {
         top: auto;
         left: auto;
-        right: 8px;
+        right: var(--spacing-md);
         bottom: 84px;
     }
 
@@ -1219,7 +1219,7 @@ body {
         right: 0;
         flex-direction: column;
         gap: var(--spacing-sm);
-        padding: var(--spacing-sm);
+        padding: var(--spacing-md);
         pointer-events: none;
         z-index: 400;
     }
@@ -1284,7 +1284,7 @@ body {
 @media (max-width: 768px) {
     .mobile-countdown {
         position: absolute;
-        left: 8px;
+        left: var(--spacing-md);
         bottom: 84px;
         display: block;
         background: var(--sidebar-bg);
@@ -1383,8 +1383,8 @@ body {
 @media (max-width: 768px) {
     .leaflet-top.leaflet-right {
         /* Position below header (56px) + layout padding */
-        top: calc(56px + var(--spacing-sm));
-        right: var(--spacing-sm);
+        top: calc(56px + var(--spacing-md));
+        right: var(--spacing-md);
         left: auto;
     }
 }
