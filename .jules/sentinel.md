@@ -12,3 +12,8 @@
 **Vulnerability:** The production CSP in `public/_headers` was overly permissive (allowing direct API connections) to support the same configuration as local development, undermining the security benefits of the API proxy.
 **Learning:** When using a split architecture (Proxy in Prod, Direct in Local), a single CSP often defaults to the "lowest common denominator" (permissive).
 **Prevention:** Implement "Split Horizon CSP": Use a strict CSP in production headers (via `_headers`) that enforces proxy usage (`connect-src 'self'`), while allowing a more permissive CSP in the `index.html` meta tag (or dev server config) to support local development where the proxy is absent.
+
+## 2026-02-05 - Context-Aware Output Encoding for Upstream Data
+**Vulnerability:** The `MapWeatherWidget` injected weather unit strings (e.g., "°C", "km/h") directly from the API response into the DOM via `innerHTML` without sanitization. While the units usually come from a trusted source, a compromised upstream API or proxy could inject malicious HTML (XSS).
+**Learning:** "Trusted" upstream APIs should still be treated as untrusted input sources when rendering to the DOM. Relying on the data type (string vs number) is insufficient in loosely typed languages like JS.
+**Prevention:** Always use context-aware output encoding (e.g., `textContent` or an `escapeHtml` utility) for ALL dynamic data injected into HTML, regardless of the source's perceived trustworthiness.
