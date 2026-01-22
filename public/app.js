@@ -1207,6 +1207,7 @@ const MapWeatherWidget = L.Control.extend({
         const temp = Math.round(weather.current.temperature_2m);
         const humidity = Math.round(weather.current.relative_humidity_2m || 0);
         const wind = Math.round(weather.current.wind_speed_10m);
+        const precip = Math.round(weather.current.precipitation_probability || 0);
 
         this._div.innerHTML = `
             <div class="weather-widget-metric" title="Temperature">
