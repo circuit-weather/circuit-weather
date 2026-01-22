@@ -104,6 +104,21 @@ function debounce(func, wait) {
     };
 }
 
+/**
+ * Escapes HTML characters to prevent XSS injection
+ * @param {string} str
+ * @returns {string}
+ */
+function escapeHtml(str) {
+    if (typeof str !== 'string') return str;
+    return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+}
+
 
 // ===================================
 // Theme Manager
@@ -1625,15 +1640,6 @@ class PrivacyModal {
 
     parseMarkdown(md) {
         // Simple markdown parser for privacy policy content
-        // SEC: Escape HTML characters to prevent XSS injection
-        const escapeHtml = (str) => {
-            return str
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#039;');
-        };
 
         // SEC: Sanitize URLs to prevent XSS (e.g. javascript: links)
         const sanitizeUrl = (url) => {
