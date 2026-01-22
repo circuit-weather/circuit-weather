@@ -1065,8 +1065,8 @@ body {
     /* Radar controls adjustments */
     .radar-controls {
         width: auto;
-        left: 8px;
-        right: 8px;
+        left: var(--spacing-sm);
+        right: var(--spacing-sm);
         transform: none;
         padding: var(--spacing-sm);
         bottom: 20px;
@@ -1090,7 +1090,7 @@ body {
     .leaflet-top.leaflet-left {
         top: auto;
         left: auto;
-        right: 8px;
+        right: var(--spacing-sm);
         bottom: 84px;
     }
 
@@ -1284,7 +1284,7 @@ body {
 @media (max-width: 768px) {
     .mobile-countdown {
         position: absolute;
-        left: 8px;
+        left: var(--spacing-sm);
         bottom: 84px;
         display: block;
         background: var(--sidebar-bg);
