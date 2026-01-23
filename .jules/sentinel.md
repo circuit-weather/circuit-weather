@@ -27,3 +27,8 @@
 **Vulnerability:** The Cloudflare Worker API proxy accepted all HTTP methods (e.g., POST, PUT, DELETE) and forwarded them as GET requests to the upstream API. This created ambiguity in the API contract, potentially masked client-side errors, and failed to handle CORS preflight (OPTIONS) requests correctly (returning 200 OK with content instead of 204 No Content).
 **Learning:** Even if an upstream API is read-only, a proxy should strictly enforce the expected method contract to prevent confusion and misuse. Explicitly handling OPTIONS is critical for correct CORS behavior, even for simple GET requests, to ensure browser compliance and prevent unnecessary upstream traffic.
 **Prevention:** Implement a strict method whitelist (e.g., GET, HEAD) at the entry point of the API proxy and explicitly handle OPTIONS requests with appropriate CORS headers before checking the whitelist.
+
+## 2026-02-12 - Inconsistent Security Headers on Error Responses
+**Vulnerability:** The API proxy's catch-all 404 handler and 405 Method Not Allowed handler failed to include critical security headers (CSP, HSTS) and CORS headers (`Access-Control-Allow-Origin`). This could lead to client-side CORS errors masking the true error (404/405) and left error pages unprotected by CSP.
+**Learning:** Security headers and CORS logic are often applied to "success" paths but easily forgotten in edge-case error handlers. Browsers still require valid CORS headers to permit JavaScript to read the status code and body of an error response.
+**Prevention:** Centralize response creation or use a middleware pattern to ensure security and CORS headers are applied to *every* response, including 404s and 500s.
