@@ -57,3 +57,8 @@
 **Vulnerability:** The `sanitizeUrl` function in `public/app.js` used a regex to detect URL schemes but failed to strip control characters and whitespace. This allowed malicious schemes like `java\nscript:` to bypass the detection regex (which expected a colon immediately after the scheme) and be treated as safe relative URLs.
 **Learning:** Regex-based validation of URL schemes is brittle if the input is not first canonicalized. Browsers may ignore control characters in attributes, allowing "broken" schemes to execute.
 **Prevention:** Always strip all whitespace (`\s`) and control characters (`\x00-\x1F`) from URL inputs *before* passing them to validation logic.
+
+## 2026-02-22 - Missing Security Headers on API Error Responses
+**Vulnerability:** API error responses (404, 502) in `src/worker.js` handlers (`handleApiRequest`, `handleTrackRequest`) lacked `Content-Security-Policy` and `Cache-Control` headers, potentially allowing error page caching or content sniffing.
+**Learning:** Centralized security headers are often applied to success paths but easily missed in scattered `catch` blocks or conditional error returns.
+**Prevention:** Ensure `DEFAULT_SECURITY_HEADERS` are spread into every `new Response()` call, including those in catch blocks and error conditions.

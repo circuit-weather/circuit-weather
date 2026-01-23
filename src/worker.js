@@ -237,6 +237,7 @@ async function handleApiRequest(request, env, ctx) {
       status: 502,
       headers: {
         'Content-Type': 'application/json',
+        'Cache-Control': 'no-store',
         ...DEFAULT_SECURITY_HEADERS,
         ...(getAllowedOrigin(request) ? { 'Access-Control-Allow-Origin': getAllowedOrigin(request) } : {}),
       }
@@ -260,8 +261,8 @@ async function handleApiRequest(request, env, ctx) {
         status: upstreamResponse.status,
         headers: {
           'Content-Type': 'application/json',
-          // We don't expose CORS on error pages unless necessary?
-          // Better to keep it consistent.
+          'Cache-Control': 'no-store',
+          ...DEFAULT_SECURITY_HEADERS,
           ...(getAllowedOrigin(request) ? { 'Access-Control-Allow-Origin': getAllowedOrigin(request) } : {}),
         },
       });
@@ -387,6 +388,8 @@ async function handleTrackRequest(request, env, ctx) {
         status: upstreamResponse.status === 404 ? 404 : 502,
         headers: {
           'Content-Type': 'application/json',
+          'Cache-Control': 'no-store',
+          ...DEFAULT_SECURITY_HEADERS,
           ...(getAllowedOrigin(request) ? { 'Access-Control-Allow-Origin': getAllowedOrigin(request) } : {}),
         },
       });
@@ -436,6 +439,8 @@ async function handleTrackRequest(request, env, ctx) {
       status: 502,
       headers: {
         'Content-Type': 'application/json',
+        'Cache-Control': 'no-store',
+        ...DEFAULT_SECURITY_HEADERS,
         ...(getAllowedOrigin(request) ? { 'Access-Control-Allow-Origin': getAllowedOrigin(request) } : {}),
       }
     });
