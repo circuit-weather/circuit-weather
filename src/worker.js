@@ -25,7 +25,8 @@ export default {
         headers: {
           'Content-Type': 'application/json',
           'Allow': 'GET, HEAD, OPTIONS',
-          ...DEFAULT_SECURITY_HEADERS
+          ...DEFAULT_SECURITY_HEADERS,
+          ...(getAllowedOrigin(request) ? { 'Access-Control-Allow-Origin': getAllowedOrigin(request) } : {}),
         }
       });
     }
@@ -53,7 +54,12 @@ export default {
     // For any other /api/* routes, return 404
     return new Response(JSON.stringify({ error: 'API endpoint not found' }), {
       status: 404,
-      headers: { 'Content-Type': 'application/json' }
+      headers: {
+        'Content-Type': 'application/json',
+        'Cache-Control': 'no-store',
+        ...DEFAULT_SECURITY_HEADERS,
+        ...(getAllowedOrigin(request) ? { 'Access-Control-Allow-Origin': getAllowedOrigin(request) } : {}),
+      }
     });
   }
 };
