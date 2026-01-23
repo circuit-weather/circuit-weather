@@ -138,7 +138,8 @@ async function handleApiRequest(request, env, ctx) {
   const upstreamUrl = `https://api.jolpi.ca/ergast/f1/${apiPath}`;
 
   // Cache key based on the full upstream URL
-  const cacheKey = new Request(upstreamUrl, request);
+  // SEC: Normalize cache key to URL only to prevent cache busting via headers
+  const cacheKey = new Request(upstreamUrl);
   const cache = caches.default;
 
   // Check cache match
