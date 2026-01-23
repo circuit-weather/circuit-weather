@@ -82,16 +82,6 @@ const CIRCUIT_MAP = {
 // ===================================
 // Utility Functions
 // ===================================
-function escapeHtml(unsafe) {
-    if (unsafe == null) return '';
-    return String(unsafe)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-}
-
 function debounce(func, wait) {
     let timeout;
     return function executedFunction(...args) {
@@ -106,12 +96,12 @@ function debounce(func, wait) {
 
 /**
  * Escapes HTML characters to prevent XSS injection
- * @param {string} str
- * @returns {string}
+ * @param {any} str - The input string (or value to be converted)
+ * @returns {string} The escaped string
  */
 function escapeHtml(str) {
-    if (typeof str !== 'string') return str;
-    return str
+    if (str == null) return '';
+    return String(str)
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
