@@ -32,3 +32,8 @@
 **Vulnerability:** The API proxy's catch-all 404 handler and 405 Method Not Allowed handler failed to include critical security headers (CSP, HSTS) and CORS headers (`Access-Control-Allow-Origin`). This could lead to client-side CORS errors masking the true error (404/405) and left error pages unprotected by CSP.
 **Learning:** Security headers and CORS logic are often applied to "success" paths but easily forgotten in edge-case error handlers. Browsers still require valid CORS headers to permit JavaScript to read the status code and body of an error response.
 **Prevention:** Centralize response creation or use a middleware pattern to ensure security and CORS headers are applied to *every* response, including 404s and 500s.
+
+## 2026-02-14 - Pre-Regex Input Length Validation
+**Vulnerability:** The `handleWeatherRequest` function in `src/worker.js` used a regular expression to validate latitude and longitude parameters without checking their length first. This could expose the worker to Regular Expression Denial of Service (ReDoS) or resource exhaustion if an attacker sent extremely long strings.
+**Learning:** Regular expressions, even simple ones, should not be the first line of defense against massive inputs. Validating input size provides a cheap, effective guard before more expensive parsing logic runs.
+**Prevention:** Always enforce strict maximum length limits on string inputs *before* passing them to regex validation or parsing functions.
