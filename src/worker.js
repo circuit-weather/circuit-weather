@@ -124,6 +124,7 @@ async function handleApiRequest(request, env, ctx) {
     });
   }
 
+
   if (!validCharsRegex.test(apiPath) || apiPath.includes('..') || apiPath.includes('//') || apiPath.startsWith('/')) {
     return new Response(JSON.stringify({ error: 'Invalid API path' }), {
       status: 400,
@@ -408,8 +409,22 @@ async function handleWeatherRequest(request, env, ctx) {
     });
   }
 
+  // SEC: Validate coordinate range
+  const latNum = parseFloat(lat);
+  const lonNum = parseFloat(lon);
+  if (!Number.isFinite(latNum) || !Number.isFinite(lonNum) || Math.abs(latNum) > 90 || Math.abs(lonNum) > 180) {
+    return new Response(JSON.stringify({ error: 'Coordinates out of range' }), {
+      status: 400,
+      headers: {
+        'Content-Type': 'application/json',
+        ...DEFAULT_SECURITY_HEADERS
+      }
+    });
+  }
+
   // Construct upstream URL with hardcoded fields to prevent abuse
-  const upstreamUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,wind_speed_10m,wind_direction_10m,weather_code&current=temperature_2m,relative_humidity_2m,wind_speed_10m,wind_direction_10m,precipitation&timeformat=unixtime&forecast_days=16`;
+  // Use sanitized numeric values to prevent injection
+  const upstreamUrl = `https://api.open-meteo.com/v1/forecast?latitude=${latNum}&longitude=${lonNum}&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,wind_speed_10m,wind_direction_10m,weather_code&current=temperature_2m,relative_humidity_2m,wind_speed_10m,wind_direction_10m,precipitation&timeformat=unixtime&forecast_days=16`;
 
   // Canonical cache key
   const cacheKey = new Request(upstreamUrl);
