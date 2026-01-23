@@ -47,3 +47,8 @@
 **Vulnerability:** The application lacked `Cross-Origin-Opener-Policy` (COOP) and `Cross-Origin-Resource-Policy` (CORP), leaving it potentially exposed to XS-Leaks and process-based side-channel attacks (Spectre).
 **Learning:** While `Cross-Origin-Embedder-Policy` (COEP) provides the strongest isolation (required for `SharedArrayBuffer`), it aggressively blocks cross-origin resources (scripts, images) that don't opt-in via CORP. For apps relying on third-party CDNs (unpkg, cartocdn), enabling COEP is a breaking change.
 **Prevention:** Implement `COOP: same-origin` and `CORP: same-origin` to gain significant process isolation and resource protection benefits without the breakage associated with COEP. This isolates the browsing context and prevents other sites from embedding the application's resources.
+
+## 2026-02-19 - Hidden File Exposure via Proxy
+**Vulnerability:** The API proxy `handleApiRequest` allowed request paths containing segments starting with `.` (e.g. `/.env`, `/drivers/.git/config`). This could potentially expose hidden files or configuration directories on the upstream server if they are not blocked by the upstream server itself.
+**Learning:** Regular expressions for allowed characters (`/^[a-zA-Z0-9/._-]*$/`) often inadvertently allow unsafe patterns like dotfiles. Explicitly checking for dangerous path components (like segments starting with `.`) is necessary for robust proxy security.
+**Prevention:** In any proxy logic, inspect the path segments and strictly block any segment that starts with `.` (excluding `.`, `..` which are handled by path normalization usually, but `.` as a prefix to a name like `.env` must be blocked).
