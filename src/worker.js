@@ -441,6 +441,17 @@ async function handleWeatherRequest(request, env, ctx) {
   const lat = url.searchParams.get('lat');
   const lon = url.searchParams.get('lon');
 
+  // SEC: Input length limit to prevent DoS/resource exhaustion
+  if ((lat && lat.length > 20) || (lon && lon.length > 20)) {
+    return new Response(JSON.stringify({ error: 'Coordinates too long' }), {
+      status: 400,
+      headers: {
+        'Content-Type': 'application/json',
+        ...DEFAULT_SECURITY_HEADERS
+      }
+    });
+  }
+
   // SEC: Validate inputs (Strict regex to prevent parameter pollution)
   const validCoordRegex = /^-?\d+(\.\d+)?$/;
   if (!lat || !lon || !validCoordRegex.test(lat) || !validCoordRegex.test(lon)) {
