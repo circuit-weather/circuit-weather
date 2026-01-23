@@ -173,8 +173,10 @@ async function handleApiRequest(request, env, ctx) {
     });
   }
 
+  // SEC: Prevent access to hidden files/directories (dotfiles)
+  const hasDotfiles = apiPath.split('/').some(part => part.startsWith('.'));
 
-  if (!validCharsRegex.test(apiPath) || apiPath.includes('..') || apiPath.includes('//') || apiPath.startsWith('/')) {
+  if (!validCharsRegex.test(apiPath) || apiPath.includes('..') || apiPath.includes('//') || apiPath.startsWith('/') || hasDotfiles) {
     return new Response(JSON.stringify({ error: 'Invalid API path' }), {
       status: 400,
       headers: {
