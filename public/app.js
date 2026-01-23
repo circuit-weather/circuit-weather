@@ -1640,10 +1640,17 @@ class PrivacyModal {
         // SEC: Sanitize URLs to prevent XSS (e.g. javascript: links)
         const sanitizeUrl = (url) => {
             const clean = url.trim();
-            // Block dangerous protocols
-            if (/^(?:javascript|vbscript|data):/i.test(clean)) {
+            // Allowlist approach: Check for protocol scheme
+            // Regex: Start with letter, followed by valid scheme chars, then colon
+            if (/^[a-z][a-z0-9+.-]*:/i.test(clean)) {
+                // If scheme exists, it MUST be in our allowlist
+                if (/^(?:https?|mailto):/i.test(clean)) {
+                    return clean;
+                }
+                // Block file:, javascript:, vbscript:, data:, blob:, etc.
                 return '#unsafe-url';
             }
+            // No scheme (relative URL), allow
             return clean;
         };
 
