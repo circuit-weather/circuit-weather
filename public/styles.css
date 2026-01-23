@@ -155,8 +155,7 @@ body {
     height: 75%;
 }
 
-.theme-toggle,
-.share-btn {
+.theme-toggle {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -170,46 +169,21 @@ body {
     transition: background-color var(--transition-fast);
 }
 
-.theme-toggle:hover,
-.share-btn:hover {
+.theme-toggle:hover {
     background: var(--color-surface-elevated);
 }
 
-.theme-toggle,
-.share-btn {
+.theme-toggle {
     display: grid;
     place-items: center;
     overflow: hidden;
 }
 
-.theme-toggle svg,
-.share-btn svg {
+.theme-toggle svg {
     width: 1rem;
     height: 1rem;
     grid-area: 1 / 1;
     transition: transform 0.5s cubic-bezier(0.4, 0.0, 0.2, 1), opacity 0.5s ease;
-}
-
-/* Share Button States */
-.share-btn .icon-share {
-    opacity: 1;
-    transform: scale(1);
-}
-
-.share-btn .icon-check {
-    opacity: 0;
-    transform: scale(0.5);
-    color: var(--color-accent);
-}
-
-.share-btn.copied .icon-share {
-    opacity: 0;
-    transform: scale(0.5);
-}
-
-.share-btn.copied .icon-check {
-    opacity: 1;
-    transform: scale(1);
 }
 
 .theme-toggle .icon-sun {
@@ -238,7 +212,7 @@ body {
     }
 }
 
-.sidebar-header .share-btn {
+.sidebar-header .theme-toggle {
     margin-left: auto;
 }
 
@@ -652,9 +626,8 @@ body {
 }
 
 .radar-play-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    display: grid;
+    place-items: center;
     width: 2rem;
     height: 2rem;
     border: none;
@@ -663,6 +636,7 @@ body {
     color: white;
     cursor: pointer;
     flex-shrink: 0;
+    overflow: hidden;
 }
 
 .radar-play-btn:hover {
@@ -672,18 +646,28 @@ body {
 .radar-play-btn svg {
     width: 0.75rem;
     height: 0.75rem;
+    grid-area: 1 / 1;
+    transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1), opacity 0.3s ease;
+}
+
+.radar-play-btn .icon-play {
+    opacity: 1;
+    transform: scale(1) rotate(0);
 }
 
 .radar-play-btn .icon-pause {
-    display: none;
+    opacity: 0;
+    transform: scale(0.5) rotate(-90deg);
 }
 
 .radar-play-btn.playing .icon-play {
-    display: none;
+    opacity: 0;
+    transform: scale(0.5) rotate(90deg);
 }
 
 .radar-play-btn.playing .icon-pause {
-    display: block;
+    opacity: 1;
+    transform: scale(1) rotate(0);
 }
 
 .radar-timeline {
@@ -1032,14 +1016,12 @@ body {
         margin-right: 0;
     }
 
-    .theme-toggle,
-    .share-btn {
+    .theme-toggle {
         width: 1.75rem;
         height: 1.75rem;
     }
 
-    .theme-toggle svg,
-    .share-btn svg {
+    .theme-toggle svg {
         width: 0.875rem;
         height: 0.875rem;
     }
@@ -1602,7 +1584,6 @@ body {
 
 /* Ensure focus ring is visible on toggle buttons */
 .theme-toggle:focus-visible,
-.share-btn:focus-visible,
 .sidebar-toggle:focus-visible,
 .mobile-menu-btn:focus-visible,
 .privacy-modal-close:focus-visible,

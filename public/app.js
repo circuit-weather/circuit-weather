@@ -1563,43 +1563,6 @@ class MapManager {
 }
 
 // ===================================
-// Share Manager
-// ===================================
-
-class ShareManager {
-    constructor() {
-        this.bindEvents();
-    }
-
-    bindEvents() {
-        document.querySelectorAll('.share-btn').forEach(btn => {
-            btn.addEventListener('click', () => this.share(btn));
-        });
-    }
-
-    async share(btn) {
-        try {
-            await navigator.clipboard.writeText(window.location.href);
-
-            // Visual feedback
-            btn.classList.add('copied');
-            const originalLabel = btn.getAttribute('aria-label');
-            btn.setAttribute('aria-label', 'Link copied!');
-
-            // Revert after 2 seconds
-            setTimeout(() => {
-                btn.classList.remove('copied');
-                if (originalLabel) {
-                    btn.setAttribute('aria-label', originalLabel);
-                }
-            }, 2000);
-        } catch (error) {
-            console.error('Failed to copy link:', error);
-        }
-    }
-}
-
-// ===================================
 // Privacy Modal
 // ===================================
 
@@ -2238,5 +2201,4 @@ document.addEventListener('DOMContentLoaded', () => {
     const app = new CircuitWeatherApp();
     app.init();
     new PrivacyModal();
-    new ShareManager();
 });
