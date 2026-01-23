@@ -449,7 +449,7 @@ async function handleWeatherRequest(request, env, ctx) {
 
     if (!upstreamResponse.ok) {
       console.error(`Upstream Weather API Error: Status ${upstreamResponse.status}`);
-      return emptyResponse();
+      return getEmptyWeatherResponse(request);
     }
 
     // Bolt Optimization: Stream response instead of buffering text
@@ -489,7 +489,7 @@ async function handleWeatherRequest(request, env, ctx) {
 
   } catch (error) {
     console.error('Weather Fetch Error:', error);
-    return emptyResponse();
+    return getEmptyWeatherResponse(request);
   }
 }
 
