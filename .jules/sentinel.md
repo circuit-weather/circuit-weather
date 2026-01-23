@@ -42,3 +42,8 @@
 **Vulnerability:** The weather API proxy accepted arbitrary floating-point coordinates, allowing attackers to bypass the cache and exhaust upstream API limits by sending requests with slightly different coordinates (e.g. 1.000001 vs 1.000002).
 **Learning:** High-precision numeric inputs in cache keys can effectively render the cache useless if the attacker controls the precision. "Grid snapping" or rounding is essential for geospatial caching.
 **Prevention:** Canonicalize/round numeric inputs (especially coordinates) to a reasonable precision (e.g. 2 decimal places for weather) before generating cache keys or upstream requests.
+
+## 2026-02-18 - Process Isolation without Breakage
+**Vulnerability:** The application lacked `Cross-Origin-Opener-Policy` (COOP) and `Cross-Origin-Resource-Policy` (CORP), leaving it potentially exposed to XS-Leaks and process-based side-channel attacks (Spectre).
+**Learning:** While `Cross-Origin-Embedder-Policy` (COEP) provides the strongest isolation (required for `SharedArrayBuffer`), it aggressively blocks cross-origin resources (scripts, images) that don't opt-in via CORP. For apps relying on third-party CDNs (unpkg, cartocdn), enabling COEP is a breaking change.
+**Prevention:** Implement `COOP: same-origin` and `CORP: same-origin` to gain significant process isolation and resource protection benefits without the breakage associated with COEP. This isolates the browsing context and prevents other sites from embedding the application's resources.
