@@ -37,3 +37,8 @@
 **Vulnerability:** The `handleWeatherRequest` function in `src/worker.js` used a regular expression to validate latitude and longitude parameters without checking their length first. This could expose the worker to Regular Expression Denial of Service (ReDoS) or resource exhaustion if an attacker sent extremely long strings.
 **Learning:** Regular expressions, even simple ones, should not be the first line of defense against massive inputs. Validating input size provides a cheap, effective guard before more expensive parsing logic runs.
 **Prevention:** Always enforce strict maximum length limits on string inputs *before* passing them to regex validation or parsing functions.
+
+## 2026-02-16 - Coordinate Canonicalization for Cache Efficiency
+**Vulnerability:** The weather API proxy accepted arbitrary floating-point coordinates, allowing attackers to bypass the cache and exhaust upstream API limits by sending requests with slightly different coordinates (e.g. 1.000001 vs 1.000002).
+**Learning:** High-precision numeric inputs in cache keys can effectively render the cache useless if the attacker controls the precision. "Grid snapping" or rounding is essential for geospatial caching.
+**Prevention:** Canonicalize/round numeric inputs (especially coordinates) to a reasonable precision (e.g. 2 decimal places for weather) before generating cache keys or upstream requests.

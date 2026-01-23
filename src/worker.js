@@ -470,8 +470,8 @@ async function handleWeatherRequest(request, env, ctx) {
   }
 
   // SEC: Validate coordinate range
-  const latNum = parseFloat(lat);
-  const lonNum = parseFloat(lon);
+  let latNum = parseFloat(lat);
+  let lonNum = parseFloat(lon);
   if (!Number.isFinite(latNum) || !Number.isFinite(lonNum) || Math.abs(latNum) > 90 || Math.abs(lonNum) > 180) {
     return new Response(JSON.stringify({ error: 'Coordinates out of range' }), {
       status: 400,
@@ -481,6 +481,11 @@ async function handleWeatherRequest(request, env, ctx) {
       }
     });
   }
+
+  // SEC: Canonicalize coordinates to 2 decimal places to prevent cache exhaustion
+  // 1.1km resolution is sufficient for weather and prevents infinite unique keys
+  latNum = Number(latNum.toFixed(2));
+  lonNum = Number(lonNum.toFixed(2));
 
   // Construct upstream URL with hardcoded fields to prevent abuse
   // Use sanitized numeric values to prevent injection
