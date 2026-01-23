@@ -375,20 +375,27 @@ class WeatherClient {
         const startTs = sessionTs - 3600;
         const endTs = sessionTs + (3 * 3600);
 
-        const indices = hourly.time.reduce((acc, time, index) => {
-            if (time >= startTs && time <= endTs) acc.push(index);
-            return acc;
-        }, []);
+        const result = [];
+        const times = hourly.time;
 
-        return indices.map(i => ({
-            time: hourly.time[i],
-            temp: hourly.temperature_2m[i],
-            humidity: hourly.relative_humidity_2m ? hourly.relative_humidity_2m[i] : null,
-            precipProb: hourly.precipitation_probability[i],
-            windSpeed: hourly.wind_speed_10m[i],
-            windDir: hourly.wind_direction_10m[i],
-            code: hourly.weather_code[i]
-        }));
+        // Bolt Optimization: Use a single for loop with early break
+        // significantly faster than reduce + map for large sorted arrays
+        for (let i = 0; i < times.length; i++) {
+            const time = times[i];
+            if (time < startTs) continue;
+            if (time > endTs) break; // Early exit since data is sorted
+
+            result.push({
+                time: time,
+                temp: hourly.temperature_2m[i],
+                humidity: hourly.relative_humidity_2m ? hourly.relative_humidity_2m[i] : null,
+                precipProb: hourly.precipitation_probability[i],
+                windSpeed: hourly.wind_speed_10m[i],
+                windDir: hourly.wind_direction_10m[i],
+                code: hourly.weather_code[i]
+            });
+        }
+        return result;
     }
 
     getWeatherDescription(code) {
