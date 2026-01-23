@@ -52,3 +52,8 @@
 **Vulnerability:** The API proxy `handleApiRequest` allowed request paths containing segments starting with `.` (e.g. `/.env`, `/drivers/.git/config`). This could potentially expose hidden files or configuration directories on the upstream server if they are not blocked by the upstream server itself.
 **Learning:** Regular expressions for allowed characters (`/^[a-zA-Z0-9/._-]*$/`) often inadvertently allow unsafe patterns like dotfiles. Explicitly checking for dangerous path components (like segments starting with `.`) is necessary for robust proxy security.
 **Prevention:** In any proxy logic, inspect the path segments and strictly block any segment that starts with `.` (excluding `.`, `..` which are handled by path normalization usually, but `.` as a prefix to a name like `.env` must be blocked).
+
+## 2026-02-21 - URL Scheme Validation Bypass via Control Characters
+**Vulnerability:** The `sanitizeUrl` function in `public/app.js` used a regex to detect URL schemes but failed to strip control characters and whitespace. This allowed malicious schemes like `java\nscript:` to bypass the detection regex (which expected a colon immediately after the scheme) and be treated as safe relative URLs.
+**Learning:** Regex-based validation of URL schemes is brittle if the input is not first canonicalized. Browsers may ignore control characters in attributes, allowing "broken" schemes to execute.
+**Prevention:** Always strip all whitespace (`\s`) and control characters (`\x00-\x1F`) from URL inputs *before* passing them to validation logic.

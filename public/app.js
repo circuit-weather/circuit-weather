@@ -1639,7 +1639,9 @@ class PrivacyModal {
 
         // SEC: Sanitize URLs to prevent XSS (e.g. javascript: links)
         const sanitizeUrl = (url) => {
-            const clean = url.trim();
+            // SEC: Remove all whitespace/control chars to prevent scheme bypass (e.g. java\nscript:)
+            const clean = String(url).replace(/[\s\x00-\x1F\x7F-\x9F]/g, '');
+
             // Allowlist approach: Check for protocol scheme
             // Regex: Start with letter, followed by valid scheme chars, then colon
             if (/^[a-z][a-z0-9+.-]*:/i.test(clean)) {
