@@ -2150,15 +2150,16 @@ class CircuitWeatherApp {
                 const relTime = this.weatherClient.getRelativeTime(hour.time, sessionTime);
                 const desc = this.weatherClient.getWeatherDescription(hour.code);
 
+                // SEC: Escape all upstream data to prevent XSS (even if trusted)
                 item.innerHTML = `
-                    <div class="weather-timeline-time">${relTime}</div>
+                    <div class="weather-timeline-time">${escapeHtml(relTime)}</div>
                     <div class="weather-timeline-condition">
-                        ${desc}
-                        <div style="font-size: 0.65em; color: var(--color-text-secondary);">${hour.windSpeed} km/h</div>
+                        ${escapeHtml(desc)}
+                        <div style="font-size: 0.65em; color: var(--color-text-secondary);">${escapeHtml(hour.windSpeed)} km/h</div>
                     </div>
                     <div class="weather-timeline-temp">
-                        <div>${Math.round(hour.temp)}°</div>
-                        <div style="font-size: 0.8em; color: #3b82f6;">${hour.precipProb}%</div>
+                        <div>${escapeHtml(Math.round(hour.temp))}°</div>
+                        <div style="font-size: 0.8em; color: #3b82f6;">${escapeHtml(hour.precipProb)}%</div>
                     </div>
                 `;
 
