@@ -13,6 +13,23 @@ export default {
     const url = new URL(request.url);
     const path = url.pathname;
 
+    // Handle CORS preflight
+    if (request.method === 'OPTIONS') {
+      return handleOptions(request);
+    }
+
+    // Enforce Method Whitelist
+    if (request.method !== 'GET' && request.method !== 'HEAD') {
+      return new Response(JSON.stringify({ error: 'Method not allowed' }), {
+        status: 405,
+        headers: {
+          'Content-Type': 'application/json',
+          'Allow': 'GET, HEAD, OPTIONS',
+          ...DEFAULT_SECURITY_HEADERS
+        }
+      });
+    }
+
     // Only /api/f1/* routes reach this worker (configured via run_worker_first)
     if (path.startsWith('/api/f1/')) {
       return handleApiRequest(request, env, ctx);
@@ -50,6 +67,27 @@ const DEFAULT_SECURITY_HEADERS = {
   'Referrer-Policy': 'strict-origin-when-cross-origin',
   'Content-Security-Policy': "default-src 'none'; frame-ancestors 'none';",
 };
+
+// Helper to handle CORS preflight requests
+function handleOptions(request) {
+  const headers = {
+    ...DEFAULT_SECURITY_HEADERS,
+    'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type', // Standard
+    'Access-Control-Max-Age': '86400',
+  };
+
+  const allowedOrigin = getAllowedOrigin(request);
+  if (allowedOrigin) {
+    headers['Access-Control-Allow-Origin'] = allowedOrigin;
+    headers['Vary'] = 'Origin';
+  }
+
+  return new Response(null, {
+    status: 204,
+    headers
+  });
+}
 
 // Helper to generate a generic, empty-like response to prevent frontend errors
 function getEmptyWeatherResponse(request) {

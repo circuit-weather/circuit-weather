@@ -22,3 +22,8 @@
 **Vulnerability:** The `handleApiRequest` function in `src/worker.js` included the full client request object (headers, method, etc.) in the cache key calculation via `new Request(upstreamUrl, request)`. This allowed attackers to bypass the cache and exhaust the upstream API quota by sending requests with varying headers (e.g., random `User-Agent` or `Accept` headers).
 **Learning:** Cloudflare Workers' `caches.default` respects the request object's headers if provided in the key. For public APIs where the response is identical regardless of client headers, the cache key should be normalized to the URL only.
 **Prevention:** Always construct cache keys using only the canonical URL (`new Request(url)`) unless the response explicitly varies by specific headers (which should then be listed in the `Vary` header).
+
+## 2026-02-09 - Loose API Method Handling
+**Vulnerability:** The Cloudflare Worker API proxy accepted all HTTP methods (e.g., POST, PUT, DELETE) and forwarded them as GET requests to the upstream API. This created ambiguity in the API contract, potentially masked client-side errors, and failed to handle CORS preflight (OPTIONS) requests correctly (returning 200 OK with content instead of 204 No Content).
+**Learning:** Even if an upstream API is read-only, a proxy should strictly enforce the expected method contract to prevent confusion and misuse. Explicitly handling OPTIONS is critical for correct CORS behavior, even for simple GET requests, to ensure browser compliance and prevent unnecessary upstream traffic.
+**Prevention:** Implement a strict method whitelist (e.g., GET, HEAD) at the entry point of the API proxy and explicitly handle OPTIONS requests with appropriate CORS headers before checking the whitelist.
