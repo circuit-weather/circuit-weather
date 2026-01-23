@@ -8,6 +8,9 @@
  * via wrangler.toml's run_worker_first and not_found_handling settings.
  */
 
+// Global timeout for all upstream API calls to prevent resource exhaustion
+const API_TIMEOUT = 5000;
+
 export default {
   async fetch(request, env, ctx) {
     const url = new URL(request.url);
@@ -242,6 +245,7 @@ async function handleApiRequest(request, env, ctx) {
         'Accept': 'application/json',
         'User-Agent': 'CircuitWeather/1.0',
       },
+      signal: AbortSignal.timeout(API_TIMEOUT),
     });
 
     if (!upstreamResponse.ok) {
@@ -368,6 +372,7 @@ async function handleTrackRequest(request, env, ctx) {
       headers: {
         'User-Agent': 'CircuitWeather/1.0',
       },
+      signal: AbortSignal.timeout(API_TIMEOUT),
     });
 
     if (!upstreamResponse.ok) {
@@ -516,6 +521,7 @@ async function handleWeatherRequest(request, env, ctx) {
         'Accept': 'application/json',
         'User-Agent': 'CircuitWeather/1.0',
       },
+      signal: AbortSignal.timeout(API_TIMEOUT),
     });
 
     if (!upstreamResponse.ok) {
@@ -605,6 +611,7 @@ async function handleRadarRequest(request, env, ctx) {
         'Accept': 'application/json',
         'User-Agent': 'CircuitWeather/1.0',
       },
+      signal: AbortSignal.timeout(API_TIMEOUT),
     });
 
     if (!upstreamResponse.ok) {
