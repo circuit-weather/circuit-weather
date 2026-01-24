@@ -389,6 +389,9 @@ class WeatherClient {
 
         for (let i = 0; i < times.length; i++) {
             const time = times[i];
+            // Bolt Optimization: Stop iterating once we pass the end time
+            if (time > endTs) break;
+
             if (time >= startTs && time <= endTs) {
                 result.push({
                     time: time,
