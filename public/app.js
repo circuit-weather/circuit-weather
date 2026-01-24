@@ -1211,16 +1211,16 @@ const MapWeatherWidget = L.Control.extend({
         // Bolt Optimization: Create DOM structure once and reuse
         // This avoids frequent innerHTML parsing/GC during map interactions
         this._div.innerHTML = `
-            <div class="weather-widget-metric" title="Temperature">
-                <svg class="icon-weather icon-temp" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z" /></svg>
+            <div class="weather-widget-metric" role="group" aria-label="Temperature" title="Temperature">
+                <svg class="icon-weather icon-temp" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z" /></svg>
                 <span class="temp-value">--</span>
             </div>
-            <div class="weather-widget-metric" title="Humidity">
-                <svg class="icon-weather icon-humidity" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" /></svg>
+            <div class="weather-widget-metric" role="group" aria-label="Humidity" title="Humidity">
+                <svg class="icon-weather icon-humidity" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" /></svg>
                 <span class="humid-value">--%</span>
             </div>
-            <div class="weather-widget-metric" title="Wind">
-                 <svg class="icon-weather icon-wind" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2" /></svg>
+            <div class="weather-widget-metric" role="group" aria-label="Wind Speed" title="Wind">
+                 <svg class="icon-weather icon-wind" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2" /></svg>
                 <span class="wind-value">--</span>
             </div>
         `;
@@ -1229,7 +1229,10 @@ const MapWeatherWidget = L.Control.extend({
         this._ui = {
             temp: this._div.querySelector('.temp-value'),
             humid: this._div.querySelector('.humid-value'),
-            wind: this._div.querySelector('.wind-value')
+            wind: this._div.querySelector('.wind-value'),
+            tempGroup: this._div.querySelector('.weather-widget-metric[title="Temperature"]'),
+            humidGroup: this._div.querySelector('.weather-widget-metric[title="Humidity"]'),
+            windGroup: this._div.querySelector('.weather-widget-metric[title="Wind"]')
         };
 
         return this._div;
@@ -1257,6 +1260,11 @@ const MapWeatherWidget = L.Control.extend({
         this._ui.temp.textContent = `${temp}${weather.units.temperature_2m}`;
         this._ui.humid.textContent = `${humidity}%`;
         this._ui.wind.textContent = `${wind} ${weather.units.wind_speed_10m}`;
+
+        // Palette Accessibility: Dynamic ARIA labels
+        if (this._ui.tempGroup) this._ui.tempGroup.setAttribute('aria-label', `Temperature: ${this._ui.temp.textContent}`);
+        if (this._ui.humidGroup) this._ui.humidGroup.setAttribute('aria-label', `Humidity: ${this._ui.humid.textContent}`);
+        if (this._ui.windGroup) this._ui.windGroup.setAttribute('aria-label', `Wind Speed: ${this._ui.wind.textContent}`);
     }
 });
 
@@ -1352,20 +1360,20 @@ class WeatherWidget {
         this.el.className = 'weather-widget';
         // HTML injected by JS
         this.el.innerHTML = `
-            <div class="weather-widget-metric" title="Temperature">
-                <svg class="icon-weather icon-temp" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <div class="weather-widget-metric" id="widgetTempGroup" role="group" aria-label="Temperature" title="Temperature">
+                <svg class="icon-weather icon-temp" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z" />
                 </svg>
                 <span id="widgetTemp">--</span>
             </div>
-            <div class="weather-widget-metric" title="Humidity">
-                <svg class="icon-weather icon-humidity" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <div class="weather-widget-metric" id="widgetHumidGroup" role="group" aria-label="Humidity" title="Humidity">
+                <svg class="icon-weather icon-humidity" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />
                 </svg>
                 <span id="widgetHumidity">--</span>
             </div>
-            <div class="weather-widget-metric" title="Wind Speed">
-                 <svg class="icon-weather icon-wind" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <div class="weather-widget-metric" id="widgetWindGroup" role="group" aria-label="Wind Speed" title="Wind Speed">
+                 <svg class="icon-weather icon-wind" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2" />
                 </svg>
                 <span id="widgetWind">--</span>
@@ -1394,9 +1402,18 @@ class WeatherWidget {
         const humidEl = document.getElementById('widgetHumidity');
         const windEl = document.getElementById('widgetWind');
 
+        const tempGroup = document.getElementById('widgetTempGroup');
+        const humidGroup = document.getElementById('widgetHumidGroup');
+        const windGroup = document.getElementById('widgetWindGroup');
+
         if (tempEl) tempEl.textContent = `${temp}${weather.units.temperature_2m}`;
         if (humidEl) humidEl.textContent = `${humidity}%`;
         if (windEl) windEl.textContent = `${wind} ${weather.units.wind_speed_10m}`;
+
+        // Palette Accessibility: Dynamic ARIA labels
+        if (tempGroup && tempEl) tempGroup.setAttribute('aria-label', `Temperature: ${tempEl.textContent}`);
+        if (humidGroup && humidEl) humidGroup.setAttribute('aria-label', `Humidity: ${humidEl.textContent}`);
+        if (windGroup && windEl) windGroup.setAttribute('aria-label', `Wind Speed: ${windEl.textContent}`);
     }
 }
 
