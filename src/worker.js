@@ -74,7 +74,7 @@ const DEFAULT_SECURITY_HEADERS = {
   'Permissions-Policy': 'accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()',
   'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
   'Referrer-Policy': 'strict-origin-when-cross-origin',
-  'Content-Security-Policy': "default-src 'none'; frame-ancestors 'none';",
+  'Content-Security-Policy': "upgrade-insecure-requests; default-src 'none'; frame-ancestors 'none';",
   'Cross-Origin-Opener-Policy': 'same-origin',
   'Cross-Origin-Resource-Policy': 'same-origin',
 };

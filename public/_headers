@@ -4,6 +4,6 @@
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()
   Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
-  Content-Security-Policy: default-src 'self'; script-src 'self' https://unpkg.com https://cdnjs.buymeacoffee.com; style-src 'self' 'unsafe-inline' https://unpkg.com https://fonts.googleapis.com; img-src 'self' data: https://*.basemaps.cartocdn.com https://flagcdn.com https://api.rainviewer.com https://tilecache.rainviewer.com https://*.buymeacoffee.com; font-src https://fonts.gstatic.com; connect-src 'self' https://*.buymeacoffee.com; object-src 'none'; frame-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';
+  Content-Security-Policy: upgrade-insecure-requests; default-src 'self'; script-src 'self' https://unpkg.com https://cdnjs.buymeacoffee.com; style-src 'self' 'unsafe-inline' https://unpkg.com https://fonts.googleapis.com; img-src 'self' data: https://*.basemaps.cartocdn.com https://flagcdn.com https://api.rainviewer.com https://tilecache.rainviewer.com https://*.buymeacoffee.com; font-src https://fonts.gstatic.com; connect-src 'self' https://*.buymeacoffee.com; object-src 'none'; frame-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';
   Cross-Origin-Opener-Policy: same-origin
   Cross-Origin-Resource-Policy: same-origin
