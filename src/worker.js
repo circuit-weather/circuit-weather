@@ -17,9 +17,10 @@ const API_TIMEOUT = 5000;
  * It provides a "best effort" defense against rapid-fire DoS attacks on a single instance.
  */
 class RateLimiter {
-  constructor(limit, windowMs) {
+  constructor(limit, windowMs, maxIps = 10000) {
     this.limit = limit;
     this.windowMs = windowMs;
+    this.maxIps = maxIps;
     this.counts = new Map();
     this.lastCleanup = Date.now();
   }
@@ -35,6 +36,15 @@ class RateLimiter {
     let record = this.counts.get(ip);
 
     if (!record) {
+      // SEC: Prevent memory exhaustion DoS
+      if (this.counts.size >= this.maxIps) {
+        this.cleanup(now);
+        // If still full after cleanup, clear everything to save the worker
+        if (this.counts.size >= this.maxIps) {
+          this.counts.clear();
+        }
+      }
+
       record = { count: 1, startTime: now };
       this.counts.set(ip, record);
       return true;

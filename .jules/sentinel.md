@@ -72,3 +72,8 @@
 **Vulnerability:** The public API proxy routes (`/api/*`) in `src/worker.js` lacked application-layer rate limiting, allowing a single IP to exhaust upstream API quotas or DoS the worker instance via rapid-fire requests.
 **Learning:** In serverless environments where persistent storage (like KV) might be unavailable or costly, ephemeral in-memory rate limiting per-isolate provides a "good enough" first line of defense against single-source floods.
 **Prevention:** Implement a lightweight Token Bucket or Counter in global scope to track and block excessive requests per IP within the worker instance, returning 429 Too Many Requests.
+
+## 2026-03-01 - Unbounded Rate Limiter Memory Exhaustion
+**Vulnerability:** The `RateLimiter` class in `src/worker.js` used an unbounded `Map` to track request counts. An attacker could exhaust the Worker's memory by flooding it with requests from unique IPs (e.g., via IP spoofing), causing the worker to crash (DoS).
+**Learning:** In-memory collections in long-running or shared processes (even "stateless" serverless functions reusing isolates) must always have a hard size limit. Lazy cleanup mechanisms based on time are insufficient if the ingestion rate exceeds the cleanup rate or if the collection grows too large between cleanups.
+**Prevention:** Enforce a strict maximum size (cap) on all dynamic in-memory collections (Maps, Sets, Arrays) used for tracking user input or state. If the limit is reached, fail open (clear state to preserve availability) or fail closed (reject requests), but never allow the process to crash.
