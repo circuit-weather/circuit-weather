@@ -1994,14 +1994,20 @@ class CircuitWeatherApp {
 
         select.innerHTML = '<option value="">Select round...</option>';
 
+        // Bolt Optimization: Use DocumentFragment to batch DOM insertions
+        // Reduces reflows when populating the race list (~24 items)
+        const fragment = document.createDocumentFragment();
+
         this.races.forEach(race => {
             const option = document.createElement('option');
             option.value = race.round;
             const date = new Date(race.date);
             const dateStr = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
             option.textContent = `R${race.round}: ${race.name} (${dateStr})`;
-            select.appendChild(option);
+            fragment.appendChild(option);
         });
+
+        select.appendChild(fragment);
     }
 
     selectRound(round) {
@@ -2087,6 +2093,9 @@ class CircuitWeatherApp {
         select.disabled = false;
         select.innerHTML = '<option value="">Select session...</option>';
 
+        // Bolt Optimization: Use DocumentFragment to batch DOM insertions
+        const fragment = document.createDocumentFragment();
+
         sessions.forEach(session => {
             const option = document.createElement('option');
             option.value = session.id;
@@ -2102,8 +2111,10 @@ class CircuitWeatherApp {
             }
 
             option.textContent = session.name + timeStr;
-            select.appendChild(option);
+            fragment.appendChild(option);
         });
+
+        select.appendChild(fragment);
     }
 
     async selectSession(sessionId) {
@@ -2234,6 +2245,9 @@ class CircuitWeatherApp {
         if (timelineEl && weather.hourly) {
             timelineEl.innerHTML = '';
 
+            // Bolt Optimization: Use DocumentFragment to batch DOM insertions
+            const fragment = document.createDocumentFragment();
+
             weather.hourly.forEach(hour => {
                 const item = document.createElement('div');
                 item.className = 'weather-timeline-item';
@@ -2254,8 +2268,10 @@ class CircuitWeatherApp {
                     </div>
                 `;
 
-                timelineEl.appendChild(item);
+                fragment.appendChild(item);
             });
+
+            timelineEl.appendChild(fragment);
         }
     }
 
