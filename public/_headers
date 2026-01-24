@@ -7,3 +7,4 @@
   Content-Security-Policy: upgrade-insecure-requests; default-src 'self'; script-src 'self' https://unpkg.com https://cdnjs.buymeacoffee.com; style-src 'self' 'unsafe-inline' https://unpkg.com https://fonts.googleapis.com; img-src 'self' data: https://*.basemaps.cartocdn.com https://flagcdn.com https://api.rainviewer.com https://tilecache.rainviewer.com https://*.buymeacoffee.com; font-src https://fonts.gstatic.com; connect-src 'self' https://*.buymeacoffee.com; object-src 'none'; frame-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';
   Cross-Origin-Opener-Policy: same-origin
   Cross-Origin-Resource-Policy: same-origin
+  Cache-Control: public, max-age=0, must-revalidate
