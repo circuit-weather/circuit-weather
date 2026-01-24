@@ -11,8 +11,75 @@
 // Global timeout for all upstream API calls to prevent resource exhaustion
 const API_TIMEOUT = 5000;
 
+/**
+ * Simple In-Memory Rate Limiter
+ * Note: In a serverless environment, this state is ephemeral and per-isolate.
+ * It provides a "best effort" defense against rapid-fire DoS attacks on a single instance.
+ */
+class RateLimiter {
+  constructor(limit, windowMs) {
+    this.limit = limit;
+    this.windowMs = windowMs;
+    this.counts = new Map();
+    this.lastCleanup = Date.now();
+  }
+
+  check(ip) {
+    const now = Date.now();
+
+    // Lazy cleanup every 5 minutes (300,000 ms)
+    if (now - this.lastCleanup > 300000) {
+      this.cleanup(now);
+    }
+
+    let record = this.counts.get(ip);
+
+    if (!record) {
+      record = { count: 1, startTime: now };
+      this.counts.set(ip, record);
+      return true;
+    }
+
+    if (now - record.startTime > this.windowMs) {
+      // Window passed, reset
+      record.count = 1;
+      record.startTime = now;
+      return true;
+    }
+
+    record.count++;
+    return record.count <= this.limit;
+  }
+
+  cleanup(now) {
+    for (const [ip, record] of this.counts.entries()) {
+      if (now - record.startTime > this.windowMs) {
+        this.counts.delete(ip);
+      }
+    }
+    this.lastCleanup = now;
+  }
+}
+
+// 100 requests per minute per IP per isolate
+const limiter = new RateLimiter(100, 60000);
+
 export default {
   async fetch(request, env, ctx) {
+    // SEC: Application Layer Rate Limiting
+    const clientIp = request.headers.get('CF-Connecting-IP') || '127.0.0.1';
+    if (!limiter.check(clientIp)) {
+      return new Response(JSON.stringify({ error: 'Too many requests' }), {
+        status: 429,
+        headers: {
+          'Content-Type': 'application/json',
+          'Retry-After': '60',
+          ...DEFAULT_SECURITY_HEADERS,
+          ...(getAllowedOrigin(request) ? { 'Access-Control-Allow-Origin': getAllowedOrigin(request) } : {}),
+        }
+      });
+    }
+
     const url = new URL(request.url);
     const path = url.pathname;
 

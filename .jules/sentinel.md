@@ -67,3 +67,8 @@
 **Vulnerability:** The custom Markdown parser in `PrivacyModal` generated external links with `target="_blank"` and `rel="noopener"` but missed `noreferrer`. This potentially leaked the application's URL to third-party sites mentioned in the Privacy Policy.
 **Learning:** Custom content parsers often bypass global security defaults or linting rules that apply to standard HTML/JSX. Manual attribute management in regex replacements is prone to omission errors.
 **Prevention:** Standardize external link generation into a single utility function that enforces `rel="noopener noreferrer"` centrally, rather than repeating the logic in multiple parsers.
+
+## 2026-02-25 - In-Memory Application Rate Limiting
+**Vulnerability:** The public API proxy routes (`/api/*`) in `src/worker.js` lacked application-layer rate limiting, allowing a single IP to exhaust upstream API quotas or DoS the worker instance via rapid-fire requests.
+**Learning:** In serverless environments where persistent storage (like KV) might be unavailable or costly, ephemeral in-memory rate limiting per-isolate provides a "good enough" first line of defense against single-source floods.
+**Prevention:** Implement a lightweight Token Bucket or Counter in global scope to track and block excessive requests per IP within the worker instance, returning 429 Too Many Requests.
