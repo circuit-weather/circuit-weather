@@ -1699,7 +1699,7 @@ class PrivacyModal {
             .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
             // Links
             .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, text, url) => {
-                return `<a href="${sanitizeUrl(url)}" target="_blank" rel="noopener">${text}</a>`;
+                return `<a href="${sanitizeUrl(url)}" target="_blank" rel="noopener noreferrer">${text}</a>`;
             })
             // List items
             .replace(/^- (.+)$/gm, '<li>$1</li>')
