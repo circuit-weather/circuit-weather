@@ -375,20 +375,33 @@ class WeatherClient {
         const startTs = sessionTs - 3600;
         const endTs = sessionTs + (3 * 3600);
 
-        const indices = hourly.time.reduce((acc, time, index) => {
-            if (time >= startTs && time <= endTs) acc.push(index);
-            return acc;
-        }, []);
+        const result = [];
+        const times = hourly.time;
+        // Destructure for faster access
+        const {
+            temperature_2m: temps,
+            relative_humidity_2m: humids,
+            precipitation_probability: precips,
+            wind_speed_10m: winds,
+            wind_direction_10m: windDirs,
+            weather_code: codes
+        } = hourly;
 
-        return indices.map(i => ({
-            time: hourly.time[i],
-            temp: hourly.temperature_2m[i],
-            humidity: hourly.relative_humidity_2m ? hourly.relative_humidity_2m[i] : null,
-            precipProb: hourly.precipitation_probability[i],
-            windSpeed: hourly.wind_speed_10m[i],
-            windDir: hourly.wind_direction_10m[i],
-            code: hourly.weather_code[i]
-        }));
+        for (let i = 0; i < times.length; i++) {
+            const time = times[i];
+            if (time >= startTs && time <= endTs) {
+                result.push({
+                    time: time,
+                    temp: temps[i],
+                    humidity: humids ? humids[i] : null,
+                    precipProb: precips[i],
+                    windSpeed: winds[i],
+                    windDir: windDirs[i],
+                    code: codes[i]
+                });
+            }
+        }
+        return result;
     }
 
     getWeatherDescription(code) {
@@ -1319,6 +1332,7 @@ class CountdownTimer {
         }
     }
 }
+
 
 // ===================================
 // Weather Widget (Desktop)
