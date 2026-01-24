@@ -82,10 +82,8 @@ export default {
       return new Response(JSON.stringify({ error: 'Too many requests' }), {
         status: 429,
         headers: {
-          'Content-Type': 'application/json',
+          ...getErrorHeaders(request),
           'Retry-After': '60',
-          ...DEFAULT_SECURITY_HEADERS,
-          ...(getAllowedOrigin(request) ? { 'Access-Control-Allow-Origin': getAllowedOrigin(request) } : {}),
         }
       });
     }
@@ -103,10 +101,8 @@ export default {
       return new Response(JSON.stringify({ error: 'Method not allowed' }), {
         status: 405,
         headers: {
-          'Content-Type': 'application/json',
+          ...getErrorHeaders(request),
           'Allow': 'GET, HEAD, OPTIONS',
-          ...DEFAULT_SECURITY_HEADERS,
-          ...(getAllowedOrigin(request) ? { 'Access-Control-Allow-Origin': getAllowedOrigin(request) } : {}),
         }
       });
     }
@@ -134,12 +130,7 @@ export default {
     // For any other /api/* routes, return 404
     return new Response(JSON.stringify({ error: 'API endpoint not found' }), {
       status: 404,
-      headers: {
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-store',
-        ...DEFAULT_SECURITY_HEADERS,
-        ...(getAllowedOrigin(request) ? { 'Access-Control-Allow-Origin': getAllowedOrigin(request) } : {}),
-      }
+      headers: getErrorHeaders(request)
     });
   }
 };
@@ -155,6 +146,23 @@ const DEFAULT_SECURITY_HEADERS = {
   'Cross-Origin-Opener-Policy': 'same-origin',
   'Cross-Origin-Resource-Policy': 'same-origin',
 };
+
+// Helper to generate standard error headers (Security + CORS + No-Cache)
+function getErrorHeaders(request) {
+  const headers = {
+    'Content-Type': 'application/json',
+    'Cache-Control': 'no-store',
+    ...DEFAULT_SECURITY_HEADERS,
+  };
+
+  const allowedOrigin = getAllowedOrigin(request);
+  if (allowedOrigin) {
+    headers['Access-Control-Allow-Origin'] = allowedOrigin;
+    headers['Vary'] = 'Origin';
+  }
+
+  return headers;
+}
 
 // Helper to handle CORS preflight requests
 function handleOptions(request) {
@@ -195,11 +203,7 @@ function getEmptyWeatherResponse(request) {
   };
   return new Response(JSON.stringify(errorResponse), {
     status: 502,
-    headers: {
-      'Content-Type': 'application/json',
-      ...DEFAULT_SECURITY_HEADERS,
-      ...(getAllowedOrigin(request) ? { 'Access-Control-Allow-Origin': getAllowedOrigin(request) } : {}),
-    }
+    headers: getErrorHeaders(request)
   });
 }
 
@@ -243,10 +247,7 @@ async function handleApiRequest(request, env, ctx) {
   if (apiPath.length > 255) {
     return new Response(JSON.stringify({ error: 'Path too long' }), {
       status: 400,
-      headers: {
-        'Content-Type': 'application/json',
-        ...DEFAULT_SECURITY_HEADERS
-      }
+      headers: getErrorHeaders(request)
     });
   }
 
@@ -256,10 +257,7 @@ async function handleApiRequest(request, env, ctx) {
   if (!validCharsRegex.test(apiPath) || apiPath.includes('..') || apiPath.includes('//') || apiPath.startsWith('/') || hasDotfiles) {
     return new Response(JSON.stringify({ error: 'Invalid API path' }), {
       status: 400,
-      headers: {
-        'Content-Type': 'application/json',
-        ...DEFAULT_SECURITY_HEADERS
-      }
+      headers: getErrorHeaders(request)
     });
   }
 
@@ -312,12 +310,7 @@ async function handleApiRequest(request, env, ctx) {
     };
     return new Response(JSON.stringify(errorResponse), {
       status: 502,
-      headers: {
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-store',
-        ...DEFAULT_SECURITY_HEADERS,
-        ...(getAllowedOrigin(request) ? { 'Access-Control-Allow-Origin': getAllowedOrigin(request) } : {}),
-      }
+      headers: getErrorHeaders(request)
     });
   };
 
@@ -336,12 +329,7 @@ async function handleApiRequest(request, env, ctx) {
         status: upstreamResponse.status,
       }), {
         status: upstreamResponse.status,
-        headers: {
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-store',
-          ...DEFAULT_SECURITY_HEADERS,
-          ...(getAllowedOrigin(request) ? { 'Access-Control-Allow-Origin': getAllowedOrigin(request) } : {}),
-        },
+        headers: getErrorHeaders(request)
       });
     }
 
@@ -388,11 +376,7 @@ async function handleApiRequest(request, env, ctx) {
       // SEC: Do not leak error.message
     }), {
       status: 502,
-      headers: {
-        'Content-Type': 'application/json',
-        ...DEFAULT_SECURITY_HEADERS,
-        ...(getAllowedOrigin(request) ? { 'Access-Control-Allow-Origin': getAllowedOrigin(request) } : {}),
-      }
+      headers: getErrorHeaders(request)
     });
   }
 }
@@ -410,10 +394,7 @@ async function handleTrackRequest(request, env, ctx) {
   if (!trackId || trackId.length > 50 || trackId.includes('..') || trackId.includes('/') || !/^[a-z0-9-]+$/.test(trackId)) {
     return new Response(JSON.stringify({ error: 'Invalid track ID' }), {
       status: 400,
-      headers: {
-        'Content-Type': 'application/json',
-        ...DEFAULT_SECURITY_HEADERS
-      }
+      headers: getErrorHeaders(request)
     });
   }
 
@@ -463,12 +444,7 @@ async function handleTrackRequest(request, env, ctx) {
         status: upstreamResponse.status,
       }), {
         status: upstreamResponse.status === 404 ? 404 : 502,
-        headers: {
-          'Content-Type': 'application/json',
-          'Cache-Control': 'no-store',
-          ...DEFAULT_SECURITY_HEADERS,
-          ...(getAllowedOrigin(request) ? { 'Access-Control-Allow-Origin': getAllowedOrigin(request) } : {}),
-        },
+        headers: getErrorHeaders(request)
       });
     }
 
@@ -514,12 +490,7 @@ async function handleTrackRequest(request, env, ctx) {
       // SEC: Do not leak error.message
     }), {
       status: 502,
-      headers: {
-        'Content-Type': 'application/json',
-        'Cache-Control': 'no-store',
-        ...DEFAULT_SECURITY_HEADERS,
-        ...(getAllowedOrigin(request) ? { 'Access-Control-Allow-Origin': getAllowedOrigin(request) } : {}),
-      }
+      headers: getErrorHeaders(request)
     });
   }
 }
@@ -536,10 +507,7 @@ async function handleWeatherRequest(request, env, ctx) {
   if ((lat && lat.length > 20) || (lon && lon.length > 20)) {
     return new Response(JSON.stringify({ error: 'Coordinates too long' }), {
       status: 400,
-      headers: {
-        'Content-Type': 'application/json',
-        ...DEFAULT_SECURITY_HEADERS
-      }
+      headers: getErrorHeaders(request)
     });
   }
 
@@ -548,10 +516,7 @@ async function handleWeatherRequest(request, env, ctx) {
   if (!lat || !lon || !validCoordRegex.test(lat) || !validCoordRegex.test(lon)) {
     return new Response(JSON.stringify({ error: 'Invalid latitude or longitude' }), {
       status: 400,
-      headers: {
-        'Content-Type': 'application/json',
-        ...DEFAULT_SECURITY_HEADERS
-      }
+      headers: getErrorHeaders(request)
     });
   }
 
@@ -561,10 +526,7 @@ async function handleWeatherRequest(request, env, ctx) {
   if (!Number.isFinite(latNum) || !Number.isFinite(lonNum) || Math.abs(latNum) > 90 || Math.abs(lonNum) > 180) {
     return new Response(JSON.stringify({ error: 'Coordinates out of range' }), {
       status: 400,
-      headers: {
-        'Content-Type': 'application/json',
-        ...DEFAULT_SECURITY_HEADERS
-      }
+      headers: getErrorHeaders(request)
     });
   }
 
@@ -754,11 +716,7 @@ async function handleRadarRequest(request, env, ctx) {
       // SEC: Do not leak error.message
     }), {
       status: 502,
-      headers: {
-        'Content-Type': 'application/json',
-        ...DEFAULT_SECURITY_HEADERS,
-        ...(getAllowedOrigin(request) ? { 'Access-Control-Allow-Origin': getAllowedOrigin(request) } : {}),
-      }
+      headers: getErrorHeaders(request)
     });
   }
 }
