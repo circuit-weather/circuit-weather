@@ -997,7 +997,10 @@ class WeatherRadar {
         }
 
         this.isPlaying = true;
-        if (this.ui.playBtn) this.ui.playBtn.classList.add('playing');
+        if (this.ui.playBtn) {
+            this.ui.playBtn.classList.add('playing');
+            this.ui.playBtn.setAttribute('aria-pressed', 'true');
+        }
 
         // Bolt Optimization: Use requestAnimationFrame instead of setInterval
         // Prevents drift and saves battery in background tabs
@@ -1024,7 +1027,10 @@ class WeatherRadar {
 
     pause() {
         this.isPlaying = false;
-        if (this.ui.playBtn) this.ui.playBtn.classList.remove('playing');
+        if (this.ui.playBtn) {
+            this.ui.playBtn.classList.remove('playing');
+            this.ui.playBtn.setAttribute('aria-pressed', 'false');
+        }
 
         if (this.animationFrameId) {
             cancelAnimationFrame(this.animationFrameId);
