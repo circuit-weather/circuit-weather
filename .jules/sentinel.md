@@ -77,3 +77,8 @@
 **Vulnerability:** The `RateLimiter` class in `src/worker.js` used an unbounded `Map` to track request counts. An attacker could exhaust the Worker's memory by flooding it with requests from unique IPs (e.g., via IP spoofing), causing the worker to crash (DoS).
 **Learning:** In-memory collections in long-running or shared processes (even "stateless" serverless functions reusing isolates) must always have a hard size limit. Lazy cleanup mechanisms based on time are insufficient if the ingestion rate exceeds the cleanup rate or if the collection grows too large between cleanups.
 **Prevention:** Enforce a strict maximum size (cap) on all dynamic in-memory collections (Maps, Sets, Arrays) used for tracking user input or state. If the limit is reached, fail open (clear state to preserve availability) or fail closed (reject requests), but never allow the process to crash.
+
+## 2026-03-04 - Referrer Leakage in SPA Fallback
+**Vulnerability:** The `Referrer-Policy` header was only set via `_headers` (Cloudflare Pages), leaving the application prone to leaking full URL paths (potentially containing sensitive session parameters) to third parties when run locally or if headers were stripped.
+**Learning:** Security headers defined at the infrastructure level (CDN/Edge) do not protect the application in all contexts (e.g., local dev, static file serving).
+**Prevention:** Always implement "Defense in Depth" by duplicating critical security directives (like `Referrer-Policy`) in `<meta>` tags where supported, ensuring the policy travels with the document regardless of the serving environment.
