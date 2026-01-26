@@ -576,6 +576,9 @@ class WeatherRadar {
             hour12: false
         });
 
+        // Bolt Optimization: Bind loop function once to avoid allocation churn in rAF
+        this.boundLoop = this.loop.bind(this);
+
         this.bindEvents();
     }
 
@@ -1022,7 +1025,7 @@ class WeatherRadar {
             this.lastFrameTime = now - (elapsed % speed);
         }
 
-        this.animationFrameId = requestAnimationFrame(() => this.loop());
+        this.animationFrameId = requestAnimationFrame(this.boundLoop);
     }
 
     pause() {
