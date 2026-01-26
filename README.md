@@ -47,6 +47,10 @@ This project uses [Cloudflare Workers](https://workers.cloudflare.com/) to proxy
 
 This setup faithfully reproduces the production environment, running both the frontend and the worker for API requests.
 
+## Compatibility
+
+**ARM Architecture:** Please note that the `wrangler` CLI, which is required for local development, does not currently support ARM-based systems like the Raspberry Pi. You may encounter an `Unsupported platform` error during installation. Development should be done on an x86/x64-based machine.
+
 ## Credits
 
 Huge thanks to the free APIs that make this possible:
