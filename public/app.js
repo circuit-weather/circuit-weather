@@ -1652,6 +1652,7 @@ class PrivacyModal {
         this.privacyLink = document.getElementById('privacyLink');
         this.loaded = false;
         this.triggerElement = null;
+        this._handleFocusTrap = this.handleFocusTrap.bind(this);
         this.bindEvents();
     }
 
@@ -1691,6 +1692,8 @@ class PrivacyModal {
             document.body.style.overflow = 'hidden';
             // Move focus to close button for accessibility
             if (this.closeBtn) this.closeBtn.focus();
+            // Enable focus trap
+            this.backdrop.addEventListener('keydown', this._handleFocusTrap);
         }
     }
 
@@ -1698,10 +1701,36 @@ class PrivacyModal {
         if (this.backdrop) {
             this.backdrop.classList.remove('visible');
             document.body.style.overflow = '';
+            // Remove focus trap
+            this.backdrop.removeEventListener('keydown', this._handleFocusTrap);
             // Restore focus to trigger element
             if (this.triggerElement) {
                 this.triggerElement.focus();
                 this.triggerElement = null;
+            }
+        }
+    }
+
+    handleFocusTrap(e) {
+        if (e.key !== 'Tab') return;
+
+        const focusableSelectors = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+        const focusableElements = this.backdrop.querySelectorAll(focusableSelectors);
+
+        if (focusableElements.length === 0) return;
+
+        const firstElement = focusableElements[0];
+        const lastElement = focusableElements[focusableElements.length - 1];
+
+        if (e.shiftKey) {
+            if (document.activeElement === firstElement) {
+                e.preventDefault();
+                lastElement.focus();
+            }
+        } else {
+            if (document.activeElement === lastElement) {
+                e.preventDefault();
+                firstElement.focus();
             }
         }
     }
