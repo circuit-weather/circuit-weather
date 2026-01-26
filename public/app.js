@@ -34,6 +34,8 @@ const CONFIG = {
     // Range circles by zoom level (metric/imperial)
     // Deprecated: Logic now dynamic in RangeCircles class
 };
+// SEC: Prevent runtime tampering with configuration
+Object.freeze(CONFIG);
 
 // Country code mappings for flags (ISO 3166-1 alpha-2)
 const COUNTRY_CODES = {
@@ -44,6 +46,8 @@ const COUNTRY_CODES = {
     'Singapore': 'sg', 'Spain': 'es', 'UAE': 'ae', 'UK': 'gb',
     'USA': 'us', 'United States': 'us', 'Las Vegas': 'us', 'Miami': 'us',
 };
+// SEC: Prevent runtime tampering with country codes
+Object.freeze(COUNTRY_CODES);
 
 // Circuit ID Mapping (Ergast -> bacinger/f1-circuits)
 // Keys must match Ergast Circuit IDs
@@ -78,6 +82,8 @@ const CIRCUIT_MAP = {
     'yas_marina': 'ae-2009',
     'zandvoort': 'nl-1948'
 };
+// SEC: Prevent runtime tampering with circuit mappings
+Object.freeze(CIRCUIT_MAP);
 
 // ===================================
 // Utility Functions
