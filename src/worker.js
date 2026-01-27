@@ -140,9 +140,9 @@ const DEFAULT_SECURITY_HEADERS = {
   'X-Content-Type-Options': 'nosniff',
   'X-Frame-Options': 'DENY',
   'Permissions-Policy': 'accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()',
-  'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
+  'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
   'Referrer-Policy': 'strict-origin-when-cross-origin',
-  'Content-Security-Policy': "upgrade-insecure-requests; default-src 'none'; frame-ancestors 'none';",
+  'Content-Security-Policy': "upgrade-insecure-requests; default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none';",
   'Cross-Origin-Opener-Policy': 'same-origin',
   'Cross-Origin-Resource-Policy': 'same-origin',
 };
