@@ -585,6 +585,9 @@ class WeatherRadar {
         // Bolt Optimization: Bind loop function once to avoid allocation churn in rAF
         this.boundLoop = this.loop.bind(this);
 
+        // Palette Accessibility: Set initial state
+        this.updateSpeedLabel();
+
         this.bindEvents();
     }
 
@@ -632,7 +635,13 @@ class WeatherRadar {
 
     updateSpeedLabel() {
         if (this.ui.speedLabel) {
-            this.ui.speedLabel.textContent = CONFIG.radarSpeeds[this.speedIndex].label;
+            const label = CONFIG.radarSpeeds[this.speedIndex].label;
+            this.ui.speedLabel.textContent = label;
+
+            // Palette Accessibility: Update ARIA label with current state
+            if (this.ui.speedBtn) {
+                this.ui.speedBtn.setAttribute('aria-label', `Playback speed: ${label}`);
+            }
         }
     }
 
