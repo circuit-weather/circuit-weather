@@ -11,6 +11,13 @@
 // Global timeout for all upstream API calls to prevent resource exhaustion
 const API_TIMEOUT = 5000;
 
+// Bolt Optimization: Pre-compile regexes for hot-path performance
+const VALID_API_PATH_REGEX = /^[a-zA-Z0-9/._-]*$/;
+const VALID_COORD_REGEX = /^-?\d+(\.\d+)?$/;
+const VALID_TRACK_ID_REGEX = /^[a-z0-9-]+$/;
+const ALLOWED_ORIGIN_LOCALHOST_REGEX = /^http:\/\/localhost(:\d+)?$/;
+const ALLOWED_ORIGIN_127_REGEX = /^http:\/\/127\.0\.0\.1(:\d+)?$/;
+
 /**
  * Simple In-Memory Rate Limiter
  * Note: In a serverless environment, this state is ephemeral and per-isolate.
@@ -220,8 +227,8 @@ function getAllowedOrigin(request) {
   // 2. Localhost/127.0.0.1 for development
   if (
     origin === 'https://circuit-weather.racing' ||
-    /^http:\/\/localhost(:\d+)?$/.test(origin) ||
-    /^http:\/\/127\.0\.0\.1(:\d+)?$/.test(origin)
+    ALLOWED_ORIGIN_LOCALHOST_REGEX.test(origin) ||
+    ALLOWED_ORIGIN_127_REGEX.test(origin)
   ) {
     return origin;
   }
@@ -241,7 +248,6 @@ async function handleApiRequest(request, env, ctx) {
   // Validate apiPath: Strict whitelist + structure check
   // Allows: alphanumeric, dot, hyphen, underscore, slash
   // Rejects: anything else (%, space, <, >, etc.), directory traversal (..), empty segments (//), absolute paths (/)
-  const validCharsRegex = /^[a-zA-Z0-9/._-]*$/;
 
   // SEC: Input length limit to prevent DoS/resource exhaustion
   if (apiPath.length > 255) {
@@ -254,7 +260,7 @@ async function handleApiRequest(request, env, ctx) {
   // SEC: Prevent access to hidden files/directories (dotfiles)
   const hasDotfiles = apiPath.split('/').some(part => part.startsWith('.'));
 
-  if (!validCharsRegex.test(apiPath) || apiPath.includes('..') || apiPath.includes('//') || apiPath.startsWith('/') || hasDotfiles) {
+  if (!VALID_API_PATH_REGEX.test(apiPath) || apiPath.includes('..') || apiPath.includes('//') || apiPath.startsWith('/') || hasDotfiles) {
     return new Response(JSON.stringify({ error: 'Invalid API path' }), {
       status: 400,
       headers: getErrorHeaders(request)
@@ -391,7 +397,7 @@ async function handleTrackRequest(request, env, ctx) {
 
   // Validation
   // SEC: Check length (50 chars max) and format
-  if (!trackId || trackId.length > 50 || trackId.includes('..') || trackId.includes('/') || !/^[a-z0-9-]+$/.test(trackId)) {
+  if (!trackId || trackId.length > 50 || trackId.includes('..') || trackId.includes('/') || !VALID_TRACK_ID_REGEX.test(trackId)) {
     return new Response(JSON.stringify({ error: 'Invalid track ID' }), {
       status: 400,
       headers: getErrorHeaders(request)
@@ -512,8 +518,7 @@ async function handleWeatherRequest(request, env, ctx) {
   }
 
   // SEC: Validate inputs (Strict regex to prevent parameter pollution)
-  const validCoordRegex = /^-?\d+(\.\d+)?$/;
-  if (!lat || !lon || !validCoordRegex.test(lat) || !validCoordRegex.test(lon)) {
+  if (!lat || !lon || !VALID_COORD_REGEX.test(lat) || !VALID_COORD_REGEX.test(lon)) {
     return new Response(JSON.stringify({ error: 'Invalid latitude or longitude' }), {
       status: 400,
       headers: getErrorHeaders(request)
