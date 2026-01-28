@@ -1,5 +1,7 @@
 # Circuit Weather 🌧️🏎️
 
+**➡️ Live site: https://circuit-weather.racing**
+
 [![License](https://img.shields.io/github/license/circuit-weather/circuit-weather)](LICENSE)
 ![JavaScript](https://img.shields.io/badge/-JavaScript-F7DF1E)
 ![HTML](https://img.shields.io/badge/-HTML-E34F26)
@@ -28,6 +30,8 @@ The application is built with vanilla HTML, CSS, and JavaScript, keeping it ligh
 The map tiles are provided by Carto (based on OpenStreetMap data), ensuring a clean look that works well with the weather overlays.
 
 ## Running it locally
+
+> **Note:** These instructions are for developers who want to contribute to the project. If you just want to use the site, please visit the live version at **https://circuit-weather.racing**.
 
 This project uses [Cloudflare Workers](https://workers.cloudflare.com/) to proxy API requests, so a simple static web server is not enough. You'll need to use the `wrangler` CLI to run it locally.
 
