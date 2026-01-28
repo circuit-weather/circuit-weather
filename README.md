@@ -29,13 +29,27 @@ The map tiles are provided by Carto (based on OpenStreetMap data), ensuring a cl
 
 ## Running it locally
 
-If you want to run this project on your own machine:
+This project uses [Cloudflare Workers](https://workers.cloudflare.com/) to proxy API requests, so a simple static web server is not enough. You'll need to use the `wrangler` CLI to run it locally.
 
-1.  Clone the repository.
-2.  Start a simple local web server (e.g., `npx serve` or `python -m http.server`).
-3.  Open the local address in your browser.
+1.  **Clone the repository.**
+2.  **Install Node.js and Wrangler.**
+    If you don't have Node.js installed, download it from [nodejs.org](https://nodejs.org/). Then, install the Wrangler CLI globally:
+    ```bash
+    npm install -g wrangler
+    ```
+3.  **Start the local development server.**
+    Run the following command in your terminal at the root of the project:
+    ```bash
+    wrangler dev
+    ```
+4.  **Open the local address in your browser.**
+    Wrangler will typically open the site at `http://localhost:8787`.
 
-No API keys are required as all data sources are free and open.
+This setup faithfully reproduces the production environment, running both the frontend and the worker for API requests.
+
+## Compatibility
+
+**ARM Architecture:** Please note that the `wrangler` CLI, which is required for local development, does not currently support ARM-based systems like the Raspberry Pi. You may encounter an `Unsupported platform` error during installation. Development should be done on an x86/x64-based machine.
 
 ## Credits
 
