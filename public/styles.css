@@ -235,7 +235,8 @@ body {
     gap: var(--spacing-xs);
 }
 
-.control-group label {
+.control-group label,
+.control-group .control-label {
     font-size: 0.75rem;
     font-weight: 500;
     color: var(--color-text-secondary);
