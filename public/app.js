@@ -2030,25 +2030,6 @@ class CircuitWeatherApp {
     }
 
     bindEvents() {
-        const shareBtn = document.getElementById('shareBtn');
-        if (shareBtn) {
-            shareBtn.addEventListener('click', async () => {
-                try {
-                    await navigator.clipboard.writeText(window.location.href);
-
-                    shareBtn.classList.add('copied');
-                    shareBtn.setAttribute('aria-label', 'Link copied');
-
-                    setTimeout(() => {
-                        shareBtn.classList.remove('copied');
-                        shareBtn.setAttribute('aria-label', 'Share this session');
-                    }, 2000);
-                } catch (err) {
-                    console.error('Failed to copy link:', err);
-                }
-            });
-        }
-
         if (this.ui.roundSelect) {
             this.ui.roundSelect.addEventListener('change', (e) => {
                 if (e.target.value) this.selectRound(e.target.value);

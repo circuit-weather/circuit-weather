@@ -212,12 +212,8 @@ body {
     }
 }
 
-.sidebar-header .share-btn {
-    margin-left: auto;
-}
-
 .sidebar-header .theme-toggle {
-    margin-left: var(--spacing-sm);
+    margin-left: auto;
 }
 
 /* Sidebar Content */
@@ -957,15 +953,34 @@ body {
 
     /* Show sidebar toggle button */
     .sidebar-toggle {
-        display: flex;
+        display: grid;
+        place-items: center;
+        overflow: hidden;
+    }
+
+    .sidebar-toggle svg {
+        grid-area: 1 / 1;
+        transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1), opacity 0.3s ease;
+    }
+
+    .sidebar-toggle .icon-menu {
+        opacity: 1;
+        transform: rotate(0) scale(1);
+    }
+
+    .sidebar-toggle .icon-close {
+        opacity: 0;
+        transform: rotate(90deg) scale(0.5);
     }
 
     .sidebar.sidebar--open .sidebar-toggle .icon-menu {
-        display: none;
+        opacity: 0;
+        transform: rotate(-90deg) scale(0.5);
     }
 
     .sidebar.sidebar--open .sidebar-toggle .icon-close {
-        display: block;
+        opacity: 1;
+        transform: rotate(0) scale(1);
     }
 
     /* Backdrop */
@@ -1588,7 +1603,6 @@ body {
 }
 
 /* Ensure focus ring is visible on toggle buttons */
-.share-btn:focus-visible,
 .theme-toggle:focus-visible,
 .sidebar-toggle:focus-visible,
 .mobile-menu-btn:focus-visible,
@@ -1610,52 +1624,4 @@ body {
 
 .radar-slider:focus-visible::-moz-range-thumb {
     box-shadow: 0 0 0 6px rgba(225, 6, 0, 0.3);
-}
-
-/* ===================================
-   Share Button
-   =================================== */
-
-.share-btn {
-    display: grid;
-    place-items: center;
-    width: 2rem;
-    height: 2rem;
-    border: none;
-    border-radius: var(--radius-md);
-    background: var(--color-surface);
-    color: var(--color-text);
-    cursor: pointer;
-    transition: background-color var(--transition-fast);
-}
-
-.share-btn:hover {
-    background: var(--color-surface-elevated);
-}
-
-.share-btn svg {
-    width: 1rem;
-    height: 1rem;
-    grid-area: 1 / 1;
-    transition: transform 0.3s cubic-bezier(0.4, 0.0, 0.2, 1), opacity 0.3s ease;
-}
-
-.share-btn .icon-share {
-    opacity: 1;
-    transform: scale(1);
-}
-
-.share-btn .icon-check {
-    opacity: 0;
-    transform: scale(0.5);
-}
-
-.share-btn.copied .icon-share {
-    opacity: 0;
-    transform: scale(0.5);
-}
-
-.share-btn.copied .icon-check {
-    opacity: 1;
-    transform: scale(1);
 }
