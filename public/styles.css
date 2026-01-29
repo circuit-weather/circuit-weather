@@ -969,6 +969,7 @@ body {
     }
 
     .sidebar-toggle .icon-close {
+        display: block;
         opacity: 0;
         transform: rotate(90deg) scale(0.5);
     }
