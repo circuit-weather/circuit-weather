@@ -4,7 +4,7 @@
 
 ## 2025-02-18 - Share Button Rejected
 **Learning:** The user explicitly rejected the addition of a "Share" button to the race info banner. This indicates a preference against cluttering the UI with sharing utilities, possibly because the URL is already easily shareable or the focus should remain strictly on weather/race data.
-**Action:** Avoid adding social sharing or URL copying buttons to the interface unless explicitly requested.
+**Action:** **STRICT DIRECTIVE**: Do NOT implement a 'Share' button or any social sharing functionality in the project interface. This is a persistent prohibition that overrides standard feature patterns.
 
 ## 2025-02-18 - Semantic Labels on Toggles
 **Learning:** Changing a toggle button's `aria-label` to match its active state (e.g., "Close sidebar" instead of "Toggle sidebar") was rejected as semantically incorrect. This highlights the importance of keeping labels generic for dual-state controls to avoid confusion or state mismatch.
