@@ -158,6 +158,12 @@ binding = "ASSETS"
 
 ---
 
+## Feature Constraints
+
+- **STRICT DIRECTIVE**: Do NOT implement a 'Share' button or any social sharing functionality in the project interface. This is a persistent prohibition that overrides standard feature patterns.
+
+---
+
 ## Known Limitations
 
 1. **RainViewer Zoom Limit** - Free tier limits to zoom level 10. Use `maxNativeZoom: 10` to upscale tiles at higher zooms.
