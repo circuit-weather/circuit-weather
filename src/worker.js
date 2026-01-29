@@ -563,8 +563,8 @@ async function handleWeatherRequest(request, env, ctx) {
       headers.delete('Access-Control-Allow-Origin');
     }
 
-    // Set client cache control (15 mins)
-    headers.set('Cache-Control', 'public, max-age=900');
+    // Set client cache control (1 hour)
+    headers.set('Cache-Control', 'public, max-age=3600');
 
     return new Response(response.body, {
       status: response.status,
@@ -590,10 +590,10 @@ async function handleWeatherRequest(request, env, ctx) {
     // Bolt Optimization: Stream response instead of buffering text
     const [cacheBody, clientBody] = upstreamResponse.body.tee();
 
-    // Cache for 15 minutes (900 seconds)
+    // Cache for 1 hour (3600 seconds)
     const cacheHeaders = new Headers({
         'Content-Type': 'application/json',
-        'Cache-Control': 'public, max-age=900',
+        'Cache-Control': 'public, max-age=3600',
         'X-Cache': 'MISS',
         'Access-Control-Allow-Origin': '*',
         ...DEFAULT_SECURITY_HEADERS
