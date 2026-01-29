@@ -2319,11 +2319,11 @@ class CircuitWeatherApp {
                     <div class="weather-timeline-time">${escapeHtml(relTime)}</div>
                     <div class="weather-timeline-condition">
                         ${escapeHtml(desc)}
-                        <div style="font-size: 0.65em; color: var(--color-text-secondary);">${escapeHtml(hour.windSpeed)} km/h</div>
+                        <div class="weather-timeline-wind">${escapeHtml(hour.windSpeed)} km/h</div>
                     </div>
                     <div class="weather-timeline-temp">
                         <div>${escapeHtml(Math.round(hour.temp))}°</div>
-                        <div style="font-size: 0.8em; color: #3b82f6;">${escapeHtml(hour.precipProb)}%</div>
+                        <div class="weather-timeline-precip">${escapeHtml(hour.precipProb)}%</div>
                     </div>
                 `;
 
