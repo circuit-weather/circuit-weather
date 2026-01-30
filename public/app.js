@@ -121,6 +121,28 @@ function escapeHtml(str) {
     return String(str).replace(ESCAPE_REGEX, char => ESCAPE_MAP[char]);
 }
 
+// ===================================
+// Safe Storage Helper
+// ===================================
+
+const SafeStorage = {
+    getItem(key) {
+        try {
+            return localStorage.getItem(key);
+        } catch (e) {
+            // SEC: Fail securely if storage is disabled/blocked (e.g. privacy settings)
+            return null;
+        }
+    },
+    setItem(key, value) {
+        try {
+            localStorage.setItem(key, value);
+        } catch (e) {
+            // SEC: Fail securely if storage is disabled/blocked
+        }
+    }
+};
+
 
 // ===================================
 // Theme Manager
@@ -135,7 +157,7 @@ class ThemeManager {
     }
 
     getInitialTheme() {
-        const stored = localStorage.getItem('theme');
+        const stored = SafeStorage.getItem('theme');
         if (stored) return stored;
         return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     }
@@ -148,7 +170,7 @@ class ThemeManager {
     toggle() {
         this.theme = this.theme === 'dark' ? 'light' : 'dark';
         this.applyTheme();
-        localStorage.setItem('theme', this.theme);
+        SafeStorage.setItem('theme', this.theme);
     }
 
     bindEvents() {
@@ -1108,7 +1130,7 @@ class RangeCircles {
     }
 
     getInitialUnit() {
-        const stored = localStorage.getItem('unit');
+        const stored = SafeStorage.getItem('unit');
         if (stored) return stored;
         // Detect from locale (imperial countries: US, Liberia, Myanmar)
         const lang = navigator.language || 'en-US';
@@ -1133,7 +1155,7 @@ class RangeCircles {
 
     setUnit(unit) {
         this.unit = unit;
-        localStorage.setItem('unit', unit);
+        SafeStorage.setItem('unit', unit);
         this.updateToggleUI();
         if (this.center) this.draw(this.center);
     }
