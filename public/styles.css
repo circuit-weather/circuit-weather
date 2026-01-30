@@ -1636,3 +1636,32 @@ body {
 .radar-slider:focus-visible::-moz-range-thumb {
     box-shadow: 0 0 0 6px rgba(225, 6, 0, 0.3);
 }
+
+/* ===================================
+   Skeleton Loading
+   =================================== */
+
+.skeleton {
+    background: linear-gradient(90deg,
+        var(--color-bg) 25%,
+        var(--color-border) 50%,
+        var(--color-bg) 75%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-loading 1.5s infinite;
+    border-radius: var(--radius-sm);
+    color: transparent !important;
+    user-select: none;
+    cursor: default;
+}
+
+.skeleton-text {
+    height: 1em;
+    width: 100%;
+    display: inline-block;
+}
+
+@keyframes skeleton-loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
