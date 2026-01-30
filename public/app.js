@@ -2181,6 +2181,11 @@ class CircuitWeatherApp {
         if (!session) return;
 
         this.showLoading(true);
+        // Palette UX: Show skeleton immediately to prevent layout shift
+        this.renderForecastSkeleton();
+
+        // Show forecast section container immediately
+        if (this.ui.forecastSection) this.ui.forecastSection.style.display = 'block';
 
         try {
             this.selectedSession = session;
@@ -2201,9 +2206,6 @@ class CircuitWeatherApp {
                 this.radar.load(),
                 this.updateSessionForecast(sessionTime, session.id)
             ]);
-
-            // Show forecast section container
-            if (this.ui.forecastSection) this.ui.forecastSection.style.display = 'block';
 
             // Ensure mobile elements are visible
             this.updateMobileVisibility();
@@ -2231,6 +2233,52 @@ class CircuitWeatherApp {
         const weather = await this.weatherClient.getForecast(lat, long, sessionTime);
 
         this.renderForecast(weather, sessionTime, sessionId);
+    }
+
+    renderForecastSkeleton() {
+        const content = this.ui.forecastContent;
+        const unavailable = this.ui.forecastUnavailable;
+
+        if (unavailable) unavailable.style.display = 'none';
+        if (content) {
+            content.style.display = 'block';
+            content.innerHTML = `
+                <div class="weather-dashboard">
+                    <div class="weather-current">
+                        <div class="weather-metric">
+                            <span class="weather-label skeleton"><span class="skeleton-text" style="width: 30px"></span></span>
+                            <span class="weather-value skeleton"><span class="skeleton-text" style="width: 40px"></span></span>
+                        </div>
+                        <div class="weather-metric">
+                            <span class="weather-label skeleton"><span class="skeleton-text" style="width: 30px"></span></span>
+                            <span class="weather-value skeleton"><span class="skeleton-text" style="width: 40px"></span></span>
+                        </div>
+                        <div class="weather-metric">
+                            <span class="weather-label skeleton"><span class="skeleton-text" style="width: 30px"></span></span>
+                            <span class="weather-value skeleton"><span class="skeleton-text" style="width: 40px"></span></span>
+                            <span class="weather-sub skeleton"><span class="skeleton-text" style="width: 20px"></span></span>
+                        </div>
+                    </div>
+                    <div class="weather-timeline" id="weatherTimeline">
+                        <div class="weather-timeline-item">
+                            <div class="weather-timeline-time skeleton"><span class="skeleton-text" style="width: 30px"></span></div>
+                            <div class="weather-timeline-condition skeleton"><span class="skeleton-text" style="width: 80px"></span></div>
+                            <div class="weather-timeline-temp skeleton"><span class="skeleton-text" style="width: 30px"></span></div>
+                        </div>
+                        <div class="weather-timeline-item">
+                            <div class="weather-timeline-time skeleton"><span class="skeleton-text" style="width: 30px"></span></div>
+                            <div class="weather-timeline-condition skeleton"><span class="skeleton-text" style="width: 80px"></span></div>
+                            <div class="weather-timeline-temp skeleton"><span class="skeleton-text" style="width: 30px"></span></div>
+                        </div>
+                        <div class="weather-timeline-item">
+                            <div class="weather-timeline-time skeleton"><span class="skeleton-text" style="width: 30px"></span></div>
+                            <div class="weather-timeline-condition skeleton"><span class="skeleton-text" style="width: 80px"></span></div>
+                            <div class="weather-timeline-temp skeleton"><span class="skeleton-text" style="width: 30px"></span></div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
     }
 
     renderLiveWeather(weather) {
