@@ -1125,6 +1125,7 @@ class RangeCircles {
         this.center = null;
         this.visibleCount = 4; // How many circles to show based on zoom
         this.currentSteps = null;
+        this.centerMarker = null;
         this.bindEvents();
         this.updateToggleUI();
     }
@@ -1185,47 +1186,93 @@ class RangeCircles {
         this.currentSteps = steps;
         this.currentUnit = this.unit;
 
-        this.clear();
-
+        // Bolt Optimization: Reuse existing layers (Object Pooling)
+        // prevents DOM thrashing during frequent zoom events.
         const multiplier = this.unit === 'metric' ? 1000 : 1609.34;
 
         steps.forEach((distance, index) => {
-            // Outline only - no fill
-            const circle = L.circle(center, {
-                radius: distance * multiplier,
-                color: '#e10600',
-                fillColor: 'transparent',
-                fillOpacity: 0,
-                weight: index === 0 ? 2 : 1,
-                dashArray: index > 0 ? '4, 4' : null,
-                opacity: 0.7,
-            });
-            circle.addTo(this.map);
-            this.circles.push(circle);
+            const radius = distance * multiplier;
 
-            // Add label at the right edge of the circle
-            const labelLatLng = this.getPointAtDistance(center, distance * multiplier, 90);
-            const label = L.divIcon({
-                className: 'range-label',
-                html: `<span>${distance}</span>`,
-                iconSize: [30, 12],
-                iconAnchor: [0, 6],
-            });
-            const labelMarker = L.marker(labelLatLng, { icon: label });
-            labelMarker.addTo(this.map);
-            this.labels.push(labelMarker);
+            // 1. Rings
+            if (this.circles[index]) {
+                const circle = this.circles[index];
+                circle.setLatLng(center);
+                circle.setRadius(radius);
+                circle.setStyle({
+                    weight: index === 0 ? 2 : 1,
+                    dashArray: index > 0 ? '4, 4' : null
+                });
+                if (!this.map.hasLayer(circle)) circle.addTo(this.map);
+            } else {
+                const circle = L.circle(center, {
+                    radius: radius,
+                    color: '#e10600',
+                    fillColor: 'transparent',
+                    fillOpacity: 0,
+                    weight: index === 0 ? 2 : 1,
+                    dashArray: index > 0 ? '4, 4' : null,
+                    opacity: 0.7,
+                });
+                circle.addTo(this.map);
+                this.circles.push(circle);
+            }
+
+            // 2. Labels
+            const labelLatLng = this.getPointAtDistance(center, radius, 90);
+            const html = `<span>${distance}</span>`;
+
+            if (this.labels[index]) {
+                const labelMarker = this.labels[index];
+                labelMarker.setLatLng(labelLatLng);
+                // Update icon content
+                const newIcon = L.divIcon({
+                    className: 'range-label',
+                    html: html,
+                    iconSize: [30, 12],
+                    iconAnchor: [0, 6],
+                });
+                labelMarker.setIcon(newIcon);
+                if (!this.map.hasLayer(labelMarker)) labelMarker.addTo(this.map);
+            } else {
+                const label = L.divIcon({
+                    className: 'range-label',
+                    html: html,
+                    iconSize: [30, 12],
+                    iconAnchor: [0, 6],
+                });
+                const labelMarker = L.marker(labelLatLng, { icon: label });
+                labelMarker.addTo(this.map);
+                this.labels.push(labelMarker);
+            }
         });
+
+        // Cleanup extras
+        while (this.circles.length > steps.length) {
+            const c = this.circles.pop();
+            this.map.removeLayer(c);
+        }
+        while (this.labels.length > steps.length) {
+            const l = this.labels.pop();
+            this.map.removeLayer(l);
+        }
 
         // Circuit center marker
-        const marker = L.circleMarker(center, {
-            radius: 6,
-            color: '#e10600',
-            fillColor: '#ffffff',
-            fillOpacity: 1,
-            weight: 2,
-        });
-        marker.addTo(this.map);
-        this.circles.push(marker);
+        if (this.centerMarker) {
+            this.centerMarker.setLatLng(center);
+            if (!this.map.hasLayer(this.centerMarker)) this.centerMarker.addTo(this.map);
+        } else {
+            this.centerMarker = L.circleMarker(center, {
+                radius: 6,
+                color: '#e10600',
+                fillColor: '#ffffff',
+                fillOpacity: 1,
+                weight: 2,
+            });
+            this.centerMarker.addTo(this.map);
+        }
+        if (this.centerMarker.bringToFront) {
+            this.centerMarker.bringToFront();
+        }
     }
 
     calculateSteps(center) {
@@ -1293,8 +1340,11 @@ class RangeCircles {
     clear() {
         this.circles.forEach(c => this.map.removeLayer(c));
         this.labels.forEach(l => this.map.removeLayer(l));
+        if (this.centerMarker) this.map.removeLayer(this.centerMarker);
+
         this.circles = [];
         this.labels = [];
+        this.centerMarker = null;
     }
 
     updateVisibility() {
