@@ -82,3 +82,8 @@
 **Vulnerability:** The `Referrer-Policy` header was only set via `_headers` (Cloudflare Pages), leaving the application prone to leaking full URL paths (potentially containing sensitive session parameters) to third parties when run locally or if headers were stripped.
 **Learning:** Security headers defined at the infrastructure level (CDN/Edge) do not protect the application in all contexts (e.g., local dev, static file serving).
 **Prevention:** Always implement "Defense in Depth" by duplicating critical security directives (like `Referrer-Policy`) in `<meta>` tags where supported, ensuring the policy travels with the document regardless of the serving environment.
+
+## 2026-03-06 - CSP Unsafe-Hashes Requirement
+**Vulnerability:** The "Buy Me a Coffee" widget injected inline styles via JavaScript, which were blocked by the strict CSP `style-src`. Adding the SHA-256 hash of the style content to the CSP was insufficient because CSP Level 3 specification mandates that hashes for `style` *attributes* are ignored unless the `'unsafe-hashes'` keyword is also present.
+**Learning:** CSP hashes generally apply to `<style>` blocks. For inline style *attributes* (e.g., `style="height: 32px"`), the browser acts conservatively and blocks them even with a matching hash unless explicitly opted-in via `'unsafe-hashes'`.
+**Prevention:** When allowing specific inline styles from third-party scripts that cannot be refactored to classes, use both the calculated SHA-256 hash AND the `'unsafe-hashes'` keyword in the `style-src` directive.

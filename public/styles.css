@@ -449,6 +449,16 @@ body {
     color: var(--color-text-secondary);
 }
 
+.weather-timeline-wind {
+    font-size: 0.65em;
+    color: var(--color-text-secondary);
+}
+
+.weather-timeline-precip {
+    font-size: 0.8em;
+    color: #3b82f6;
+}
+
 /* Buy Me a Coffee Button */
 .bmc-container {
     display: flex;
