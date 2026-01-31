@@ -2106,7 +2106,22 @@ class CircuitWeatherApp {
     bindEvents() {
         if (this.ui.roundSelect) {
             this.ui.roundSelect.addEventListener('change', (e) => {
-                if (e.target.value) this.selectRound(e.target.value);
+                if (e.target.value) {
+                    this.selectRound(e.target.value);
+                } else {
+                    // Palette UX: Reset session select when round is cleared
+                    if (this.ui.sessionSelect) {
+                        this.ui.sessionSelect.disabled = true;
+                        this.ui.sessionSelect.innerHTML = '<option value="">Select a round first</option>';
+                    }
+                    this.selectedSession = null;
+                    this.selectedRace = null;
+                    if (this.ui.forecastSection) this.ui.forecastSection.style.display = 'none';
+                    if (this.ui.raceInfoBanner) this.ui.raceInfoBanner.style.display = 'none';
+                    this.countdown.show(false);
+                    this.trackLayer.clear();
+                    this.rangeCircles.clear();
+                }
             });
         }
 
