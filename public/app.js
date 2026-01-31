@@ -462,8 +462,8 @@ class WeatherClient {
         const diffMins = (timestamp * 1000 - sessionTime.getTime()) / 60000;
 
         if (Math.abs(diffMins) < 30) return 'Start';
-        if (diffMins < 0) return `${Math.round(diffMins/60)}h`;
-        return `+${Math.round(diffMins/60)}h`;
+        if (diffMins < 0) return `${Math.round(diffMins / 60)}h`;
+        return `+${Math.round(diffMins / 60)}h`;
     }
 }
 
@@ -2015,8 +2015,9 @@ class CircuitWeatherApp {
                 this.autoSelectNextRound();
             }
 
-            // Initial weather update for map center
-            this.updateLiveWeatherForMapCenter();
+            // Initial weather update for circuit (deferred until circuit selected)
+            // Note: Weather is now pinned to circuit, not map center
+            this.startWeatherRefreshInterval();
 
 
             this.showLoading(false);
@@ -2133,7 +2134,8 @@ class CircuitWeatherApp {
             });
         }
 
-        this.mapManager.map.on('moveend', debounce(() => this.updateLiveWeatherForMapCenter(), 500));
+        // Note: Weather updates are now pinned to circuit, not triggered by map pan
+        // This reduces API calls significantly - weather only updates when circuit changes or every 5 minutes
     }
 
     populateRoundSelect() {
@@ -2196,7 +2198,7 @@ class CircuitWeatherApp {
         }
 
         // Fetch current "Live" weather for the widgets
-        this.updateLiveWeatherForMapCenter();
+        this.updateLiveWeatherForCircuit();
 
         this.updateMobileVisibility();
 
@@ -2307,11 +2309,28 @@ class CircuitWeatherApp {
         }
     }
 
-    async updateLiveWeatherForMapCenter() {
-        const center = this.mapManager.map.getCenter();
-        const weather = await this.weatherClient.getForecast(center.lat, center.lng, new Date());
+    async updateLiveWeatherForCircuit() {
+        // Only fetch weather if a circuit is selected
+        if (!this.currentCircuitCenter) {
+            return;
+        }
+
+        const [lat, lng] = this.currentCircuitCenter;
+        const weather = await this.weatherClient.getForecast(lat, lng, new Date());
         this.weatherWidget.update(weather);
         this.renderLiveWeather(weather); // Also update mobile card
+    }
+
+    startWeatherRefreshInterval() {
+        // Clear any existing interval
+        if (this.weatherRefreshInterval) {
+            clearInterval(this.weatherRefreshInterval);
+        }
+
+        // Refresh weather every 5 minutes (300000ms)
+        this.weatherRefreshInterval = setInterval(() => {
+            this.updateLiveWeatherForCircuit();
+        }, 300000);
     }
 
 
@@ -2427,7 +2446,7 @@ class CircuitWeatherApp {
             // For session forecast, we look at the hourly data to find max precip probability
             let maxPrecip = 0;
             if (weather.hourly && weather.hourly.length > 0) {
-                 maxPrecip = Math.max(...weather.hourly.map(h => h.precipProb));
+                maxPrecip = Math.max(...weather.hourly.map(h => h.precipProb));
             }
 
             if (this.ui.weatherTemp) this.ui.weatherTemp.textContent = `${temp}${weather.units.temperature_2m}`;
