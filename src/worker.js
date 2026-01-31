@@ -46,9 +46,11 @@ class RateLimiter {
       // SEC: Prevent memory exhaustion DoS
       if (this.counts.size >= this.maxIps) {
         this.cleanup(now);
-        // If still full after cleanup, clear everything to save the worker
+        // If still full after cleanup, evict oldest entry (LRU) to make room
+        // This prevents a full reset which would benefit attackers
         if (this.counts.size >= this.maxIps) {
-          this.counts.clear();
+          const oldestIp = this.counts.keys().next().value;
+          this.counts.delete(oldestIp);
         }
       }
 
