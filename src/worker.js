@@ -45,9 +45,14 @@ class RateLimiter {
     if (!record) {
       // SEC: Prevent memory exhaustion DoS
       if (this.counts.size >= this.maxIps) {
-        this.cleanup(now);
-        // If still full after cleanup, evict oldest entry (LRU) to make room
+        // Bolt Optimization: Throttle full cleanup to avoid O(N) scan on every request during saturation
+        if (now - this.lastCleanup > 10000) {
+          this.cleanup(now);
+        }
+
+        // If still full after (throttled) cleanup, evict oldest entry (LRU) to make room
         // This prevents a full reset which would benefit attackers
+        // Map.keys().next() is O(1) in V8
         if (this.counts.size >= this.maxIps) {
           const oldestIp = this.counts.keys().next().value;
           this.counts.delete(oldestIp);
