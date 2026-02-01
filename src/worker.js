@@ -627,34 +627,10 @@ async function handleWeatherRequest(request, env, ctx) {
 
     if (!upstreamResponse.ok) {
       console.error(`Upstream Weather API Error: Status ${upstreamResponse.status}`);
-
-      // Cache error response to prevent hammering upstream when rate limited
-      // This stops the retry storm that occurs when Open-Meteo returns 429
-      const errorCacheTTL = upstreamResponse.status === 429 ? 300 : 60; // 5 min for 429, 1 min for other errors
-      const errorResponse = getEmptyWeatherResponse(request);
-
-      // Clone the response for caching
-      const errorCacheHeaders = new Headers({
-        'Content-Type': 'application/json',
-        'Cache-Control': `public, max-age=${errorCacheTTL}`,
-        'X-Cache': 'ERROR-CACHED',
-        ...DEFAULT_SECURITY_HEADERS
-      });
-
-      const errorCacheResponse = new Response(JSON.stringify({
+      return cacheAndReturnError(request, cache, cacheKey, upstreamResponse.status, {
         error: 'Weather data temporarily unavailable',
-        current: { temperature_2m: null, relative_humidity_2m: null, wind_speed_10m: null },
-        hourly: { time: [], temperature_2m: [], precipitation_probability: [] },
-        current_units: {}
-      }), {
-        status: 200, // Return 200 so it gets cached
-        headers: errorCacheHeaders,
-      });
-
-      // Cache the error response so we don't hammer Open-Meteo
-      ctx.waitUntil(cache.put(cacheKey, errorCacheResponse.clone()));
-
-      return errorCacheResponse;
+        status: upstreamResponse.status,
+      }, ctx);
     }
 
     // Bolt Optimization: Stream response instead of buffering text
