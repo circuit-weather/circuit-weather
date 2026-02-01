@@ -222,6 +222,47 @@ function getEmptyWeatherResponse(request) {
 }
 
 /**
+ * Helper to cache and return an error response
+ */
+function cacheAndReturnError(request, cache, cacheKey, status, errorData, ctx) {
+  // Cache error response to prevent hammering upstream
+  const errorCacheTTL = status === 429 ? 300 : 60;
+
+  const errorBody = JSON.stringify(errorData);
+
+  const errorHeaders = new Headers({
+    'Content-Type': 'application/json',
+    'Cache-Control': `public, max-age=${errorCacheTTL}`,
+    'X-Cache': 'ERROR-CACHED',
+    'Access-Control-Allow-Origin': '*', // Store permissive, override on delivery
+    ...DEFAULT_SECURITY_HEADERS
+  });
+
+  const errorResponse = new Response(errorBody, {
+    status: status,
+    headers: errorHeaders
+  });
+
+  // Cache the error response
+  ctx.waitUntil(cache.put(cacheKey, errorResponse.clone()));
+
+  // Prepare response for client with strict CORS
+  const clientErrorHeaders = new Headers(errorHeaders);
+  const allowedOrigin = getAllowedOrigin(request);
+  if (allowedOrigin) {
+    clientErrorHeaders.set('Access-Control-Allow-Origin', allowedOrigin);
+    clientErrorHeaders.set('Vary', 'Origin');
+  } else {
+    clientErrorHeaders.delete('Access-Control-Allow-Origin');
+  }
+
+  return new Response(errorBody, {
+    status: status,
+    headers: clientErrorHeaders
+  });
+}
+
+/**
  * Helper to determine allowed CORS origin
  * Returns the origin string if allowed, or null if forbidden.
  */
@@ -337,13 +378,10 @@ async function handleApiRequest(request, env, ctx) {
     });
 
     if (!upstreamResponse.ok) {
-      return new Response(JSON.stringify({
+      return cacheAndReturnError(request, cache, cacheKey, upstreamResponse.status, {
         error: 'Upstream API error',
         status: upstreamResponse.status,
-      }), {
-        status: upstreamResponse.status,
-        headers: getErrorHeaders(request)
-      });
+      }, ctx);
     }
 
     // Bolt Optimization: Stream response instead of buffering text
@@ -452,13 +490,11 @@ async function handleTrackRequest(request, env, ctx) {
     });
 
     if (!upstreamResponse.ok) {
-      return new Response(JSON.stringify({
+      const status = upstreamResponse.status === 404 ? 404 : 502;
+      return cacheAndReturnError(request, cache, cacheKey, status, {
         error: 'Track not found',
         status: upstreamResponse.status,
-      }), {
-        status: upstreamResponse.status === 404 ? 404 : 502,
-        headers: getErrorHeaders(request)
-      });
+      }, ctx);
     }
 
     // Bolt Optimization: Stream response instead of buffering text
