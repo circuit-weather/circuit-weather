@@ -627,10 +627,52 @@ async function handleWeatherRequest(request, env, ctx) {
 
     if (!upstreamResponse.ok) {
       console.error(`Upstream Weather API Error: Status ${upstreamResponse.status}`);
-      return cacheAndReturnError(request, cache, cacheKey, upstreamResponse.status, {
+
+      // Cache error response to prevent hammering upstream when rate limited
+      // This stops the retry storm that occurs when Open-Meteo returns 429
+      const errorCacheTTL = upstreamResponse.status === 429 ? 300 : 60; // 5 min for 429, 1 min for other errors
+
+      // Use empty response structure to keep UI visible (showing --)
+      const errorResponse = {
         error: 'Weather data temporarily unavailable',
-        status: upstreamResponse.status,
-      }, ctx);
+        current: { temperature_2m: null, relative_humidity_2m: null, wind_speed_10m: null },
+        hourly: { time: [], temperature_2m: [], precipitation_probability: [] },
+        current_units: {}
+      };
+
+      const errorBody = JSON.stringify(errorResponse);
+
+      const errorHeaders = new Headers({
+        'Content-Type': 'application/json',
+        'Cache-Control': `public, max-age=${errorCacheTTL}`,
+        'X-Cache': 'ERROR-CACHED',
+        'Access-Control-Allow-Origin': '*',
+        ...DEFAULT_SECURITY_HEADERS
+      });
+
+      // Return 200 so the frontend renders the widget with empty values instead of hiding it
+      const cacheResponse = new Response(errorBody, {
+        status: 200,
+        headers: errorHeaders,
+      });
+
+      // Cache the error response
+      ctx.waitUntil(cache.put(cacheKey, cacheResponse.clone()));
+
+      // Prepare response for client with strict CORS
+      const clientHeaders = new Headers(errorHeaders);
+      const allowedOrigin = getAllowedOrigin(request);
+      if (allowedOrigin) {
+        clientHeaders.set('Access-Control-Allow-Origin', allowedOrigin);
+        clientHeaders.set('Vary', 'Origin');
+      } else {
+        clientHeaders.delete('Access-Control-Allow-Origin');
+      }
+
+      return new Response(errorBody, {
+        status: 200,
+        headers: clientHeaders
+      });
     }
 
     // Bolt Optimization: Stream response instead of buffering text
