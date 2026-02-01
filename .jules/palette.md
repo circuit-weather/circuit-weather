@@ -26,3 +26,7 @@
 ## 2026-01-24 - Vanilla JS Modal Focus Management
 **Learning:** The application uses custom vanilla JS classes for modals (like `PrivacyModal`) which lack native focus trapping features provided by libraries or the `<dialog>` element.
 **Action:** When implementing or modifying overlays/modals in this codebase, manual `keydown` event listeners must be added to trap Tab focus cycles, as the browser does not handle this automatically for `div`-based modals.
+
+## 2026-02-21 - Actionable Empty States
+**Learning:** Generic empty states like "Forecast available closer to session" provide insufficient guidance when the user selects a distant future event, potentially causing confusion about whether the feature is broken.
+**Action:** When data is unavailable due to time constraints, provide specific, actionable information (e.g., "Forecast available from [Date]") to manage user expectations effectively.
