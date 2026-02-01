@@ -71,6 +71,36 @@ git push origin main
 
 **Note**: The project is connected to Cloudflare Pages via GitHub integration. Pushing to `main` triggers automatic deployment - no manual `wrangler deploy` needed.
 
+### Git Workflow for Changes
+
+All code changes must follow this workflow:
+
+1. **Create a new branch** from `main`:
+   ```bash
+   git checkout main
+   git pull origin main
+   git checkout -b feature/your-feature-name
+   ```
+
+2. **Make your changes** on the new branch
+
+3. **Commit and push** to the repository:
+   ```bash
+   git add .
+   git commit -m "Brief description of changes"
+   git push origin feature/your-feature-name
+   ```
+
+4. **Open a Pull Request** on GitHub with:
+   - A clear, descriptive title
+   - A well-constructed description that includes:
+     - What changes were made and why
+     - Any relevant context or background
+     - Testing performed
+     - Screenshots (if UI changes)
+
+> **Important**: Direct pushes to `main` should be avoided. All changes should go through the PR review process.
+
 ### Cloudflare Configuration (wrangler.toml)
 ```toml
 name = "circuit-weather"
