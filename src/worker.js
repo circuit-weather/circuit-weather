@@ -620,13 +620,14 @@ async function handleWeatherRequest(request, env, ctx) {
     const upstreamResponse = await fetch(upstreamUrl, {
       headers: {
         'Accept': 'application/json',
-        'User-Agent': 'CircuitWeather/1.0',
+        'User-Agent': 'CircuitWeather/1.0 (https://circuit-weather.racing)',
       },
       signal: AbortSignal.timeout(API_TIMEOUT),
     });
 
     if (!upstreamResponse.ok) {
-      console.error(`Upstream Weather API Error: Status ${upstreamResponse.status}`);
+      const errorText = await upstreamResponse.text();
+      console.error(`Upstream Weather API Error: Status ${upstreamResponse.status} - ${errorText}`);
 
       // Cache error response to prevent hammering upstream when rate limited
       // This stops the retry storm that occurs when Open-Meteo returns 429
