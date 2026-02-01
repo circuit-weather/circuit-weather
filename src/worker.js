@@ -352,11 +352,11 @@ async function handleApiRequest(request, env, ctx) {
     // Create cacheable response (1 hour)
     // We store '*' in cache as a fallback, but we always override on delivery
     const cacheHeaders = new Headers({
-        'Content-Type': 'application/json',
-        'Cache-Control': 'public, max-age=3600',
-        'X-Cache': 'MISS',
-        'Access-Control-Allow-Origin': '*', // Store permissive, override on delivery
-        ...DEFAULT_SECURITY_HEADERS
+      'Content-Type': 'application/json',
+      'Cache-Control': 'public, max-age=3600',
+      'X-Cache': 'MISS',
+      'Access-Control-Allow-Origin': '*', // Store permissive, override on delivery
+      ...DEFAULT_SECURITY_HEADERS
     });
 
     const cacheResponse = new Response(cacheBody, {
@@ -378,8 +378,8 @@ async function handleApiRequest(request, env, ctx) {
     }
 
     return new Response(clientBody, {
-        status: 200,
-        headers: clientHeaders
+      status: 200,
+      headers: clientHeaders
     });
 
   } catch (error) {
@@ -466,11 +466,11 @@ async function handleTrackRequest(request, env, ctx) {
 
     // Create cacheable response (24 hours - tracks are static)
     const cacheHeaders = new Headers({
-        'Content-Type': 'application/json',
-        'Cache-Control': 'public, max-age=86400',
-        'X-Cache': 'MISS',
-        'Access-Control-Allow-Origin': '*',
-        ...DEFAULT_SECURITY_HEADERS
+      'Content-Type': 'application/json',
+      'Cache-Control': 'public, max-age=86400',
+      'X-Cache': 'MISS',
+      'Access-Control-Allow-Origin': '*',
+      ...DEFAULT_SECURITY_HEADERS
     });
 
     const cacheResponse = new Response(cacheBody, {
@@ -492,8 +492,8 @@ async function handleTrackRequest(request, env, ctx) {
     }
 
     return new Response(clientBody, {
-        status: 200,
-        headers: clientHeaders
+      status: 200,
+      headers: clientHeaders
     });
 
   } catch (error) {
@@ -591,7 +591,34 @@ async function handleWeatherRequest(request, env, ctx) {
 
     if (!upstreamResponse.ok) {
       console.error(`Upstream Weather API Error: Status ${upstreamResponse.status}`);
-      return getEmptyWeatherResponse(request);
+
+      // Cache error response to prevent hammering upstream when rate limited
+      // This stops the retry storm that occurs when Open-Meteo returns 429
+      const errorCacheTTL = upstreamResponse.status === 429 ? 300 : 60; // 5 min for 429, 1 min for other errors
+      const errorResponse = getEmptyWeatherResponse(request);
+
+      // Clone the response for caching
+      const errorCacheHeaders = new Headers({
+        'Content-Type': 'application/json',
+        'Cache-Control': `public, max-age=${errorCacheTTL}`,
+        'X-Cache': 'ERROR-CACHED',
+        ...DEFAULT_SECURITY_HEADERS
+      });
+
+      const errorCacheResponse = new Response(JSON.stringify({
+        error: 'Weather data temporarily unavailable',
+        current: { temperature_2m: null, relative_humidity_2m: null, wind_speed_10m: null },
+        hourly: { time: [], temperature_2m: [], precipitation_probability: [] },
+        current_units: {}
+      }), {
+        status: 200, // Return 200 so it gets cached
+        headers: errorCacheHeaders,
+      });
+
+      // Cache the error response so we don't hammer Open-Meteo
+      ctx.waitUntil(cache.put(cacheKey, errorCacheResponse.clone()));
+
+      return errorCacheResponse;
     }
 
     // Bolt Optimization: Stream response instead of buffering text
@@ -599,11 +626,11 @@ async function handleWeatherRequest(request, env, ctx) {
 
     // Cache for 15 minutes (900 seconds)
     const cacheHeaders = new Headers({
-        'Content-Type': 'application/json',
-        'Cache-Control': 'public, max-age=900',
-        'X-Cache': 'MISS',
-        'Access-Control-Allow-Origin': '*',
-        ...DEFAULT_SECURITY_HEADERS
+      'Content-Type': 'application/json',
+      'Cache-Control': 'public, max-age=900',
+      'X-Cache': 'MISS',
+      'Access-Control-Allow-Origin': '*',
+      ...DEFAULT_SECURITY_HEADERS
     });
 
     const cacheResponse = new Response(cacheBody, {
@@ -625,13 +652,31 @@ async function handleWeatherRequest(request, env, ctx) {
     }
 
     return new Response(clientBody, {
-        status: 200,
-        headers: clientHeaders
+      status: 200,
+      headers: clientHeaders
     });
 
   } catch (error) {
     console.error('Weather Fetch Error:', error);
-    return getEmptyWeatherResponse(request);
+
+    // Cache fetch errors (timeouts, network issues) briefly to prevent retry storms
+    const errorCacheResponse = new Response(JSON.stringify({
+      error: 'Weather data temporarily unavailable',
+      current: { temperature_2m: null, relative_humidity_2m: null, wind_speed_10m: null },
+      hourly: { time: [], temperature_2m: [], precipitation_probability: [] },
+      current_units: {}
+    }), {
+      status: 200,
+      headers: new Headers({
+        'Content-Type': 'application/json',
+        'Cache-Control': 'public, max-age=60', // Cache network errors for 1 minute
+        'X-Cache': 'ERROR-CACHED',
+        ...DEFAULT_SECURITY_HEADERS
+      })
+    });
+
+    ctx.waitUntil(cache.put(cacheKey, errorCacheResponse.clone()));
+    return errorCacheResponse;
   }
 }
 
@@ -689,11 +734,11 @@ async function handleRadarRequest(request, env, ctx) {
 
     // 1. Prepare Response for Cache (1 minute)
     const cacheHeaders = new Headers({
-        'Content-Type': 'application/json',
-        'Cache-Control': 'public, max-age=60', // Worker Cache TTL
-        'X-Cache': 'MISS',
-        'Access-Control-Allow-Origin': '*',
-        ...DEFAULT_SECURITY_HEADERS
+      'Content-Type': 'application/json',
+      'Cache-Control': 'public, max-age=60', // Worker Cache TTL
+      'X-Cache': 'MISS',
+      'Access-Control-Allow-Origin': '*',
+      ...DEFAULT_SECURITY_HEADERS
     });
 
     const cacheResponse = new Response(cacheBody, {
@@ -717,8 +762,8 @@ async function handleRadarRequest(request, env, ctx) {
     clientHeaders.set('Cache-Control', 'public, max-age=60');
 
     return new Response(clientBody, {
-        status: 200,
-        headers: clientHeaders
+      status: 200,
+      headers: clientHeaders
     });
 
   } catch (error) {
