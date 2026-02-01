@@ -357,7 +357,10 @@ class WeatherClient {
         const diffDays = (sessionTime - now) / (1000 * 60 * 60 * 24);
 
         if (diffDays > 14) {
-            return { available: false, reason: 'too_far' };
+            // Palette UX: Calculate when the forecast will become available
+            // Open-Meteo offers ~14-16 days forecast. We use 14 for safety.
+            const availableFrom = new Date(sessionTime.getTime() - (14 * 24 * 60 * 60 * 1000));
+            return { available: false, reason: 'too_far', availableFrom };
         }
 
         try {
@@ -2432,7 +2435,26 @@ class CircuitWeatherApp {
 
         if (!weather.available) {
             if (content) content.style.display = 'none';
-            if (unavailable) unavailable.style.display = 'block';
+            if (unavailable) {
+                unavailable.style.display = 'block';
+
+                // Palette UX: Provide helpful guidance on when data will be available
+                const p = unavailable.querySelector('p');
+                if (p) {
+                    if (weather.reason === 'too_far' && weather.availableFrom) {
+                        const dateStr = weather.availableFrom.toLocaleDateString(undefined, {
+                            month: 'short',
+                            day: 'numeric'
+                        });
+                        p.textContent = `Forecast available from ${dateStr}`;
+                    } else if (weather.reason === 'error') {
+                        p.textContent = 'Unable to load forecast data';
+                    } else {
+                        // Default fallback
+                        p.textContent = 'Forecast available closer to session';
+                    }
+                }
+            }
             return;
         }
 
