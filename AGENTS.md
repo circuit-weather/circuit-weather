@@ -210,6 +210,23 @@ binding = "ASSETS"
 
 ---
 
+## Test & Verification File Policy
+
+> **Important**: Do NOT persist one-off test scripts, verification files, or debug artifacts in the project.
+
+### Rules
+
+1. **No ad-hoc test files** - Scripts like `verify_*.py`, `test_*.js`, or similar should not be committed
+2. **No screenshots or artifacts** - Files like `verification.png`, `debug_output.txt`, etc. must be deleted after use
+3. **Clean up after yourself** - If you create temporary files for testing, remove them before completing your task
+4. **Use proper test locations** - If persistent tests are needed, discuss with the user about proper test infrastructure
+
+### If You Find Orphaned Test Files
+
+If you discover files that appear to be one-off agent tests (e.g., standalone verification scripts not referenced anywhere), flag them to the user for removal.
+
+---
+
 ## Local Development
 
 ```bash
