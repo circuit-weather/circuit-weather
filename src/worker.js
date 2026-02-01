@@ -222,6 +222,47 @@ function getEmptyWeatherResponse(request) {
 }
 
 /**
+ * Helper to cache and return an error response
+ */
+function cacheAndReturnError(request, cache, cacheKey, status, errorData, ctx) {
+  // Cache error response to prevent hammering upstream
+  const errorCacheTTL = status === 429 ? 300 : 60;
+
+  const errorBody = JSON.stringify(errorData);
+
+  const errorHeaders = new Headers({
+    'Content-Type': 'application/json',
+    'Cache-Control': `public, max-age=${errorCacheTTL}`,
+    'X-Cache': 'ERROR-CACHED',
+    'Access-Control-Allow-Origin': '*', // Store permissive, override on delivery
+    ...DEFAULT_SECURITY_HEADERS
+  });
+
+  const errorResponse = new Response(errorBody, {
+    status: status,
+    headers: errorHeaders
+  });
+
+  // Cache the error response
+  ctx.waitUntil(cache.put(cacheKey, errorResponse.clone()));
+
+  // Prepare response for client with strict CORS
+  const clientErrorHeaders = new Headers(errorHeaders);
+  const allowedOrigin = getAllowedOrigin(request);
+  if (allowedOrigin) {
+    clientErrorHeaders.set('Access-Control-Allow-Origin', allowedOrigin);
+    clientErrorHeaders.set('Vary', 'Origin');
+  } else {
+    clientErrorHeaders.delete('Access-Control-Allow-Origin');
+  }
+
+  return new Response(errorBody, {
+    status: status,
+    headers: clientErrorHeaders
+  });
+}
+
+/**
  * Helper to determine allowed CORS origin
  * Returns the origin string if allowed, or null if forbidden.
  */
@@ -337,13 +378,10 @@ async function handleApiRequest(request, env, ctx) {
     });
 
     if (!upstreamResponse.ok) {
-      return new Response(JSON.stringify({
+      return cacheAndReturnError(request, cache, cacheKey, upstreamResponse.status, {
         error: 'Upstream API error',
         status: upstreamResponse.status,
-      }), {
-        status: upstreamResponse.status,
-        headers: getErrorHeaders(request)
-      });
+      }, ctx);
     }
 
     // Bolt Optimization: Stream response instead of buffering text
@@ -452,13 +490,11 @@ async function handleTrackRequest(request, env, ctx) {
     });
 
     if (!upstreamResponse.ok) {
-      return new Response(JSON.stringify({
+      const status = upstreamResponse.status === 404 ? 404 : 502;
+      return cacheAndReturnError(request, cache, cacheKey, status, {
         error: 'Track not found',
         status: upstreamResponse.status,
-      }), {
-        status: upstreamResponse.status === 404 ? 404 : 502,
-        headers: getErrorHeaders(request)
-      });
+      }, ctx);
     }
 
     // Bolt Optimization: Stream response instead of buffering text
@@ -584,41 +620,60 @@ async function handleWeatherRequest(request, env, ctx) {
     const upstreamResponse = await fetch(upstreamUrl, {
       headers: {
         'Accept': 'application/json',
-        'User-Agent': 'CircuitWeather/1.0',
+        'User-Agent': 'CircuitWeather/1.0 (https://circuit-weather.racing)',
       },
       signal: AbortSignal.timeout(API_TIMEOUT),
     });
 
     if (!upstreamResponse.ok) {
-      console.error(`Upstream Weather API Error: Status ${upstreamResponse.status}`);
+      const errorText = await upstreamResponse.text();
+      console.error(`Upstream Weather API Error: Status ${upstreamResponse.status} - ${errorText}`);
 
       // Cache error response to prevent hammering upstream when rate limited
       // This stops the retry storm that occurs when Open-Meteo returns 429
       const errorCacheTTL = upstreamResponse.status === 429 ? 300 : 60; // 5 min for 429, 1 min for other errors
-      const errorResponse = getEmptyWeatherResponse(request);
 
-      // Clone the response for caching
-      const errorCacheHeaders = new Headers({
-        'Content-Type': 'application/json',
-        'Cache-Control': `public, max-age=${errorCacheTTL}`,
-        'X-Cache': 'ERROR-CACHED',
-        ...DEFAULT_SECURITY_HEADERS
-      });
-
-      const errorCacheResponse = new Response(JSON.stringify({
+      // Use empty response structure to keep UI visible (showing --)
+      const errorResponse = {
         error: 'Weather data temporarily unavailable',
         current: { temperature_2m: null, relative_humidity_2m: null, wind_speed_10m: null },
         hourly: { time: [], temperature_2m: [], precipitation_probability: [] },
         current_units: {}
-      }), {
-        status: 200, // Return 200 so it gets cached
-        headers: errorCacheHeaders,
+      };
+
+      const errorBody = JSON.stringify(errorResponse);
+
+      const errorHeaders = new Headers({
+        'Content-Type': 'application/json',
+        'Cache-Control': `public, max-age=${errorCacheTTL}`,
+        'X-Cache': 'ERROR-CACHED',
+        'Access-Control-Allow-Origin': '*',
+        ...DEFAULT_SECURITY_HEADERS
       });
 
-      // Cache the error response so we don't hammer Open-Meteo
-      ctx.waitUntil(cache.put(cacheKey, errorCacheResponse.clone()));
+      // Return 200 so the frontend renders the widget with empty values instead of hiding it
+      const cacheResponse = new Response(errorBody, {
+        status: 200,
+        headers: errorHeaders,
+      });
 
-      return errorCacheResponse;
+      // Cache the error response
+      ctx.waitUntil(cache.put(cacheKey, cacheResponse.clone()));
+
+      // Prepare response for client with strict CORS
+      const clientHeaders = new Headers(errorHeaders);
+      const allowedOrigin = getAllowedOrigin(request);
+      if (allowedOrigin) {
+        clientHeaders.set('Access-Control-Allow-Origin', allowedOrigin);
+        clientHeaders.set('Vary', 'Origin');
+      } else {
+        clientHeaders.delete('Access-Control-Allow-Origin');
+      }
+
+      return new Response(errorBody, {
+        status: 200,
+        headers: clientHeaders
+      });
     }
 
     // Bolt Optimization: Stream response instead of buffering text
