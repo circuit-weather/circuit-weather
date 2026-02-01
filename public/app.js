@@ -1431,6 +1431,7 @@ class CountdownTimer {
         this.timer = null;
         this.targetTime = null;
         this.sessionName = '';
+        this.mobileQuery = window.matchMedia('(max-width: 768px)');
 
         // Bolt Optimization: Cache DOM elements
         this.ui = {
@@ -1486,7 +1487,7 @@ class CountdownTimer {
         if (this.ui.card) this.ui.card.style.display = visible ? 'block' : 'none';
         // Only show mobile countdown on mobile viewports
         if (this.ui.mobileCard) {
-            const isMobile = window.innerWidth <= 768;
+            const isMobile = this.mobileQuery.matches;
             this.ui.mobileCard.style.display = (visible && isMobile) ? 'block' : 'none';
         }
     }
@@ -1941,6 +1942,7 @@ class CircuitWeatherApp {
         this.selectedRace = null;
         this.selectedSession = null;
         this.router = new Router(params => this.handleRoute(params));
+        this.mobileQuery = window.matchMedia('(max-width: 768px)');
 
         // Bolt Optimization: Cache frequently accessed DOM elements
         this.ui = {
@@ -2059,23 +2061,15 @@ class CircuitWeatherApp {
     }
 
     bindResizeHandler() {
-        let lastIsMobile = window.innerWidth <= 768;
-
-        window.addEventListener('resize', () => {
-            const isMobile = window.innerWidth <= 768;
-
+        this.mobileQuery.addEventListener('change', () => {
             // Note: Map resizing is handled by ResizeObserver in MapManager
-
             // Update visibility when crossing the breakpoint
-            if (isMobile !== lastIsMobile) {
-                lastIsMobile = isMobile;
-                this.updateMobileVisibility();
-            }
+            this.updateMobileVisibility();
         });
     }
 
     updateMobileVisibility() {
-        const isMobile = window.innerWidth <= 768;
+        const isMobile = this.mobileQuery.matches;
 
         // Update mobile race info visibility
         if (this.ui.mobileRaceInfo) {
@@ -2228,7 +2222,7 @@ class CircuitWeatherApp {
         // Mobile overlay
         if (this.ui.mobileRaceInfo) {
             // Only show mobile race info on mobile viewports
-            const isMobile = window.innerWidth <= 768;
+            const isMobile = this.mobileQuery.matches;
             this.ui.mobileRaceInfo.style.display = (race && isMobile) ? 'flex' : 'none';
         }
         if (this.ui.mobileCountryFlag && flagUrl) {
@@ -2403,7 +2397,7 @@ class CircuitWeatherApp {
             return;
         }
 
-        const isMobile = window.innerWidth <= 768;
+        const isMobile = this.mobileQuery.matches;
         if (mobileCard && isMobile) {
             mobileCard.style.display = 'flex';
         } else if (mobileCard) {
