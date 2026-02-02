@@ -29,65 +29,83 @@ class RateLimiter {
     this.windowMs = windowMs;
     this.rate = limit / windowMs; // Tokens per ms
     this.maxIps = maxIps;
-    this.counts = new Map();
+    // Bolt Optimization: Generational Garbage Collection
+    // Use two maps to avoid O(N) cleanup iteration
+    this.currentGen = new Map();
+    this.oldGen = new Map();
     this.lastCleanup = Date.now();
   }
 
   check(ip) {
     const now = Date.now();
 
-    // Lazy cleanup every 5 minutes (300,000 ms)
-    if (now - this.lastCleanup > 300000) {
+    // Bolt Optimization: Rotate generations every windowMs
+    // This provides O(1) cleanup instead of O(N) iteration
+    if (now - this.lastCleanup > this.windowMs) {
       this.cleanup(now);
     }
 
-    let record = this.counts.get(ip);
+    let record = this.currentGen.get(ip);
 
-    if (!record) {
-      // SEC: Prevent memory exhaustion DoS
-      if (this.counts.size >= this.maxIps) {
-        // Bolt Optimization: Throttle full cleanup to avoid O(N) scan on every request during saturation
-        if (now - this.lastCleanup > 10000) {
-          this.cleanup(now);
-        }
+    if (record) {
+      // Found in current generation
+      const elapsed = now - record.lastCheck;
+      const refill = elapsed * this.rate;
+      record.tokens = Math.min(this.limit, record.tokens + refill);
+      record.lastCheck = now;
 
-        // If still full after (throttled) cleanup, evict oldest entry (LRU) to make room
-        // This prevents a full reset which would benefit attackers
-        // Map.keys().next() is O(1) in V8
-        if (this.counts.size >= this.maxIps) {
-          const oldestIp = this.counts.keys().next().value;
-          this.counts.delete(oldestIp);
-        }
+      if (record.tokens >= 1) {
+        record.tokens -= 1;
+        return true;
       }
-
-      // Start with full tokens minus the 1 we are about to consume
-      record = { tokens: this.limit - 1, lastCheck: now };
-      this.counts.set(ip, record);
-      return true;
+      return false;
     }
 
-    // Refill tokens based on time elapsed
-    const elapsed = now - record.lastCheck;
-    const refill = elapsed * this.rate;
-    record.tokens = Math.min(this.limit, record.tokens + refill);
-    record.lastCheck = now;
+    // Check old generation
+    record = this.oldGen.get(ip);
 
-    if (record.tokens >= 1) {
-      record.tokens -= 1;
-      return true;
+    if (record) {
+      // Found in old generation - migrate to current if still valid
+      // Note: records in oldGen are at most 2 * windowMs old, so they might be valid
+      if (now - record.lastCheck <= this.windowMs) {
+        const elapsed = now - record.lastCheck;
+        const refill = elapsed * this.rate;
+        record.tokens = Math.min(this.limit, record.tokens + refill);
+        record.lastCheck = now;
+
+        // Move to current
+        this.currentGen.set(ip, record);
+        this.oldGen.delete(ip); // Optional: keep memory lean
+
+        if (record.tokens >= 1) {
+          record.tokens -= 1;
+          return true;
+        }
+        return false;
+      }
     }
 
-    return false;
+    // New or expired: Create new record
+    // SEC: Prevent memory exhaustion DoS
+    if (this.currentGen.size >= this.maxIps) {
+      // If full, evict oldest entry (LRU) to make room
+      // Map.keys().next() is O(1) in V8
+      const oldestIp = this.currentGen.keys().next().value;
+      this.currentGen.delete(oldestIp);
+    }
+
+    // Start with full tokens minus the 1 we are about to consume
+    record = { tokens: this.limit - 1, lastCheck: now };
+    this.currentGen.set(ip, record);
+    return true;
   }
 
   cleanup(now) {
-    for (const [ip, record] of this.counts.entries()) {
-      // If inactive for windowMs, the bucket is full again.
-      // We can remove it to save memory.
-      if (now - record.lastCheck > this.windowMs) {
-        this.counts.delete(ip);
-      }
-    }
+    // Bolt Optimization: O(1) Generational Cleanup
+    // Simply rotate the maps. Old current becomes old (to be checked for migration),
+    // and very old data (previous oldGen) is discarded by GC.
+    this.oldGen = this.currentGen;
+    this.currentGen = new Map();
     this.lastCleanup = now;
   }
 }
