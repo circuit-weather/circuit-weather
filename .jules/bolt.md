@@ -19,3 +19,7 @@
 ## 2024-05-25 - RateLimiter Saturation Optimization
 **Learning:** Naive cleanup strategies (O(N) scan) in `RateLimiter` classes become a Denial-of-Service vector under high load/saturation, consuming significant CPU (measured ~98% overhead).
 **Action:** Throttle expensive cleanup operations and rely on O(1) LRU eviction when memory limits are reached to maintain throughput during attacks.
+
+## 2024-05-25 - RateLimiter Generational Cleanup
+**Learning:** Throttled O(N) cleanup in RateLimiters is still insufficient under sustained attack as it blocks the event loop periodically.
+**Action:** Implement Generational Garbage Collection (Double Buffering) to achieve O(1) cleanup by simply rotating Maps, eliminating iteration entirely.
