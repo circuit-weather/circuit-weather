@@ -29,6 +29,7 @@ Circuit Weather is a real-time F1 race circuit weather radar application. It dis
 |---------|---------|---------------|
 | Jolpica F1 API | Race schedule data | No |
 | RainViewer | Weather radar tiles | No |
+| Open-Meteo | Weather forecasts | No |
 | Carto | Map basemap tiles | No |
 
 ### Data Handling
@@ -193,6 +194,7 @@ binding = "ASSETS"
 1. **RainViewer Zoom Limit** - Free tier limits to zoom level 10. Use `maxNativeZoom: 10` to upscale tiles at higher zooms.
 2. **Radar Opacity** - Tiles must be added with small opacity (0.01) initially to trigger loading.
 3. **F1 API Rate Limits** - Edge caching via Worker mitigates this.
+4. **Current Weather Disabled** - The live current weather widget is disabled via `FEATURE_FLAGS.enableCurrentWeather` in `app.js` to reduce Open-Meteo API calls (429 rate limiting). Session forecasts still work. Re-enable by setting the flag to `true`.
 
 ---
 
