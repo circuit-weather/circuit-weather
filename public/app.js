@@ -2011,8 +2011,12 @@ class CircuitWeatherApp {
             this.rangeCircles = new RangeCircles(map);
             this.trackLayer = new TrackLayer(map);
             this.radar = new WeatherRadar(map);
-            this.weatherWidget = new MapWeatherWidget({ position: 'topright' });
-            this.mapManager.map.addControl(this.weatherWidget);
+
+            // Only create weather widget if feature is enabled
+            if (FEATURE_FLAGS.enableCurrentWeather) {
+                this.weatherWidget = new MapWeatherWidget({ position: 'topright' });
+                this.mapManager.map.addControl(this.weatherWidget);
+            }
 
 
             // Always load radar immediately
