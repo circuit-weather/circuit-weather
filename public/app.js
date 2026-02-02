@@ -1760,8 +1760,7 @@ class PrivacyModal {
 
     bindEvents() {
         if (this.privacyLink) {
-            this.privacyLink.addEventListener('click', (e) => {
-                e.preventDefault();
+            this.privacyLink.addEventListener('click', () => {
                 this.open();
             });
         }
