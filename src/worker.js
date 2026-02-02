@@ -25,8 +25,9 @@ const ALLOWED_ORIGIN_127_REGEX = /^http:\/\/127\.0\.0\.1(:\d+)?$/;
  */
 class RateLimiter {
   constructor(limit, windowMs, maxIps = 10000) {
-    this.limit = limit;
+    this.limit = limit; // Capacity
     this.windowMs = windowMs;
+    this.rate = limit / windowMs; // Tokens per ms
     this.maxIps = maxIps;
     this.counts = new Map();
     this.lastCleanup = Date.now();
@@ -59,25 +60,31 @@ class RateLimiter {
         }
       }
 
-      record = { count: 1, startTime: now };
+      // Start with full tokens minus the 1 we are about to consume
+      record = { tokens: this.limit - 1, lastCheck: now };
       this.counts.set(ip, record);
       return true;
     }
 
-    if (now - record.startTime > this.windowMs) {
-      // Window passed, reset
-      record.count = 1;
-      record.startTime = now;
+    // Refill tokens based on time elapsed
+    const elapsed = now - record.lastCheck;
+    const refill = elapsed * this.rate;
+    record.tokens = Math.min(this.limit, record.tokens + refill);
+    record.lastCheck = now;
+
+    if (record.tokens >= 1) {
+      record.tokens -= 1;
       return true;
     }
 
-    record.count++;
-    return record.count <= this.limit;
+    return false;
   }
 
   cleanup(now) {
     for (const [ip, record] of this.counts.entries()) {
-      if (now - record.startTime > this.windowMs) {
+      // If inactive for windowMs, the bucket is full again.
+      // We can remove it to save memory.
+      if (now - record.lastCheck > this.windowMs) {
         this.counts.delete(ip);
       }
     }
