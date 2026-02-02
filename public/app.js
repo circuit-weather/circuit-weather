@@ -37,6 +37,15 @@ const CONFIG = {
 // SEC: Prevent runtime tampering with configuration
 Object.freeze(CONFIG);
 
+// Feature Flags - Toggle features on/off without removing code
+const FEATURE_FLAGS = {
+    // Disabled to reduce Open-Meteo API calls (429 rate limiting)
+    // The current weather widget requires an API call per circuit change
+    // Re-enable when API access is increased or rate limiting is resolved
+    enableCurrentWeather: false,
+};
+Object.freeze(FEATURE_FLAGS);
+
 // Country code mappings for flags (ISO 3166-1 alpha-2)
 const COUNTRY_CODES = {
     'Australia': 'au', 'Austria': 'at', 'Azerbaijan': 'az', 'Bahrain': 'bh',
@@ -1512,6 +1521,9 @@ class WeatherWidget {
     }
 
     create() {
+        // Feature flag: Don't create widget if current weather is disabled
+        if (!FEATURE_FLAGS.enableCurrentWeather) return;
+
         const container = document.querySelector('.main-content');
         if (!container) return;
 
@@ -2306,6 +2318,11 @@ class CircuitWeatherApp {
     }
 
     async updateLiveWeatherForCircuit() {
+        // Feature flag: Skip current weather to reduce API calls
+        if (!FEATURE_FLAGS.enableCurrentWeather) {
+            return;
+        }
+
         // Only fetch weather if a circuit is selected
         if (!this.currentCircuitCenter) {
             return;
