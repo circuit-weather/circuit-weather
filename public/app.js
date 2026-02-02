@@ -1201,6 +1201,8 @@ class RangeCircles {
         // Bolt Optimization: Reuse existing layers (Object Pooling)
         // prevents DOM thrashing during frequent zoom events.
         const multiplier = this.unit === 'metric' ? 1000 : 1609.34;
+        // Get theme-aware color from CSS variable
+        const rangeColor = getComputedStyle(document.documentElement).getPropertyValue('--color-range-circle').trim() || '#e10600';
 
         steps.forEach((distance, index) => {
             const radius = distance * multiplier;
@@ -1211,6 +1213,7 @@ class RangeCircles {
                 circle.setLatLng(center);
                 circle.setRadius(radius);
                 circle.setStyle({
+                    color: rangeColor,
                     weight: index === 0 ? 2 : 1,
                     dashArray: index > 0 ? '4, 4' : null
                 });
@@ -1218,7 +1221,7 @@ class RangeCircles {
             } else {
                 const circle = L.circle(center, {
                     radius: radius,
-                    color: '#e10600',
+                    color: rangeColor,
                     fillColor: 'transparent',
                     fillOpacity: 0,
                     weight: index === 0 ? 2 : 1,
@@ -1271,11 +1274,12 @@ class RangeCircles {
         // Circuit center marker
         if (this.centerMarker) {
             this.centerMarker.setLatLng(center);
+            this.centerMarker.setStyle({ color: rangeColor });
             if (!this.map.hasLayer(this.centerMarker)) this.centerMarker.addTo(this.map);
         } else {
             this.centerMarker = L.circleMarker(center, {
                 radius: 6,
-                color: '#e10600',
+                color: rangeColor,
                 fillColor: '#ffffff',
                 fillOpacity: 1,
                 weight: 2,

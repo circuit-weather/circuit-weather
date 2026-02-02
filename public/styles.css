@@ -11,10 +11,12 @@
     --color-text: #0f172a;
     --color-text-secondary: #64748b;
     --color-border: #e2e8f0;
-    --color-forecast-track: #dbeafe; /* Light blue for forecast */
+    --color-forecast-track: #dbeafe;
+    /* Light blue for forecast */
     --color-primary: #e10600;
     --color-primary-hover: #b30500;
     --color-accent: #15803d;
+    --color-range-circle: #e10600;
 
     /* Sidebar */
     --sidebar-width: 280px;
@@ -56,8 +58,11 @@
     --color-text: #f1f5f9;
     --color-text-secondary: #94a3b8;
     --color-border: #334155;
-    --color-forecast-track: #1e40af; /* Dark blue for forecast */
+    --color-forecast-track: #1e40af;
+    /* Dark blue for forecast */
     --sidebar-bg: rgba(30, 41, 59, 0.92);
+    --color-range-circle: #ff6b5b;
+    /* Brighter coral for visibility on dark maps */
 }
 
 /* ===================================
@@ -622,7 +627,7 @@ body {
     box-shadow: none !important;
     font-size: 10px;
     font-weight: 600;
-    color: var(--color-primary);
+    color: var(--color-range-circle);
     white-space: nowrap;
 }
 
@@ -1302,7 +1307,8 @@ body {
     }
 
     .mobile-race-info {
-        display: flex; /* overridden by JS toggle */
+        display: flex;
+        /* overridden by JS toggle */
         align-items: center;
         gap: var(--spacing-sm);
         background: var(--sidebar-bg);
@@ -1403,19 +1409,23 @@ body {
 
 /* Weather Icon Colors */
 .icon-temp {
-    color: #ef4444; /* Red-500 */
+    color: #ef4444;
+    /* Red-500 */
 }
 
 .icon-humidity {
-    color: #3b82f6; /* Blue-500 */
+    color: #3b82f6;
+    /* Blue-500 */
 }
 
 .icon-wind {
-    color: #64748b; /* Slate-500 */
+    color: #64748b;
+    /* Slate-500 */
 }
 
 .icon-precip {
-    color: #3b82f6; /* Blue-500 for rain/precip */
+    color: #3b82f6;
+    /* Blue-500 for rain/precip */
 }
 
 /* ===================================
@@ -1451,7 +1461,8 @@ body {
 .weather-widget-metric span {
     font-size: 0.75rem;
     font-weight: 600;
-    min-width: 40px; /* Align text */
+    min-width: 40px;
+    /* Align text */
     text-align: left;
     font-variant-numeric: tabular-nums;
 }
@@ -1635,12 +1646,14 @@ body {
 .radar-speed-btn:focus-visible {
     outline: 2px solid var(--color-primary);
     outline-offset: 2px;
-    z-index: 10; /* Ensure ring is on top */
+    z-index: 10;
+    /* Ensure ring is on top */
 }
 
 /* Radar Slider Focus */
 .radar-slider:focus-visible {
-    outline: none; /* We style the thumb instead */
+    outline: none;
+    /* We style the thumb instead */
 }
 
 .radar-slider:focus-visible::-webkit-slider-thumb {
@@ -1657,10 +1670,9 @@ body {
 
 .skeleton {
     background: linear-gradient(90deg,
-        var(--color-bg) 25%,
-        var(--color-border) 50%,
-        var(--color-bg) 75%
-    );
+            var(--color-bg) 25%,
+            var(--color-border) 50%,
+            var(--color-bg) 75%);
     background-size: 200% 100%;
     animation: skeleton-loading 1.5s infinite;
     border-radius: var(--radius-sm);
@@ -1676,6 +1688,11 @@ body {
 }
 
 @keyframes skeleton-loading {
-    0% { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
 }
