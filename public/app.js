@@ -621,9 +621,17 @@ class WeatherRadar {
             timeStart: document.getElementById('radarTimeStart'),
             timeEnd: document.getElementById('radarTimeEnd'),
             controls: document.getElementById('radarControls'),
-            status: document.getElementById('radarStatus'),
-            statusText: document.getElementById('radarStatusText')
+            // New Error Toast UI
+            errorToast: document.getElementById('errorToast'),
+            errorTitle: document.getElementById('errorTitle'),
+            errorMessage: document.getElementById('errorMessage'),
+            errorTimer: document.getElementById('errorTimer')
         };
+
+        // Rate Limiting & Error Handling
+        this.rateLimitResetTime = 0;
+        this.retryTimer = null;
+        this.checkStatusController = null;
 
         // Bolt Optimization: Reuse DateTimeFormat
         this.timeFormatter = new Intl.DateTimeFormat(undefined, {
@@ -923,40 +931,119 @@ class WeatherRadar {
     }
 
     handleTileError(e) {
-        const now = Date.now();
+        // If we represent a 404/Empty tile, just ignore (common in RainViewer for oceans)
+        // If we are already in a rate limit cooldown, allow standard retries but suppress new alerts
+        if (Date.now() < this.rateLimitResetTime) return;
 
-        // Debounce: only count errors once per second
-        if (now - this.lastTileErrorTime < 1000) {
-            return;
-        }
-        this.lastTileErrorTime = now;
-        this.tileErrorCount++;
+        // Smart Error Diagnosis using HEAD request
+        const tileUrl = e.tile.src;
 
-        // Log tile error details to console
-        const tileUrl = e.tile?.src || 'unknown';
-        console.warn(`[Radar] Tile load failed (${this.tileErrorCount}):`, tileUrl);
+        // Avoid spamming checks for every single tile failure
+        if (this.isCheckingStatus) return;
+        this.isCheckingStatus = true;
 
-        // Show status indicator after threshold
-        if (this.tileErrorCount >= this.tileErrorThreshold) {
-            this.showTileError();
-        }
+        fetch(tileUrl, { method: 'HEAD' })
+            .then(response => {
+                this.isCheckingStatus = false;
+
+                if (response.status === 429) {
+                    // Critical: Rate Limit Hit
+                    this.triggerRateLimitCooldown();
+                } else if (response.status === 404 || response.status === 204) {
+                    // Benign: Empty tile area (RainViewer normal behavior)
+                    // Do nothing - effectively suppresses the warning
+                } else {
+                    // Other error (network, 500, etc)
+                    // Debounce generic warnings
+                    const now = Date.now();
+                    if (now - this.lastTileErrorTime > 2000) {
+                        this.lastTileErrorTime = now;
+                        this.showErrorToast('Tile Error', 'Checking radar connection...', 5);
+                    }
+                }
+            })
+            .catch(() => {
+                this.isCheckingStatus = false;
+                // Network error (likely offline or blocked)
+                const now = Date.now();
+                if (now - this.lastTileErrorTime > 5000) {
+                    this.lastTileErrorTime = now;
+                    // Only show if we actually have issues
+                }
+            });
     }
 
-    showTileError() {
-        if (this.ui.status) {
-            this.ui.status.style.display = 'flex';
-            if (this.ui.statusText) {
-                this.ui.statusText.textContent = `Tile errors (${this.tileErrorCount})`;
+    triggerRateLimitCooldown() {
+        if (this.rateLimitResetTime > Date.now()) return; // Already triggered
+
+        // Set 60s cooldown (RainViewer limit is per minute)
+        const waitTimeMs = 61000;
+        this.rateLimitResetTime = Date.now() + waitTimeMs;
+
+        // Show persistent toast
+        this.showErrorToast(
+            'High Traffic',
+            'Rate limit exceeded. Pausing momentarily.',
+            60
+        );
+
+        // Schedule Retry
+        if (this.retryTimer) clearTimeout(this.retryTimer);
+        this.retryTimer = setTimeout(() => {
+            this.retryTiles();
+        }, waitTimeMs);
+    }
+
+    retryTiles() {
+        this.rateLimitResetTime = 0;
+        this.hideErrorToast();
+
+        // Force redraw of all active layers
+        Object.values(this.layers).forEach(layer => {
+            if (layer && this.map.hasLayer(layer)) {
+                layer.redraw();
             }
-        }
+        });
+        console.log('[Radar] Retrying tiles after cooldown...');
     }
 
-    hideTileError() {
-        this.tileErrorCount = 0;
-        if (this.ui.status) {
-            this.ui.status.style.display = 'none';
-        }
+    showErrorToast(title, message, durationSec = 5) {
+        if (!this.ui.errorToast) return;
+
+        this.ui.errorTitle.textContent = title;
+        this.ui.errorMessage.textContent = message;
+        this.ui.errorToast.classList.add('visible');
+        this.ui.errorToast.style.opacity = '1';
+
+        // Handle Countdown UI
+        const endTime = Date.now() + (durationSec * 1000);
+
+        const updateTimer = () => {
+            if (!this.ui.errorToast.classList.contains('visible')) return;
+
+            const remaining = Math.ceil((endTime - Date.now()) / 1000);
+            if (remaining > 0) {
+                this.ui.errorTimer.textContent = `${remaining}s`;
+                requestAnimationFrame(updateTimer);
+            } else {
+                this.ui.errorTimer.textContent = '';
+                if (durationSec < 10 && this.rateLimitResetTime < Date.now()) {
+                    this.hideErrorToast();
+                }
+            }
+        };
+        updateTimer();
     }
+
+    hideErrorToast() {
+        if (!this.ui.errorToast) return;
+        this.ui.errorToast.classList.remove('visible');
+        this.ui.errorToast.style.opacity = '0';
+    }
+
+    // Legacy method stubs
+    showTileError() { }
+    hideTileError() { }
 
     // Bolt Optimization: Reuse Leaflet layers to reduce DOM churn
     reconcileLayers(newFrames) {
