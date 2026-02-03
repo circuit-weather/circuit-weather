@@ -731,7 +731,7 @@ class WeatherRadar {
         return [...past, ...nowcast].map(frame => ({
             time: frame.time,
             path: frame.path,
-            url: `${data.host}${frame.path}/256/{z}/{x}/{y}/2/1_1.png`,
+            url: `${data.host}${frame.path}/512/{z}/{x}/{y}/2/1_1.png`,
         }));
     }
 
@@ -747,8 +747,12 @@ class WeatherRadar {
 
             // Wait for tiles to load before starting animation
             await this.waitForTilesToLoad();
-            // Reset tile error state on successful load
             this.hideTileError();
+
+            // Start serial preload of remaining frames
+            // This prevents "hammering" by loading one frame at a time in the background
+            this.preloadSequence();
+
             this.play();
         } catch (error) {
             console.error('Radar load failed:', error);
@@ -912,7 +916,7 @@ class WeatherRadar {
      */
     createLayer(frame, index) {
         const layer = L.tileLayer(frame.url, {
-            tileSize: 256,
+            tileSize: 512,
             opacity: 0.01,
             zIndex: 100 + index,
             maxNativeZoom: 7, // RainViewer free tier limit (Jan 2026), higher zooms scale tiles
@@ -1016,10 +1020,17 @@ class WeatherRadar {
             // Persistent toast while errors exist
             const message = `Retrying ${count} failed tile${count > 1 ? 's' : ''}...`;
 
+            // Fix Timer Sync: Use actual remaining time if a retry cooldown is active
+            let duration = 60;
+            if (this.rateLimitResetTime > Date.now()) {
+                duration = Math.ceil((this.rateLimitResetTime - Date.now()) / 1000);
+                duration = Math.max(1, duration); // Ensure at least 1s
+            }
+
             this.showErrorToast(
                 this.activeErrorTitle || 'Connection Instability',
                 message,
-                60 // Keep alive
+                duration
             );
         } else {
             // DEBOUNCE HIDE: Wait 1s before hiding to prevent "popping" during redraws
@@ -1223,6 +1234,70 @@ class WeatherRadar {
                     this.showFrame(this.currentFrame);
                     resolve();
                 }
+            }, 3000);
+        });
+    }
+
+    /**
+     * Serial Preloader: Loads frames one-by-one to prevent API hammering.
+     * Prevents the "Wall of Requests" (50+ pending) issue.
+     */
+    async preloadSequence() {
+        console.log('[Radar] Starting serial preload sequence...');
+
+        // Order: Start from current frame + 1, wrap around.
+        const sequence = [];
+        for (let i = 0; i < this.frames.length; i++) {
+            const index = (this.currentFrame + 1 + i) % this.frames.length;
+            if (index !== this.currentFrame) {
+                sequence.push(index);
+            }
+        }
+
+        for (const index of sequence) {
+            await this.preloadFrame(index);
+        }
+    }
+
+    preloadFrame(index) {
+        return new Promise(resolve => {
+            const layer = this.getLayer(index);
+
+            // If layer exists and is on map, it's likely already loaded or loading.
+            // But we want to ensure it's loaded before moving to next.
+            if (!layer) {
+                resolve();
+                return;
+            }
+
+            if (this.map.hasLayer(layer)) {
+                // Already on map (maybe from showFrame). 
+                // We assume it's handling itself, but we'll wait a small bit just to space out requests
+                setTimeout(resolve, 500);
+                return;
+            }
+
+            // Add to map hidden to trigger load
+            layer.setOpacity(0);
+            layer.addTo(this.map);
+
+            const onComplete = () => {
+                cleanup();
+                resolve();
+            };
+
+            const cleanup = () => {
+                layer.off('load', onComplete);
+                layer.off('tileerror', onComplete);
+            };
+
+            layer.on('load', onComplete);
+            layer.on('tileerror', onComplete);
+
+            // Timeout to prevent stuck queue (3s per frame)
+            setTimeout(() => {
+                cleanup();
+                resolve();
             }, 3000);
         });
     }
