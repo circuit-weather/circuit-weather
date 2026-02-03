@@ -901,9 +901,9 @@ class WeatherRadar {
             zIndex: 100 + index,
             maxNativeZoom: 7, // RainViewer free tier limit (Jan 2026), higher zooms scale tiles
             maxZoom: 18,
-            updateWhenIdle: false,
+            updateWhenIdle: true, // Bolt Optimization: Only load tiles when panning stops (reduces requests)
             updateWhenZooming: false,
-            keepBuffer: 2,
+            keepBuffer: 0, // Bolt Optimization: Minimize buffer to reduce total request count
         });
 
         // Track tile loading errors for the error indicator UI
