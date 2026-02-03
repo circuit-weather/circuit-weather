@@ -30,3 +30,7 @@
 ## 2026-02-21 - Actionable Empty States
 **Learning:** Generic empty states like "Forecast available closer to session" provide insufficient guidance when the user selects a distant future event, potentially causing confusion about whether the feature is broken.
 **Action:** When data is unavailable due to time constraints, provide specific, actionable information (e.g., "Forecast available from [Date]") to manage user expectations effectively.
+
+## 2024-05-24 - Map Accessibility: Clutter in Tab Order
+**Learning:** Leaflet markers and overlays are interactive by default (`interactive: true`), making them focusable tab stops even when purely decorative or informational (like distance labels). This clutters the keyboard navigation sequence for map users.
+**Action:** Always set `{ interactive: false, keyboard: false }` for map overlays that are visual-only to ensure they don't block map panning or create unnecessary tab stops.
