@@ -632,6 +632,7 @@ class WeatherRadar {
         this.rateLimitResetTime = 0;
         this.retryTimer = null;
         this.checkStatusController = null;
+        this.failedTiles = new Set(); // Track unique failed tile elements for accurate counting
 
         // Bolt Optimization: Reuse DateTimeFormat
         this.timeFormatter = new Intl.DateTimeFormat(undefined, {
@@ -642,6 +643,7 @@ class WeatherRadar {
 
         // Bolt Optimization: Bind loop function once to avoid allocation churn in rAF
         this.boundLoop = this.loop.bind(this);
+        this.updateErrorUIBound = this.updateErrorUI.bind(this); // Pre-bind for frequent updates
 
         // Palette Accessibility: Set initial state
         this.updateSpeedLabel();
@@ -919,6 +921,20 @@ class WeatherRadar {
             this.handleTileError(e);
         });
 
+        // Track success/cleanup to decrement error count
+        layer.on('tileload', (e) => {
+            if (this.failedTiles.has(e.tile)) {
+                this.failedTiles.delete(e.tile);
+                this.updateErrorUI();
+            }
+        });
+        layer.on('tileunload', (e) => {
+            if (this.failedTiles.has(e.tile)) {
+                this.failedTiles.delete(e.tile);
+                this.updateErrorUI();
+            }
+        });
+
         // NOTE: Layer is NOT added to map here - this is critical for rate limiting!
         // If we added all 13+ animation frames to the map, every zoom/pan would
         // trigger ~170 tile requests, exceeding RainViewer's 100 req/min limit.
@@ -963,7 +979,8 @@ class WeatherRadar {
 
                     // Since we can't distinguish due to CORS, we MUST retry to avoid "silent missing tiles".
                     // Use a shorter cooldown (15s) for this "soft" error.
-                    this.triggerRateLimitCooldown(15000, 'Loading...', 'Retrying connection...');
+                    this.failedTiles.add(e.tile);
+                    this.triggerRateLimitCooldown(15000, 'Connection Instability', `Retrying ${this.failedTiles.size} failed tiles...`);
                 } else {
                     // API returned error (500, etc) - Service likely down
                     const now = Date.now();
@@ -976,12 +993,30 @@ class WeatherRadar {
             .catch((err) => {
                 this.isCheckingStatus = false;
                 // Network error (likely offline)
-                const now = Date.now();
-                if (now - this.lastTileErrorTime > 5000) {
-                    this.lastTileErrorTime = now;
-                    this.showErrorToast('Connection Failed', 'Unable to reach radar API server.', 5);
-                }
+                this.failedTiles.add(e.tile);
+                this.updateErrorUI();
             });
+    }
+
+    updateErrorUI() {
+        const count = this.failedTiles.size;
+        if (count > 0) {
+            // Persistent toast while errors exist
+            // We use the existing toast method but with LONG duration to simulate persistence, 
+            // or we update the text if it's already visible.
+            const message = `Retrying ${count} failed tile${count > 1 ? 's' : ''}...`;
+
+            // If already handling a rate limit with a title, keep it, otherwise generic
+            // This logic is a bit tricky with the existing triggerRateLimitCooldown.
+            // For now, we'll just show a generic "Connection Instability" if not already showing "High Traffic".
+            // The triggerRateLimitCooldown already handles its own message.
+            // This updateErrorUI is primarily for when handleTileError's catch block or the 'response.ok' branch triggers it.
+            if (this.rateLimitResetTime <= Date.now()) { // Only show if not in an active rate limit cooldown
+                this.showErrorToast('Connection Instability', message, 60); // 60s effectively persistent until next update
+            }
+        } else {
+            this.hideErrorToast();
+        }
     }
 
     triggerRateLimitCooldown(waitTimeMs = 61000, title = 'High Traffic', message = 'Rate limit exceeded. Pausing momentarily.') {
