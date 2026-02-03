@@ -953,6 +953,12 @@ class WeatherRadar {
     }
 
     handleTileError(e) {
+        // Always track the failure first
+        // This ensures that if we are in a cooldown or checking status (returning early),
+        // we still count these parallel failures so the user sees "Retrying 20 tiles..."
+        this.failedTiles.add(e.tile);
+        this.updateErrorUI();
+
         // If we represent a 404/Empty tile, just ignore (common in RainViewer for oceans)
         // If we are already in a rate limit cooldown, allow standard retries but suppress new alerts
         if (Date.now() < this.rateLimitResetTime) return;
@@ -978,17 +984,11 @@ class WeatherRadar {
                     this.triggerRateLimitCooldown();
                 } else if (response.ok) {
                     // Ambiguous Case: API is fine (200), but tile failed.
-                    // Could be:
-                    // A) 404 Empty Tile (Ocean/Desert) -> Retry useless but harmless
-                    // B) 429 Rate Limit on Tile Cache only -> Retry ESSENTIAL
-                    // C) 500 Tile Cache Error -> Retry might fix
-
-                    // Since we can't distinguish due to CORS, we MUST retry to avoid "silent missing tiles".
-                    // Use a shorter cooldown (15s) for this "soft" error.
-                    this.failedTiles.add(e.tile);
+                    // We treat this as a transient failure that needs retry.
+                    // Count is already updated at top of method.
                     this.triggerRateLimitCooldown(15000, 'Connection Instability', `Retrying ${this.failedTiles.size} failed tiles...`);
                 } else {
-                    // API returned error (500, etc) - Service likely down
+                    // Service Error
                     const now = Date.now();
                     if (now - this.lastTileErrorTime > 2000) {
                         this.lastTileErrorTime = now;
@@ -999,7 +999,7 @@ class WeatherRadar {
             .catch((err) => {
                 this.isCheckingStatus = false;
                 // Network error (likely offline)
-                this.failedTiles.add(e.tile);
+                // Count already updated at top.
                 this.updateErrorUI();
             });
     }
