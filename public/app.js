@@ -12,6 +12,7 @@ const isLocal = window.location.hostname === 'localhost' ||
     window.location.protocol === 'file:';
 
 const CONFIG = {
+    isLocal, // Expose for tile URL construction
     f1ApiBase: isLocal ? 'https://api.jolpi.ca/ergast/f1' : '/api/f1',
     rainViewerApi: isLocal ? 'https://api.rainviewer.com/public/weather-maps.json' : '/api/radar',
     trackApi: isLocal ? 'https://raw.githubusercontent.com/bacinger/f1-circuits/master/circuits' : '/api/track',
@@ -710,10 +711,14 @@ class WeatherRadar {
         // Store the count of past frames to identify the forecast start
         this.pastFrameCount = past.length;
 
+        // Use tile proxy for caching (2hr edge cache) instead of direct RainViewer
+        // This reduces RainViewer requests and prevents rate limiting
+        const tileBase = CONFIG.isLocal ? data.host : '/api/tiles';
+
         return [...past, ...nowcast].map(frame => ({
             time: frame.time,
             path: frame.path,
-            url: `${data.host}${frame.path}/256/{z}/{x}/{y}/2/1_1.png`,
+            url: `${tileBase}${frame.path}/256/{z}/{x}/{y}/2/1_1.png`,
         }));
     }
 
