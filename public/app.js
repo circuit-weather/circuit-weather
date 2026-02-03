@@ -1007,13 +1007,14 @@ class WeatherRadar {
     updateErrorUI() {
         const count = this.failedTiles.size;
         if (count > 0) {
+            // Cancel any pending hide timer since we have errors
+            if (this.hideErrorTimer) {
+                clearTimeout(this.hideErrorTimer);
+                this.hideErrorTimer = null;
+            }
+
             // Persistent toast while errors exist
             const message = `Retrying ${count} failed tile${count > 1 ? 's' : ''}...`;
-
-            // Allow updating the text even if in cooldown, so user sees the count increase!
-            // We only suppress if the title is strictly 'High Traffic' (429) and we don't want to overwrite it?
-            // Actually, if we are in High Traffic mode, the count is less relevant than the "Paused" state.
-            // But if we are in "Retrying connection" mode (15s), we definitely want the count.
 
             this.showErrorToast(
                 this.activeErrorTitle || 'Connection Instability',
@@ -1021,7 +1022,14 @@ class WeatherRadar {
                 60 // Keep alive
             );
         } else {
-            this.hideErrorToast();
+            // DEBOUNCE HIDE: Wait 1s before hiding to prevent "popping" during redraws
+            // If errors reappear within 1s (e.g. strict redraw), the toast stays visible.
+            if (!this.hideErrorTimer) {
+                this.hideErrorTimer = setTimeout(() => {
+                    this.hideErrorToast();
+                    this.hideErrorTimer = null;
+                }, 1000);
+            }
         }
     }
 
@@ -1031,6 +1039,7 @@ class WeatherRadar {
         // Playback continues (removed pause) so valid tiles can load
 
         this.rateLimitResetTime = Date.now() + waitTimeMs;
+        this.activeErrorTitle = title; // Track title for consistency
 
         // Show persistent toast
         this.showErrorToast(title, message, Math.ceil(waitTimeMs / 1000));
@@ -1044,11 +1053,13 @@ class WeatherRadar {
 
     retryTiles() {
         this.rateLimitResetTime = 0;
+        this.activeErrorTitle = null;
 
-        // Don't blindly hide the toast!
-        // If there are still failed tiles tracked in the Set, we want to keep showing the count.
-        // The retry will trigger a redraw, which might unload/reload tiles.
-        // We let the event listeners handle the count updates.
+        // Manual Clean: Explicitly clear errors to prevent accumulation drift
+        // We rely on new errors specifically from the new redraw
+        this.failedTiles.clear();
+
+        // Update UI (will trigger the debounce hide, but new errors will cancel it fast)
         this.updateErrorUI();
 
         // Force redraw of all active layers
