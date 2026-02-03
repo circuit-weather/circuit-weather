@@ -851,6 +851,12 @@ class WeatherRadar {
     }
 
     createLayers() {
+        if (!this.map) return;
+
+        // Reset error tracking on full layer rebuild
+        if (this.failedTiles) this.failedTiles.clear();
+        this.updateErrorUI();
+
         // Clear existing layers if any (full reset)
         this.layers.forEach(layer => {
             if (layer) this.map.removeLayer(layer);
@@ -928,12 +934,9 @@ class WeatherRadar {
                 this.updateErrorUI();
             }
         });
-        layer.on('tileunload', (e) => {
-            if (this.failedTiles.has(e.tile)) {
-                this.failedTiles.delete(e.tile);
-                this.updateErrorUI();
-            }
-        });
+        // REMOVED: tileunload listener. 
+        // We do NOT want to clear errors just because a frame cycles off-screen during animation.
+        // We only clear if it actually LOADS successfully (above) or if we reset layers entirely.
 
         // NOTE: Layer is NOT added to map here - this is critical for rate limiting!
         // If we added all 13+ animation frames to the map, every zoom/pan would
@@ -1002,18 +1005,18 @@ class WeatherRadar {
         const count = this.failedTiles.size;
         if (count > 0) {
             // Persistent toast while errors exist
-            // We use the existing toast method but with LONG duration to simulate persistence, 
-            // or we update the text if it's already visible.
             const message = `Retrying ${count} failed tile${count > 1 ? 's' : ''}...`;
 
-            // If already handling a rate limit with a title, keep it, otherwise generic
-            // This logic is a bit tricky with the existing triggerRateLimitCooldown.
-            // For now, we'll just show a generic "Connection Instability" if not already showing "High Traffic".
-            // The triggerRateLimitCooldown already handles its own message.
-            // This updateErrorUI is primarily for when handleTileError's catch block or the 'response.ok' branch triggers it.
-            if (this.rateLimitResetTime <= Date.now()) { // Only show if not in an active rate limit cooldown
-                this.showErrorToast('Connection Instability', message, 60); // 60s effectively persistent until next update
-            }
+            // Allow updating the text even if in cooldown, so user sees the count increase!
+            // We only suppress if the title is strictly 'High Traffic' (429) and we don't want to overwrite it?
+            // Actually, if we are in High Traffic mode, the count is less relevant than the "Paused" state.
+            // But if we are in "Retrying connection" mode (15s), we definitely want the count.
+
+            this.showErrorToast(
+                this.activeErrorTitle || 'Connection Instability',
+                message,
+                60 // Keep alive
+            );
         } else {
             this.hideErrorToast();
         }
