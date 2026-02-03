@@ -1079,16 +1079,16 @@ class WeatherRadar {
     /**
      * Display a specific animation frame on the map.
      * 
-     * IMPORTANT - RATE LIMITING STRATEGY:
-     * RainViewer free tier limits: 100 requests/IP/min, max zoom 7 (as of Jan 2026).
-     * To stay under limits, we only keep 2 layers on the map at once:
-     * - The currently visible frame
-     * - The next frame (preloaded for smooth animation)
+     * LAYER STRATEGY:
+     * - All layers stay on the map once added (tiles are cached by browser)
+     * - Toggle opacity to show/hide frames (prevents flash from re-adding)
+     * - Preload next frame at opacity 0 so tiles load before transition
      * 
-     * All other layers are REMOVED from the map (not just hidden with opacity).
-     * This prevents Leaflet from requesting tiles for hidden layers on zoom/pan.
-     * Without this, zooming triggers ~170 tile requests (13 frames × 13 tiles),
-     * which immediately exceeds the 100 req/min limit.
+     * RATE LIMITING (RainViewer free tier - as of Jan 2026):
+     * - maxNativeZoom: 7 prevents requests at invalid zoom levels
+     * - Smart polling syncs with RainViewer's 10-min update cycle
+     * - Tiles cache in browser after first load, so zoom/pan after initial
+     *   load hits cache rather than making new requests
      * 
      * @param {number} index - Frame index to display (0 to frames.length-1)
      */
@@ -1098,45 +1098,39 @@ class WeatherRadar {
         // Skip if already showing this frame (prevents redundant updates)
         if (this.visibleLayerIndex === index) return;
 
-        // Calculate which frame to preload (wraps around for looping animation)
-        const nextIndex = (index + 1) % this.frames.length;
         const previousIndex = this.visibleLayerIndex;
 
-        // Get or create the new layer (doesn't add to map - that happens below)
+        // Get or create the current layer and add to map if needed
         const layer = this.getLayer(index);
-
-        // STEP 1: Show NEW layer FIRST (prevents flash during transition)
-        // We add and show the new layer before hiding the old one so there's
-        // always at least one visible frame during the transition
         if (layer) {
             if (!this.map.hasLayer(layer)) {
                 layer.addTo(this.map);
             }
+            // Show this layer
             layer.setOpacity(CONFIG.radarOpacity);
         }
 
-        // STEP 2: Hide the previous layer AFTER new one is visible
+        // Hide the previous layer (keep on map - tiles are cached by browser)
+        // We don't remove layers because:
+        // 1. Removing/re-adding causes flash even with cached tiles
+        // 2. Browser caches tiles, so staying on map doesn't re-fetch
+        // 3. Zoom/pan will trigger tile requests either way
         if (previousIndex !== -1 && this.layers[previousIndex]) {
             this.layers[previousIndex].setOpacity(0);
         }
 
-        // STEP 3: Clean up - remove layers that are not visible and not preloaded
-        // This is critical for rate limiting: layers on the map request tiles on zoom/pan
-        this.layers.forEach((lyr, i) => {
-            if (lyr && i !== index && i !== nextIndex && this.map.hasLayer(lyr)) {
-                this.map.removeLayer(lyr);
-            }
-        });
+        // Preload next frame to map at opacity 0 (ensures tiles load ahead of time)
+        const nextIndex = (index + 1) % this.frames.length;
+        const nextLayer = this.getLayer(nextIndex);
+        if (nextLayer && !this.map.hasLayer(nextLayer)) {
+            nextLayer.addTo(this.map);
+            nextLayer.setOpacity(0);
+        }
 
         // Update state
         this.visibleLayerIndex = index;
         this.updateTimeDisplay(this.frames[index]?.time);
         if (this.ui.slider) this.ui.slider.value = index;
-
-        // STEP 4: Preload next frame for smooth animation
-        // Creates the layer object but doesn't add to map (tiles won't load yet)
-        // The layer will be added to map when showFrame is called for nextIndex
-        this.getLayer(nextIndex);
     }
 
     updateTimeDisplay(timestamp) {
