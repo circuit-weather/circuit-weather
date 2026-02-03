@@ -934,9 +934,12 @@ class WeatherRadar {
                 this.updateErrorUI();
             }
         });
-        // REMOVED: tileunload listener. 
-        // We do NOT want to clear errors just because a frame cycles off-screen during animation.
-        // We only clear if it actually LOADS successfully (above) or if we reset layers entirely.
+        layer.on('tileunload', (e) => {
+            if (this.failedTiles.has(e.tile)) {
+                this.failedTiles.delete(e.tile);
+                this.updateErrorUI();
+            }
+        });
 
         // NOTE: Layer is NOT added to map here - this is critical for rate limiting!
         // If we added all 13+ animation frames to the map, every zoom/pan would
@@ -1041,7 +1044,12 @@ class WeatherRadar {
 
     retryTiles() {
         this.rateLimitResetTime = 0;
-        this.hideErrorToast();
+
+        // Don't blindly hide the toast!
+        // If there are still failed tiles tracked in the Set, we want to keep showing the count.
+        // The retry will trigger a redraw, which might unload/reload tiles.
+        // We let the event listeners handle the count updates.
+        this.updateErrorUI();
 
         // Force redraw of all active layers
         Object.values(this.layers).forEach(layer => {
