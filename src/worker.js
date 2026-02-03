@@ -653,7 +653,8 @@ async function handleWeatherRequest(request, env, ctx) {
     });
 
     if (!upstreamResponse.ok) {
-      const errorText = await upstreamResponse.text();
+      // SEC: Limit error body size to prevent memory exhaustion DoS
+      const errorText = await readLimitedBody(upstreamResponse, 1024);
       console.error(`Upstream Weather API Error: Status ${upstreamResponse.status} - ${errorText}`);
 
       // Cache error response to prevent hammering upstream when rate limited
@@ -860,3 +861,49 @@ async function handleRadarRequest(request, env, ctx) {
   }
 }
 
+/**
+ * Helper to safely read a limited amount of the response body
+ * Prevents memory exhaustion attacks from large upstream responses
+ */
+async function readLimitedBody(response, limit = 1024) {
+  if (!response.body) return '';
+  const reader = response.body.getReader();
+  let received = 0;
+  let chunks = [];
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      const chunkLength = value.length;
+
+      if (received + chunkLength > limit) {
+          // Push enough to exceed limit by 1 to indicate truncation
+          const needed = limit - received + 1;
+          chunks.push(value.slice(0, needed));
+          received += chunkLength;
+          break;
+      }
+
+      chunks.push(value);
+      received += chunkLength;
+    }
+  } catch (err) {
+    // Ignore error, return what we have
+  } finally {
+    reader.cancel();
+  }
+
+  const decoder = new TextDecoder();
+  let result = '';
+  for (const chunk of chunks) {
+    result += decoder.decode(chunk, { stream: true });
+  }
+  result += decoder.decode();
+
+  if (result.length > limit) {
+    return result.substring(0, limit) + '... (truncated)';
+  }
+  return result;
+}
