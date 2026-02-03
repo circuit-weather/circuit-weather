@@ -957,12 +957,11 @@ class WeatherRadar {
                 } else if (response.ok) {
                     // API is fine. This implies the tile error is isolated.
                     // Most likely cause: 404 Empty Tile (Ocean/Desert).
-                    // Action: Suppress error toast to avoid "silent failure" false alarms.
-                    // We only log to console for debugging.
+                    // Inform user briefly so they know it's not a broken connection.
                     const now = Date.now();
                     if (now - this.lastTileErrorTime > 5000) {
                         this.lastTileErrorTime = now;
-                        console.log('[Radar] Specific tile failed (likely 404), but API is healthy. Suppressing alert.');
+                        this.showErrorToast('No Radar Data', 'Area has no coverage.', 3);
                     }
                 } else {
                     // API returned error (500, etc) - The SERVICE might be down
