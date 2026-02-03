@@ -874,7 +874,9 @@ class WeatherRadar {
             this.handleTileError(e);
         });
 
-        layer.addTo(this.map);
+        // DON'T auto-add to map - this prevents tile requests for all frames
+        // Layers are added to map only when needed in showFrame()
+
         // Store frame info on the layer for easier matching later
         layer.frameTime = frame.time;
         layer.framePath = frame.path;
@@ -1003,6 +1005,11 @@ class WeatherRadar {
         const currentLayer = this.getLayer(this.currentFrame);
         if (!currentLayer) return;
 
+        // Add to map if not already (needed to trigger tile loading)
+        if (!this.map.hasLayer(currentLayer)) {
+            currentLayer.addTo(this.map);
+        }
+
         return new Promise((resolve) => {
             let resolved = false;
 
@@ -1036,18 +1043,31 @@ class WeatherRadar {
         // Optimization: Only update layers that need changing
         if (this.visibleLayerIndex === index) return; // No change needed
 
-        // Hide previous layer
+        // REMOVE previous layer from map entirely (not just hide it)
+        // This prevents tile requests on zoom/pan for hidden layers
         if (this.visibleLayerIndex !== -1 && this.layers[this.visibleLayerIndex]) {
             this.layers[this.visibleLayerIndex].setOpacity(0);
+            // Don't remove immediately - let it fade first, then we'll clean up old ones
         }
 
         // Get or create new layer
         const layer = this.getLayer(index);
 
-        // Show new layer
+        // Add to map if not already on it, then show
         if (layer) {
+            if (!this.map.hasLayer(layer)) {
+                layer.addTo(this.map);
+            }
             layer.setOpacity(CONFIG.radarOpacity);
         }
+
+        // Clean up: Remove layers that are not visible and not the next frame
+        const nextIndex = (index + 1) % this.frames.length;
+        this.layers.forEach((lyr, i) => {
+            if (lyr && i !== index && i !== nextIndex && this.map.hasLayer(lyr)) {
+                this.map.removeLayer(lyr);
+            }
+        });
 
         this.visibleLayerIndex = index;
 
@@ -1055,8 +1075,7 @@ class WeatherRadar {
 
         if (this.ui.slider) this.ui.slider.value = index;
 
-        // Bolt Optimization: Preload next frame for smooth animation
-        const nextIndex = (index + 1) % this.frames.length;
+        // Preload next frame (just creates layer object, doesn't add to map)
         this.getLayer(nextIndex);
     }
 
