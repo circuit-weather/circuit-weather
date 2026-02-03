@@ -554,6 +554,7 @@ class TrackLayer {
 
             this.layer = L.geoJSON(data, {
                 style: {
+                    interactive: false,
                     color: '#e10600',
                     weight: 4, // Initial, will be updated immediately
                     opacity: 0.8,
@@ -1225,6 +1226,7 @@ class RangeCircles {
                 if (!this.map.hasLayer(circle)) circle.addTo(this.map);
             } else {
                 const circle = L.circle(center, {
+                    interactive: false,
                     radius: radius,
                     color: rangeColor,
                     fillColor: 'transparent',
@@ -1260,7 +1262,7 @@ class RangeCircles {
                     iconSize: [30, 12],
                     iconAnchor: [0, 6],
                 });
-                const labelMarker = L.marker(labelLatLng, { icon: label });
+                const labelMarker = L.marker(labelLatLng, { icon: label, interactive: false, keyboard: false });
                 labelMarker.addTo(this.map);
                 this.labels.push(labelMarker);
             }
@@ -1283,6 +1285,8 @@ class RangeCircles {
             if (!this.map.hasLayer(this.centerMarker)) this.centerMarker.addTo(this.map);
         } else {
             this.centerMarker = L.circleMarker(center, {
+                interactive: false,
+                keyboard: false,
                 radius: 6,
                 color: rangeColor,
                 fillColor: '#ffffff',
