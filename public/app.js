@@ -748,18 +748,31 @@ class WeatherRadar {
         }
     }
 
+    /**
+     * Start the smart polling cycle for radar updates.
+     * Uses sync polling instead of fixed intervals - see scheduleNextPoll().
+     */
     startPolling() {
         this.stopPolling();
-        // Smart polling: sync with RainViewer's 10-minute update cycle
-        // Poll 1 minute after each :X0 mark (when new data is available)
         this.scheduleNextPoll();
     }
 
+    /**
+     * Schedule the next poll to sync with RainViewer's update cycle.
+     * 
+     * RATE LIMITING STRATEGY:
+     * Instead of polling every 30 seconds (120 API calls/hour), we sync with
+     * RainViewer's 10-minute update cycle. We poll 1 minute after each :X0 mark
+     * (e.g., :01, :11, :21) when new data is available.
+     * 
+     * This reduces API calls from ~120/hour to ~6/hour while still getting
+     * fresh data within 1 minute of it becoming available.
+     */
     scheduleNextPoll() {
         const now = Date.now();
         const msPerMin = 60000;
         const updateIntervalMs = 10 * msPerMin; // RainViewer updates every 10 minutes
-        const offsetMs = 1 * msPerMin; // Poll 1 minute after update
+        const offsetMs = 1 * msPerMin; // Poll 1 minute after update to ensure data is ready
 
         // Calculate ms since last :X0 mark (e.g., :00, :10, :20, etc.)
         const msSinceLastUpdate = now % updateIntervalMs;
@@ -772,12 +785,12 @@ class WeatherRadar {
             delay -= updateIntervalMs;
         }
 
-        // Minimum delay of 30 seconds to avoid tight loops
+        // Minimum delay of 30 seconds to avoid tight loops on clock edge cases
         delay = Math.max(delay, 30000);
 
         this.pollingTimeout = setTimeout(() => {
             this.checkForUpdates();
-            this.scheduleNextPoll(); // Schedule next poll
+            this.scheduleNextPoll(); // Schedule next poll recursively
         }, delay);
     }
 
@@ -848,6 +861,14 @@ class WeatherRadar {
         }
     }
 
+    /**
+     * Get or create a radar layer for the given frame index.
+     * The layer is NOT automatically added to the map - this is intentional.
+     * See showFrame() for the rate limiting strategy explanation.
+     * 
+     * @param {number} index - Frame index
+     * @returns {L.TileLayer|null} The layer, or null if index is invalid
+     */
     getLayer(index) {
         if (index < 0 || index >= this.frames.length) return null;
 
@@ -857,11 +878,27 @@ class WeatherRadar {
         return this.layers[index];
     }
 
+    /**
+     * Create a new Leaflet TileLayer for a radar frame.
+     * 
+     * IMPORTANT: This does NOT add the layer to the map.
+     * Layers are added to map only in showFrame() to control tile requests.
+     * 
+     * Configuration notes:
+     * - maxNativeZoom: 7 - RainViewer free tier limit as of Jan 2026
+     *   Higher zoom levels will scale the zoom-7 tiles (pseudo-zoom)
+     * - tileSize: 256 - Standard tile size
+     * - keepBuffer: 2 - Keeps 2 tiles outside viewport for smooth panning
+     * 
+     * @param {Object} frame - Frame data with url, time, path
+     * @param {number} index - Frame index for z-index ordering
+     * @returns {L.TileLayer} The created layer (not on map yet)
+     */
     createLayer(frame, index) {
         const layer = L.tileLayer(frame.url, {
             tileSize: 256,
-            opacity: 0.01, // Small opacity to trigger tile loading
-            zIndex: 100 + index, // Will be updated later
+            opacity: 0.01,
+            zIndex: 100 + index,
             maxNativeZoom: 7, // RainViewer free tier limit (Jan 2026), higher zooms scale tiles
             maxZoom: 18,
             updateWhenIdle: false,
@@ -869,15 +906,17 @@ class WeatherRadar {
             keepBuffer: 2,
         });
 
-        // Handle tile loading errors
+        // Track tile loading errors for the error indicator UI
         layer.on('tileerror', (e) => {
             this.handleTileError(e);
         });
 
-        // DON'T auto-add to map - this prevents tile requests for all frames
-        // Layers are added to map only when needed in showFrame()
+        // NOTE: Layer is NOT added to map here - this is critical for rate limiting!
+        // If we added all 13+ animation frames to the map, every zoom/pan would
+        // trigger ~170 tile requests, exceeding RainViewer's 100 req/min limit.
+        // See showFrame() for the layer management strategy.
 
-        // Store frame info on the layer for easier matching later
+        // Store frame metadata for layer matching during reconciliation
         layer.frameTime = frame.time;
         layer.framePath = frame.path;
         return layer;
@@ -1037,23 +1076,38 @@ class WeatherRadar {
         });
     }
 
+    /**
+     * Display a specific animation frame on the map.
+     * 
+     * IMPORTANT - RATE LIMITING STRATEGY:
+     * RainViewer free tier limits: 100 requests/IP/min, max zoom 7 (as of Jan 2026).
+     * To stay under limits, we only keep 2 layers on the map at once:
+     * - The currently visible frame
+     * - The next frame (preloaded for smooth animation)
+     * 
+     * All other layers are REMOVED from the map (not just hidden with opacity).
+     * This prevents Leaflet from requesting tiles for hidden layers on zoom/pan.
+     * Without this, zooming triggers ~170 tile requests (13 frames × 13 tiles),
+     * which immediately exceeds the 100 req/min limit.
+     * 
+     * @param {number} index - Frame index to display (0 to frames.length-1)
+     */
     showFrame(index) {
         if (index < 0 || index >= this.frames.length) return;
 
-        // Optimization: Only update layers that need changing
-        if (this.visibleLayerIndex === index) return; // No change needed
+        // Skip if already showing this frame (prevents redundant updates)
+        if (this.visibleLayerIndex === index) return;
 
-        // REMOVE previous layer from map entirely (not just hide it)
-        // This prevents tile requests on zoom/pan for hidden layers
-        if (this.visibleLayerIndex !== -1 && this.layers[this.visibleLayerIndex]) {
-            this.layers[this.visibleLayerIndex].setOpacity(0);
-            // Don't remove immediately - let it fade first, then we'll clean up old ones
-        }
+        // Calculate which frame to preload (wraps around for looping animation)
+        const nextIndex = (index + 1) % this.frames.length;
+        const previousIndex = this.visibleLayerIndex;
 
-        // Get or create new layer
+        // Get or create the new layer (doesn't add to map - that happens below)
         const layer = this.getLayer(index);
 
-        // Add to map if not already on it, then show
+        // STEP 1: Show NEW layer FIRST (prevents flash during transition)
+        // We add and show the new layer before hiding the old one so there's
+        // always at least one visible frame during the transition
         if (layer) {
             if (!this.map.hasLayer(layer)) {
                 layer.addTo(this.map);
@@ -1061,21 +1115,27 @@ class WeatherRadar {
             layer.setOpacity(CONFIG.radarOpacity);
         }
 
-        // Clean up: Remove layers that are not visible and not the next frame
-        const nextIndex = (index + 1) % this.frames.length;
+        // STEP 2: Hide the previous layer AFTER new one is visible
+        if (previousIndex !== -1 && this.layers[previousIndex]) {
+            this.layers[previousIndex].setOpacity(0);
+        }
+
+        // STEP 3: Clean up - remove layers that are not visible and not preloaded
+        // This is critical for rate limiting: layers on the map request tiles on zoom/pan
         this.layers.forEach((lyr, i) => {
             if (lyr && i !== index && i !== nextIndex && this.map.hasLayer(lyr)) {
                 this.map.removeLayer(lyr);
             }
         });
 
+        // Update state
         this.visibleLayerIndex = index;
-
         this.updateTimeDisplay(this.frames[index]?.time);
-
         if (this.ui.slider) this.ui.slider.value = index;
 
-        // Preload next frame (just creates layer object, doesn't add to map)
+        // STEP 4: Preload next frame for smooth animation
+        // Creates the layer object but doesn't add to map (tiles won't load yet)
+        // The layer will be added to map when showFrame is called for nextIndex
         this.getLayer(nextIndex);
     }
 
