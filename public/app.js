@@ -935,41 +935,47 @@ class WeatherRadar {
         // If we are already in a rate limit cooldown, allow standard retries but suppress new alerts
         if (Date.now() < this.rateLimitResetTime) return;
 
-        // Smart Error Diagnosis using HEAD request
-        const tileUrl = e.tile.src;
+        // Smart Error Diagnosis using API Health Check
+        // process: We cannot check the tile URL directly due to CORS blocks on the tile cache.
+        // Instead, we check the main RainViewer API. If IT is rate limited, we are definitely limited.
+        // If it is OK (200), then the tile error is likely a benign 404 (empty/ocean).
 
-        // Avoid spamming checks for every single tile failure
+        // Avoid spamming checks
         if (this.isCheckingStatus) return;
         this.isCheckingStatus = true;
 
-        fetch(tileUrl, { method: 'HEAD' })
+        // Use direct API URL to avoid proxy nuances and ensure we check the source
+        const checkUrl = 'https://api.rainviewer.com/public/weather-maps.json';
+
+        fetch(checkUrl, { method: 'HEAD' })
             .then(response => {
                 this.isCheckingStatus = false;
 
                 if (response.status === 429) {
-                    // Critical: Rate Limit Hit
+                    // Critical: Rate Limit Hit (API is blocked, so tiles likely are too)
                     this.triggerRateLimitCooldown();
-                } else if (response.status === 404 || response.status === 204) {
-                    // Informative: Empty tile area (RainViewer normal behavior)
-                    // Show brief toast so user knows system is working but no data exists
+                } else if (response.ok) {
+                    // API is fine. This implies the tile error is isolated.
+                    // Most likely cause: 404 Empty Tile (Ocean/Desert).
+                    // Action: Suppress error toast to avoid "silent failure" false alarms.
+                    // We only log to console for debugging.
                     const now = Date.now();
-                    // Debounce "No Coverage" message to every 10 seconds to avoid annoyance
-                    if (now - this.lastTileErrorTime > 10000) {
+                    if (now - this.lastTileErrorTime > 5000) {
                         this.lastTileErrorTime = now;
-                        this.showErrorToast('No Radar Data', 'No coverage available for this area.', 3);
+                        console.log('[Radar] Specific tile failed (likely 404), but API is healthy. Suppressing alert.');
                     }
                 } else {
-                    // Other error (500, etc)
+                    // API returned error (500, etc) - The SERVICE might be down
                     const now = Date.now();
                     if (now - this.lastTileErrorTime > 2000) {
                         this.lastTileErrorTime = now;
-                        this.showErrorToast('connection Error', `Server returned ${response.status}`, 5);
+                        this.showErrorToast('Radar Service Error', `Status: ${response.status}`, 5);
                     }
                 }
             })
             .catch((err) => {
                 this.isCheckingStatus = false;
-                // Network error (likely offline, blocked, or CORS failure)
+                // Network error (likely offline)
                 const now = Date.now();
                 if (now - this.lastTileErrorTime > 5000) {
                     this.lastTileErrorTime = now;
