@@ -963,7 +963,7 @@ class WeatherRadar {
 
                     // Since we can't distinguish due to CORS, we MUST retry to avoid "silent missing tiles".
                     // Use a shorter cooldown (15s) for this "soft" error.
-                    this.triggerRateLimitCooldown(15000, 'Loading...', 'Improving connection quality.');
+                    this.triggerRateLimitCooldown(15000, 'Loading...', 'Retrying connection...');
                 } else {
                     // API returned error (500, etc) - Service likely down
                     const now = Date.now();
@@ -987,10 +987,7 @@ class WeatherRadar {
     triggerRateLimitCooldown(waitTimeMs = 61000, title = 'High Traffic', message = 'Rate limit exceeded. Pausing momentarily.') {
         if (this.rateLimitResetTime > Date.now()) return; // Already triggered
 
-        // Pause playback to prevent error cascade
-        if (this.isPlaying) {
-            this.pause();
-        }
+        // Playback continues (removed pause) so valid tiles can load
 
         this.rateLimitResetTime = Date.now() + waitTimeMs;
 
