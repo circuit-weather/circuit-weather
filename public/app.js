@@ -950,25 +950,30 @@ class WeatherRadar {
                     // Critical: Rate Limit Hit
                     this.triggerRateLimitCooldown();
                 } else if (response.status === 404 || response.status === 204) {
-                    // Benign: Empty tile area (RainViewer normal behavior)
-                    // Do nothing - effectively suppresses the warning
+                    // Informative: Empty tile area (RainViewer normal behavior)
+                    // Show brief toast so user knows system is working but no data exists
+                    const now = Date.now();
+                    // Debounce "No Coverage" message to every 10 seconds to avoid annoyance
+                    if (now - this.lastTileErrorTime > 10000) {
+                        this.lastTileErrorTime = now;
+                        this.showErrorToast('No Radar Data', 'No coverage available for this area.', 3);
+                    }
                 } else {
-                    // Other error (network, 500, etc)
-                    // Debounce generic warnings
+                    // Other error (500, etc)
                     const now = Date.now();
                     if (now - this.lastTileErrorTime > 2000) {
                         this.lastTileErrorTime = now;
-                        this.showErrorToast('Tile Error', 'Checking radar connection...', 5);
+                        this.showErrorToast('connection Error', `Server returned ${response.status}`, 5);
                     }
                 }
             })
-            .catch(() => {
+            .catch((err) => {
                 this.isCheckingStatus = false;
-                // Network error (likely offline or blocked)
+                // Network error (likely offline, blocked, or CORS failure)
                 const now = Date.now();
                 if (now - this.lastTileErrorTime > 5000) {
                     this.lastTileErrorTime = now;
-                    // Only show if we actually have issues
+                    this.showErrorToast('Connection Failed', 'Unable to reach radar server.', 5);
                 }
             });
     }
