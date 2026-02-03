@@ -605,6 +605,11 @@ class WeatherRadar {
         this.pollingInterval = null;
         this.pendingFrames = null;
 
+        // Tile error tracking
+        this.tileErrorCount = 0;
+        this.tileErrorThreshold = 3; // Show warning after this many errors
+        this.lastTileErrorTime = 0;
+
         // Bolt Optimization: Cache DOM elements
         this.ui = {
             playBtn: document.getElementById('radarPlayBtn'),
@@ -615,7 +620,9 @@ class WeatherRadar {
             relative: document.getElementById('radarRelative'),
             timeStart: document.getElementById('radarTimeStart'),
             timeEnd: document.getElementById('radarTimeEnd'),
-            controls: document.getElementById('radarControls')
+            controls: document.getElementById('radarControls'),
+            status: document.getElementById('radarStatus'),
+            statusText: document.getElementById('radarStatusText')
         };
 
         // Bolt Optimization: Reuse DateTimeFormat
@@ -730,6 +737,8 @@ class WeatherRadar {
 
             // Wait for tiles to load before starting animation
             await this.waitForTilesToLoad();
+            // Reset tile error state on successful load
+            this.hideTileError();
             this.play();
         } catch (error) {
             console.error('Radar load failed:', error);
@@ -828,11 +837,53 @@ class WeatherRadar {
             updateWhenZooming: false,
             keepBuffer: 2,
         });
+
+        // Handle tile loading errors
+        layer.on('tileerror', (e) => {
+            this.handleTileError(e);
+        });
+
         layer.addTo(this.map);
         // Store frame info on the layer for easier matching later
         layer.frameTime = frame.time;
         layer.framePath = frame.path;
         return layer;
+    }
+
+    handleTileError(e) {
+        const now = Date.now();
+
+        // Debounce: only count errors once per second
+        if (now - this.lastTileErrorTime < 1000) {
+            return;
+        }
+        this.lastTileErrorTime = now;
+        this.tileErrorCount++;
+
+        // Log tile error details to console
+        const tileUrl = e.tile?.src || 'unknown';
+        console.warn(`[Radar] Tile load failed (${this.tileErrorCount}):`, tileUrl);
+
+        // Show status indicator after threshold
+        if (this.tileErrorCount >= this.tileErrorThreshold) {
+            this.showTileError();
+        }
+    }
+
+    showTileError() {
+        if (this.ui.status) {
+            this.ui.status.style.display = 'flex';
+            if (this.ui.statusText) {
+                this.ui.statusText.textContent = `Tile errors (${this.tileErrorCount})`;
+            }
+        }
+    }
+
+    hideTileError() {
+        this.tileErrorCount = 0;
+        if (this.ui.status) {
+            this.ui.status.style.display = 'none';
+        }
     }
 
     // Bolt Optimization: Reuse Leaflet layers to reduce DOM churn
@@ -1117,6 +1168,7 @@ class WeatherRadar {
     destroy() {
         this.stopPolling();
         this.pause();
+        this.hideTileError();
         this.layers.forEach(layer => {
             if (layer) this.map.removeLayer(layer);
         });
