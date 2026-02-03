@@ -750,14 +750,45 @@ class WeatherRadar {
 
     startPolling() {
         this.stopPolling();
-        // Poll every 30 seconds to catch updates quickly
-        this.pollingInterval = setInterval(() => this.checkForUpdates(), 30000);
+        // Smart polling: sync with RainViewer's 10-minute update cycle
+        // Poll 1 minute after each :X0 mark (when new data is available)
+        this.scheduleNextPoll();
+    }
+
+    scheduleNextPoll() {
+        const now = Date.now();
+        const msPerMin = 60000;
+        const updateIntervalMs = 10 * msPerMin; // RainViewer updates every 10 minutes
+        const offsetMs = 1 * msPerMin; // Poll 1 minute after update
+
+        // Calculate ms since last :X0 mark (e.g., :00, :10, :20, etc.)
+        const msSinceLastUpdate = now % updateIntervalMs;
+
+        // Calculate delay until next update + offset
+        let delay = updateIntervalMs - msSinceLastUpdate + offsetMs;
+
+        // If we're already past the offset window, wait for next cycle
+        if (delay > updateIntervalMs) {
+            delay -= updateIntervalMs;
+        }
+
+        // Minimum delay of 30 seconds to avoid tight loops
+        delay = Math.max(delay, 30000);
+
+        this.pollingTimeout = setTimeout(() => {
+            this.checkForUpdates();
+            this.scheduleNextPoll(); // Schedule next poll
+        }, delay);
     }
 
     stopPolling() {
         if (this.pollingInterval) {
             clearInterval(this.pollingInterval);
             this.pollingInterval = null;
+        }
+        if (this.pollingTimeout) {
+            clearTimeout(this.pollingTimeout);
+            this.pollingTimeout = null;
         }
     }
 
@@ -831,7 +862,7 @@ class WeatherRadar {
             tileSize: 256,
             opacity: 0.01, // Small opacity to trigger tile loading
             zIndex: 100 + index, // Will be updated later
-            maxNativeZoom: 10,
+            maxNativeZoom: 7, // RainViewer free tier limit (Jan 2026), higher zooms scale tiles
             maxZoom: 18,
             updateWhenIdle: false,
             updateWhenZooming: false,
