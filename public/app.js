@@ -955,20 +955,21 @@ class WeatherRadar {
                     // Critical: Rate Limit Hit (API is blocked, so tiles likely are too)
                     this.triggerRateLimitCooldown();
                 } else if (response.ok) {
-                    // API is fine. This implies the tile error is isolated.
-                    // Most likely cause: 404 Empty Tile (Ocean/Desert).
-                    // Inform user briefly so they know it's not a broken connection.
-                    const now = Date.now();
-                    if (now - this.lastTileErrorTime > 5000) {
-                        this.lastTileErrorTime = now;
-                        this.showErrorToast('No Radar Data', 'Area has no coverage.', 3);
-                    }
+                    // Ambiguous Case: API is fine (200), but tile failed.
+                    // Could be:
+                    // A) 404 Empty Tile (Ocean/Desert) -> Retry useless but harmless
+                    // B) 429 Rate Limit on Tile Cache only -> Retry ESSENTIAL
+                    // C) 500 Tile Cache Error -> Retry might fix
+
+                    // Since we can't distinguish due to CORS, we MUST retry to avoid "silent missing tiles".
+                    // Use a shorter cooldown (15s) for this "soft" error.
+                    this.triggerRateLimitCooldown(15000, 'Loading...', 'Improving connection quality.');
                 } else {
-                    // API returned error (500, etc) - The SERVICE might be down
+                    // API returned error (500, etc) - Service likely down
                     const now = Date.now();
                     if (now - this.lastTileErrorTime > 2000) {
                         this.lastTileErrorTime = now;
-                        this.showErrorToast('Radar Service Error', `Status: ${response.status}`, 5);
+                        this.showErrorToast('Service Error', `Radar status: ${response.status}`, 5);
                     }
                 }
             })
@@ -978,24 +979,23 @@ class WeatherRadar {
                 const now = Date.now();
                 if (now - this.lastTileErrorTime > 5000) {
                     this.lastTileErrorTime = now;
-                    this.showErrorToast('Connection Failed', 'Unable to reach radar server.', 5);
+                    this.showErrorToast('Connection Failed', 'Unable to reach radar API server.', 5);
                 }
             });
     }
 
-    triggerRateLimitCooldown() {
+    triggerRateLimitCooldown(waitTimeMs = 61000, title = 'High Traffic', message = 'Rate limit exceeded. Pausing momentarily.') {
         if (this.rateLimitResetTime > Date.now()) return; // Already triggered
 
-        // Set 60s cooldown (RainViewer limit is per minute)
-        const waitTimeMs = 61000;
+        // Pause playback to prevent error cascade
+        if (this.isPlaying) {
+            this.pause();
+        }
+
         this.rateLimitResetTime = Date.now() + waitTimeMs;
 
         // Show persistent toast
-        this.showErrorToast(
-            'High Traffic',
-            'Rate limit exceeded. Pausing momentarily.',
-            60
-        );
+        this.showErrorToast(title, message, Math.ceil(waitTimeMs / 1000));
 
         // Schedule Retry
         if (this.retryTimer) clearTimeout(this.retryTimer);
