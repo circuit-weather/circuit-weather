@@ -2113,11 +2113,13 @@ class MapManager {
         // This is more efficient than window.resize listeners and manual timeouts
         const mapContainer = document.getElementById('map');
         if (mapContainer && window.ResizeObserver) {
-            this.resizeObserver = new ResizeObserver(() => {
+            // Bolt Optimization: Debounce resize events to prevent layout thrashing
+            // invalidateSize() is expensive, so we only run it once the resize settles (100ms)
+            this.resizeObserver = new ResizeObserver(debounce(() => {
                 if (this.map) {
                     this.map.invalidateSize();
                 }
-            });
+            }, 100));
             this.resizeObserver.observe(mapContainer);
         }
 

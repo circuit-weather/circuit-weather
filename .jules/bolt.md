@@ -23,3 +23,7 @@
 ## 2024-05-25 - RateLimiter Generational Cleanup
 **Learning:** Throttled O(N) cleanup in RateLimiters is still insufficient under sustained attack as it blocks the event loop periodically.
 **Action:** Implement Generational Garbage Collection (Double Buffering) to achieve O(1) cleanup by simply rotating Maps, eliminating iteration entirely.
+
+## 2026-05-25 - ResizeObserver Debouncing
+**Learning:** `ResizeObserver` fires as rapidly as 60fps during window resizing. Performing expensive layout operations like `map.invalidateSize()` directly in the callback causes significant main thread blocking and layout thrashing.
+**Action:** Always debounce `ResizeObserver` callbacks when they trigger expensive UI updates or reflows.
