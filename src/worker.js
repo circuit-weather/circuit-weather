@@ -227,6 +227,20 @@ function handleOptions(request) {
 }
 
 // Helper to generate a generic, empty-like response to prevent frontend errors
+function getEmptyRadarResponse(request) {
+  const emptyRadar = {
+    radar: {
+      past: [],
+      nowcast: []
+    },
+    host: 'https://tilecache.rainviewer.com'
+  };
+  return new Response(JSON.stringify(emptyRadar), {
+    status: 200,
+    headers: getErrorHeaders(request)
+  });
+}
+
 function getEmptyWeatherResponse(request) {
   const errorResponse = {
     error: 'Failed to fetch weather data',
@@ -243,7 +257,7 @@ function getEmptyWeatherResponse(request) {
     current_units: {}
   };
   return new Response(JSON.stringify(errorResponse), {
-    status: 502,
+    status: 200, // Return 200 to allow UI to render gracefully
     headers: getErrorHeaders(request)
   });
 }
@@ -808,8 +822,8 @@ async function handleRadarRequest(request, env, ctx) {
     });
 
     if (!upstreamResponse.ok) {
-      console.error(`Upstream Weather API Error: Status ${upstreamResponse.status}`);
-      return getEmptyWeatherResponse(request);
+      console.error(`Upstream Radar API Error: Status ${upstreamResponse.status}`);
+      return getEmptyRadarResponse(request);
     }
 
     // Bolt Optimization: Stream response instead of buffering text
@@ -879,11 +893,11 @@ async function readLimitedBody(response, limit = 1024) {
       const chunkLength = value.length;
 
       if (received + chunkLength > limit) {
-          // Push enough to exceed limit by 1 to indicate truncation
-          const needed = limit - received + 1;
-          chunks.push(value.slice(0, needed));
-          received += chunkLength;
-          break;
+        // Push enough to exceed limit by 1 to indicate truncation
+        const needed = limit - received + 1;
+        chunks.push(value.slice(0, needed));
+        received += chunkLength;
+        break;
       }
 
       chunks.push(value);

@@ -739,7 +739,10 @@ class WeatherRadar {
         this.stopPolling();
         try {
             await this.fetchAndFilter();
-            if (this.frames.length === 0) return;
+            if (this.frames.length === 0) {
+                this.showControls(true);
+                return;
+            }
 
             this.createLayers();
             this.updateSlider();
