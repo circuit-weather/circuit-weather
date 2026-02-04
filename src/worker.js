@@ -849,6 +849,7 @@ async function handleTileRequest(request, env, ctx) {
     // Clean up headers
     cacheHeaders.delete('Set-Cookie');
     cacheHeaders.delete('Server');
+    cacheHeaders.delete('Vary'); // Robustness: Prevent cache fragmentation based on User-Agent/Origin
 
     const cacheResponse = new Response(cacheBody, {
       status: upstreamResponse.status,
