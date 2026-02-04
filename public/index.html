@@ -50,12 +50,12 @@
                 <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar"
                     title="Close sidebar (Esc)" aria-keyshortcuts="Escape" aria-expanded="false"
                     aria-controls="sidebar">
-                    <svg class="icon-menu" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg class="icon-menu" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="3" y1="6" x2="21" y2="6"></line>
                         <line x1="3" y1="12" x2="21" y2="12"></line>
                         <line x1="3" y1="18" x2="21" y2="18"></line>
                     </svg>
-                    <svg class="icon-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg class="icon-close" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
                         <line x1="6" y1="6" x2="18" y2="18"></line>
                     </svg>
@@ -69,13 +69,13 @@
                 </span>
                 <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark/light mode"
                     title="Toggle dark/light mode">
-                    <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg class="icon-sun" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="12" r="5"></circle>
                         <path
                             d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42">
                         </path>
                     </svg>
-                    <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg class="icon-moon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
                     </svg>
                 </button>
@@ -151,12 +151,12 @@
                                     <span class="weather-sub" id="weatherWindDir">--</span>
                                 </div>
                             </div>
-                            <div class="weather-timeline" id="weatherTimeline">
+            <div class="weather-timeline" id="weatherTimeline" tabindex="0" role="region" aria-label="Hourly forecast">
                                 <!-- Timeline items injected here -->
                             </div>
                         </div>
                     </div>
-                    <div id="forecastUnavailable" style="display: none;">
+    <div id="forecastUnavailable" style="display: none;" aria-live="polite">
                         <p class="forecast-unavailable">Forecast available closer to session</p>
                     </div>
                 </div>
@@ -188,7 +188,7 @@
             <header class="mobile-header" id="mobileHeader">
                 <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open menu" title="Open menu"
                     aria-expanded="false" aria-controls="sidebar">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="3" y1="6" x2="21" y2="6"></line>
                         <line x1="3" y1="12" x2="21" y2="12"></line>
                         <line x1="3" y1="18" x2="21" y2="18"></line>
@@ -205,13 +205,13 @@
                 </div>
                 <button class="theme-toggle mobile-theme-toggle" id="mobileThemeToggle"
                     aria-label="Toggle dark/light mode" title="Toggle dark/light mode">
-                    <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg class="icon-sun" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="12" r="5"></circle>
                         <path
                             d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42">
                         </path>
                     </svg>
-                    <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg class="icon-moon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
                     </svg>
                 </button>
@@ -224,10 +224,10 @@
             <div class="radar-controls" id="radarControls" style="display: none;">
                 <button class="radar-play-btn" id="radarPlayBtn" aria-label="Play/Pause radar animation"
                     title="Play/Pause (Space)" aria-keyshortcuts="Space" aria-pressed="false">
-                    <svg class="icon-play" viewBox="0 0 24 24" fill="currentColor">
+                    <svg class="icon-play" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor">
                         <polygon points="5,3 19,12 5,21"></polygon>
                     </svg>
-                    <svg class="icon-pause" viewBox="0 0 24 24" fill="currentColor">
+                    <svg class="icon-pause" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor">
                         <rect x="6" y="4" width="4" height="16"></rect>
                         <rect x="14" y="4" width="4" height="16"></rect>
                     </svg>
@@ -276,7 +276,7 @@
                 <p>Loading...</p>
             </div>
             <!-- Error Toast -->
-            <div id="errorToast" class="error-toast">
+    <div id="errorToast" class="error-toast" role="alert" aria-live="assertive">
                 <div class="error-icon">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="12" r="10"></circle>
