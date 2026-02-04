@@ -1618,7 +1618,7 @@ class RangeCircles {
 
             // 2. Labels
             const labelLatLng = this.getPointAtDistance(center, radius, 90);
-            const html = `<span>${distance}</span>`;
+            const html = `<span aria-hidden="true">${distance}</span>`;
 
             if (this.labels[index]) {
                 const labelMarker = this.labels[index];
