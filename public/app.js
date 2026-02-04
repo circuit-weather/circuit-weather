@@ -42,7 +42,7 @@ const FEATURE_FLAGS = {
     // Disabled to reduce Open-Meteo API calls (429 rate limiting)
     // The current weather widget requires an API call per circuit change
     // Re-enable when API access is increased or rate limiting is resolved
-    enableCurrentWeather: false,
+    enableCurrentWeather: true,
 };
 Object.freeze(FEATURE_FLAGS);
 
