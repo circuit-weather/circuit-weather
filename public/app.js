@@ -595,7 +595,6 @@ class WeatherRadar {
         this.visibleLayerIndex = -1; // Track currently visible layer for optimization
         this.layers = [];
         this.isPlaying = false;
-        this.animationTimer = null; // Deprecated: kept for cleanup safety
         this.animationFrameId = null;
         this.lastFrameTime = 0;
         this.sessionTime = null;
@@ -1484,12 +1483,6 @@ class WeatherRadar {
         if (this.animationFrameId) {
             cancelAnimationFrame(this.animationFrameId);
             this.animationFrameId = null;
-        }
-
-        // Legacy cleanup (safe to keep)
-        if (this.animationTimer) {
-            clearInterval(this.animationTimer);
-            this.animationTimer = null;
         }
     }
 
