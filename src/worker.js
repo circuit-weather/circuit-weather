@@ -110,8 +110,8 @@ class RateLimiter {
   }
 }
 
-// 100 requests per minute per IP per isolate
-const limiter = new RateLimiter(100, 60000);
+// 1000 requests per minute per IP per isolate (Increased for tile support)
+const limiter = new RateLimiter(1000, 60000);
 
 export default {
   async fetch(request, env, ctx) {
