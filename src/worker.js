@@ -789,6 +789,15 @@ async function handleTileRequest(request, env, ctx) {
   const url = new URL(request.url);
   // Extract path suffix: /api/tiles/v2/radar/... -> /v2/radar/...
   const tilePath = url.pathname.replace('/api/tiles', '');
+
+  // SEC: Validate tilePath (length and content) to prevent traversal/SSRF
+  if (tilePath.length > 255 || !VALID_API_PATH_REGEX.test(tilePath) || tilePath.includes('..') || tilePath.includes('//')) {
+    return new Response(JSON.stringify({ error: 'Invalid tile path' }), {
+      status: 400,
+      headers: getErrorHeaders(request)
+    });
+  }
+
   const upstreamUrl = `https://tilecache.rainviewer.com${tilePath}`;
 
   // Canonical cache key
