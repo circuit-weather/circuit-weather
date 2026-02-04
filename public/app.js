@@ -31,8 +31,6 @@ const CONFIG = {
         { label: '2x', speed: 500 }
     ],
     defaultSpeedIndex: 1, // Start at 1x
-    // Range circles by zoom level (metric/imperial)
-    // Deprecated: Logic now dynamic in RangeCircles class
 };
 // SEC: Prevent runtime tampering with configuration
 Object.freeze(CONFIG);
