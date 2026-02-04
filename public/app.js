@@ -920,13 +920,19 @@ class WeatherRadar {
     createLayer(frame, index) {
         const layer = L.tileLayer(frame.url, {
             tileSize: 512,
+            zoomOffset: -1,
             opacity: 0.01,
             zIndex: 100 + index,
-            maxNativeZoom: 7, // RainViewer free tier limit (Jan 2026), higher zooms scale tiles
+
+            // RainViewer free tier limit (Jan 2026) is tile zoom 7.
+            // With zoomOffset: -1, map zoom 8 requests tile zoom 7.
+            maxNativeZoom: 8,
+            minNativeZoom: 1,
+
             maxZoom: 18,
             updateWhenIdle: true, // Bolt Optimization: Only load tiles when panning stops (reduces requests)
             updateWhenZooming: false,
-            keepBuffer: 0, // Bolt Optimization: Minimize buffer to reduce total request count
+            keepBuffer: 2, // Restored for smoother animation; Serial Loader handles the initial burst
         });
 
         // Track tile loading errors for the error indicator UI
