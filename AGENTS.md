@@ -135,11 +135,12 @@ binding = "ASSETS"
    - Distance labels on circles
 
 3. **Weather Radar**
-   - Live radar tiles from RainViewer
-   - Animated playback with play/pause
-   - Timeline slider
+   - Live radar tiles from RainViewer (V2 API)
+   - **Historical Only**: Free tier API no longer supports forecast/nowcast data
+   - Animated playback of past 2 hours
+   - Timeline slider (adaptive range)
    - Session-relative time display ("5m before", "10m after")
-   - Must handle RainViewer's zoom limit (maxNativeZoom: 10)
+   - Must handle RainViewer's zoom limit (maxNativeZoom: 8)
 
 4. **Session Countdown**
    - Countdown timer to selected session start
