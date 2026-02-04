@@ -92,3 +92,8 @@
 **Vulnerability:** The simple Fixed Window rate limiter allowed traffic bursts up to 2x the limit at window boundaries (e.g., 100 reqs at T=59s and 100 reqs at T=60.1s).
 **Learning:** Fixed Window algorithms are simple but susceptible to boundary attacks. For security-critical rate limiting, they provide insufficient protection against calculated floods.
 **Prevention:** Use a Token Bucket or Sliding Window Log algorithm which enforces a consistent rate over time and smooths out bursts.
+
+## 2026-03-10 - Unrestricted Tile Proxy Path
+**Vulnerability:** The `handleTileRequest` in `src/worker.js` blindly appended the request path suffix to the upstream URL without validation. This allowed directory traversal (`..`) and potentially accessing arbitrary paths on the upstream server.
+**Learning:** Proxy endpoints often assume the input path is safe or that the upstream will handle it. However, unvalidated path construction is a common vector for SSRF or traversing into unintended API endpoints.
+**Prevention:** Strictly validate proxy path segments against an allowlist of characters and explicitly reject directory traversal sequences (`..`) before constructing upstream URLs.
