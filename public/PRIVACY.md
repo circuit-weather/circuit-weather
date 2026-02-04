@@ -34,7 +34,7 @@ While we proxy some data, your browser connects directly to the following servic
 
 **Open-Meteo**
 - **Purpose:** Provides detailed weather forecasts for race sessions.
-- **Data Sent:** Your browser connects directly to Open-Meteo API. Coordinates of the selected circuit are sent to fetch local weather.
+- **Data Sent:** Your browser connects directly to Open-Meteo API. Your IP address is visible to Open-Meteo as part of this standard web request. Coordinates of the selected circuit are sent to fetch local weather.
 - **Privacy Policy:** [open-meteo.com/en/features#terms](https://open-meteo.com/en/features#terms)
 
 **RainViewer**

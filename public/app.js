@@ -15,7 +15,7 @@ const CONFIG = {
     f1ApiBase: isLocal ? 'https://api.jolpi.ca/ergast/f1' : '/api/f1',
     rainViewerApi: isLocal ? 'https://api.rainviewer.com/public/weather-maps.json' : '/api/radar',
     trackApi: isLocal ? 'https://raw.githubusercontent.com/bacinger/f1-circuits/master/circuits' : '/api/track',
-    weatherApi: isLocal ? 'https://api.open-meteo.com/v1/forecast' : '/api/weather',
+    weatherApi: 'https://api.open-meteo.com/v1/forecast',
     // Use Carto basemaps (reliable, free, no key)
     mapTiles: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
     mapTilesDark: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
@@ -387,14 +387,9 @@ class WeatherClient {
             }
 
             if (!data) {
-                let url;
-                if (isLocal) {
-                    // Bolt Optimization: Use rounded coordinates in URL to improve browser cache hit rate
-                    url = `${this.baseUrl}?latitude=${rLat}&longitude=${rLon}&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,wind_speed_10m,wind_direction_10m,weather_code&current=temperature_2m,relative_humidity_2m,wind_speed_10m,wind_direction_10m,precipitation&timeformat=unixtime&forecast_days=16`;
-                } else {
-                    // Bolt Optimization: Use rounded coordinates in URL to improve browser cache hit rate
-                    url = `${this.baseUrl}?lat=${rLat}&lon=${rLon}`;
-                }
+                // Bolt Optimization: Use rounded coordinates in URL to improve browser cache hit rate
+                // Direct call to Open-Meteo (Client-side)
+                const url = `${this.baseUrl}?latitude=${rLat}&longitude=${rLon}&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,wind_speed_10m,wind_direction_10m,weather_code&current=temperature_2m,relative_humidity_2m,wind_speed_10m,wind_direction_10m,precipitation&timeformat=unixtime&forecast_days=16`;
 
                 const response = await fetch(url);
                 if (!response.ok) throw new Error('Weather API error');

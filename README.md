@@ -26,7 +26,7 @@ Key features include:
 ## How it works
 
 The application is built with vanilla HTML, CSS, and JavaScript, keeping it lightweight and fast. It uses Leaflet.js for interesting interactive maps.
-All API requests (Jolpica F1, RainViewer) are proxied through a **Cloudflare Worker** to cache data at the edge and protect user privacy. We use optimized **512px tile caching** to reduce request volume by 75% compared to standard implementations.
+All API requests (Jolpica F1, RainViewer) are proxied through a **Cloudflare Worker** to cache data at the edge and protect user privacy. Weather forecasts are fetched directly from Open-Meteo by the client to ensure reliability. We use optimized **512px tile caching** to reduce request volume by 75% compared to standard implementations.
 
 The map tiles are provided by Carto (based on OpenStreetMap data), ensuring a clean look that works well with the weather overlays.
 
