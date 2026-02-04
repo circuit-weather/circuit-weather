@@ -21,7 +21,7 @@ However, the application relies on third-party services and infrastructure which
 ### Cloudflare
 This website is hosted on **Cloudflare Pages** and utilizes **Cloudflare Workers** to power its API. We leverage Cloudflare's global edge network to aggressively cache data close to you.
 
-- **Privacy Proxy:** To enhance your privacy, requests for F1 schedules (Jolpica), Track Layouts (GitHub), and Weather Radar metadata (RainViewer) are proxied through our Cloudflare Worker. This means the upstream API providers see Cloudflare's IP address rather than yours for these specific requests.
+- **Privacy Proxy:** To enhance your privacy, requests for F1 schedules, Track Layouts, and **all RainViewer Radar Tiles** are proxied through our Cloudflare Worker. This hides your IP address from these third-party services.
 - **Advanced Caching:** We utilize advanced edge caching features to store API responses on Cloudflare's servers. This minimizes data usage and reduces load on the open-source community APIs we rely on.
 - **Data Processed:** Cloudflare processes your IP address and request metadata to deliver the website and protect against security threats.
 - **Privacy Policy:** [cloudflare.com/privacypolicy](https://www.cloudflare.com/privacypolicy/)
@@ -39,7 +39,7 @@ While we proxy some data, your browser connects directly to the following servic
 
 **RainViewer**
 - **Purpose:** Provides precipitation radar layers.
-- **Data Sent:** While radar *metadata* is proxied to protect your privacy, the actual *radar map tiles* (images) are fetched directly by your browser from RainViewer's tile servers.
+- **Data Sent:** **None directly.** Both radar metadata and tile images are proxied through our Cloudflare Worker. Your browser does not connect directly to RainViewer servers.
 - **Privacy Policy:** [rainviewer.com/privacy](https://www.rainviewer.com/privacy.html)
 
 ### Mapping & Assets
@@ -68,6 +68,7 @@ The following services provide the raw data that we process and cache via Cloudf
 
 - **Jolpica F1:** Historical and current F1 schedule data.
 - **GitHub:** Stores static track layout files (GeoJSON).
+- **RainViewer:** Weather radar tiles and metadata (2-hour edge cache).
 
 ## Local Storage
 
