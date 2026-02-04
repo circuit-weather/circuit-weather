@@ -156,6 +156,11 @@ export default {
       return handleRadarRequest(request, env, ctx);
     }
 
+    // Handle radar tile requests (Optimized Cache)
+    if (path.startsWith('/api/tiles/')) {
+      return handleTileRequest(request, env, ctx);
+    }
+
     // Handle track requests
     if (path.startsWith('/api/track/')) {
       return handleTrackRequest(request, env, ctx);
@@ -776,6 +781,105 @@ async function handleWeatherRequest(request, env, ctx) {
     return errorCacheResponse;
   }
 }
+/**
+ * Handle Radar Tile requests with robust caching
+ * Route: /api/tiles/...
+ */
+async function handleTileRequest(request, env, ctx) {
+  const url = new URL(request.url);
+  // Extract path suffix: /api/tiles/v2/radar/... -> /v2/radar/...
+  const tilePath = url.pathname.replace('/api/tiles', '');
+  const upstreamUrl = `https://tilecache.rainviewer.com${tilePath}`;
+
+  // Canonical cache key
+  const cacheKey = new Request(upstreamUrl);
+  const cache = caches.default;
+
+  // 1. Check Cache
+  let response = await cache.match(cacheKey);
+
+  if (response) {
+    const headers = new Headers(response.headers);
+    headers.set('X-Cache', 'HIT');
+
+    // Apply strict CORS
+    const allowedOrigin = getAllowedOrigin(request);
+    if (allowedOrigin) {
+      headers.set('Access-Control-Allow-Origin', allowedOrigin);
+      headers.set('Vary', 'Origin');
+    } else {
+      headers.delete('Access-Control-Allow-Origin');
+    }
+
+    return new Response(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers
+    });
+  }
+
+  // 2. Fetch Upstream
+  try {
+    const upstreamResponse = await fetch(upstreamUrl, {
+      headers: {
+        'User-Agent': 'CircuitWeather/1.0',
+        'Accept': 'image/png,image/*;q=0.8'
+      },
+      signal: AbortSignal.timeout(API_TIMEOUT),
+    });
+
+    // 3. Error Handling - Do NOT cache errors
+    if (!upstreamResponse.ok) {
+      console.error(`Upstream Tile Error ${upstreamResponse.status}: ${upstreamUrl}`);
+      // Pass error status to client so frontend logic can retry or show error
+      return new Response(upstreamResponse.body, {
+        status: upstreamResponse.status,
+        headers: getErrorHeaders(request)
+      });
+    }
+
+    // 4. Cache Success Response
+    const [cacheBody, clientBody] = upstreamResponse.body.tee();
+
+    const cacheHeaders = new Headers(upstreamResponse.headers);
+    cacheHeaders.set('Cache-Control', 'public, max-age=7200'); // 2 Hours TTL
+    cacheHeaders.set('X-Cache', 'MISS');
+    cacheHeaders.set('Access-Control-Allow-Origin', '*');
+
+    // Clean up headers
+    cacheHeaders.delete('Set-Cookie');
+    cacheHeaders.delete('Server');
+
+    const cacheResponse = new Response(cacheBody, {
+      status: upstreamResponse.status,
+      headers: cacheHeaders
+    });
+
+    ctx.waitUntil(cache.put(cacheKey, cacheResponse));
+
+    // 5. Return to Client
+    const clientHeaders = new Headers(cacheHeaders);
+    const allowedOrigin = getAllowedOrigin(request);
+    if (allowedOrigin) {
+      clientHeaders.set('Access-Control-Allow-Origin', allowedOrigin);
+      clientHeaders.set('Vary', 'Origin');
+    }
+
+    return new Response(clientBody, {
+      status: upstreamResponse.status,
+      headers: clientHeaders
+    });
+
+  } catch (error) {
+    console.error('Tile Proxy Error:', error);
+    // Return error to client, frontend will handle retries
+    return new Response('Tile proxy failed', {
+      status: 502,
+      headers: getErrorHeaders(request)
+    });
+  }
+}
+
 
 /**
  * Handle RainViewer API requests with caching

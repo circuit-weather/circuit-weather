@@ -731,7 +731,7 @@ class WeatherRadar {
         return [...past, ...nowcast].map(frame => ({
             time: frame.time,
             path: frame.path,
-            url: `${data.host}${frame.path}/512/{z}/{x}/{y}/2/1_1.png`,
+            url: `/api/tiles${frame.path}/512/{z}/{x}/{y}/2/1_1.png`,
         }));
     }
 
