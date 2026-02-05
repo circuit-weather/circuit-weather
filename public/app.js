@@ -2442,6 +2442,31 @@ class CircuitWeatherApp {
         } catch (error) {
             console.error('Failed to initialize:', error);
             this.showLoading(false);
+            this.showInitError();
+        }
+    }
+
+    showInitError() {
+        const sidebarContent = document.querySelector('.sidebar-content');
+        if (sidebarContent) {
+            sidebarContent.innerHTML = `
+                <div class="error-state">
+                    <div class="error-icon" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <line x1="12" y1="8" x2="12" y2="12"></line>
+                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                        </svg>
+                    </div>
+                    <h3>Connection Failed</h3>
+                    <p>Unable to load race schedule.</p>
+                    <button class="retry-btn" type="button">Retry</button>
+                </div>
+            `;
+            const btn = sidebarContent.querySelector('.retry-btn');
+            if (btn) {
+                btn.addEventListener('click', () => window.location.reload());
+            }
         }
     }
 
