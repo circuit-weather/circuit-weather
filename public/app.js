@@ -515,31 +515,39 @@ class TrackLayer {
         }
 
         try {
-            let data;
-
-            // Check cache first
+            // Check cache first (Bolt Optimization: Cache L.geoJSON layer instead of raw data)
             if (this.cache.has(circuitId)) {
-                data = this.cache.get(circuitId);
-            } else {
-                let url;
-                if (CONFIG.trackApi.startsWith('/')) {
-                    // Worker proxy (no extension)
-                    url = `${CONFIG.trackApi}/${geoJsonId}`;
-                } else {
-                    // Direct GitHub (needs extension)
-                    url = `${CONFIG.trackApi}/${geoJsonId}.geojson`;
-                }
-
-                const response = await fetch(url);
-
-                if (!response.ok) throw new Error(`Track fetch failed: ${response.status}`);
+                this.layer = this.cache.get(circuitId);
 
                 // Check if this is still the requested circuit
                 if (this.currentCircuitId !== circuitId) return;
 
-                data = await response.json();
-                this.cache.set(circuitId, data);
+                if (!this.map.hasLayer(this.layer)) {
+                    this.layer.addTo(this.map);
+                }
+
+                this.updateStyle();
+                this.layer.bringToBack();
+                return;
             }
+
+            let url;
+            if (CONFIG.trackApi.startsWith('/')) {
+                // Worker proxy (no extension)
+                url = `${CONFIG.trackApi}/${geoJsonId}`;
+            } else {
+                // Direct GitHub (needs extension)
+                url = `${CONFIG.trackApi}/${geoJsonId}.geojson`;
+            }
+
+            const response = await fetch(url);
+
+            if (!response.ok) throw new Error(`Track fetch failed: ${response.status}`);
+
+            // Check if this is still the requested circuit
+            if (this.currentCircuitId !== circuitId) return;
+
+            const data = await response.json();
 
             // Double check before rendering
             if (this.currentCircuitId !== circuitId) return;
@@ -555,7 +563,12 @@ class TrackLayer {
                     lineJoin: 'round',
                     className: 'track-path'
                 }
-            }).addTo(this.map);
+            });
+
+            // Cache the created layer
+            this.cache.set(circuitId, this.layer);
+
+            this.layer.addTo(this.map);
 
             // Apply correct weight for current zoom
             this.updateStyle();
