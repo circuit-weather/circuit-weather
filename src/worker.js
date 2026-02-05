@@ -460,7 +460,8 @@ async function handleTrackRequest(request, env, ctx) {
 
   // Validation
   // SEC: Check length (50 chars max) and format
-  if (!trackId || trackId.length > 50 || trackId.includes('..') || trackId.includes('/') || !VALID_TRACK_ID_REGEX.test(trackId)) {
+  // Bolt Optimization: Remove redundant string scans (includes) covered by regex
+  if (!trackId || trackId.length > 50 || !VALID_TRACK_ID_REGEX.test(trackId)) {
     return new Response(JSON.stringify({ error: 'Invalid track ID' }), {
       status: 400,
       headers: getErrorHeaders(request)
