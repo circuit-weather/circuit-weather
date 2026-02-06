@@ -580,6 +580,15 @@ async function handleTileRequest(request, env, ctx) {
     });
   }
 
+  // SEC: Strict Extension Validation
+  // Ensure we only proxy PNG images as expected by the frontend
+  if (!tilePath.endsWith('.png')) {
+    return new Response(JSON.stringify({ error: 'Invalid tile format' }), {
+      status: 400,
+      headers: getErrorHeaders(request)
+    });
+  }
+
   const upstreamUrl = `https://tilecache.rainviewer.com${tilePath}`;
 
   // Canonical cache key
@@ -625,6 +634,17 @@ async function handleTileRequest(request, env, ctx) {
       // Pass error status to client so frontend logic can retry or show error
       return new Response(upstreamResponse.body, {
         status: upstreamResponse.status,
+        headers: getErrorHeaders(request)
+      });
+    }
+
+    // SEC: Strict Content-Type Validation
+    // Prevent XSS via MIME sniffing if upstream returns non-image content (e.g. HTML)
+    const contentType = upstreamResponse.headers.get('Content-Type');
+    if (!contentType || !contentType.startsWith('image/')) {
+      console.error(`Upstream Tile Invalid Content-Type: ${contentType}`);
+      return new Response(JSON.stringify({ error: 'Invalid upstream content type' }), {
+        status: 502,
         headers: getErrorHeaders(request)
       });
     }
