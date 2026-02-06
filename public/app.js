@@ -2789,9 +2789,11 @@ class CircuitWeatherApp {
 
         if (unavailable) unavailable.style.display = 'none';
         if (content) {
+            // Palette A11y: Mark region as busy during loading
+            content.setAttribute('aria-busy', 'true');
             content.style.display = 'block';
             content.innerHTML = `
-                <div class="weather-dashboard">
+                <div class="weather-dashboard" aria-hidden="true">
                     <div class="weather-current">
                         <div class="weather-metric">
                             <span class="weather-label skeleton"><span class="skeleton-text" style="width: 30px"></span></span>
@@ -2867,7 +2869,10 @@ class CircuitWeatherApp {
             return;
         }
 
+        // Palette A11y: Clear busy state
         const content = this.ui.forecastContent;
+        if (content) content.removeAttribute('aria-busy');
+
         const unavailable = this.ui.forecastUnavailable;
 
         if (!weather.available) {
