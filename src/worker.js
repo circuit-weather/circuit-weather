@@ -402,6 +402,16 @@ async function handleApiRequest(request, env, ctx) {
       }, ctx);
     }
 
+    // SEC: Strict Content-Type Validation
+    // Prevent cache poisoning if upstream returns HTML error page with 200 OK
+    const contentType = upstreamResponse.headers.get('Content-Type');
+    if (!contentType || !contentType.includes('application/json')) {
+      console.error(`Upstream Invalid Content-Type: ${contentType}`);
+      return cacheAndReturnError(request, cache, cacheKey, 502, {
+        error: 'Invalid upstream content type',
+      }, ctx);
+    }
+
     // Bolt Optimization: Stream response instead of buffering text
     const [cacheBody, clientBody] = upstreamResponse.body.tee();
 

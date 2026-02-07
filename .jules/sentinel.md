@@ -97,3 +97,8 @@
 **Vulnerability:** The `handleTileRequest` in `src/worker.js` blindly appended the request path suffix to the upstream URL without validation. This allowed directory traversal (`..`) and potentially accessing arbitrary paths on the upstream server.
 **Learning:** Proxy endpoints often assume the input path is safe or that the upstream will handle it. However, unvalidated path construction is a common vector for SSRF or traversing into unintended API endpoints.
 **Prevention:** Strictly validate proxy path segments against an allowlist of characters and explicitly reject directory traversal sequences (`..`) before constructing upstream URLs.
+
+## 2026-03-12 - Upstream Cache Poisoning via Content-Type Mismatch
+**Vulnerability:** The API proxy in `src/worker.js` trusted upstream responses (e.g., from Jolpica) to always be valid JSON. If the upstream returned a 200 OK response with an HTML error page (e.g., from a WAF or maintenance page), the worker would cache this as `application/json` for 1 hour. This effectively poisoned the cache, causing the frontend application to break for all users served from that cache edge until TTL expired.
+**Learning:** Proxying "success" status codes (200 OK) blindly is dangerous if the upstream content type is not validated. Modern applications rely on strict content types, and caching layers can propagate transient upstream errors as persistent failures if not intercepted.
+**Prevention:** In API proxies, always validate that the `Content-Type` of the upstream response matches the expected type (e.g., `application/json`) before caching or serving it to the client. If the type is invalid (e.g. `text/html`), treat the response as an error (502 Bad Gateway) and do not cache it.
