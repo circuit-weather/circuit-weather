@@ -2926,9 +2926,12 @@ class CircuitWeatherApp {
 
             // Bolt Optimization: Use DocumentFragment to batch DOM insertions
             const fragment = document.createDocumentFragment();
+            // Palette UX: Use semantic list for timeline items
+            const list = document.createElement('ul');
+            list.className = 'weather-timeline-list';
 
             weather.hourly.forEach(hour => {
-                const item = document.createElement('div');
+                const item = document.createElement('li');
                 item.className = 'weather-timeline-item';
 
                 const relTime = this.weatherClient.getRelativeTime(hour.time, sessionTime);
@@ -2947,9 +2950,10 @@ class CircuitWeatherApp {
                     </div>
                 `;
 
-                fragment.appendChild(item);
+                list.appendChild(item);
             });
 
+            fragment.appendChild(list);
             timelineEl.appendChild(fragment);
         }
     }

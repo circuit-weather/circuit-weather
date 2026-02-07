@@ -419,12 +419,18 @@ body {
 }
 
 .weather-timeline {
-    display: flex;
-    flex-direction: column;
-    gap: var(--spacing-xs);
     max-height: 200px;
     overflow-y: auto;
     padding-right: 4px;
+}
+
+.weather-timeline-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-xs);
+    list-style: none;
+    margin: 0;
+    padding: 0;
 }
 
 .weather-timeline-item {
