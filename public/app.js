@@ -2582,32 +2582,14 @@ class CircuitWeatherApp {
         // Bolt Optimization: Use DocumentFragment to batch DOM insertions
         // Reduces reflows when populating the race list (~24 items)
         const fragment = document.createDocumentFragment();
-        let currentOptgroup = null;
-        let currentMonth = '';
 
         this.races.forEach(race => {
-            const date = new Date(race.date);
-            // Palette UX: Group races by month for better scannability
-            // Uses system locale for month name (e.g. "March", "Marzo")
-            const monthName = date.toLocaleString(undefined, { month: 'long' });
-
-            if (monthName !== currentMonth) {
-                currentMonth = monthName;
-                currentOptgroup = document.createElement('optgroup');
-                currentOptgroup.label = monthName;
-                fragment.appendChild(currentOptgroup);
-            }
-
             const option = document.createElement('option');
             option.value = race.round;
+            const date = new Date(race.date);
             const dateStr = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
             option.textContent = `R${race.round}: ${race.name} (${dateStr})`;
-
-            if (currentOptgroup) {
-                currentOptgroup.appendChild(option);
-            } else {
-                fragment.appendChild(option);
-            }
+            fragment.appendChild(option);
         });
 
         select.appendChild(fragment);
@@ -2944,9 +2926,12 @@ class CircuitWeatherApp {
 
             // Bolt Optimization: Use DocumentFragment to batch DOM insertions
             const fragment = document.createDocumentFragment();
+            // Palette UX: Use semantic list for timeline items
+            const list = document.createElement('ul');
+            list.className = 'weather-timeline-list';
 
             weather.hourly.forEach(hour => {
-                const item = document.createElement('div');
+                const item = document.createElement('li');
                 item.className = 'weather-timeline-item';
 
                 const relTime = this.weatherClient.getRelativeTime(hour.time, sessionTime);
@@ -2965,9 +2950,10 @@ class CircuitWeatherApp {
                     </div>
                 `;
 
-                fragment.appendChild(item);
+                list.appendChild(item);
             });
 
+            fragment.appendChild(list);
             timelineEl.appendChild(fragment);
         }
     }
