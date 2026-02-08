@@ -470,6 +470,15 @@ class WeatherClient {
         if (diffMins < 0) return `${Math.round(diffMins / 60)}h`;
         return `+${Math.round(diffMins / 60)}h`;
     }
+
+    getAccessibleRelativeTime(timestamp, sessionTime) {
+        const diffMins = (timestamp * 1000 - sessionTime.getTime()) / 60000;
+
+        if (Math.abs(diffMins) < 30) return 'Session start';
+        const hours = Math.round(diffMins / 60);
+        if (hours < 0) return `${Math.abs(hours)} hour${Math.abs(hours) !== 1 ? 's' : ''} before session`;
+        return `${hours} hour${hours !== 1 ? 's' : ''} after session`;
+    }
 }
 
 // ===================================
@@ -2920,7 +2929,8 @@ class CircuitWeatherApp {
         }
 
         // Render Timeline
-        const timelineEl = this.ui.weatherTimeline;
+        // Bolt Optimization: Re-query element as it may have been recreated by skeleton loader
+        const timelineEl = document.getElementById('weatherTimeline');
         if (timelineEl && weather.hourly) {
             timelineEl.innerHTML = '';
 
@@ -2937,15 +2947,23 @@ class CircuitWeatherApp {
                 const relTime = this.weatherClient.getRelativeTime(hour.time, sessionTime);
                 const desc = this.weatherClient.getWeatherDescription(hour.code);
 
+                // Palette Accessibility: Generate descriptive label for screen readers
+                const a11yTime = this.weatherClient.getAccessibleRelativeTime(hour.time, sessionTime);
+                const temp = Math.round(hour.temp);
+                const ariaLabel = `${a11yTime}. ${desc}. Temperature ${temp} degrees. Rain chance ${hour.precipProb}%. Wind ${hour.windSpeed} km/h.`;
+
+                item.setAttribute('aria-label', ariaLabel);
+
                 // SEC: Escape all upstream data to prevent XSS (even if trusted)
+                // Palette Accessibility: Hide visual elements from screen readers to prevent fragmented reading
                 item.innerHTML = `
-                    <div class="weather-timeline-time">${escapeHtml(relTime)}</div>
-                    <div class="weather-timeline-condition">
+                    <div class="weather-timeline-time" aria-hidden="true">${escapeHtml(relTime)}</div>
+                    <div class="weather-timeline-condition" aria-hidden="true">
                         ${escapeHtml(desc)}
                         <div class="weather-timeline-wind">${escapeHtml(hour.windSpeed)} km/h</div>
                     </div>
-                    <div class="weather-timeline-temp">
-                        <div>${escapeHtml(Math.round(hour.temp))}°</div>
+                    <div class="weather-timeline-temp" aria-hidden="true">
+                        <div>${escapeHtml(temp)}°</div>
                         <div class="weather-timeline-precip">${escapeHtml(hour.precipProb)}%</div>
                     </div>
                 `;
