@@ -685,6 +685,8 @@ async function handleTileRequest(request, env, ctx) {
     if (allowedOrigin) {
       clientHeaders.set('Access-Control-Allow-Origin', allowedOrigin);
       clientHeaders.set('Vary', 'Origin');
+    } else {
+      clientHeaders.delete('Access-Control-Allow-Origin');
     }
 
     return new Response(clientBody, {
