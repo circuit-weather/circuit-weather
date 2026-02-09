@@ -171,6 +171,23 @@ class ThemeManager {
 
     applyTheme() {
         document.documentElement.setAttribute('data-theme', this.theme);
+
+        // Palette UX: Update toggle button labels for better accessibility
+        // Dynamic labels clarify the action (e.g., "Switch to light mode") rather than just describing the current state
+        const nextTheme = this.theme === 'dark' ? 'light' : 'dark';
+        const label = `Switch to ${nextTheme} mode`;
+
+        const updateBtn = (id) => {
+            const btn = document.getElementById(id);
+            if (btn) {
+                btn.setAttribute('aria-label', label);
+                btn.setAttribute('title', label);
+            }
+        };
+
+        updateBtn('themeToggle');
+        updateBtn('mobileThemeToggle');
+
         if (this.onThemeChange) this.onThemeChange(this.theme);
     }
 
