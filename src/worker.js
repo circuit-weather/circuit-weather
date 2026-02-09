@@ -650,8 +650,9 @@ async function handleTileRequest(request, env, ctx) {
 
     // SEC: Strict Content-Type Validation
     // Prevent XSS via MIME sniffing if upstream returns non-image content (e.g. HTML)
+    // Only allow PNG as we enforced .png extension in URL. Blocks image/svg+xml.
     const contentType = upstreamResponse.headers.get('Content-Type');
-    if (!contentType || !contentType.startsWith('image/')) {
+    if (!contentType || !contentType.startsWith('image/png')) {
       console.error(`Upstream Tile Invalid Content-Type: ${contentType}`);
       return new Response(JSON.stringify({ error: 'Invalid upstream content type' }), {
         status: 502,
@@ -666,6 +667,12 @@ async function handleTileRequest(request, env, ctx) {
     cacheHeaders.set('Cache-Control', 'public, max-age=7200'); // 2 Hours TTL
     cacheHeaders.set('X-Cache', 'MISS');
     cacheHeaders.set('Access-Control-Allow-Origin', '*');
+
+    // SEC: Add security headers (missing in previous version)
+    // Ensures X-Content-Type-Options: nosniff is set on cached tiles
+    Object.entries(DEFAULT_SECURITY_HEADERS).forEach(([key, value]) => {
+      cacheHeaders.set(key, value);
+    });
 
     // Clean up headers
     cacheHeaders.delete('Set-Cookie');
