@@ -3129,14 +3129,14 @@ class WindLayer {
         this.lastFrameTime = 0;
 
         // Configuration
-        this.gridSpacing = 60; // px
-        this.arrowSize = 14; // px base size
+        this.gridSpacing = 50; // px
+        this.arrowSize = 16; // px base size
         this.maxRadiusKm = 10; // Only draw within 10km radius of circuit (reduced to keep it focused)
         this.circuitCenter = null; // [lat, lng]
 
         // Theme Colors
         this.color = getComputedStyle(document.documentElement).getPropertyValue('--color-text').trim() || '#0f172a';
-        this.opacity = 0.4;
+        this.opacity = 0.6;
 
         // Leaflet Handlers
         this._onMove = this.onMove.bind(this);
