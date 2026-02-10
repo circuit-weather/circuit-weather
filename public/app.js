@@ -15,8 +15,7 @@ const CONFIG = {
     f1ApiBase: isLocal ? 'https://api.jolpi.ca/ergast/f1' : '/api/f1',
     rainViewerApi: isLocal ? 'https://api.rainviewer.com/public/weather-maps.json' : '/api/radar',
     trackApi: isLocal ? 'https://raw.githubusercontent.com/bacinger/f1-circuits/master/circuits' : '/api/track',
-    // Proxy weather requests in production for privacy and rate limiting
-    weatherApi: isLocal ? 'https://api.open-meteo.com/v1/forecast' : '/api/weather',
+    weatherApi: 'https://api.open-meteo.com/v1/forecast',
     // Use Carto basemaps (reliable, free, no key)
     mapTiles: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
     mapTilesDark: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',

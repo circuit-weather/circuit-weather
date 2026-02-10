@@ -166,11 +166,6 @@ export default {
       return handleTrackRequest(request, env, ctx);
     }
 
-    // Handle weather requests (Proxied Open-Meteo)
-    if (path === '/api/weather') {
-      return handleWeatherRequest(request, env, ctx);
-    }
-
     // For any other /api/* routes, return 404
     return new Response(JSON.stringify({ error: 'API endpoint not found' }), {
       status: 404,
@@ -305,122 +300,6 @@ function getAllowedOrigin(request) {
   }
 
   return null;
-}
-
-/**
- * Handle Weather requests with caching and input validation
- */
-async function handleWeatherRequest(request, env, ctx) {
-  const url = new URL(request.url);
-  const lat = url.searchParams.get('latitude');
-  const lon = url.searchParams.get('longitude');
-
-  // SEC: Validate coordinates (numeric, format)
-  if (!lat || !lon || !VALID_COORD_REGEX.test(lat) || !VALID_COORD_REGEX.test(lon)) {
-    return new Response(JSON.stringify({ error: 'Invalid coordinates' }), {
-      status: 400,
-      headers: getErrorHeaders(request)
-    });
-  }
-
-  // Construct upstream URL with fixed parameters to enforce scope
-  // This prevents clients from requesting arbitrary data fields
-  const upstreamUrl = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,wind_speed_10m,wind_direction_10m,weather_code&current=temperature_2m,relative_humidity_2m,wind_speed_10m,wind_direction_10m,precipitation&timeformat=unixtime&forecast_days=16`;
-
-  // Canonical cache key based on upstream URL (lat/lon only, no extra client params)
-  const cacheKey = new Request(upstreamUrl);
-  const cache = caches.default;
-
-  // Check cache match
-  let response = await cache.match(cacheKey);
-
-  if (response) {
-    const headers = new Headers(response.headers);
-    headers.set('X-Cache', 'HIT');
-
-    // Apply strict CORS
-    const allowedOrigin = getAllowedOrigin(request);
-    if (allowedOrigin) {
-      headers.set('Access-Control-Allow-Origin', allowedOrigin);
-      headers.set('Vary', 'Origin');
-    } else {
-      headers.delete('Access-Control-Allow-Origin');
-    }
-
-    return new Response(response.body, {
-      status: response.status,
-      statusText: response.statusText,
-      headers
-    });
-  }
-
-  try {
-    const upstreamResponse = await fetch(upstreamUrl, {
-      headers: {
-        'Accept': 'application/json',
-        // Open-Meteo is public but appreciates User-Agent
-        'User-Agent': 'CircuitWeather/1.0',
-      },
-      signal: AbortSignal.timeout(API_TIMEOUT),
-    });
-
-    if (!upstreamResponse.ok) {
-      return cacheAndReturnError(request, cache, cacheKey, upstreamResponse.status, {
-        error: 'Weather API error',
-        status: upstreamResponse.status,
-      }, ctx);
-    }
-
-    // SEC: Strict Content-Type Validation
-    const contentType = upstreamResponse.headers.get('Content-Type');
-    if (!contentType || !contentType.includes('application/json')) {
-      console.error(`Upstream Weather Invalid Content-Type: ${contentType}`);
-      return cacheAndReturnError(request, cache, cacheKey, 502, {
-        error: 'Invalid upstream content type',
-      }, ctx);
-    }
-
-    const [cacheBody, clientBody] = upstreamResponse.body.tee();
-
-    // Cache for 15 minutes (900s)
-    const cacheHeaders = new Headers({
-      'Content-Type': 'application/json',
-      'Cache-Control': 'public, max-age=900',
-      'X-Cache': 'MISS',
-      'Access-Control-Allow-Origin': '*',
-      ...DEFAULT_SECURITY_HEADERS
-    });
-
-    const cacheResponse = new Response(cacheBody, {
-      status: 200,
-      headers: cacheHeaders,
-    });
-
-    ctx.waitUntil(cache.put(cacheKey, cacheResponse));
-
-    const clientHeaders = new Headers(cacheHeaders);
-    const allowedOrigin = getAllowedOrigin(request);
-    if (allowedOrigin) {
-      clientHeaders.set('Access-Control-Allow-Origin', allowedOrigin);
-      clientHeaders.set('Vary', 'Origin');
-    } else {
-      clientHeaders.delete('Access-Control-Allow-Origin');
-    }
-
-    return new Response(clientBody, {
-      status: 200,
-      headers: clientHeaders
-    });
-
-  } catch (error) {
-    console.error('Weather Fetch Error:', error);
-    return new Response(JSON.stringify({
-      error: 'Failed to fetch weather data',
-    }), {
-      status: 502,
-      headers: getErrorHeaders(request)
-    });
-  }
 }
 
 /**
@@ -879,6 +758,14 @@ async function handleRadarRequest(request, env, ctx) {
 
     if (!upstreamResponse.ok) {
       console.error(`Upstream Radar API Error: Status ${upstreamResponse.status}`);
+      return getEmptyRadarResponse(request);
+    }
+
+    // SEC: Strict Content-Type Validation
+    // Prevent cache poisoning if upstream returns HTML error page (e.g. WAF/Maintenance) with 200 OK
+    const contentType = upstreamResponse.headers.get('Content-Type');
+    if (!contentType || !contentType.includes('application/json')) {
+      console.error(`Upstream Radar Invalid Content-Type: ${contentType}`);
       return getEmptyRadarResponse(request);
     }
 
