@@ -3258,6 +3258,8 @@ class WindLayer {
         if (this.isVisible) {
             this.createCanvas();
             this.canvas.style.display = 'block';
+            // Force immediate resize and draw to ensure visibility
+            this.resize();
             this.startAnimation();
         } else {
             this.stopAnimation();
@@ -3383,6 +3385,10 @@ class WindLayer {
 
         // Distance in pixels
         const pxRadius = Math.hypot(edgePoint.x - circuitPoint.x, edgePoint.y - circuitPoint.y);
+
+        // Ensure minimum pixel radius to prevent invisible layer at low zooms
+        // or small maps
+        if (pxRadius < 20) pxRadius = 20;
 
         // Optimization: Don't draw if circuit is off-screen
         if (circuitPoint.x < -pxRadius || circuitPoint.x > width + pxRadius ||
