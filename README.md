@@ -20,7 +20,7 @@ Key features include:
 *   **Race Schedule:** Browse all circuits from the current F1 season with session start times.
 *   **Distance Markers:** Toggle range circles to gauge how far the rain is from the track (in km or miles).
 *   **Theme Support:** Automatically adapts to your system's dark or light mode, or you can toggle it manually.
-*   **Shareable Links:** Send a direct link to a specific race or session to your friends.
+*   **Deep Linking:** Navigate directly to a specific race or session via the URL.
 *   **Responsive Design:** Works great on your phone, tablet, or desktop.
 
 ## How it works

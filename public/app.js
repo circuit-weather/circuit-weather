@@ -2356,44 +2356,6 @@ class PrivacyModal {
 }
 
 // ===================================
-// Share Manager
-// ===================================
-
-class ShareManager {
-    constructor() {
-        this.btn = document.getElementById('shareBtn');
-        this.bindEvents();
-    }
-
-    bindEvents() {
-        if (this.btn) {
-            this.btn.addEventListener('click', () => this.share());
-        }
-    }
-
-    async share() {
-        try {
-            await navigator.clipboard.writeText(window.location.href);
-            this.showTooltip();
-        } catch (err) {
-            console.error('Failed to copy link:', err);
-        }
-    }
-
-    showTooltip() {
-        if (!this.btn) return;
-        this.btn.classList.add('copied');
-
-        // Clear previous timeout if user clicks rapidly
-        if (this.timeout) clearTimeout(this.timeout);
-
-        this.timeout = setTimeout(() => {
-            this.btn.classList.remove('copied');
-        }, 2000);
-    }
-}
-
-// ===================================
 // Main Application
 // ===================================
 
@@ -3055,5 +3017,4 @@ document.addEventListener('DOMContentLoaded', () => {
     const app = new CircuitWeatherApp();
     app.init();
     new PrivacyModal();
-    new ShareManager();
 });
