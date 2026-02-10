@@ -9,3 +9,7 @@
 ## 2025-01-28 - Semantic Lists for Timelines
 **Learning:** Using `<div>` soup for lists of items (like a forecast timeline) forces screen reader users to navigate blindly.
 **Action:** Use semantic `<ul>` and `<li>` structures for any list of repeating items. Remove default styling with CSS to maintain the design while improving navigability.
+
+## 2025-05-21 - Share Button Rejection
+**Learning:** User explicitly rejected an explicit "Share" button in the header, preferring a strictly immersive, app-like interface without social/sharing clutter.
+**Action:** Avoid adding dedicated share UI elements. Rely on browser native URL copying and document "Deep Linking" capabilities instead of building "Share" features.
