@@ -3130,13 +3130,13 @@ class WindLayer {
 
         // Configuration
         this.gridSpacing = 50; // px
-        this.arrowSize = 16; // px base size
-        this.maxRadiusKm = 10; // Only draw within 10km radius of circuit (reduced to keep it focused)
+        this.arrowSize = 18; // px base size
+        this.maxRadiusKm = 25; // Only draw within 25km radius of circuit (more prominent)
         this.circuitCenter = null; // [lat, lng]
 
         // Theme Colors
         this.color = getComputedStyle(document.documentElement).getPropertyValue('--color-text').trim() || '#0f172a';
-        this.opacity = 0.6;
+        this.opacity = 0.8;
 
         // Leaflet Handlers
         this._onMove = this.onMove.bind(this);
@@ -3237,7 +3237,10 @@ class WindLayer {
 
         if (wind) {
             this.currentWind = wind;
-            // No need to force redraw, the loop handles it
+            // Ensure animation is running if we have valid data and are visible
+            if (this.isVisible && !this.animationId) {
+                this.startAnimation();
+            }
         }
     }
 
@@ -3301,43 +3304,10 @@ class WindLayer {
         // Speed: 10 km/h = ? pixels/sec
         // Let's make it visual: 10 km/h -> 20 px/sec
         const pxPerKmh = 2;
-        const speedPx = this.currentWind.speed * pxPerKmh * dt;
 
-        // Direction: wind_direction_10m is "direction wind is coming FROM" in degrees (0=North, 90=East)
-        // So wind blowing FROM North (0 deg) moves particles DOWN (+y)
-        // Math:
-        // 0 deg (N) -> move (0, 1)
-        // 90 deg (E) -> move (-1, 0)
-        // 180 deg (S) -> move (0, -1)
-        // 270 deg (W) -> move (1, 0)
-
-        // Convert to radians.
-        // Standard trig: 0 is East (+x). We need 0 to be North (-y? No, from North means moving Down +y).
-        // Angle of movement = (WindDir + 180) to get "blowing TOWARDS"
-        // Then convert to standard math angle (0=East, CCW).
-        // Let's just use sin/cos directly with the compass angle.
-
-        // To Vector:
-        // x = -sin(dir)  (0->0, 90->-1, 180->0, 270->1)  Matches!
-        // y = -cos(dir)  (0->-1, 90->0, 180->1, 270->0)  Matches "blowing towards"!
-        // Actually: From North (0) -> Blows South. So dy should be positive. -cos(0) = -1. Incorrect.
-        // wait. 0 deg is North. Wind FROM North. Blows TO South.
-        // Canvas Y increases Down. So South is +Y.
-        // We want dy = +speed.
-        // cos(0) = 1. So we want +cos(0).
-        // 180 deg (South). Wind FROM South. Blows TO North.
-        // We want dy = -speed.
-        // cos(180) = -1. So we want +cos(180).
-        // Y Formula: dy = cos(rad) * speed.
-
-        // X Axis: 90 deg (East). Wind FROM East. Blows TO West.
-        // Canvas X decreases Left. So West is -X.
-        // We want dx = -speed.
-        // sin(90) = 1. So we want -sin(90).
-        // 270 deg (West). Wind FROM West. Blows TO East.
-        // We want dx = +speed.
-        // sin(270) = -1. So we want -sin(270) => +1.
-        // X Formula: dx = -sin(rad) * speed.
+        // Ensure at least tiny movement so it looks alive even if calm (0.5 km/h)
+        const effectiveSpeed = Math.max(0.5, this.currentWind.speed);
+        const speedPx = effectiveSpeed * pxPerKmh * dt;
 
         const rad = this.currentWind.direction * (Math.PI / 180);
         const dx = -Math.sin(rad) * speedPx;
@@ -3347,8 +3317,9 @@ class WindLayer {
         this.gridOffset.y += dy;
 
         // Wrap offset to keep precision high (modulo grid spacing)
-        this.gridOffset.x = this.gridOffset.x % this.gridSpacing;
-        this.gridOffset.y = this.gridOffset.y % this.gridSpacing;
+        // Handle negative modulo correctly
+        this.gridOffset.x = ((this.gridOffset.x % this.gridSpacing) + this.gridSpacing) % this.gridSpacing;
+        this.gridOffset.y = ((this.gridOffset.y % this.gridSpacing) + this.gridSpacing) % this.gridSpacing;
     }
 
     draw() {
