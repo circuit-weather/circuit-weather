@@ -218,7 +218,41 @@ body {
 }
 
 .sidebar-header .theme-toggle {
+    margin-left: var(--spacing-sm);
+}
+
+.sidebar-header .share-btn {
     margin-left: auto;
+}
+
+.share-btn {
+    position: relative;
+}
+
+.share-btn .tooltip {
+    position: absolute;
+    top: 110%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--color-surface-elevated);
+    color: var(--color-text);
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    font-size: 0.7rem;
+    font-weight: 500;
+    white-space: nowrap;
+    box-shadow: var(--shadow-md);
+    border: 1px solid var(--color-border);
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity var(--transition-fast);
+    pointer-events: none;
+    z-index: 20;
+}
+
+.share-btn.copied .tooltip {
+    opacity: 1;
+    visibility: visible;
 }
 
 /* Sidebar Content */
