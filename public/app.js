@@ -418,6 +418,8 @@ class WeatherClient {
             return {
                 available: true,
                 current: data.current,
+                // Return full hourly data for the wind layer
+                rawHourly: data.hourly,
                 hourly: this.filterHourly(data.hourly, sessionTime),
                 units: data.current_units
             };
@@ -495,6 +497,70 @@ class WeatherClient {
         const hours = Math.round(diffMins / 60);
         if (hours < 0) return `${Math.abs(hours)} hour${Math.abs(hours) !== 1 ? 's' : ''} before session`;
         return `${hours} hour${hours !== 1 ? 's' : ''} after session`;
+    }
+
+    /**
+     * Get interpolated wind data for a specific timestamp.
+     * @param {Object} rawHourly - The raw hourly data object from Open-Meteo
+     * @param {number} timestamp - Unix timestamp (seconds)
+     * @returns {Object|null} { speed, direction } or null if out of range
+     */
+    getWindAtTimestamp(rawHourly, timestamp) {
+        if (!rawHourly || !rawHourly.time || rawHourly.time.length === 0) return null;
+
+        const times = rawHourly.time;
+        const speeds = rawHourly.wind_speed_10m;
+        const dirs = rawHourly.wind_direction_10m;
+
+        // Binary search for the interval
+        let low = 0, high = times.length - 1;
+
+        // Check bounds
+        if (timestamp < times[0]) return { speed: speeds[0], direction: dirs[0] };
+        if (timestamp > times[high]) return { speed: speeds[high], direction: dirs[high] };
+
+        while (low <= high) {
+            const mid = Math.floor((low + high) / 2);
+            if (times[mid] === timestamp) {
+                return { speed: speeds[mid], direction: dirs[mid] };
+            } else if (times[mid] < timestamp) {
+                low = mid + 1;
+            } else {
+                high = mid - 1;
+            }
+        }
+
+        // After search, high is the index just before timestamp, low is just after
+        // But since we did low = mid + 1, low is the upper bound index.
+        // Let's verify: if times[mid] < timestamp, low becomes mid + 1.
+        // So times[low-1] < timestamp < times[low].
+        const i1 = low - 1;
+        const i2 = low;
+
+        if (i1 < 0 || i2 >= times.length) return null; // Should be covered by bounds check
+
+        const t1 = times[i1];
+        const t2 = times[i2];
+        const factor = (timestamp - t1) / (t2 - t1);
+
+        // Linear interpolation for speed
+        const speed = speeds[i1] + (speeds[i2] - speeds[i1]) * factor;
+
+        // Circular interpolation for direction (0-360)
+        let d1 = dirs[i1];
+        let d2 = dirs[i2];
+
+        // Handle wrap-around (e.g. 350 -> 10 should be +20 deg, not -340)
+        if (Math.abs(d2 - d1) > 180) {
+            if (d2 > d1) d1 += 360;
+            else d2 += 360;
+        }
+
+        let direction = d1 + (d2 - d1) * factor;
+        direction = direction % 360;
+        if (direction < 0) direction += 360;
+
+        return { speed, direction };
     }
 }
 
@@ -1401,6 +1467,11 @@ class WeatherRadar {
 
     updateTimeDisplay(timestamp) {
         if (!this.ui.time || !timestamp) return;
+
+        // Notify external listeners (Wind Layer)
+        if (this.onTimeUpdate) {
+            this.onTimeUpdate(timestamp);
+        }
 
         // Bolt Optimization: Use shared formatter and cached elements
         // This runs every animation frame, so efficiency matters.
@@ -2367,6 +2438,7 @@ class CircuitWeatherApp {
         this.f1Api = new F1API();
         this.weatherClient = new WeatherClient();
         this.radar = null;
+        this.windLayer = null; // New Wind Layer
         this.trackLayer = null;
         this.rangeCircles = null;
         this.weatherWidget = null;
@@ -2434,7 +2506,14 @@ class CircuitWeatherApp {
 
             this.rangeCircles = new RangeCircles(map);
             this.trackLayer = new TrackLayer(map);
+            this.windLayer = new WindLayer(map, this.weatherClient);
             this.radar = new WeatherRadar(map);
+
+            // Sync Radar Time with Wind Layer
+            // We use a custom event or callback injection
+            this.radar.onTimeUpdate = (timestamp) => {
+                if (this.windLayer) this.windLayer.updateTime(timestamp);
+            };
 
             // Only create weather widget if feature is enabled
             if (FEATURE_FLAGS.enableCurrentWeather) {
@@ -2636,6 +2715,9 @@ class CircuitWeatherApp {
             this.mapManager.setView(lat, lng);
             this.rangeCircles.draw([lat, lng]);
 
+            // Set Wind Layer Center
+            this.windLayer.setCircuitCenter([lat, lng]);
+
             // Load track layout
             if (race.circuit && race.circuit.circuitId) {
                 this.trackLayer.loadTrack(race.circuit.circuitId);
@@ -2805,6 +2887,11 @@ class CircuitWeatherApp {
 
         const { lat, long } = this.selectedRace.location;
         const weather = await this.weatherClient.getForecast(lat, long, sessionTime);
+
+        // Pass raw hourly data to Wind Layer
+        if (weather.available && weather.rawHourly && this.windLayer) {
+            this.windLayer.setData(weather.rawHourly);
+        }
 
         this.renderForecast(weather, sessionTime, sessionId);
     }
@@ -3018,3 +3105,353 @@ document.addEventListener('DOMContentLoaded', () => {
     app.init();
     new PrivacyModal();
 });
+
+// ===================================
+// Wind Layer (Animated Grid)
+// ===================================
+
+class WindLayer {
+    constructor(map, weatherClient) {
+        this.map = map;
+        this.weatherClient = weatherClient;
+        this.canvas = null;
+        this.ctx = null;
+        this.animationId = null;
+        this.isVisible = false;
+
+        // Data State
+        this.rawHourlyData = null;
+        this.currentTimestamp = null;
+        this.currentWind = { speed: 0, direction: 0 };
+
+        // Animation State
+        this.gridOffset = { x: 0, y: 0 };
+        this.lastFrameTime = 0;
+
+        // Configuration
+        this.gridSpacing = 60; // px
+        this.arrowSize = 14; // px base size
+        this.maxRadiusKm = 10; // Only draw within 10km radius of circuit (reduced to keep it focused)
+        this.circuitCenter = null; // [lat, lng]
+
+        // Theme Colors
+        this.color = getComputedStyle(document.documentElement).getPropertyValue('--color-text').trim() || '#0f172a';
+        this.opacity = 0.4;
+
+        // Leaflet Handlers
+        this._onMove = this.onMove.bind(this);
+        this._onResize = this.resize.bind(this);
+
+        this.bindEvents();
+    }
+
+    bindEvents() {
+        // Update color on theme change
+        const observer = new MutationObserver((mutations) => {
+            mutations.forEach((mutation) => {
+                if (mutation.type === 'attributes' && mutation.attributeName === 'data-theme') {
+                    this.color = getComputedStyle(document.documentElement).getPropertyValue('--color-text').trim();
+                    if (this.isVisible) this.draw();
+                }
+            });
+        });
+        observer.observe(document.documentElement, { attributes: true });
+
+        // Bind toggle button
+        const toggle = document.getElementById('windToggle');
+        if (toggle) {
+            toggle.addEventListener('click', () => this.toggle());
+        }
+    }
+
+    createCanvas() {
+        if (this.canvas) return;
+
+        this.canvas = document.createElement('canvas');
+        this.canvas.className = 'wind-layer-canvas';
+        this.canvas.style.position = 'absolute';
+        this.canvas.style.top = '0';
+        this.canvas.style.left = '0';
+        this.canvas.style.pointerEvents = 'none';
+        this.canvas.style.zIndex = '400'; // Above map, below controls
+        this.canvas.style.opacity = this.opacity;
+
+        // Add to Leaflet's overlay pane so it moves with the map?
+        // Actually, for a fixed grid animation, it's better to add to the map container
+        // and redraw on move. If we add to overlay pane, we have to handle coordinate projection for every arrow.
+        // A "screen space" grid is much more performant and "vibe coded" for wind.
+        // The wind is "in the air", not "on the ground".
+
+        this.map.getContainer().appendChild(this.canvas);
+        this.ctx = this.canvas.getContext('2d');
+        this.resize();
+
+        // Bind map events only when canvas exists
+        this.map.on('move', this._onMove);
+        this.map.on('resize', this._onResize);
+    }
+
+    destroyCanvas() {
+        if (this.canvas) {
+            this.map.off('move', this._onMove);
+            this.map.off('resize', this._onResize);
+            this.canvas.remove();
+            this.canvas = null;
+            this.ctx = null;
+        }
+    }
+
+    resize() {
+        if (!this.canvas) return;
+        const size = this.map.getSize();
+        this.canvas.width = size.x;
+        this.canvas.height = size.y;
+        this.draw();
+    }
+
+    onMove() {
+        if (this.isVisible) this.draw();
+    }
+
+    setData(hourlyData) {
+        this.rawHourlyData = hourlyData;
+        // Reset or update current wind based on current timestamp
+        if (this.currentTimestamp) {
+            this.updateTime(this.currentTimestamp);
+        }
+    }
+
+    setCircuitCenter(center) {
+        this.circuitCenter = center;
+        if (this.isVisible) this.draw();
+    }
+
+    updateTime(timestamp) {
+        this.currentTimestamp = timestamp;
+
+        if (!this.rawHourlyData || !this.weatherClient) return;
+
+        // Fetch interpolated wind for this timestamp
+        // Note: The timestamp from radar is already in seconds (Unix)
+        const wind = this.weatherClient.getWindAtTimestamp(this.rawHourlyData, timestamp);
+
+        if (wind) {
+            this.currentWind = wind;
+            // No need to force redraw, the loop handles it
+        }
+    }
+
+    toggle(forceState) {
+        const newState = forceState !== undefined ? forceState : !this.isVisible;
+
+        if (newState === this.isVisible) return;
+
+        this.isVisible = newState;
+
+        // Update UI
+        const toggleBtn = document.getElementById('windToggle');
+        if (toggleBtn) {
+            toggleBtn.classList.toggle('active', this.isVisible);
+            toggleBtn.setAttribute('aria-pressed', this.isVisible);
+        }
+
+        if (this.isVisible) {
+            this.createCanvas();
+            this.canvas.style.display = 'block';
+            this.startAnimation();
+        } else {
+            this.stopAnimation();
+            if (this.canvas) {
+                this.canvas.style.display = 'none';
+                this.destroyCanvas(); // Save memory when off
+            }
+        }
+    }
+
+    startAnimation() {
+        if (this.animationId) return;
+        this.lastFrameTime = performance.now();
+        this.loop();
+    }
+
+    stopAnimation() {
+        if (this.animationId) {
+            cancelAnimationFrame(this.animationId);
+            this.animationId = null;
+        }
+    }
+
+    loop() {
+        if (!this.isVisible) return;
+
+        const now = performance.now();
+        const dt = Math.min((now - this.lastFrameTime) / 1000, 0.1); // Limit dt to 100ms
+        this.lastFrameTime = now;
+
+        this.updatePhysics(dt);
+        this.draw();
+
+        this.animationId = requestAnimationFrame(() => this.loop());
+    }
+
+    updatePhysics(dt) {
+        // Move the grid offset based on wind speed and direction
+        // Speed: 10 km/h = ? pixels/sec
+        // Let's make it visual: 10 km/h -> 20 px/sec
+        const pxPerKmh = 2;
+        const speedPx = this.currentWind.speed * pxPerKmh * dt;
+
+        // Direction: wind_direction_10m is "direction wind is coming FROM" in degrees (0=North, 90=East)
+        // So wind blowing FROM North (0 deg) moves particles DOWN (+y)
+        // Math:
+        // 0 deg (N) -> move (0, 1)
+        // 90 deg (E) -> move (-1, 0)
+        // 180 deg (S) -> move (0, -1)
+        // 270 deg (W) -> move (1, 0)
+
+        // Convert to radians.
+        // Standard trig: 0 is East (+x). We need 0 to be North (-y? No, from North means moving Down +y).
+        // Angle of movement = (WindDir + 180) to get "blowing TOWARDS"
+        // Then convert to standard math angle (0=East, CCW).
+        // Let's just use sin/cos directly with the compass angle.
+
+        // To Vector:
+        // x = -sin(dir)  (0->0, 90->-1, 180->0, 270->1)  Matches!
+        // y = -cos(dir)  (0->-1, 90->0, 180->1, 270->0)  Matches "blowing towards"!
+        // Actually: From North (0) -> Blows South. So dy should be positive. -cos(0) = -1. Incorrect.
+        // wait. 0 deg is North. Wind FROM North. Blows TO South.
+        // Canvas Y increases Down. So South is +Y.
+        // We want dy = +speed.
+        // cos(0) = 1. So we want +cos(0).
+        // 180 deg (South). Wind FROM South. Blows TO North.
+        // We want dy = -speed.
+        // cos(180) = -1. So we want +cos(180).
+        // Y Formula: dy = cos(rad) * speed.
+
+        // X Axis: 90 deg (East). Wind FROM East. Blows TO West.
+        // Canvas X decreases Left. So West is -X.
+        // We want dx = -speed.
+        // sin(90) = 1. So we want -sin(90).
+        // 270 deg (West). Wind FROM West. Blows TO East.
+        // We want dx = +speed.
+        // sin(270) = -1. So we want -sin(270) => +1.
+        // X Formula: dx = -sin(rad) * speed.
+
+        const rad = this.currentWind.direction * (Math.PI / 180);
+        const dx = -Math.sin(rad) * speedPx;
+        const dy = Math.cos(rad) * speedPx; // Wind from North (0) blows South (+Y)
+
+        this.gridOffset.x += dx;
+        this.gridOffset.y += dy;
+
+        // Wrap offset to keep precision high (modulo grid spacing)
+        this.gridOffset.x = this.gridOffset.x % this.gridSpacing;
+        this.gridOffset.y = this.gridOffset.y % this.gridSpacing;
+    }
+
+    draw() {
+        if (!this.ctx || !this.map || !this.circuitCenter) return;
+
+        const width = this.canvas.width;
+        const height = this.canvas.height;
+
+        this.ctx.clearRect(0, 0, width, height);
+
+        // Pre-calculate rotation
+        // Arrow should point "towards" the wind direction
+        // Rotation 0 is usually pointing Right or Up. Let's say our arrow points Up (0, -1).
+        // Wind 0 deg (From North) -> Blowing South (Down). Arrow should point Down (180 deg).
+        // Rotation = WindDir + 180
+        const rotation = (this.currentWind.direction + 180) * (Math.PI / 180);
+
+        // Scale based on speed
+        // Min size 0.5, Max size 1.5
+        const scale = Math.max(0.5, Math.min(1.5, this.currentWind.speed / 20)); // 20kmh = 1.0
+
+        // Determine bounds for drawing
+        // Only draw if within radius of circuit center (if set)
+        let circuitPoint = this.map.latLngToContainerPoint(this.circuitCenter);
+
+        // Calculate pixel radius for maxRadiusKm
+        // Use a point at distance
+        // Simple approx: 1 deg lat approx 111km.
+        // This avoids complex projection math on every frame
+        // Find a point maxRadiusKm north
+        const latOffset = this.maxRadiusKm / 111;
+        const edgeLatLng = L.latLng(this.circuitCenter[0] + latOffset, this.circuitCenter[1]);
+        const edgePoint = this.map.latLngToContainerPoint(edgeLatLng);
+
+        // Distance in pixels
+        const pxRadius = Math.hypot(edgePoint.x - circuitPoint.x, edgePoint.y - circuitPoint.y);
+
+        // Optimization: Don't draw if circuit is off-screen
+        if (circuitPoint.x < -pxRadius || circuitPoint.x > width + pxRadius ||
+            circuitPoint.y < -pxRadius || circuitPoint.y > height + pxRadius) {
+            return;
+        }
+
+        // Color
+        this.ctx.strokeStyle = this.color;
+        this.ctx.lineWidth = 1.5;
+        this.ctx.lineCap = 'round';
+        this.ctx.lineJoin = 'round';
+
+        // Draw grid
+        // Iterate x from -spacing to width + spacing
+        // Adjust by gridOffset
+        // Use modulo to wrap the grid seamlessly
+
+        const startX = (this.gridOffset.x % this.gridSpacing) - this.gridSpacing;
+        const startY = (this.gridOffset.y % this.gridSpacing) - this.gridSpacing;
+
+        for (let x = startX; x < width + this.gridSpacing; x += this.gridSpacing) {
+            for (let y = startY; y < height + this.gridSpacing; y += this.gridSpacing) {
+
+                // Check distance to circuit center
+                const dist = Math.hypot(x - circuitPoint.x, y - circuitPoint.y);
+
+                // Clip strictly to radius
+                if (dist > pxRadius) continue;
+
+                // Fade out near edge (soft circle)
+                // Linear fade for last 20% of radius
+                let alpha = 1;
+                if (dist > pxRadius * 0.8) {
+                    alpha = 1 - ((dist - (pxRadius * 0.8)) / (pxRadius * 0.2));
+                }
+
+                this.ctx.globalAlpha = Math.max(0, alpha * this.opacity);
+
+                this.drawArrow(x, y, rotation, scale);
+            }
+        }
+    }
+
+    drawArrow(x, y, rotation, scale) {
+        this.ctx.save();
+        this.ctx.translate(x, y);
+        this.ctx.rotate(rotation);
+        this.ctx.scale(scale, scale);
+
+        // Draw simple arrow (pointing UP 0, -size)
+        // But wait, rotation logic:
+        // 0 deg wind (North) -> Rotated 180 (South).
+        // If arrow points UP natively, rotating 180 makes it point DOWN. Correct.
+
+        const s = this.arrowSize;
+
+        this.ctx.beginPath();
+        // Arrow head
+        this.ctx.moveTo(0, s/2); // Tail
+        this.ctx.lineTo(0, -s/2); // Tip
+
+        // Wings
+        this.ctx.moveTo(-s/4, -s/4); // Left wing
+        this.ctx.lineTo(0, -s/2); // Tip
+        this.ctx.lineTo(s/4, -s/4); // Right wing
+
+        this.ctx.stroke();
+
+        this.ctx.restore();
+    }
+}
