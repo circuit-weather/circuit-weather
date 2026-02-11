@@ -516,7 +516,10 @@ class WeatherClient {
         let low = 0, high = times.length - 1;
 
         // Check bounds
+        // If timestamp is before the first forecast data point (historical radar time),
+        // use the first forecast point as a best approximation (current conditions)
         if (timestamp < times[0]) return { speed: speeds[0], direction: dirs[0] };
+        // If timestamp is after the last forecast data point, use the last point
         if (timestamp > times[high]) return { speed: speeds[high], direction: dirs[high] };
 
         while (low <= high) {
@@ -3222,9 +3225,17 @@ class WindLayer {
     setData(hourlyData) {
         console.log('[WindLayer] setData called with', hourlyData?.time?.length || 0, 'data points');
         this.rawHourlyData = hourlyData;
-        // Reset or update current wind based on current timestamp
-        if (this.currentTimestamp) {
-            this.updateTime(this.currentTimestamp);
+        
+        // If we have a current timestamp, update the wind for that time
+        // Otherwise use current time
+        const timestamp = this.currentTimestamp || Math.floor(Date.now() / 1000);
+        this.updateTime(timestamp);
+        
+        // If the layer is visible and we now have data, make sure animation is running
+        if (this.isVisible && this.rawHourlyData && this.currentWind && !this.animationId) {
+            this.startAnimation();
+            // Force a redraw
+            this.draw();
         }
     }
 
@@ -3306,6 +3317,13 @@ class WindLayer {
             // Force immediate resize and draw to ensure visibility
             this.resize();
             this.startAnimation();
+            
+            // If we already have data but no currentWind set, try to get it now
+            if (this.rawHourlyData && !this.currentWind) {
+                // Use current time or the first available forecast time
+                const now = Math.floor(Date.now() / 1000);
+                this.updateTime(now);
+            }
             
             // Show debug info immediately with current status
             const debugSpeed = document.getElementById('windDebugSpeed');
