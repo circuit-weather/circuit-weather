@@ -761,6 +761,14 @@ async function handleRadarRequest(request, env, ctx) {
       return getEmptyRadarResponse(request);
     }
 
+    // SEC: Strict Content-Type Validation
+    // Prevent cache poisoning if upstream returns HTML error page (e.g. WAF/Maintenance) with 200 OK
+    const contentType = upstreamResponse.headers.get('Content-Type');
+    if (!contentType || !contentType.includes('application/json')) {
+      console.error(`Upstream Radar Invalid Content-Type: ${contentType}`);
+      return getEmptyRadarResponse(request);
+    }
+
     // Bolt Optimization: Stream response instead of buffering text
     const [cacheBody, clientBody] = upstreamResponse.body.tee();
 
