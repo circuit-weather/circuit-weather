@@ -107,3 +107,8 @@
 **Vulnerability:** The `handleTileRequest` function in `src/worker.js` correctly added restrictive CORS headers for allowed origins but failed to remove the upstream `Access-Control-Allow-Origin: *` header for disallowed origins when serving cached responses.
 **Learning:** When using `caches.default` in Cloudflare Workers, cached responses preserve their original headers (including `*`). Modifying headers for the client requires explicit deletion in the `else` block of an allowlist check, not just setting them in the `if` block.
 **Prevention:** Always implement a "deny by default" strategy for security headers. Ensure that if a condition for a restrictive header is not met, any existing permissive header is explicitly removed.
+
+## 2026-05-20 - Defense in Depth via Permissions Policy and Headers
+**Vulnerability:** The application relied on default browser behavior for features like synchronous XHR and cross-domain policy files, and lacked explicit disablement of the XSS Auditor (which can introduce side-channel leaks).
+**Learning:** Modern security is about reducing the attack surface even for features you don't use. Leaving deprecated features enabled (like `sync-xhr`) or relying on defaults can expose users to performance degradation or obscure vulnerabilities (XS-Search via XSS Auditor).
+**Prevention:** Explicitly disable unused powerful features using `Permissions-Policy` (e.g. `sync-xhr=()`) and set `X-Permitted-Cross-Domain-Policies: none` to prevent Flash/PDF data leakage. Also, disable the XSS Auditor (`X-XSS-Protection: 0`) as it is now considered a best practice to avoid XS-Search attacks.
