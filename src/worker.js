@@ -178,7 +178,9 @@ export default {
 const DEFAULT_SECURITY_HEADERS = {
   'X-Content-Type-Options': 'nosniff',
   'X-Frame-Options': 'DENY',
-  'Permissions-Policy': 'accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()',
+  'X-XSS-Protection': '0', // Disable XSS Auditor to prevent XS-Search/Info Leakage
+  'X-Permitted-Cross-Domain-Policies': 'none',
+  'Permissions-Policy': 'accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=(), sync-xhr=()',
   'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
   'Referrer-Policy': 'strict-origin-when-cross-origin',
   'Content-Security-Policy': "upgrade-insecure-requests; default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none';",
