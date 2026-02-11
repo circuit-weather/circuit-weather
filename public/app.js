@@ -3302,8 +3302,8 @@ class WindLayer {
     updatePhysics(dt) {
         // Move the grid offset based on wind speed and direction
         // Speed: 10 km/h = ? pixels/sec
-        // Let's make it visual: 10 km/h -> 20 px/sec
-        const pxPerKmh = 2;
+        // Let's make it visual: 10 km/h -> 100 px/sec (increased for better visibility)
+        const pxPerKmh = 10;
 
         // Ensure at least tiny movement so it looks alive even if calm (0.5 km/h)
         const effectiveSpeed = Math.max(0.5, this.currentWind.speed);
