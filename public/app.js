@@ -3360,6 +3360,9 @@ class WindLayer {
     }
 
     updatePhysics(dt) {
+        // Don't update physics if we don't have valid wind data
+        if (!this.rawHourlyData || !this.currentWind) return;
+
         // Move the grid offset based on wind speed and direction
         // Speed: 10 km/h = ? pixels/sec
         // Let's make it visual: 10 km/h -> 100 px/sec (increased for better visibility)
@@ -3387,6 +3390,12 @@ class WindLayer {
 
         const width = this.canvas.width;
         const height = this.canvas.height;
+
+        // Don't draw if we don't have valid wind data
+        if (!this.rawHourlyData || !this.currentWind) {
+            this.ctx.clearRect(0, 0, width, height);
+            return;
+        }
 
         this.ctx.clearRect(0, 0, width, height);
 
