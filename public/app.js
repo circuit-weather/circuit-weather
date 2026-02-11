@@ -2889,6 +2889,12 @@ class CircuitWeatherApp {
         const weather = await this.weatherClient.getForecast(lat, long, sessionTime);
 
         // Pass raw hourly data to Wind Layer
+        console.log('[App] Passing weather data to wind layer:', { 
+            available: weather.available, 
+            hasRawHourly: !!weather.rawHourly, 
+            hasWindLayer: !!this.windLayer,
+            hourlyDataPoints: weather.rawHourly ? weather.rawHourly.time?.length : 0
+        });
         if (weather.available && weather.rawHourly && this.windLayer) {
             this.windLayer.setData(weather.rawHourly);
         }
@@ -3214,6 +3220,7 @@ class WindLayer {
     }
 
     setData(hourlyData) {
+        console.log('[WindLayer] setData called with', hourlyData?.time?.length || 0, 'data points');
         this.rawHourlyData = hourlyData;
         // Reset or update current wind based on current timestamp
         if (this.currentTimestamp) {
@@ -3229,8 +3236,16 @@ class WindLayer {
     updateTime(timestamp) {
         this.currentTimestamp = timestamp;
 
+        // Always update debug display with current status
+        const debugSpeed = document.getElementById('windDebugSpeed');
+        const debugDir = document.getElementById('windDebugDir');
+        const debugInfo = document.getElementById('windDebugInfo');
+
         if (!this.rawHourlyData || !this.weatherClient) {
             console.log('[WindLayer] No hourly data or weather client available');
+            if (debugSpeed) debugSpeed.textContent = 'Waiting for data...';
+            if (debugDir) debugDir.textContent = '';
+            if (debugInfo) debugInfo.style.display = 'block';
             return;
         }
 
@@ -3255,9 +3270,6 @@ class WindLayer {
             this.currentWind = wind;
             
             // Update debug display
-            const debugSpeed = document.getElementById('windDebugSpeed');
-            const debugDir = document.getElementById('windDebugDir');
-            const debugInfo = document.getElementById('windDebugInfo');
             if (debugSpeed) debugSpeed.textContent = `${wind.speed.toFixed(1)} km/h`;
             if (debugDir) debugDir.textContent = `${wind.direction.toFixed(0)}°`;
             if (debugInfo) debugInfo.style.display = 'block';
@@ -3268,6 +3280,9 @@ class WindLayer {
             }
         } else {
             console.log('[WindLayer] No wind data available for timestamp:', timestamp);
+            if (debugSpeed) debugSpeed.textContent = 'No data for time';
+            if (debugDir) debugDir.textContent = '';
+            if (debugInfo) debugInfo.style.display = 'block';
         }
     }
 
@@ -3291,6 +3306,21 @@ class WindLayer {
             // Force immediate resize and draw to ensure visibility
             this.resize();
             this.startAnimation();
+            
+            // Show debug info immediately with current status
+            const debugSpeed = document.getElementById('windDebugSpeed');
+            const debugDir = document.getElementById('windDebugDir');
+            const debugInfo = document.getElementById('windDebugInfo');
+            if (debugInfo) {
+                debugInfo.style.display = 'block';
+                if (this.rawHourlyData && this.currentWind) {
+                    if (debugSpeed) debugSpeed.textContent = `${this.currentWind.speed.toFixed(1)} km/h`;
+                    if (debugDir) debugDir.textContent = `${this.currentWind.direction.toFixed(0)}°`;
+                } else {
+                    if (debugSpeed) debugSpeed.textContent = 'Waiting for data...';
+                    if (debugDir) debugDir.textContent = '';
+                }
+            }
         } else {
             this.stopAnimation();
             if (this.canvas) {
