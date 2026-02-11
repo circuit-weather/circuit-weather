@@ -3229,18 +3229,45 @@ class WindLayer {
     updateTime(timestamp) {
         this.currentTimestamp = timestamp;
 
-        if (!this.rawHourlyData || !this.weatherClient) return;
+        if (!this.rawHourlyData || !this.weatherClient) {
+            console.log('[WindLayer] No hourly data or weather client available');
+            return;
+        }
+
+        // Log the available hourly data for debugging
+        if (this.rawHourlyData.time && this.rawHourlyData.time.length > 0) {
+            console.log('[WindLayer] Available hourly wind data:');
+            for (let i = 0; i < this.rawHourlyData.time.length; i++) {
+                const time = new Date(this.rawHourlyData.time[i] * 1000).toLocaleString();
+                const speed = this.rawHourlyData.wind_speed_10m[i];
+                const dir = this.rawHourlyData.wind_direction_10m[i];
+                console.log(`  ${time}: ${speed} km/h @ ${dir}°`);
+            }
+        }
 
         // Fetch interpolated wind for this timestamp
         // Note: The timestamp from radar is already in seconds (Unix)
         const wind = this.weatherClient.getWindAtTimestamp(this.rawHourlyData, timestamp);
 
         if (wind) {
+            const radarTime = new Date(timestamp * 1000).toLocaleString();
+            console.log(`[WindLayer] Radar time: ${radarTime}, Wind: ${wind.speed.toFixed(1)} km/h @ ${wind.direction.toFixed(1)}°`);
             this.currentWind = wind;
+            
+            // Update debug display
+            const debugSpeed = document.getElementById('windDebugSpeed');
+            const debugDir = document.getElementById('windDebugDir');
+            const debugInfo = document.getElementById('windDebugInfo');
+            if (debugSpeed) debugSpeed.textContent = `${wind.speed.toFixed(1)} km/h`;
+            if (debugDir) debugDir.textContent = `${wind.direction.toFixed(0)}°`;
+            if (debugInfo) debugInfo.style.display = 'block';
+            
             // Ensure animation is running if we have valid data and are visible
             if (this.isVisible && !this.animationId) {
                 this.startAnimation();
             }
+        } else {
+            console.log('[WindLayer] No wind data available for timestamp:', timestamp);
         }
     }
 
@@ -3270,6 +3297,9 @@ class WindLayer {
                 this.canvas.style.display = 'none';
                 this.destroyCanvas(); // Save memory when off
             }
+            // Hide debug info when wind layer is off
+            const debugInfo = document.getElementById('windDebugInfo');
+            if (debugInfo) debugInfo.style.display = 'none';
         }
     }
 
