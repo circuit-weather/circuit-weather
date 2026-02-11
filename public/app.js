@@ -2892,12 +2892,6 @@ class CircuitWeatherApp {
         const weather = await this.weatherClient.getForecast(lat, long, sessionTime);
 
         // Pass raw hourly data to Wind Layer
-        console.log('[App] Passing weather data to wind layer:', { 
-            available: weather.available, 
-            hasRawHourly: !!weather.rawHourly, 
-            hasWindLayer: !!this.windLayer,
-            hourlyDataPoints: weather.rawHourly ? weather.rawHourly.time?.length : 0
-        });
         if (weather.available && weather.rawHourly && this.windLayer) {
             this.windLayer.setData(weather.rawHourly);
         }
@@ -3138,14 +3132,14 @@ class WindLayer {
         this.lastFrameTime = 0;
 
         // Configuration
-        this.gridSpacing = 50; // px
-        this.arrowSize = 18; // px base size
-        this.maxRadiusKm = 25; // Only draw within 25km radius of circuit (more prominent)
+        this.gridSpacing = 60; // px
+        this.arrowSize = 14; // px base size
+        this.maxRadiusKm = 40; // Draw within 40km radius of circuit
         this.circuitCenter = null; // [lat, lng]
 
         // Theme Colors
         this.color = getComputedStyle(document.documentElement).getPropertyValue('--color-text').trim() || '#0f172a';
-        this.opacity = 0.8;
+        this.opacity = 0.5;
 
         // Leaflet Handlers
         this._onMove = this.onMove.bind(this);
@@ -3223,18 +3217,16 @@ class WindLayer {
     }
 
     setData(hourlyData) {
-        console.log('[WindLayer] setData called with', hourlyData?.time?.length || 0, 'data points');
         this.rawHourlyData = hourlyData;
-        
+
         // If we have a current timestamp, update the wind for that time
         // Otherwise use current time
         const timestamp = this.currentTimestamp || Math.floor(Date.now() / 1000);
         this.updateTime(timestamp);
-        
+
         // If the layer is visible and we now have data, make sure animation is running
         if (this.isVisible && this.rawHourlyData && this.currentWind && !this.animationId) {
             this.startAnimation();
-            // Force a redraw
             this.draw();
         }
     }
@@ -3247,53 +3239,18 @@ class WindLayer {
     updateTime(timestamp) {
         this.currentTimestamp = timestamp;
 
-        // Always update debug display with current status
-        const debugSpeed = document.getElementById('windDebugSpeed');
-        const debugDir = document.getElementById('windDebugDir');
-        const debugInfo = document.getElementById('windDebugInfo');
-
-        if (!this.rawHourlyData || !this.weatherClient) {
-            console.log('[WindLayer] No hourly data or weather client available');
-            if (debugSpeed) debugSpeed.textContent = 'Waiting for data...';
-            if (debugDir) debugDir.textContent = '';
-            if (debugInfo) debugInfo.style.display = 'block';
-            return;
-        }
-
-        // Log the available hourly data for debugging
-        if (this.rawHourlyData.time && this.rawHourlyData.time.length > 0) {
-            console.log('[WindLayer] Available hourly wind data:');
-            for (let i = 0; i < this.rawHourlyData.time.length; i++) {
-                const time = new Date(this.rawHourlyData.time[i] * 1000).toLocaleString();
-                const speed = this.rawHourlyData.wind_speed_10m[i];
-                const dir = this.rawHourlyData.wind_direction_10m[i];
-                console.log(`  ${time}: ${speed} km/h @ ${dir}°`);
-            }
-        }
+        if (!this.rawHourlyData || !this.weatherClient) return;
 
         // Fetch interpolated wind for this timestamp
-        // Note: The timestamp from radar is already in seconds (Unix)
         const wind = this.weatherClient.getWindAtTimestamp(this.rawHourlyData, timestamp);
 
         if (wind) {
-            const radarTime = new Date(timestamp * 1000).toLocaleString();
-            console.log(`[WindLayer] Radar time: ${radarTime}, Wind: ${wind.speed.toFixed(1)} km/h @ ${wind.direction.toFixed(1)}°`);
             this.currentWind = wind;
-            
-            // Update debug display
-            if (debugSpeed) debugSpeed.textContent = `${wind.speed.toFixed(1)} km/h`;
-            if (debugDir) debugDir.textContent = `${wind.direction.toFixed(0)}°`;
-            if (debugInfo) debugInfo.style.display = 'block';
-            
+
             // Ensure animation is running if we have valid data and are visible
             if (this.isVisible && !this.animationId) {
                 this.startAnimation();
             }
-        } else {
-            console.log('[WindLayer] No wind data available for timestamp:', timestamp);
-            if (debugSpeed) debugSpeed.textContent = 'No data for time';
-            if (debugDir) debugDir.textContent = '';
-            if (debugInfo) debugInfo.style.display = 'block';
         }
     }
 
@@ -3314,40 +3271,20 @@ class WindLayer {
         if (this.isVisible) {
             this.createCanvas();
             this.canvas.style.display = 'block';
-            // Force immediate resize and draw to ensure visibility
             this.resize();
             this.startAnimation();
-            
+
             // If we already have data but no currentWind set, try to get it now
             if (this.rawHourlyData && !this.currentWind) {
-                // Use current time or the first available forecast time
                 const now = Math.floor(Date.now() / 1000);
                 this.updateTime(now);
-            }
-            
-            // Show debug info immediately with current status
-            const debugSpeed = document.getElementById('windDebugSpeed');
-            const debugDir = document.getElementById('windDebugDir');
-            const debugInfo = document.getElementById('windDebugInfo');
-            if (debugInfo) {
-                debugInfo.style.display = 'block';
-                if (this.rawHourlyData && this.currentWind) {
-                    if (debugSpeed) debugSpeed.textContent = `${this.currentWind.speed.toFixed(1)} km/h`;
-                    if (debugDir) debugDir.textContent = `${this.currentWind.direction.toFixed(0)}°`;
-                } else {
-                    if (debugSpeed) debugSpeed.textContent = 'Waiting for data...';
-                    if (debugDir) debugDir.textContent = '';
-                }
             }
         } else {
             this.stopAnimation();
             if (this.canvas) {
                 this.canvas.style.display = 'none';
-                this.destroyCanvas(); // Save memory when off
+                this.destroyCanvas();
             }
-            // Hide debug info when wind layer is off
-            const debugInfo = document.getElementById('windDebugInfo');
-            if (debugInfo) debugInfo.style.display = 'none';
         }
     }
 
@@ -3386,13 +3323,15 @@ class WindLayer {
         // Let's make it visual: 10 km/h -> 100 px/sec (increased for better visibility)
         const pxPerKmh = 10;
 
-        // Ensure at least tiny movement so it looks alive even if calm (0.5 km/h)
+        // Ensure at least tiny movement so it looks alive even if calm
         const effectiveSpeed = Math.max(0.5, this.currentWind.speed);
         const speedPx = effectiveSpeed * pxPerKmh * dt;
 
+        // Move grid in the direction the wind is blowing TOWARDS
+        // (matches arrow pointing direction)
         const rad = this.currentWind.direction * (Math.PI / 180);
-        const dx = -Math.sin(rad) * speedPx;
-        const dy = Math.cos(rad) * speedPx; // Wind from North (0) blows South (+Y)
+        const dx = Math.sin(rad) * speedPx;
+        const dy = -Math.cos(rad) * speedPx;
 
         this.gridOffset.x += dx;
         this.gridOffset.y += dy;
@@ -3442,10 +3381,9 @@ class WindLayer {
         const edgePoint = this.map.latLngToContainerPoint(edgeLatLng);
 
         // Distance in pixels
-        const pxRadius = Math.hypot(edgePoint.x - circuitPoint.x, edgePoint.y - circuitPoint.y);
+        let pxRadius = Math.hypot(edgePoint.x - circuitPoint.x, edgePoint.y - circuitPoint.y);
 
         // Ensure minimum pixel radius to prevent invisible layer at low zooms
-        // or small maps
         if (pxRadius < 20) pxRadius = 20;
 
         // Optimization: Don't draw if circuit is off-screen
@@ -3456,7 +3394,7 @@ class WindLayer {
 
         // Color
         this.ctx.strokeStyle = this.color;
-        this.ctx.lineWidth = 1.5;
+        this.ctx.lineWidth = 1.8;
         this.ctx.lineCap = 'round';
         this.ctx.lineJoin = 'round';
 
@@ -3506,13 +3444,13 @@ class WindLayer {
 
         this.ctx.beginPath();
         // Arrow head
-        this.ctx.moveTo(0, s/2); // Tail
-        this.ctx.lineTo(0, -s/2); // Tip
+        this.ctx.moveTo(0, s / 2); // Tail
+        this.ctx.lineTo(0, -s / 2); // Tip
 
         // Wings
-        this.ctx.moveTo(-s/4, -s/4); // Left wing
-        this.ctx.lineTo(0, -s/2); // Tip
-        this.ctx.lineTo(s/4, -s/4); // Right wing
+        this.ctx.moveTo(-s / 4, -s / 4); // Left wing
+        this.ctx.lineTo(0, -s / 2); // Tip
+        this.ctx.lineTo(s / 4, -s / 4); // Right wing
 
         this.ctx.stroke();
 

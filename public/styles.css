@@ -1938,25 +1938,6 @@ body {
     box-shadow: 0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-primary);
 }
 
-/* Wind Debug Info */
-.wind-debug-info {
-    margin-top: 8px;
-    padding: 4px 8px;
-    background: var(--color-surface-elevated);
-    border-radius: var(--radius-sm);
-    font-size: 12px;
-    color: var(--color-text-secondary);
-    font-family: monospace;
-    display: flex;
-    align-items: center;
-    gap: 4px;
-}
-
-.wind-debug-info span:first-child {
-    color: var(--color-text);
-    font-weight: 500;
-}
-
 /* Wind Layer Canvas */
 .wind-layer-canvas {
     transition: opacity var(--transition-normal);
