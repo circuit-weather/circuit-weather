@@ -3128,7 +3128,7 @@ class WindLayer {
         // Data State
         this.rawHourlyData = null;
         this.currentTimestamp = null;
-        this.currentWind = { speed: 0, direction: 0 };
+        this.currentWind = null;
 
         // Animation State
         this.gridOffset = { x: 0, y: 0 };
