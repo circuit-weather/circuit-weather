@@ -186,6 +186,7 @@ const DEFAULT_SECURITY_HEADERS = {
   'Content-Security-Policy': "upgrade-insecure-requests; default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none';",
   'Cross-Origin-Opener-Policy': 'same-origin',
   'Cross-Origin-Resource-Policy': 'same-origin',
+  'X-Robots-Tag': 'noindex', // Prevent search engines from indexing API responses
 };
 
 // Helper to generate standard error headers (Security + CORS + No-Cache)
