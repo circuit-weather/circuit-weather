@@ -12,9 +12,9 @@ const isLocal = window.location.hostname === 'localhost' ||
     window.location.protocol === 'file:';
 
 const CONFIG = {
-    f1ApiBase: isLocal ? 'https://api.jolpi.ca/ergast/f1' : '/api/f1',
-    rainViewerApi: isLocal ? 'https://api.rainviewer.com/public/weather-maps.json' : '/api/radar',
-    trackApi: isLocal ? 'https://raw.githubusercontent.com/bacinger/f1-circuits/master/circuits' : '/api/track',
+    f1ApiBase: '/api/f1',
+    rainViewerApi: '/api/radar',
+    trackApi: '/api/track',
     weatherApi: 'https://api.open-meteo.com/v1/forecast',
     // Use Carto basemaps (reliable, free, no key)
     mapTiles: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
