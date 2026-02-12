@@ -51,6 +51,12 @@ circuit-weather/
 │   ├── index.html
 │   ├── styles.css
 │   ├── app.js
+│   ├── favicon.svg
+│   ├── icon-192.png  # PWA icon (192×192)
+│   ├── icon-512.png  # PWA icon (512×512)
+│   ├── manifest.json # PWA web app manifest
+│   ├── sw.js         # Service worker (app shell caching)
+│   ├── _headers      # Cloudflare Pages custom headers (CSP, security)
 │   └── PRIVACY.md
 ├── src/
 │   └── worker.js     # Cloudflare Worker (API proxy + asset serving)
@@ -58,6 +64,16 @@ circuit-weather/
 ├── README.md
 └── LICENSE
 ```
+
+### Image Assets
+
+| File | Format | Size | Purpose | Source |
+|------|--------|------|---------|--------|
+| `favicon.svg` | SVG | 24×24 viewBox | Browser tab icon | Hand-authored (red rounded rect + white F1 flag) |
+| `icon-192.png` | PNG | 192×192 px | PWA icon (Android install, Apple touch icon) | Generated from `favicon.svg` |
+| `icon-512.png` | PNG | 512×512 px | PWA splash screen / maskable icon | Generated from `favicon.svg` |
+
+**Regenerating icons**: If `favicon.svg` is updated, regenerate the PNGs at 192×192 and 512×512 using any SVG-to-PNG converter (e.g. `cairosvg`, Inkscape, or Pillow with manual drawing). The icons must visually match the favicon design.
 
 ### Build & Deploy
 ```bash

@@ -12,7 +12,7 @@
     <meta property="og:type" content="website">
     <meta name="referrer" content="strict-origin-when-cross-origin">
     <meta http-equiv="Content-Security-Policy"
-        content="upgrade-insecure-requests; default-src 'self'; script-src 'self' 'sha256-CmbK0HHcbxCZLwpkNw7KW+4U30zGlzgm7h4DCLb7uJg=' https://unpkg.com/leaflet@1.9.4/dist/leaflet.js https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js; style-src 'self' 'unsafe-hashes' 'sha256-PZsbSh/dGIbjwOp9epLB45/oMfQ+Xgvt64Vtq4LUX9Y=' 'sha256-biLFinpqYMtWHmXfkA1BPeCY0/fNt46SAZ+BBk5YUog=' 'sha256-vrx7HQzOJaP6063lWrku35kkMdzSrsgKxVadh9ZBZeY=' https://unpkg.com/leaflet@1.9.4/dist/leaflet.css https://fonts.googleapis.com; img-src 'self' data: https://*.basemaps.cartocdn.com https://flagcdn.com https://api.rainviewer.com https://tilecache.rainviewer.com https://*.buymeacoffee.com; font-src https://fonts.gstatic.com; connect-src 'self' https://api.jolpi.ca https://api.open-meteo.com https://raw.githubusercontent.com https://api.rainviewer.com https://tilecache.rainviewer.com https://*.buymeacoffee.com; object-src 'none'; frame-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';">
+        content="upgrade-insecure-requests; default-src 'self'; script-src 'self' 'sha256-CmbK0HHcbxCZLwpkNw7KW+4U30zGlzgm7h4DCLb7uJg=' 'sha256-4EkphFwdIH5ujWaiSAOEbv6i/PL7gwoaZRlm22JWDc0=' https://unpkg.com/leaflet@1.9.4/dist/leaflet.js https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js; style-src 'self' 'unsafe-hashes' 'sha256-PZsbSh/dGIbjwOp9epLB45/oMfQ+Xgvt64Vtq4LUX9Y=' 'sha256-biLFinpqYMtWHmXfkA1BPeCY0/fNt46SAZ+BBk5YUog=' 'sha256-vrx7HQzOJaP6063lWrku35kkMdzSrsgKxVadh9ZBZeY=' https://unpkg.com/leaflet@1.9.4/dist/leaflet.css https://fonts.googleapis.com; img-src 'self' data: https://*.basemaps.cartocdn.com https://flagcdn.com https://api.rainviewer.com https://tilecache.rainviewer.com https://*.buymeacoffee.com; font-src https://fonts.gstatic.com; connect-src 'self' https://api.jolpi.ca https://api.open-meteo.com https://raw.githubusercontent.com https://api.rainviewer.com https://tilecache.rainviewer.com https://*.buymeacoffee.com; worker-src 'self'; object-src 'none'; frame-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';">
     <title>Circuit Weather - F1 Race Circuit Weather Radar</title>
 
     <script>
@@ -26,8 +26,11 @@
         })();
     </script>
 
-    <!-- Favicon -->
+    <!-- Favicon & PWA -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="apple-touch-icon" href="/icon-192.png">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="theme-color" content="#e10600">
 
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -50,12 +53,14 @@
                 <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar"
                     title="Close sidebar (Esc)" aria-keyshortcuts="Escape" aria-expanded="false"
                     aria-controls="sidebar">
-                    <svg class="icon-menu" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg class="icon-menu" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2">
                         <line x1="3" y1="6" x2="21" y2="6"></line>
                         <line x1="3" y1="12" x2="21" y2="12"></line>
                         <line x1="3" y1="18" x2="21" y2="18"></line>
                     </svg>
-                    <svg class="icon-close" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg class="icon-close" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2">
                         <line x1="18" y1="6" x2="6" y2="18"></line>
                         <line x1="6" y1="6" x2="18" y2="18"></line>
                     </svg>
@@ -69,13 +74,15 @@
                 </span>
                 <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark/light mode"
                     title="Toggle dark/light mode">
-                    <svg class="icon-sun" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg class="icon-sun" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2">
                         <circle cx="12" cy="12" r="5"></circle>
                         <path
                             d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42">
                         </path>
                     </svg>
-                    <svg class="icon-moon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg class="icon-moon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2">
                         <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
                     </svg>
                 </button>
@@ -126,7 +133,7 @@
                 <!-- Session Countdown -->
                 <div class="countdown-card" id="countdownCard" style="display: none;">
                     <div class="countdown-label">Session starts in</div>
-                <div class="countdown-timer" id="countdownTimer" role="timer">--:--:--</div>
+                    <div class="countdown-timer" id="countdownTimer" role="timer">--:--:--</div>
                     <div class="countdown-session" id="countdownSession"></div>
                 </div>
 
@@ -151,12 +158,13 @@
                                     <span class="weather-sub" id="weatherWindDir">--</span>
                                 </div>
                             </div>
-            <div class="weather-timeline" id="weatherTimeline" tabindex="0" role="region" aria-label="Hourly forecast">
+                            <div class="weather-timeline" id="weatherTimeline" tabindex="0" role="region"
+                                aria-label="Hourly forecast">
                                 <!-- Timeline items injected here -->
                             </div>
                         </div>
                     </div>
-    <div id="forecastUnavailable" style="display: none;" aria-live="polite">
+                    <div id="forecastUnavailable" style="display: none;" aria-live="polite">
                         <p class="forecast-unavailable">Forecast available closer to session</p>
                     </div>
                 </div>
@@ -205,13 +213,15 @@
                 </div>
                 <button class="theme-toggle mobile-theme-toggle" id="mobileThemeToggle"
                     aria-label="Toggle dark/light mode" title="Toggle dark/light mode">
-                    <svg class="icon-sun" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg class="icon-sun" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2">
                         <circle cx="12" cy="12" r="5"></circle>
                         <path
                             d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42">
                         </path>
                     </svg>
-                    <svg class="icon-moon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <svg class="icon-moon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2">
                         <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
                     </svg>
                 </button>
@@ -276,7 +286,7 @@
                 <p>Loading...</p>
             </div>
             <!-- Error Toast -->
-    <div id="errorToast" class="error-toast" role="alert" aria-live="assertive">
+            <div id="errorToast" class="error-toast" role="alert" aria-live="assertive">
                 <div class="error-icon">
                     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="12" r="10"></circle>
@@ -319,6 +329,9 @@
 
     <!-- App JS -->
     <script src="/app.js"></script>
+
+    <!-- Service Worker Registration -->
+    <script>if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js'); }</script>
 </body>
 
 </html>
