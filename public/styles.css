@@ -1746,6 +1746,33 @@ body {
     outline-offset: 2px;
 }
 
+/* ===================================
+   Utilities
+   =================================== */
+
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border-width: 0;
+}
+
+.external-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.icon-external {
+    width: 1em;
+    height: 1em;
+}
+
 /* Interactive Elements Overrides */
 .radar-play-btn:focus-visible {
     outline: none;
