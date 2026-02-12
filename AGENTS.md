@@ -250,13 +250,26 @@ If you discover files that appear to be one-off agent tests (e.g., standalone ve
 ## Local Development
 
 ```bash
-python -m http.server 8000 --directory public
-# Opens at http://localhost:8000
+wrangler dev
+# Opens at http://127.0.0.1:8787
 ```
 
 ### Notes
-- This serves the static frontend files directly for quick testing
-- F1 data fetches go directly to the Jolpica API (no Worker proxy locally)
-- Deployment to Cloudflare handles the Worker/API proxy automatically via GitHub push
+- This runs the full Cloudflare Worker + static assets locally, faithfully reproducing the production environment
+- All API routes (`/api/f1/*`, `/api/radar`, `/api/tiles/*`, `/api/track/*`) are handled by the local worker proxy
+- Deployment to Cloudflare is automatic via GitHub push to `main`
 
+### Terminating Background Processes
+
+> **Important for Google Antigravity**: The `send_command_input` tool's `Terminate` flag does **NOT** reliably kill background processes on this system. It may report success but the process continues running and holding its port. **Do not use it.** Instead, always use `taskkill` to stop background processes:
+>
+> ```powershell
+> # Find the PIDs listening on the target port (e.g. 8787 for wrangler dev)
+> netstat -ano | findstr ":8787"
+>
+> # Kill each PID found
+> taskkill /PID <pid> /F
+> ```
+>
+> Always verify the port is free before starting a new server instance.
 
