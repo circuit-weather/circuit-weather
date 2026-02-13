@@ -666,21 +666,23 @@ async function handleTileRequest(request, env, ctx) {
     // 4. Cache Success Response
     const [cacheBody, clientBody] = upstreamResponse.body.tee();
 
-    const cacheHeaders = new Headers(upstreamResponse.headers);
+    // SEC: Allowlist headers to prevent leaking sensitive upstream headers
+    const cacheHeaders = new Headers();
+    const allowedHeaders = ['Content-Type', 'Content-Length', 'Last-Modified', 'ETag', 'Date'];
+    for (const header of allowedHeaders) {
+      const value = upstreamResponse.headers.get(header);
+      if (value) cacheHeaders.set(header, value);
+    }
+
     cacheHeaders.set('Cache-Control', 'public, max-age=7200'); // 2 Hours TTL
     cacheHeaders.set('X-Cache', 'MISS');
     cacheHeaders.set('Access-Control-Allow-Origin', '*');
 
-    // SEC: Add security headers (missing in previous version)
+    // SEC: Add security headers
     // Ensures X-Content-Type-Options: nosniff is set on cached tiles
     Object.entries(DEFAULT_SECURITY_HEADERS).forEach(([key, value]) => {
       cacheHeaders.set(key, value);
     });
-
-    // Clean up headers
-    cacheHeaders.delete('Set-Cookie');
-    cacheHeaders.delete('Server');
-    cacheHeaders.delete('Vary'); // Robustness: Prevent cache fragmentation based on User-Agent/Origin
 
     const cacheResponse = new Response(cacheBody, {
       status: upstreamResponse.status,
