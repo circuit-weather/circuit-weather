@@ -38,15 +38,12 @@ The map tiles are provided by Carto (based on OpenStreetMap data), ensuring a cl
 This project uses [Cloudflare Workers](https://workers.cloudflare.com/) to proxy API requests, so a simple static web server is not enough. You'll need to use the `wrangler` CLI to run it locally.
 
 1.  **Clone the repository.**
-2.  **Install Node.js and Wrangler.**
-    If you don't have Node.js installed, download it from [nodejs.org](https://nodejs.org/). Then, install the Wrangler CLI globally:
-    ```bash
-    npm install -g wrangler
-    ```
+2.  **Install Node.js.**
+    If you don't have Node.js installed, download it from [nodejs.org](https://nodejs.org/).
 3.  **Start the local development server.**
     Run the following command in your terminal at the root of the project:
     ```bash
-    wrangler dev
+    npx wrangler dev
     ```
 4.  **Open the local address in your browser.**
     Wrangler will typically open the site at `http://localhost:8787`.
