@@ -123,10 +123,22 @@ All code changes must follow this workflow:
 name = "circuit-weather"
 main = "src/worker.js"
 compatibility_date = "2024-09-23"
+preview_urls = true
 
+# Cloudflare Workers with Assets configuration
+# https://developers.cloudflare.com/workers/static-assets/routing/single-page-application/
 [assets]
 directory = "./public"
 binding = "ASSETS"
+# Enable SPA fallback - serve index.html for 404s instead of redirecting
+not_found_handling = "single-page-application"
+# Only run the worker for API routes - all other routes use SPA fallback
+run_worker_first = ["/api/*"]
+[[routes]]
+pattern = "circuit-weather.racing"
+custom_domain = true
+[placement]
+mode = "smart"
 ```
 
 ### Environment
@@ -261,15 +273,25 @@ wrangler dev
 
 ### Terminating Background Processes
 
-> **Important for Google Antigravity**: The `send_command_input` tool's `Terminate` flag does **NOT** reliably kill background processes on this system. It may report success but the process continues running and holding its port. **Do not use it.** Instead, always use `taskkill` to stop background processes:
->
-> ```powershell
-> # Find the PIDs listening on the target port (e.g. 8787 for wrangler dev)
-> netstat -ano | findstr ":8787"
->
-> # Kill each PID found
-> taskkill /PID <pid> /F
-> ```
->
+> **Important for Google Antigravity**: The `send_command_input` tool's `Terminate` flag does **NOT** reliably kill background processes on this system. It may report success but the process continues running and holding its port. **Do not use it.** Instead, always use the following manual methods to stop background processes:
+
+**Windows (PowerShell):**
+```powershell
+# Find the PIDs listening on the target port (e.g. 8787 for wrangler dev)
+netstat -ano | findstr ":8787"
+
+# Kill each PID found
+taskkill /PID <pid> /F
+```
+
+**Linux / macOS (Bash):**
+```bash
+# Find the PIDs listening on the target port
+lsof -i :8787
+
+# Kill the process (replace <PID> with the actual process ID)
+kill -9 <PID>
+```
+
 > Always verify the port is free before starting a new server instance.
 
