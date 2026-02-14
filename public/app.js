@@ -2448,7 +2448,7 @@ class CircuitWeatherApp {
     }
 
     async init() {
-        this.showLoading(true);
+        this.showLoading(true, 'Loading race schedule...');
 
         try {
             const map = this.mapManager.init();
@@ -2767,7 +2767,7 @@ class CircuitWeatherApp {
         const session = this.selectedRace?.sessions.find(s => s.id === sessionId);
         if (!session) return;
 
-        this.showLoading(true);
+        this.showLoading(true, 'Loading session data...');
         // Palette UX: Show skeleton immediately to prevent layout shift
         this.renderForecastSkeleton();
 
@@ -3042,8 +3042,12 @@ class CircuitWeatherApp {
         }
     }
 
-    showLoading(visible) {
-        if (this.ui.loadingOverlay) this.ui.loadingOverlay.classList.toggle('visible', visible);
+    showLoading(visible, text = 'Loading...') {
+        if (this.ui.loadingOverlay) {
+            this.ui.loadingOverlay.classList.toggle('visible', visible);
+            const p = this.ui.loadingOverlay.querySelector('p');
+            if (p) p.textContent = text;
+        }
     }
 }
 
