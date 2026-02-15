@@ -60,10 +60,13 @@ circuit-weather/
 │   └── PRIVACY.md
 ├── src/
 │   └── worker.js     # Cloudflare Worker (API proxy + asset serving)
+├── .jules/           # Jules AI agent config (MUST be lowercase)
 ├── wrangler.toml     # Cloudflare config
 ├── README.md
 └── LICENSE
 ```
+
+> **Important for Jules**: The `.jules` directory must **always** be lowercase (`.jules`, not `.Jules`). GitHub runs on Linux (case-sensitive), and creating `.Jules` alongside `.jules` causes conflicts on Windows/macOS (case-insensitive). Always use `.jules` with a lowercase `j`.
 
 ### Image Assets
 
