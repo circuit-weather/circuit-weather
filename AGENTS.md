@@ -80,10 +80,9 @@ circuit-weather/
 # Local development
 npx wrangler dev
 
-# Deploy to Cloudflare (auto-deploys on push to GitHub)
-git add .
-git commit -m "Your changes"
-git push origin main
+# Deploy to Cloudflare
+# Deployment is automatic via GitHub Actions when changes are merged to the 'main' branch.
+# See "Git Workflow for Changes" below.
 ```
 
 **Note**: The project is connected to Cloudflare Pages via GitHub integration. Pushing to `main` triggers automatic deployment - no manual `wrangler deploy` needed.
@@ -262,7 +261,7 @@ If you discover files that appear to be one-off agent tests (e.g., standalone ve
 ## Local Development
 
 ```bash
-wrangler dev
+npx wrangler dev
 # Opens at http://127.0.0.1:8787
 ```
 
