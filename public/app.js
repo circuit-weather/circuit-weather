@@ -1481,7 +1481,8 @@ class WeatherRadar {
         this.isPlaying = true;
         if (this.ui.playBtn) {
             this.ui.playBtn.classList.add('playing');
-            this.ui.playBtn.setAttribute('aria-pressed', 'true');
+            this.ui.playBtn.setAttribute('aria-label', 'Pause radar animation');
+            this.ui.playBtn.setAttribute('title', 'Pause (Space)');
         }
 
         // Bolt Optimization: Use requestAnimationFrame instead of setInterval
@@ -1511,7 +1512,8 @@ class WeatherRadar {
         this.isPlaying = false;
         if (this.ui.playBtn) {
             this.ui.playBtn.classList.remove('playing');
-            this.ui.playBtn.setAttribute('aria-pressed', 'false');
+            this.ui.playBtn.setAttribute('aria-label', 'Play radar animation');
+            this.ui.playBtn.setAttribute('title', 'Play (Space)');
         }
 
         if (this.animationFrameId) {
