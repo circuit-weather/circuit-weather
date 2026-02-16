@@ -556,12 +556,11 @@ body {
 .ad-overlay {
     position: absolute;
     top: var(--spacing-md);
-    /* Center in map area: 50% of viewport + half sidebar width */
-    left: calc(50% + (var(--sidebar-width) / 2));
+    left: 50%;
     transform: translateX(-50%);
     z-index: 500;
-    /* Map width (100% - sidebar) minus 200px clearance */
-    width: calc(100% - var(--sidebar-width) - 200px);
+    /* Map width minus ~300px to clear weather widget (approx 150px on each side) */
+    width: calc(100% - 300px);
     max-width: 728px;
     background: var(--sidebar-bg);
     backdrop-filter: var(--glass-blur);
