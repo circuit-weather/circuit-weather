@@ -589,35 +589,42 @@ async function handleLeafletRequest(request, env, ctx) {
   const url = new URL(request.url);
   const path = url.pathname.replace('/api/assets/', '');
 
-  // Whitelist of allowed files
+  // Whitelist of allowed files with SRI integrity hashes
   const allowedFiles = new Map([
     ['leaflet.js', {
       upstream: 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
-      contentTypes: ['application/javascript', 'text/javascript'] // Allow both standard and legacy
+      contentTypes: ['application/javascript', 'text/javascript'], // Allow both standard and legacy
+      integrity: 'sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo='
     }],
     ['leaflet.css', {
       upstream: 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
-      contentTypes: ['text/css']
+      contentTypes: ['text/css'],
+      integrity: 'sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY='
     }],
     ['images/layers.png', {
       upstream: 'https://unpkg.com/leaflet@1.9.4/dist/images/layers.png',
-      contentTypes: ['image/png']
+      contentTypes: ['image/png'],
+      integrity: 'sha256-Hbvp0CjikvNvy6j4s6KNXokydU/CIVuaxp5M3s9RB8Y='
     }],
     ['images/layers-2x.png', {
       upstream: 'https://unpkg.com/leaflet@1.9.4/dist/images/layers-2x.png',
-      contentTypes: ['image/png']
+      contentTypes: ['image/png'],
+      integrity: 'sha256-Bm2sqFDY/77wB68AsG6sABVyje4nnFHzy2xxbffELt8='
     }],
     ['images/marker-icon.png', {
       upstream: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-      contentTypes: ['image/png']
+      contentTypes: ['image/png'],
+      integrity: 'sha256-V0w6XMqF9BFAhbaEFZbWLwDXyJLHsD8oy/owHesdxDc='
     }],
     ['images/marker-icon-2x.png', {
       upstream: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-      contentTypes: ['image/png']
+      contentTypes: ['image/png'],
+      integrity: 'sha256-ABecTB7oMNOhCEEq4NKU9Vd2z+sIXGASmjmqb8SuJSg='
     }],
     ['images/marker-shadow.png', {
       upstream: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-      contentTypes: ['image/png']
+      contentTypes: ['image/png'],
+      integrity: 'sha256-Jk9cZAM58ELdcpBiz8BMF/jqDymIK1OOOEjtjxDttNo='
     }],
   ]);
 
@@ -672,8 +679,21 @@ async function handleLeafletRequest(request, env, ctx) {
       return new Response('Invalid upstream content type', { status: 502, headers: getErrorHeaders(request) });
     }
 
-    const [cacheBody, clientBody] = upstreamResponse.body.tee();
+    // SEC: Validate Content Integrity (SRI)
+    // Buffer the response body to calculate hash
+    const buffer = await upstreamResponse.arrayBuffer();
+    const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    // Convert to base64 string
+    const hashBase64 = btoa(String.fromCharCode(...hashArray));
+    const calculatedIntegrity = `sha256-${hashBase64}`;
 
+    if (calculatedIntegrity !== config.integrity) {
+      console.error(`Leaflet Integrity Mismatch (${path}): Expected ${config.integrity}, Got ${calculatedIntegrity}`);
+      return new Response('Integrity check failed', { status: 502, headers: getErrorHeaders(request) });
+    }
+
+    // Use the buffered body for caching and response
     // Use the first allowed content type as the canonical one for the client response
     const canonicalType = config.contentTypes[0];
 
@@ -685,7 +705,7 @@ async function handleLeafletRequest(request, env, ctx) {
     });
 
     // Cache it
-    ctx.waitUntil(cache.put(cacheKey, new Response(cacheBody, { headers: cacheHeaders })));
+    ctx.waitUntil(cache.put(cacheKey, new Response(buffer, { headers: cacheHeaders })));
 
     const clientHeaders = new Headers(cacheHeaders);
     const allowedOrigin = getAllowedOrigin(request);
@@ -694,7 +714,7 @@ async function handleLeafletRequest(request, env, ctx) {
       clientHeaders.set('Vary', 'Origin');
     }
 
-    return new Response(clientBody, {
+    return new Response(buffer, {
       status: 200,
       headers: clientHeaders
     });
@@ -704,6 +724,7 @@ async function handleLeafletRequest(request, env, ctx) {
     return new Response('Leaflet fetch failed', { status: 502, headers: getErrorHeaders(request) });
   }
 }
+
 
 /**
  * Handle Radar Tile requests with robust caching

@@ -22,3 +22,8 @@
 **Vulnerability:** Loading CSS/JS from public CDNs (like `unpkg.com`) in CSP `style-src`/`script-src` allows any malicious file from that CDN to be executed if injected.
 **Learning:** Even with SRI, a broad CSP allowance (`https://unpkg.com`) permits loading arbitrary styles/scripts if an XSS vulnerability exists.
 **Prevention:** Use a Cloudflare Worker proxy (`/api/assets/*`) to fetch specific, versioned files from the CDN and validate their Content-Type. This allows the CSP to be tightened to `self` only, removing the CDN origin entirely.
+
+## 2026-02-16 - [Strict Asset Proxy with Integrity Verification]
+**Vulnerability:** The application proxied Leaflet assets from `unpkg.com` via a Cloudflare Worker to enforce strict CSP. However, the worker did not verify the integrity of the upstream response, meaning a compromised CDN or supply chain attack could serve malicious code that the worker would cache and serve as "trusted" (same-origin).
+**Learning:** Relying solely on client-side SRI allows the worker to be poisoned. A trusted proxy must verify the integrity of the content it serves, especially when it acts as a gatekeeper for CSP.
+**Prevention:** Implemented SHA-256 hash verification in the worker proxy (`handleLeafletRequest`). The worker now calculates the hash of the upstream response body and compares it against a hardcoded allowlist of known-good hashes before serving or caching the file. This effectively pins the dependencies in the backend.
