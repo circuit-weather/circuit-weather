@@ -11,10 +11,8 @@
     <meta property="og:description" content="Real-time weather radar for Formula 1 race circuits">
     <meta property="og:type" content="website">
     <meta name="referrer" content="strict-origin-when-cross-origin">
-    <!-- CSP: frame-ancestors allows Google AdSense to iframe this page for ad preview/approval.
-         Do NOT change frame-ancestors to 'none' — it would break AdSense. -->
     <meta http-equiv="Content-Security-Policy"
-        content="upgrade-insecure-requests; default-src 'self'; script-src 'self' https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js https://pagead2.googlesyndication.com https://adservice.google.com https://www.googletagservices.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https://*.basemaps.cartocdn.com https://flagcdn.com https://*.buymeacoffee.com https://pagead2.googlesyndication.com https://*.googleusercontent.com; font-src https://fonts.gstatic.com; connect-src 'self' https://api.open-meteo.com https://api.rainviewer.com https://*.buymeacoffee.com https://pagead2.googlesyndication.com; worker-src 'self'; object-src 'none'; frame-src https://tpc.googlesyndication.com https://googleads.g.doubleclick.net https://*.google.com; base-uri 'self'; form-action 'self'; frame-ancestors 'self' https://*.google.com https://*.doubleclick.net https://*.googlesyndication.com;">
+        content="upgrade-insecure-requests; default-src 'self'; script-src 'self' https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https://*.basemaps.cartocdn.com https://flagcdn.com https://*.buymeacoffee.com; font-src https://fonts.gstatic.com; connect-src 'self' https://api.open-meteo.com https://api.rainviewer.com https://*.buymeacoffee.com; worker-src 'self'; object-src 'none'; frame-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self';">
     <title>Circuit Weather - F1 Race Circuit Weather Radar</title>
 
     <!-- Theme Initialization -->
@@ -32,14 +30,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- Leaflet CSS -->
-    <link rel="stylesheet" href="/api/assets/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=">
+    <link rel="stylesheet" href="/api/assets/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=">
 
     <!-- App CSS -->
     <link rel="stylesheet" href="/styles.css">
 
-    <!-- Google AdSense -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2970746064366277"
-        crossorigin="anonymous"></script>
+
 </head>
 
 <body>
@@ -233,12 +230,6 @@
                 </button>
             </header>
 
-            <!-- AdSense Banner (overlaid on map) -->
-            <div class="ad-overlay" id="adOverlay">
-                <!-- circuit-racing -->
-                <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2970746064366277"
-                    data-ad-slot="4194164633" data-ad-format="auto" data-full-width-responsive="true"></ins>
-            </div>
 
             <!-- Map Container -->
             <div id="map" class="map"></div>
@@ -314,8 +305,7 @@
                 <div class="error-timer" id="errorTimer" aria-hidden="true"></div>
             </div>
 
-            <!-- Fallback content for crawlers/bots that don't execute JavaScript (e.g. Google AdsBot).
-                 This helps AdSense understand page content for ad approval. -->
+            <!-- Fallback content for crawlers/bots that don't execute JavaScript. -->
             <noscript>
                 <div
                     style="padding: 2rem; max-width: 800px; margin: 0 auto; font-family: Inter, sans-serif; line-height: 1.6;">
@@ -360,8 +350,8 @@
     </div>
 
     <!-- Leaflet JS (Proxied for strict CSP) -->
-    <script src="/api/assets/leaflet.js"
-        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+    <script src="/api/assets/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+        crossorigin=""></script>
 
     <!-- App JS -->
     <script src="/app.js"></script>

@@ -180,9 +180,6 @@ export default {
 };
 
 // Common security headers for all responses
-// NOTE: X-Frame-Options is intentionally omitted. We use CSP frame-ancestors instead
-// to allow Google AdSense to iframe the page for ad preview/approval.
-// Do NOT add X-Frame-Options: DENY — it would block AdSense.
 const DEFAULT_SECURITY_HEADERS = {
   'X-Content-Type-Options': 'nosniff',
   'X-XSS-Protection': '0', // Disable XSS Auditor to prevent XS-Search/Info Leakage
@@ -190,9 +187,8 @@ const DEFAULT_SECURITY_HEADERS = {
   'Permissions-Policy': 'accelerometer=(), autoplay=(), camera=(), fullscreen=(), geolocation=(), gyroscope=(), interest-cohort=(), magnetometer=(), microphone=(), payment=(), picture-in-picture=(), usb=(), sync-xhr=()',
   'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
   'Referrer-Policy': 'strict-origin-when-cross-origin',
-  // frame-ancestors allows Google AdSense domains to iframe this page for ad preview/approval.
-  // Do NOT change to 'none' — it would break AdSense.
-  'Content-Security-Policy': "upgrade-insecure-requests; default-src 'none'; frame-ancestors 'self' https://*.google.com https://*.doubleclick.net https://*.googlesyndication.com; frame-src https://tpc.googlesyndication.com https://googleads.g.doubleclick.net https://*.google.com; base-uri 'none'; form-action 'none';",
+  'Content-Security-Policy': "upgrade-insecure-requests; default-src 'none'; frame-ancestors 'none'; frame-src 'none'; base-uri 'none'; form-action 'none';",
+  'X-Frame-Options': 'DENY',
   'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
   'Cross-Origin-Resource-Policy': 'cross-origin',
   'X-Robots-Tag': 'noindex', // Prevent search engines from indexing API responses

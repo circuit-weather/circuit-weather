@@ -552,27 +552,7 @@ body {
     background: var(--color-bg);
 }
 
-/* AdSense Overlay */
-.ad-overlay {
-    position: absolute;
-    top: var(--spacing-md);
-    /* Shift center left by 60px to account for weather widget on right */
-    left: calc(50% - 60px);
-    transform: translateX(-50%);
-    z-index: 500;
-    /* Map width minus 160px (clearance for weather widget + left margin) */
-    width: calc(100% - 160px);
-    max-width: 728px;
-    background: var(--sidebar-bg);
-    backdrop-filter: var(--glass-blur);
-    -webkit-backdrop-filter: var(--glass-blur);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-lg);
-    box-shadow: var(--shadow-lg);
-    padding: var(--spacing-sm);
-    min-height: 50px;
-    overflow: hidden;
-}
+
 
 /* Leaflet Customization */
 .leaflet-control-zoom {
@@ -1186,17 +1166,6 @@ body {
         height: auto;
     }
 
-    /* Ad overlay beside weather widget on mobile */
-    .ad-overlay {
-        top: calc(56px + 50px + var(--spacing-md));
-        left: var(--spacing-sm);
-        right: auto;
-        transform: none;
-        width: calc(100% - 100px);
-        max-width: none;
-        padding: var(--spacing-xs);
-        min-height: 50px;
-    }
 
     /* Compact header */
     .sidebar-header {

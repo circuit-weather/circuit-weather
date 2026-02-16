@@ -3073,10 +3073,5 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Initialize AdSense
-    try {
-        (window.adsbygoogle = window.adsbygoogle || []).push({});
-    } catch (e) {
-        console.error('AdSense error:', e);
-    }
+
 });
