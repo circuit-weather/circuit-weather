@@ -166,6 +166,11 @@ export default {
       return handleTrackRequest(request, env, ctx);
     }
 
+    // Handle Leaflet proxy (Strict CSP)
+    if (path === '/api/assets/leaflet.js') {
+      return handleLeafletRequest(request, env, ctx);
+    }
+
     // For any other /api/* routes, return 404
     return new Response(JSON.stringify({ error: 'API endpoint not found' }), {
       status: 404,
@@ -577,6 +582,83 @@ async function handleTrackRequest(request, env, ctx) {
       status: 502,
       headers: getErrorHeaders(request)
     });
+  }
+}
+
+/**
+ * Handle Leaflet JS proxy to enable strict CSP (remove unpkg.com)
+ */
+async function handleLeafletRequest(request, env, ctx) {
+  const upstreamUrl = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+  const cacheKey = new Request(upstreamUrl);
+  const cache = caches.default;
+
+  let response = await cache.match(cacheKey);
+
+  if (response) {
+    const headers = new Headers(response.headers);
+    headers.set('X-Cache', 'HIT');
+
+    // Apply strict CORS
+    const allowedOrigin = getAllowedOrigin(request);
+    if (allowedOrigin) {
+      headers.set('Access-Control-Allow-Origin', allowedOrigin);
+      headers.set('Vary', 'Origin');
+    } else {
+      headers.delete('Access-Control-Allow-Origin');
+    }
+
+    return new Response(response.body, {
+      status: response.status,
+      headers
+    });
+  }
+
+  try {
+    const upstreamResponse = await fetch(upstreamUrl, {
+      headers: { 'User-Agent': 'CircuitWeather/1.0' },
+      signal: AbortSignal.timeout(API_TIMEOUT),
+    });
+
+    if (!upstreamResponse.ok) {
+      console.error(`Leaflet Fetch Error: ${upstreamResponse.status}`);
+      return new Response('Failed to load Leaflet', { status: 502, headers: getErrorHeaders(request) });
+    }
+
+    // SEC: Validate Content-Type
+    const contentType = upstreamResponse.headers.get('Content-Type');
+    if (!contentType || (!contentType.includes('application/javascript') && !contentType.includes('text/javascript'))) {
+      console.error(`Leaflet Invalid Content-Type: ${contentType}`);
+      return new Response('Invalid upstream content type', { status: 502, headers: getErrorHeaders(request) });
+    }
+
+    const [cacheBody, clientBody] = upstreamResponse.body.tee();
+
+    const cacheHeaders = new Headers({
+      'Content-Type': 'application/javascript',
+      'Cache-Control': 'public, max-age=31536000, immutable', // Long cache for versioned file
+      'X-Cache': 'MISS',
+      ...DEFAULT_SECURITY_HEADERS
+    });
+
+    // Cache it
+    ctx.waitUntil(cache.put(cacheKey, new Response(cacheBody, { headers: cacheHeaders })));
+
+    const clientHeaders = new Headers(cacheHeaders);
+    const allowedOrigin = getAllowedOrigin(request);
+    if (allowedOrigin) {
+      clientHeaders.set('Access-Control-Allow-Origin', allowedOrigin);
+      clientHeaders.set('Vary', 'Origin');
+    }
+
+    return new Response(clientBody, {
+      status: 200,
+      headers: clientHeaders
+    });
+
+  } catch (error) {
+    console.error('Leaflet Proxy Error:', error);
+    return new Response('Leaflet fetch failed', { status: 502, headers: getErrorHeaders(request) });
   }
 }
 
