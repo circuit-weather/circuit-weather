@@ -22,3 +22,8 @@
 **Vulnerability:** Loading CSS/JS from public CDNs (like `unpkg.com`) in CSP `style-src`/`script-src` allows any malicious file from that CDN to be executed if injected.
 **Learning:** Even with SRI, a broad CSP allowance (`https://unpkg.com`) permits loading arbitrary styles/scripts if an XSS vulnerability exists.
 **Prevention:** Use a Cloudflare Worker proxy (`/api/assets/*`) to fetch specific, versioned files from the CDN and validate their Content-Type. This allows the CSP to be tightened to `self` only, removing the CDN origin entirely.
+
+## 2026-06-15 - [Strict CSP Alignment with Proxy Architecture]
+**Vulnerability:** The `public/index.html` CSP allowed `connect-src` to `https://api.rainviewer.com`, even though the application architecture mandated proxying all such requests through `src/worker.js` to protect user privacy (IP masking). This created a loophole where a compromised script could potentially leak user IPs directly to the third-party provider.
+**Learning:** CSP directives can easily drift from architectural intent if not manually synchronized. A "working" CSP is not necessarily a "secure" or "correct" CSP.
+**Prevention:** Audit CSP `connect-src` against the actual network requests made by the frontend (e.g., via `grep` or network logs). If a proxy is used for privacy, the direct upstream origin MUST be removed from the CSP to enforce the privacy guarantee.
