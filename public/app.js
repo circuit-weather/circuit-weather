@@ -172,6 +172,13 @@ class ThemeManager {
     applyTheme() {
         document.documentElement.setAttribute('data-theme', this.theme);
 
+        // Palette UX: Update theme-color meta tag for mobile browsers
+        // Matches sidebar color in dark mode (#1e293b) and brand color in light mode (#e10600)
+        const meta = document.querySelector('meta[name="theme-color"]');
+        if (meta) {
+            meta.content = this.theme === 'dark' ? '#1e293b' : '#e10600';
+        }
+
         // Palette UX: Update toggle button labels for better accessibility
         // Dynamic labels clarify the action (e.g., "Switch to light mode") rather than just describing the current state
         const nextTheme = this.theme === 'dark' ? 'light' : 'dark';
