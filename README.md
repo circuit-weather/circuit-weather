@@ -52,7 +52,9 @@ This setup faithfully reproduces the production environment, running both the fr
 
 ## Compatibility
 
-**ARM Architecture:** Please note that the `wrangler` CLI, which is required for local development, does not currently support ARM-based systems like the Raspberry Pi. You may encounter an `Unsupported platform` error during installation. Development should be done on an x86/x64-based machine.
+**Apple Silicon:** Development on Apple Silicon (M1/M2/M3) Macs is fully supported.
+
+**Raspberry Pi / Linux ARM:** Please note that the `wrangler` CLI may encounter an `Unsupported platform` error during installation on Linux ARM-based systems (like the Raspberry Pi). Development is recommended on an x86/x64-based machine or Apple Silicon Mac.
 
 ## Credits
 
