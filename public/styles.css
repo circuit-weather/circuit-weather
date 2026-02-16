@@ -559,7 +559,7 @@ body {
     left: 50%;
     transform: translateX(-50%);
     z-index: 500;
-    width: 90%;
+    width: calc(100% - 200px);
     max-width: 728px;
     background: var(--sidebar-bg);
     backdrop-filter: var(--glass-blur);
