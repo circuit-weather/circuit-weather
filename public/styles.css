@@ -1184,10 +1184,13 @@ body {
         height: auto;
     }
 
-    /* Ad overlay below mobile header */
+    /* Ad overlay beside weather widget on mobile */
     .ad-overlay {
         top: calc(56px + var(--spacing-sm));
-        width: 95%;
+        left: var(--spacing-sm);
+        right: auto;
+        transform: none;
+        width: calc(100% - 100px);
         max-width: none;
         padding: var(--spacing-xs);
         min-height: 50px;
