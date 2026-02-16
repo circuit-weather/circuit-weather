@@ -161,7 +161,7 @@ mode = "smart"
 2. **Map Display**
    - Centered on selected circuit
    - Dark/light mode basemaps (Carto)
-   - Range circles (outline only) at 5/10/25/50 km or 3/6/15/30 mi
+   - Dynamic range circles (outline only) that scale based on map zoom/bounds
    - Distance labels on circles
 
 3. **Weather Radar**
@@ -226,7 +226,7 @@ mode = "smart"
 1. **RainViewer Zoom Limit** - Free tier limits to zoom level 10. We use **512px tiles** with `zoomOffset: -1` and `maxNativeZoom: 8` to emulate higher resolution while reducing requests.
 2. **Radar Opacity** - Tiles must be added with small opacity (0.01) initially to trigger loading.
 3. **F1 API Rate Limits** - Edge caching via Worker mitigates this.
-4. **Current Weather Disabled** - The live current weather widget is disabled via `FEATURE_FLAGS.enableCurrentWeather` in `app.js` to reduce Open-Meteo API calls (429 rate limiting). Session forecasts still work. Re-enable by setting the flag to `true`.
+4. **Current Weather Rate Limits** - The live current weather widget is enabled via `FEATURE_FLAGS.enableCurrentWeather` in `app.js`, but be aware that it triggers an Open-Meteo API call per circuit change which may hit 429 rate limits during high traffic.
 
 ---
 
