@@ -51,6 +51,7 @@ circuit-weather/
 │   ├── index.html
 │   ├── styles.css
 │   ├── app.js
+│   ├── theme.js      # Critical for FOUC prevention (load in head)
 │   ├── favicon.svg
 │   ├── icon-192.png  # PWA icon (192×192)
 │   ├── icon-512.png  # PWA icon (512×512)
@@ -84,7 +85,7 @@ circuit-weather/
 npx wrangler dev
 
 # Deploy to Cloudflare
-# Deployment is automatic via GitHub Actions when changes are merged to the 'main' branch.
+# Deployment is automatic via Cloudflare Pages integration when changes are merged to the 'main' branch.
 # See "Git Workflow for Changes" below.
 ```
 

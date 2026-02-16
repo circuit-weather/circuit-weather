@@ -16,7 +16,7 @@ This web app is completely and unashamedly vibe coded primarily with the use of 
 The site provides a live weather radar overlay on top of the circuit map. You can see past weather movement and a short-term forecast to predict if rain is incoming. It automatically loads the schedule for the current F1 season, allowing you to jump between different rounds and sessions (like Qualifying or the Race).
 
 Key features include:
-*   **Live Radar:** Visualise rain moving across the track with a 2-hour history and 30-minute forecast.
+*   **Live Radar:** Visualise rain moving across the track with a 2-hour history.
 *   **Race Schedule:** Browse all circuits from the current F1 season with session start times.
 *   **Distance Markers:** Toggle range circles to gauge how far the rain is from the track (in km or miles).
 *   **Theme Support:** Automatically adapts to your system's dark or light mode, or you can toggle it manually.
