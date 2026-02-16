@@ -552,6 +552,21 @@ body {
     background: var(--color-bg);
 }
 
+/* AdSense Overlay */
+.ad-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 500;
+    background: var(--sidebar-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border-bottom: 1px solid var(--color-border);
+    padding: var(--spacing-xs);
+    min-height: 50px;
+}
+
 /* Leaflet Customization */
 .leaflet-control-zoom {
     border: none !important;
