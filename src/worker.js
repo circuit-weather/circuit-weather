@@ -180,7 +180,7 @@ const DEFAULT_SECURITY_HEADERS = {
   'X-Frame-Options': 'DENY',
   'X-XSS-Protection': '0', // Disable XSS Auditor to prevent XS-Search/Info Leakage
   'X-Permitted-Cross-Domain-Policies': 'none',
-  'Permissions-Policy': 'accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=(), sync-xhr=()',
+  'Permissions-Policy': 'accelerometer=(), autoplay=(), camera=(), fullscreen=(), geolocation=(), gyroscope=(), interest-cohort=(), magnetometer=(), microphone=(), payment=(), picture-in-picture=(), usb=(), sync-xhr=()',
   'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
   'Referrer-Policy': 'strict-origin-when-cross-origin',
   'Content-Security-Policy': "upgrade-insecure-requests; default-src 'none'; frame-ancestors 'none'; base-uri 'none'; form-action 'none';",
@@ -586,7 +586,10 @@ async function handleTileRequest(request, env, ctx) {
   const tilePath = url.pathname.replace('/api/tiles', '');
 
   // SEC: Validate tilePath (length and content) to prevent traversal/SSRF
-  if (tilePath.length > 255 || !VALID_API_PATH_REGEX.test(tilePath) || tilePath.includes('..') || tilePath.includes('//')) {
+  // SEC: Prevent access to hidden files/directories (dotfiles)
+  const hasDotfiles = tilePath.split('/').some(part => part.startsWith('.'));
+
+  if (tilePath.length > 255 || !VALID_API_PATH_REGEX.test(tilePath) || tilePath.includes('..') || tilePath.includes('//') || hasDotfiles) {
     return new Response(JSON.stringify({ error: 'Invalid tile path' }), {
       status: 400,
       headers: getErrorHeaders(request)
