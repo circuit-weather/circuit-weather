@@ -217,7 +217,10 @@ mode = "smart"
 | Endpoint | Purpose |
 |----------|---------|
 | `/api/f1/*` | Proxies to Jolpica F1 API with 1-hour edge caching |
+| `/api/radar` | Proxies to RainViewer Maps API with 1-minute caching (initializes animation) |
 | `/api/tiles/*` | Proxies to RainViewer tile API with 2-hour edge caching (512px optimized) |
+| `/api/track/*` | Proxies to GitHub for GeoJSON track data with 24-hour caching |
+| `/api/assets/*` | Proxies to unpkg for Leaflet assets with 1-year immutable caching (strict CSP) |
 
 ---
 
