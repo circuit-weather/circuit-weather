@@ -556,10 +556,12 @@ body {
 .ad-overlay {
     position: absolute;
     top: var(--spacing-md);
-    left: 50%;
+    /* Center in map area: 50% of viewport + half sidebar width */
+    left: calc(50% + (var(--sidebar-width) / 2));
     transform: translateX(-50%);
     z-index: 500;
-    width: calc(100% - 200px);
+    /* Map width (100% - sidebar) minus 200px clearance */
+    width: calc(100% - var(--sidebar-width) - 200px);
     max-width: 728px;
     background: var(--sidebar-bg);
     backdrop-filter: var(--glass-blur);
