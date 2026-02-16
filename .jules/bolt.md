@@ -23,3 +23,7 @@
 ## 2024-05-25 - RateLimiter Generational Cleanup
 **Learning:** Throttled O(N) cleanup in RateLimiters is still insufficient under sustained attack as it blocks the event loop periodically.
 **Action:** Implement Generational Garbage Collection (Double Buffering) to achieve O(1) cleanup by simply rotating Maps, eliminating iteration entirely.
+
+## 2024-05-26 - Worker Request Allocations
+**Learning:** `split('/').some()` for path validation and inline `Map` creation in request handlers create significant per-request allocation overhead (measured ~100x slower for map creation).
+**Action:** Hoist all static configuration (Maps, Arrays, Regexes) to module-level constants to leverage isolate reuse and replace string splitting with regex checks in hot paths.

@@ -17,6 +17,40 @@ const VALID_COORD_REGEX = /^-?\d+(\.\d+)?$/;
 const VALID_TRACK_ID_REGEX = /^[a-z0-9-]+$/;
 const ALLOWED_ORIGIN_LOCALHOST_REGEX = /^http:\/\/localhost(:\d+)?$/;
 const ALLOWED_ORIGIN_127_REGEX = /^http:\/\/127\.0\.0\.1(:\d+)?$/;
+const DOTFILE_REGEX = /(?:^|\/)\./;
+
+const LEAFLET_ASSETS = new Map([
+  ['leaflet.js', {
+    upstream: 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
+    contentTypes: ['application/javascript', 'text/javascript'] // Allow both standard and legacy
+  }],
+  ['leaflet.css', {
+    upstream: 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
+    contentTypes: ['text/css']
+  }],
+  ['images/layers.png', {
+    upstream: 'https://unpkg.com/leaflet@1.9.4/dist/images/layers.png',
+    contentTypes: ['image/png']
+  }],
+  ['images/layers-2x.png', {
+    upstream: 'https://unpkg.com/leaflet@1.9.4/dist/images/layers-2x.png',
+    contentTypes: ['image/png']
+  }],
+  ['images/marker-icon.png', {
+    upstream: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+    contentTypes: ['image/png']
+  }],
+  ['images/marker-icon-2x.png', {
+    upstream: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+    contentTypes: ['image/png']
+  }],
+  ['images/marker-shadow.png', {
+    upstream: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+    contentTypes: ['image/png']
+  }],
+]);
+
+const ALLOWED_TILE_HEADERS = ['Content-Type', 'Content-Length', 'Last-Modified', 'ETag', 'Date'];
 
 /**
  * Simple In-Memory Rate Limiter
@@ -332,7 +366,8 @@ async function handleApiRequest(request, env, ctx) {
   }
 
   // SEC: Prevent access to hidden files/directories (dotfiles)
-  const hasDotfiles = apiPath.split('/').some(part => part.startsWith('.'));
+  // Bolt Optimization: Use regex instead of split/some for performance
+  const hasDotfiles = DOTFILE_REGEX.test(apiPath);
 
   if (!VALID_API_PATH_REGEX.test(apiPath) || apiPath.includes('..') || apiPath.includes('//') || apiPath.startsWith('/') || hasDotfiles) {
     return new Response(JSON.stringify({ error: 'Invalid API path' }), {
@@ -589,39 +624,7 @@ async function handleLeafletRequest(request, env, ctx) {
   const url = new URL(request.url);
   const path = url.pathname.replace('/api/assets/', '');
 
-  // Whitelist of allowed files
-  const allowedFiles = new Map([
-    ['leaflet.js', {
-      upstream: 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
-      contentTypes: ['application/javascript', 'text/javascript'] // Allow both standard and legacy
-    }],
-    ['leaflet.css', {
-      upstream: 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
-      contentTypes: ['text/css']
-    }],
-    ['images/layers.png', {
-      upstream: 'https://unpkg.com/leaflet@1.9.4/dist/images/layers.png',
-      contentTypes: ['image/png']
-    }],
-    ['images/layers-2x.png', {
-      upstream: 'https://unpkg.com/leaflet@1.9.4/dist/images/layers-2x.png',
-      contentTypes: ['image/png']
-    }],
-    ['images/marker-icon.png', {
-      upstream: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-      contentTypes: ['image/png']
-    }],
-    ['images/marker-icon-2x.png', {
-      upstream: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-      contentTypes: ['image/png']
-    }],
-    ['images/marker-shadow.png', {
-      upstream: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-      contentTypes: ['image/png']
-    }],
-  ]);
-
-  const config = allowedFiles.get(path);
+  const config = LEAFLET_ASSETS.get(path);
   if (!config) {
     return new Response('File not found', { status: 404, headers: getErrorHeaders(request) });
   }
@@ -716,7 +719,8 @@ async function handleTileRequest(request, env, ctx) {
 
   // SEC: Validate tilePath (length and content) to prevent traversal/SSRF
   // SEC: Prevent access to hidden files/directories (dotfiles)
-  const hasDotfiles = tilePath.split('/').some(part => part.startsWith('.'));
+  // Bolt Optimization: Use regex instead of split/some for performance
+  const hasDotfiles = DOTFILE_REGEX.test(tilePath);
 
   if (tilePath.length > 255 || !VALID_API_PATH_REGEX.test(tilePath) || tilePath.includes('..') || tilePath.includes('//') || hasDotfiles) {
     return new Response(JSON.stringify({ error: 'Invalid tile path' }), {
@@ -800,8 +804,7 @@ async function handleTileRequest(request, env, ctx) {
 
     // SEC: Allowlist headers to prevent leaking sensitive upstream headers
     const cacheHeaders = new Headers();
-    const allowedHeaders = ['Content-Type', 'Content-Length', 'Last-Modified', 'ETag', 'Date'];
-    for (const header of allowedHeaders) {
+    for (const header of ALLOWED_TILE_HEADERS) {
       const value = upstreamResponse.headers.get(header);
       if (value) cacheHeaders.set(header, value);
     }
