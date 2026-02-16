@@ -1186,7 +1186,7 @@ body {
 
     /* Ad overlay beside weather widget on mobile */
     .ad-overlay {
-        top: calc(56px + var(--spacing-sm));
+        top: calc(56px + 50px + var(--spacing-md));
         left: var(--spacing-sm);
         right: auto;
         transform: none;
