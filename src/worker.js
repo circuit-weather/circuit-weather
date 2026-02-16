@@ -167,7 +167,7 @@ export default {
     }
 
     // Handle Leaflet proxy (Strict CSP)
-    if (path === '/api/assets/leaflet.js') {
+    if (path.startsWith('/api/assets/')) {
       return handleLeafletRequest(request, env, ctx);
     }
 
@@ -586,10 +586,51 @@ async function handleTrackRequest(request, env, ctx) {
 }
 
 /**
- * Handle Leaflet JS proxy to enable strict CSP (remove unpkg.com)
+ * Handle Leaflet Assets proxy to enable strict CSP (remove unpkg.com)
+ * Proxies JS, CSS, and images from unpkg
  */
 async function handleLeafletRequest(request, env, ctx) {
-  const upstreamUrl = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
+  const url = new URL(request.url);
+  const path = url.pathname.replace('/api/assets/', '');
+
+  // Whitelist of allowed files
+  const allowedFiles = new Map([
+    ['leaflet.js', {
+      upstream: 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
+      contentTypes: ['application/javascript', 'text/javascript'] // Allow both standard and legacy
+    }],
+    ['leaflet.css', {
+      upstream: 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
+      contentTypes: ['text/css']
+    }],
+    ['images/layers.png', {
+      upstream: 'https://unpkg.com/leaflet@1.9.4/dist/images/layers.png',
+      contentTypes: ['image/png']
+    }],
+    ['images/layers-2x.png', {
+      upstream: 'https://unpkg.com/leaflet@1.9.4/dist/images/layers-2x.png',
+      contentTypes: ['image/png']
+    }],
+    ['images/marker-icon.png', {
+      upstream: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
+      contentTypes: ['image/png']
+    }],
+    ['images/marker-icon-2x.png', {
+      upstream: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
+      contentTypes: ['image/png']
+    }],
+    ['images/marker-shadow.png', {
+      upstream: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
+      contentTypes: ['image/png']
+    }],
+  ]);
+
+  const config = allowedFiles.get(path);
+  if (!config) {
+    return new Response('File not found', { status: 404, headers: getErrorHeaders(request) });
+  }
+
+  const upstreamUrl = config.upstream;
   const cacheKey = new Request(upstreamUrl);
   const cache = caches.default;
 
@@ -621,21 +662,27 @@ async function handleLeafletRequest(request, env, ctx) {
     });
 
     if (!upstreamResponse.ok) {
-      console.error(`Leaflet Fetch Error: ${upstreamResponse.status}`);
-      return new Response('Failed to load Leaflet', { status: 502, headers: getErrorHeaders(request) });
+      console.error(`Leaflet Fetch Error (${path}): ${upstreamResponse.status}`);
+      return new Response('Failed to load Leaflet asset', { status: 502, headers: getErrorHeaders(request) });
     }
 
     // SEC: Validate Content-Type
     const contentType = upstreamResponse.headers.get('Content-Type');
-    if (!contentType || (!contentType.includes('application/javascript') && !contentType.includes('text/javascript'))) {
-      console.error(`Leaflet Invalid Content-Type: ${contentType}`);
+    // Allow partial match (e.g. text/css; charset=utf-8) against any allowed type
+    const isValidType = config.contentTypes.some(type => contentType && contentType.includes(type));
+
+    if (!isValidType) {
+      console.error(`Leaflet Invalid Content-Type (${path}): ${contentType} (expected ${config.contentTypes.join(' or ')})`);
       return new Response('Invalid upstream content type', { status: 502, headers: getErrorHeaders(request) });
     }
 
     const [cacheBody, clientBody] = upstreamResponse.body.tee();
 
+    // Use the first allowed content type as the canonical one for the client response
+    const canonicalType = config.contentTypes[0];
+
     const cacheHeaders = new Headers({
-      'Content-Type': 'application/javascript',
+      'Content-Type': canonicalType, // Enforce strict/canonical type
       'Cache-Control': 'public, max-age=31536000, immutable', // Long cache for versioned file
       'X-Cache': 'MISS',
       ...DEFAULT_SECURITY_HEADERS
