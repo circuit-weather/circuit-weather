@@ -187,7 +187,7 @@ const DEFAULT_SECURITY_HEADERS = {
   'Referrer-Policy': 'strict-origin-when-cross-origin',
   // frame-ancestors allows Google AdSense domains to iframe this page for ad preview/approval.
   // Do NOT change to 'none' — it would break AdSense.
-  'Content-Security-Policy': "upgrade-insecure-requests; default-src 'none'; frame-ancestors 'self' https://*.google.com https://*.doubleclick.net https://*.googlesyndication.com; base-uri 'none'; form-action 'none';",
+  'Content-Security-Policy': "upgrade-insecure-requests; default-src 'none'; frame-ancestors 'self' https://*.google.com https://*.doubleclick.net https://*.googlesyndication.com; frame-src https://tpc.googlesyndication.com https://googleads.g.doubleclick.net https://*.google.com; base-uri 'none'; form-action 'none';",
   'Cross-Origin-Opener-Policy': 'same-origin',
   'Cross-Origin-Resource-Policy': 'same-origin',
   'X-Robots-Tag': 'noindex', // Prevent search engines from indexing API responses
