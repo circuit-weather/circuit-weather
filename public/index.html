@@ -14,25 +14,11 @@
     <!-- CSP: frame-ancestors allows Google AdSense to iframe this page for ad preview/approval.
          Do NOT change frame-ancestors to 'none' — it would break AdSense. -->
     <meta http-equiv="Content-Security-Policy"
-        content="upgrade-insecure-requests; default-src 'self'; script-src 'self' 'unsafe-inline' 'sha256-CmbK0HHcbxCZLwpkNw7KW+4U30zGlzgm7h4DCLb7uJg=' 'sha256-4EkphFwdIH5ujWaiSAOEbv6i/PL7gwoaZRlm22JWDc0=' 'sha256-FakEheKlaV1wyoXNdJzH8crnRetl2iN+DtJroSuyZFg=' https://unpkg.com/leaflet@1.9.4/dist/leaflet.js https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js https://pagead2.googlesyndication.com https://adservice.google.com https://www.googletagservices.com; style-src 'self' 'unsafe-inline' 'unsafe-hashes' 'sha256-PZsbSh/dGIbjwOp9epLB45/oMfQ+Xgvt64Vtq4LUX9Y=' 'sha256-biLFinpqYMtWHmXfkA1BPeCY0/fNt46SAZ+BBk5YUog=' 'sha256-vrx7HQzOJaP6063lWrku35kkMdzSrsgKxVadh9ZBZeY=' https://unpkg.com/leaflet@1.9.4/dist/leaflet.css https://fonts.googleapis.com; img-src 'self' data: https://*.basemaps.cartocdn.com https://flagcdn.com https://*.buymeacoffee.com https://pagead2.googlesyndication.com https://*.googleusercontent.com; font-src https://fonts.gstatic.com; connect-src 'self' https://api.open-meteo.com https://api.rainviewer.com https://*.buymeacoffee.com https://pagead2.googlesyndication.com; worker-src 'self'; object-src 'none'; frame-src https://tpc.googlesyndication.com https://googleads.g.doubleclick.net https://*.google.com; base-uri 'self'; form-action 'self'; frame-ancestors 'self' https://*.google.com https://*.doubleclick.net https://*.googlesyndication.com;">
+        content="upgrade-insecure-requests; default-src 'self'; script-src 'self' https://unpkg.com/leaflet@1.9.4/dist/leaflet.js https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js https://pagead2.googlesyndication.com https://adservice.google.com https://www.googletagservices.com; style-src 'self' 'unsafe-inline' 'unsafe-hashes' 'sha256-PZsbSh/dGIbjwOp9epLB45/oMfQ+Xgvt64Vtq4LUX9Y=' 'sha256-biLFinpqYMtWHmXfkA1BPeCY0/fNt46SAZ+BBk5YUog=' 'sha256-vrx7HQzOJaP6063lWrku35kkMdzSrsgKxVadh9ZBZeY=' https://unpkg.com/leaflet@1.9.4/dist/leaflet.css https://fonts.googleapis.com; img-src 'self' data: https://*.basemaps.cartocdn.com https://flagcdn.com https://*.buymeacoffee.com https://pagead2.googlesyndication.com https://*.googleusercontent.com; font-src https://fonts.gstatic.com; connect-src 'self' https://api.open-meteo.com https://api.rainviewer.com https://*.buymeacoffee.com https://pagead2.googlesyndication.com; worker-src 'self'; object-src 'none'; frame-src https://tpc.googlesyndication.com https://googleads.g.doubleclick.net https://*.google.com; base-uri 'self'; form-action 'self'; frame-ancestors 'self' https://*.google.com https://*.doubleclick.net https://*.googlesyndication.com;">
     <title>Circuit Weather - F1 Race Circuit Weather Radar</title>
 
-    <script>
-        // Bolt: Initialize theme immediately to prevent FOUC
-        (function () {
-            try {
-                const stored = localStorage.getItem('theme');
-                const theme = stored || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
-                document.documentElement.setAttribute('data-theme', theme);
-
-                // Palette: Set theme-color meta tag for mobile browsers
-                const meta = document.querySelector('meta[name="theme-color"]');
-                if (meta) {
-                    meta.content = theme === 'dark' ? '#1e293b' : '#e10600';
-                }
-            } catch (e) { }
-        })();
-    </script>
+    <!-- Theme Initialization -->
+    <script src="/theme.js"></script>
 
     <!-- Favicon & PWA -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
@@ -253,9 +239,6 @@
                 <!-- circuit-racing -->
                 <ins class="adsbygoogle" style="display:block" data-ad-client="ca-pub-2970746064366277"
                     data-ad-slot="4194164633" data-ad-format="auto" data-full-width-responsive="true"></ins>
-                <script>
-                    (adsbygoogle = window.adsbygoogle || []).push({});
-                </script>
             </div>
 
             <!-- Map Container -->
@@ -383,9 +366,6 @@
 
     <!-- App JS -->
     <script src="/app.js"></script>
-
-    <!-- Service Worker Registration -->
-    <script>if ('serviceWorker' in navigator) { navigator.serviceWorker.register('/sw.js'); }</script>
 </body>
 
 </html>
