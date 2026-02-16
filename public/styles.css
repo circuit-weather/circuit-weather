@@ -555,16 +555,21 @@ body {
 /* AdSense Overlay */
 .ad-overlay {
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
+    top: var(--spacing-md);
+    left: 50%;
+    transform: translateX(-50%);
     z-index: 500;
+    width: 90%;
+    max-width: 728px;
     background: var(--sidebar-bg);
     backdrop-filter: var(--glass-blur);
     -webkit-backdrop-filter: var(--glass-blur);
-    border-bottom: 1px solid var(--color-border);
-    padding: var(--spacing-xs);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    padding: var(--spacing-sm);
     min-height: 50px;
+    overflow: hidden;
 }
 
 /* Leaflet Customization */
@@ -1177,6 +1182,15 @@ body {
         right: 0;
         bottom: 0;
         height: auto;
+    }
+
+    /* Ad overlay below mobile header */
+    .ad-overlay {
+        top: calc(56px + var(--spacing-sm));
+        width: 95%;
+        max-width: none;
+        padding: var(--spacing-xs);
+        min-height: 50px;
     }
 
     /* Compact header */
