@@ -1,6 +1,13 @@
-2025-02-18 - Missing API Endpoints in Documentation
+# Archivist Journal
 
-Issue: The "API Endpoints" table in AGENTS.md was incomplete, listing only 2 of the 5 active worker routes.
-Cause: Documentation drift as new features (tracks, radar JSON, asset proxying) were added to `worker.js` without updating `AGENTS.md`.
-Fix: Updated AGENTS.md to include `/api/radar`, `/api/track/*`, and `/api/assets/*` with accurate caching policies derived from source code.
-Prevention: When modifying `worker.js`, cross-reference `AGENTS.md` to ensure documentation matches the implementation.
+2025-01-29 - Product Claim Drift: RainViewer Free Tier
+Issue: README.md claimed "30-minute forecast" while AGENTS.md correctly noted "Historical Only" due to free tier API changes.
+Cause: Feature removal in upstream API (RainViewer) was not reflected in user-facing documentation.
+Fix: Updated README.md to remove the forecast claim.
+Prevention: Verify feature claims against current API capabilities during major updates.
+
+2025-01-29 - Agent Operations: Overwriting History
+Issue: Initialized a new journal file potentially overwriting existing content without checking.
+Cause: Assumed file did not exist based on root directory listing.
+Fix: (Self-correction) Always check for existence before writing new files.
+Prevention: Use `list_files` on subdirectories or `read_file` before creating/writing.
