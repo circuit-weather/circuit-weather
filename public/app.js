@@ -1023,8 +1023,9 @@ class WeatherRadar {
         if (this.isCheckingStatus) return;
         this.isCheckingStatus = true;
 
-        // Use direct API URL to avoid proxy nuances and ensure we check the source
-        const checkUrl = 'https://api.rainviewer.com/public/weather-maps.json';
+        // Use proxied API URL to avoid privacy leak (direct connection exposes IP)
+        // Worker now passes through 429 status for this check
+        const checkUrl = CONFIG.rainViewerApi;
 
         fetch(checkUrl, { method: 'HEAD' })
             .then(response => {

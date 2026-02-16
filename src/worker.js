@@ -895,6 +895,15 @@ async function handleRadarRequest(request, env, ctx) {
 
     if (!upstreamResponse.ok) {
       console.error(`Upstream Radar API Error: Status ${upstreamResponse.status}`);
+      if (upstreamResponse.status === 429) {
+        return new Response(JSON.stringify({ error: 'Upstream Rate Limit' }), {
+          status: 429,
+          headers: {
+            ...getErrorHeaders(request),
+            'Retry-After': '60'
+          }
+        });
+      }
       return getEmptyRadarResponse(request);
     }
 
