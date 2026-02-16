@@ -3065,4 +3065,18 @@ document.addEventListener('DOMContentLoaded', () => {
     const app = new CircuitWeatherApp();
     app.init();
     new PrivacyModal();
+
+    // Register Service Worker
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js').catch(err => {
+            console.error('Service Worker registration failed:', err);
+        });
+    }
+
+    // Initialize AdSense
+    try {
+        (window.adsbygoogle = window.adsbygoogle || []).push({});
+    } catch (e) {
+        console.error('AdSense error:', e);
+    }
 });
