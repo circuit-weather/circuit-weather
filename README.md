@@ -50,6 +50,12 @@ This project uses [Cloudflare Workers](https://workers.cloudflare.com/) to proxy
 
 This setup faithfully reproduces the production environment, running both the frontend and the worker for API requests.
 
+## Compatibility
+
+**Apple Silicon:** Development on Apple Silicon (M1/M2/M3) Macs is fully supported.
+
+**Raspberry Pi / Linux ARM:** Please note that the `wrangler` CLI may encounter an `Unsupported platform` error during installation on Linux ARM-based systems (like the Raspberry Pi). Development is recommended on an x86/x64-based machine or Apple Silicon Mac.
+
 ## Credits
 
 Huge thanks to the free APIs that make this possible:
