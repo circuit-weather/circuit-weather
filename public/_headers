@@ -1,12 +1,16 @@
+# NOTE: X-Frame-Options is intentionally omitted. We use CSP frame-ancestors instead
+# to allow Google AdSense to iframe the page for ad preview/approval.
+# Do NOT add X-Frame-Options: DENY — it would block AdSense.
+# The frame-ancestors directive in the CSP below allows Google AdSense domains
+# to iframe this page. Do NOT change frame-ancestors to 'none'.
 /*
-  X-Frame-Options: DENY
   X-Content-Type-Options: nosniff
   X-XSS-Protection: 0
   X-Permitted-Cross-Domain-Policies: none
   Referrer-Policy: strict-origin-when-cross-origin
   Permissions-Policy: accelerometer=(), autoplay=(), camera=(), fullscreen=(), geolocation=(), gyroscope=(), interest-cohort=(), magnetometer=(), microphone=(), payment=(), picture-in-picture=(), usb=(), sync-xhr=()
   Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
-  Content-Security-Policy: upgrade-insecure-requests; default-src 'self'; script-src 'self' 'sha256-CmbK0HHcbxCZLwpkNw7KW+4U30zGlzgm7h4DCLb7uJg=' 'sha256-4EkphFwdIH5ujWaiSAOEbv6i/PL7gwoaZRlm22JWDc0=' 'sha256-FakEheKlaV1wyoXNdJzH8crnRetl2iN+DtJroSuyZFg=' https://unpkg.com/leaflet@1.9.4/dist/leaflet.js https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js; style-src 'self' 'unsafe-hashes' 'sha256-PZsbSh/dGIbjwOp9epLB45/oMfQ+Xgvt64Vtq4LUX9Y=' 'sha256-biLFinpqYMtWHmXfkA1BPeCY0/fNt46SAZ+BBk5YUog=' 'sha256-vrx7HQzOJaP6063lWrku35kkMdzSrsgKxVadh9ZBZeY=' https://unpkg.com/leaflet@1.9.4/dist/leaflet.css https://fonts.googleapis.com; img-src 'self' data: https://*.basemaps.cartocdn.com https://flagcdn.com https://*.buymeacoffee.com; font-src https://fonts.gstatic.com; connect-src 'self' https://api.open-meteo.com https://api.rainviewer.com https://*.buymeacoffee.com; worker-src 'self'; object-src 'none'; frame-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';
+  Content-Security-Policy: upgrade-insecure-requests; default-src 'self'; script-src 'self' 'sha256-CmbK0HHcbxCZLwpkNw7KW+4U30zGlzgm7h4DCLb7uJg=' 'sha256-4EkphFwdIH5ujWaiSAOEbv6i/PL7gwoaZRlm22JWDc0=' 'sha256-FakEheKlaV1wyoXNdJzH8crnRetl2iN+DtJroSuyZFg=' https://unpkg.com/leaflet@1.9.4/dist/leaflet.js https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js; style-src 'self' 'unsafe-hashes' 'sha256-PZsbSh/dGIbjwOp9epLB45/oMfQ+Xgvt64Vtq4LUX9Y=' 'sha256-biLFinpqYMtWHmXfkA1BPeCY0/fNt46SAZ+BBk5YUog=' 'sha256-vrx7HQzOJaP6063lWrku35kkMdzSrsgKxVadh9ZBZeY=' https://unpkg.com/leaflet@1.9.4/dist/leaflet.css https://fonts.googleapis.com; img-src 'self' data: https://*.basemaps.cartocdn.com https://flagcdn.com https://*.buymeacoffee.com; font-src https://fonts.gstatic.com; connect-src 'self' https://api.open-meteo.com https://api.rainviewer.com https://*.buymeacoffee.com; worker-src 'self'; object-src 'none'; frame-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self' https://*.google.com https://*.doubleclick.net https://*.googlesyndication.com;
   Cross-Origin-Opener-Policy: same-origin
   Cross-Origin-Resource-Policy: same-origin
   Cache-Control: public, max-age=0, must-revalidate

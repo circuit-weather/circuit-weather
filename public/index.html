@@ -11,8 +11,10 @@
     <meta property="og:description" content="Real-time weather radar for Formula 1 race circuits">
     <meta property="og:type" content="website">
     <meta name="referrer" content="strict-origin-when-cross-origin">
+    <!-- CSP: frame-ancestors allows Google AdSense to iframe this page for ad preview/approval.
+         Do NOT change frame-ancestors to 'none' — it would break AdSense. -->
     <meta http-equiv="Content-Security-Policy"
-        content="upgrade-insecure-requests; default-src 'self'; script-src 'self' 'sha256-CmbK0HHcbxCZLwpkNw7KW+4U30zGlzgm7h4DCLb7uJg=' 'sha256-4EkphFwdIH5ujWaiSAOEbv6i/PL7gwoaZRlm22JWDc0=' 'sha256-FakEheKlaV1wyoXNdJzH8crnRetl2iN+DtJroSuyZFg=' https://unpkg.com/leaflet@1.9.4/dist/leaflet.js https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js; style-src 'self' 'unsafe-hashes' 'sha256-PZsbSh/dGIbjwOp9epLB45/oMfQ+Xgvt64Vtq4LUX9Y=' 'sha256-biLFinpqYMtWHmXfkA1BPeCY0/fNt46SAZ+BBk5YUog=' 'sha256-vrx7HQzOJaP6063lWrku35kkMdzSrsgKxVadh9ZBZeY=' https://unpkg.com/leaflet@1.9.4/dist/leaflet.css https://fonts.googleapis.com; img-src 'self' data: https://*.basemaps.cartocdn.com https://flagcdn.com https://*.buymeacoffee.com; font-src https://fonts.gstatic.com; connect-src 'self' https://api.open-meteo.com https://api.rainviewer.com https://*.buymeacoffee.com; worker-src 'self'; object-src 'none'; frame-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'none';">
+        content="upgrade-insecure-requests; default-src 'self'; script-src 'self' 'sha256-CmbK0HHcbxCZLwpkNw7KW+4U30zGlzgm7h4DCLb7uJg=' 'sha256-4EkphFwdIH5ujWaiSAOEbv6i/PL7gwoaZRlm22JWDc0=' 'sha256-FakEheKlaV1wyoXNdJzH8crnRetl2iN+DtJroSuyZFg=' https://unpkg.com/leaflet@1.9.4/dist/leaflet.js https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js; style-src 'self' 'unsafe-hashes' 'sha256-PZsbSh/dGIbjwOp9epLB45/oMfQ+Xgvt64Vtq4LUX9Y=' 'sha256-biLFinpqYMtWHmXfkA1BPeCY0/fNt46SAZ+BBk5YUog=' 'sha256-vrx7HQzOJaP6063lWrku35kkMdzSrsgKxVadh9ZBZeY=' https://unpkg.com/leaflet@1.9.4/dist/leaflet.css https://fonts.googleapis.com; img-src 'self' data: https://*.basemaps.cartocdn.com https://flagcdn.com https://*.buymeacoffee.com; font-src https://fonts.gstatic.com; connect-src 'self' https://api.open-meteo.com https://api.rainviewer.com https://*.buymeacoffee.com; worker-src 'self'; object-src 'none'; frame-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self' https://*.google.com https://*.doubleclick.net https://*.googlesyndication.com;">
     <title>Circuit Weather - F1 Race Circuit Weather Radar</title>
 
     <script>
@@ -188,10 +190,11 @@
             <div class="sidebar-footer">
                 <button type="button" id="privacyLink" class="link-button">Privacy</button>
                 <span>•</span>
-                <a href="https://github.com/circuit-weather/circuit-weather" target="_blank"
-                    rel="noopener noreferrer" class="external-link">
+                <a href="https://github.com/circuit-weather/circuit-weather" target="_blank" rel="noopener noreferrer"
+                    class="external-link">
                     GitHub
-                    <svg class="icon-external" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <svg class="icon-external" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
                         <polyline points="15 3 21 3 21 9"></polyline>
                         <line x1="10" y1="14" x2="21" y2="3"></line>
@@ -246,8 +249,8 @@
 
             <!-- Radar Timeline -->
             <div class="radar-controls" id="radarControls" style="display: none;">
-                <button class="radar-play-btn" id="radarPlayBtn" aria-label="Play radar animation"
-                    title="Play (Space)" aria-keyshortcuts="Space">
+                <button class="radar-play-btn" id="radarPlayBtn" aria-label="Play radar animation" title="Play (Space)"
+                    aria-keyshortcuts="Space">
                     <svg class="icon-play" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor">
                         <polygon points="5,3 19,12 5,21"></polygon>
                     </svg>
@@ -312,7 +315,7 @@
                     <div class="error-title" id="errorTitle">Tile Error</div>
                     <div class="error-message" id="errorMessage">Retrying...</div>
                 </div>
-            <div class="error-timer" id="errorTimer" aria-hidden="true"></div>
+                <div class="error-timer" id="errorTimer" aria-hidden="true"></div>
             </div>
         </main>
     </div>
