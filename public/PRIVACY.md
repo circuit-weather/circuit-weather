@@ -51,7 +51,6 @@ While we proxy some data, your browser connects directly to the following servic
 
 **Content Delivery Networks (CDNs)**
 To improve performance and reliability, we load standard libraries and assets from public CDNs:
-- **Unpkg:** Serves the Leaflet.js mapping library.
 - **Google Fonts:** Serves typography files.
 - **FlagCDN:** Serves country flag icons.
 
@@ -69,6 +68,7 @@ The following services provide the raw data that we process and cache via Cloudf
 - **Jolpica F1:** Historical and current F1 schedule data.
 - **GitHub:** Stores static track layout files (GeoJSON).
 - **RainViewer:** Weather radar tiles and metadata (2-hour edge cache).
+- **Leaflet (via Unpkg):** Map interaction library assets (proxied for security).
 
 ## Local Storage
 

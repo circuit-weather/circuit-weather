@@ -11,3 +11,9 @@ Issue: Initialized a new journal file potentially overwriting existing content w
 Cause: Assumed file did not exist based on root directory listing.
 Fix: (Self-correction) Always check for existence before writing new files.
 Prevention: Use `list_files` on subdirectories or `read_file` before creating/writing.
+
+2026-01-28 - Privacy Policy Inaccuracy: Unpkg Usage
+Issue: PRIVACY.md claimed Leaflet assets were loaded directly from Unpkg, while the codebase (worker.js) proxied them for strict CSP compliance.
+Cause: Documentation drift after implementing strict Content Security Policy (CSP) and asset proxying.
+Fix: Updated PRIVACY.md to correctly list Leaflet as a proxied data source.
+Prevention: Review PRIVACY.md when modifying CSP or external asset loading strategies.
