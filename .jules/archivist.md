@@ -23,3 +23,9 @@ Issue: AGENTS.md listed "Auth Required" as "No" for Jolpica, while failing to me
 Cause: Documentation drift as new services (GitHub tracks) and patterns (proxying for privacy) were adopted without updating the high-level agent guide.
 Fix: Renamed "Auth Required" to "Connection" in AGENTS.md, updated values to "Proxied (Cached)" or "Direct (Client-side)", and added missing services (GitHub, Open-Meteo).
 Prevention: Review AGENTS.md when adding new external dependencies or changing data fetching strategies.
+
+2026-02-17 - Incomplete Third-Party Service List
+Issue: AGENTS.md omitted Google Fonts, FlagCDN, and Buy Me a Coffee from the Third-Party Services table, creating a discrepancy with the codebase and PRIVACY.md.
+Cause: Frontend assets and widgets added directly to HTML/JS were not reflected in the high-level architecture documentation.
+Fix: Added missing services to AGENTS.md with "Direct (Client-side)" connection type.
+Prevention: Audit index.html and app.js for external URLs when updating documentation or adding new features.
