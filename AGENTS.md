@@ -225,6 +225,12 @@ mode = "smart"
 
 ---
 
+## Prohibited Changes
+
+> **Do NOT add a "Skip to content" link.** This is a single-page application with only one view — there is no repeated navigation block to skip past. A "Skip to content" link serves no purpose here and should not be introduced.
+
+---
+
 ## Known Limitations
 
 1. **RainViewer Zoom Limit** - Free tier limits to zoom level 10. We use **512px tiles** with `zoomOffset: -1` and `maxNativeZoom: 8` to emulate higher resolution while reducing requests.
