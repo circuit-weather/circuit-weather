@@ -32,6 +32,9 @@ Circuit Weather is a real-time F1 race circuit weather radar application. It dis
 | Open-Meteo | Weather forecasts | Direct (Client-side) |
 | Carto | Map basemap tiles | Direct (Client-side) |
 | GitHub | Track GeoJSON data | Proxied (Cached) |
+| Google Fonts | Typography | Direct (Client-side) |
+| FlagCDN | Country flags | Direct (Client-side) |
+| Buy Me a Coffee | Support widget | Direct (Client-side) |
 
 ### Data Handling
 - **No cookies** used
