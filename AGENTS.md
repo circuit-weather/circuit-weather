@@ -13,7 +13,7 @@ Circuit Weather is a real-time F1 race circuit weather radar application. It dis
 | Frontend | Vanilla HTML/CSS/JS |
 | Mapping | Leaflet.js with Carto basemaps |
 | Backend | Cloudflare Workers with Assets |
-| APIs | Jolpica F1 API, RainViewer API |
+| APIs | Jolpica F1, RainViewer, Open-Meteo, GitHub (Tracks) |
 
 ---
 
@@ -25,12 +25,13 @@ Circuit Weather is a real-time F1 race circuit weather radar application. It dis
 - **NO user authentication** - App is read-only, no user accounts
 
 ### Third-Party Services
-| Service | Purpose | Auth Required |
-|---------|---------|---------------|
-| Jolpica F1 API | Race schedule data | No |
+| Service | Purpose | Connection |
+|---------|---------|------------|
+| Jolpica F1 API | Race schedule data | Proxied (Cached) |
 | RainViewer | Weather radar tiles | Proxied (Cached) |
 | Open-Meteo | Weather forecasts | Direct (Client-side) |
-| Carto | Map basemap tiles | No |
+| Carto | Map basemap tiles | Direct (Client-side) |
+| GitHub | Track GeoJSON data | Proxied (Cached) |
 
 ### Data Handling
 - **No cookies** used

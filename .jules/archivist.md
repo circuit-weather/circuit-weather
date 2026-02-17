@@ -17,3 +17,9 @@ Issue: PRIVACY.md claimed Leaflet assets were loaded directly from Unpkg, while 
 Cause: Documentation drift after implementing strict Content Security Policy (CSP) and asset proxying.
 Fix: Updated PRIVACY.md to correctly list Leaflet as a proxied data source.
 Prevention: Review PRIVACY.md when modifying CSP or external asset loading strategies.
+
+2026-01-29 - Inaccurate Third-Party Service Documentation
+Issue: AGENTS.md listed "Auth Required" as "No" for Jolpica, while failing to mention it is proxied, and inconsistently used "Proxied" for RainViewer in the same column. It also missed GitHub (Tracks) and Open-Meteo in the Technology Stack overview.
+Cause: Documentation drift as new services (GitHub tracks) and patterns (proxying for privacy) were adopted without updating the high-level agent guide.
+Fix: Renamed "Auth Required" to "Connection" in AGENTS.md, updated values to "Proxied (Cached)" or "Direct (Client-side)", and added missing services (GitHub, Open-Meteo).
+Prevention: Review AGENTS.md when adding new external dependencies or changing data fetching strategies.
