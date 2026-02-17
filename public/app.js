@@ -49,7 +49,7 @@ Object.freeze(FEATURE_FLAGS);
 const COUNTRY_CODES = {
     'Australia': 'au', 'Austria': 'at', 'Azerbaijan': 'az', 'Bahrain': 'bh',
     'Belgium': 'be', 'Brazil': 'br', 'Canada': 'ca', 'China': 'cn',
-    'Hungary': 'hu', 'Italy': 'it', 'Japan': 'jp', 'Mexico': 'mx',
+    'France': 'fr', 'Hungary': 'hu', 'Italy': 'it', 'Japan': 'jp', 'Mexico': 'mx',
     'Monaco': 'mc', 'Netherlands': 'nl', 'Qatar': 'qa', 'Saudi Arabia': 'sa',
     'Singapore': 'sg', 'Spain': 'es', 'UAE': 'ae', 'UK': 'gb',
     'USA': 'us', 'United States': 'us', 'Las Vegas': 'us', 'Miami': 'us',
@@ -641,6 +641,10 @@ class WeatherClient {
     }
 
     async getForecast(lat, lon, sessionTime) {
+        if (!sessionTime || isNaN(sessionTime.getTime())) {
+            return { available: false, reason: 'tbd' };
+        }
+
         // Check if session is too far in future (> 10 days)
         // Open-Meteo free tier goes up to 14-16 days but accuracy drops
         const now = new Date();
@@ -1704,7 +1708,7 @@ class WeatherRadar {
         let relativeText = '';
 
         // Show relative to session if available
-        if (this.ui.relative && this.sessionTime) {
+        if (this.ui.relative && this.sessionTime && !isNaN(this.sessionTime.getTime())) {
             const diff = (timestamp * 1000 - this.sessionTime.getTime()) / 60000; // minutes
             if (Math.abs(diff) < 1) {
                 relativeText = 'Session start';
@@ -2182,6 +2186,21 @@ class CountdownTimer {
     }
 
     update() {
+        if (!this.targetTime || isNaN(this.targetTime.getTime())) {
+            if (this.ui.timer) {
+                this.ui.timer.textContent = 'TBD';
+                this.ui.timer.removeAttribute('aria-label');
+            }
+            if (this.ui.mobileTimer) {
+                this.ui.mobileTimer.textContent = 'TBD';
+                this.ui.mobileTimer.removeAttribute('aria-label');
+            }
+            if (this.ui.session) this.ui.session.textContent = this.sessionName;
+            if (this.ui.mobileSession) this.ui.mobileSession.textContent = this.sessionName;
+            this.stop();
+            return;
+        }
+
         const now = new Date();
         const diff = this.targetTime - now;
 
@@ -3150,7 +3169,7 @@ class CircuitWeatherApp {
             this.selectedSession = session;
 
             // Calculate session time
-            const sessionTime = new Date(`${session.date}T${session.time}`);
+            const sessionTime = session.time ? new Date(`${session.date}T${session.time}`) : null;
 
             // Start countdown
             this.countdown.start(sessionTime, `${this.selectedRace.name} - ${session.name}`);
@@ -3324,6 +3343,8 @@ class CircuitWeatherApp {
                         p.textContent = `Forecast available from ${dateStr}`;
                     } else if (weather.reason === 'error') {
                         p.textContent = 'Unable to load forecast data';
+                    } else if (weather.reason === 'tbd') {
+                        p.textContent = 'Session time to be confirmed';
                     } else {
                         // Default fallback
                         p.textContent = 'Forecast available closer to session';
