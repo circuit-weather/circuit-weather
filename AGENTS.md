@@ -2,7 +2,7 @@
 
 ## Overview
 
-Circuit Weather is a real-time F1 race circuit weather radar application. It displays live weather radar overlays on maps of F1 circuits to help viewers understand weather conditions during race weekends.
+Circuit Weather is a real-time motorsport circuit weather radar application. It displays live weather radar overlays on maps of racing circuits to help viewers understand weather conditions during race weekends. Currently supports **Formula 1** and **WEC** (World Endurance Championship), with architecture designed for easy addition of new series.
 
 ---
 
@@ -13,7 +13,7 @@ Circuit Weather is a real-time F1 race circuit weather radar application. It dis
 | Frontend | Vanilla HTML/CSS/JS |
 | Mapping | Leaflet.js with Carto basemaps |
 | Backend | Cloudflare Workers with Assets |
-| APIs | Jolpica F1 API, RainViewer API |
+| APIs | Jolpica F1 API, TheSportsDB (WEC), RainViewer API |
 
 ---
 
@@ -27,7 +27,8 @@ Circuit Weather is a real-time F1 race circuit weather radar application. It dis
 ### Third-Party Services
 | Service | Purpose | Auth Required |
 |---------|---------|---------------|
-| Jolpica F1 API | Race schedule data | No |
+| Jolpica F1 API | F1 race schedule data | No |
+| TheSportsDB | WEC schedule + venue data | No (free tier, key `3`) |
 | RainViewer | Weather radar tiles | Proxied (Cached) |
 | Open-Meteo | Weather forecasts | Direct (Client-side) |
 | Carto | Map basemap tiles | No |
@@ -155,9 +156,9 @@ mode = "smart"
 ### Core Features
 
 1. **Series/Round/Session Selection**
-   - Series dropdown (F1 only currently)
-   - Round dropdown shows all races in current season with dates
-   - Session dropdown shows FP1-3, Sprint/Qualifying/Race with times
+   - Series dropdown (F1, WEC)
+   - Round dropdown shows all races/events in current season with dates
+   - Session dropdown shows sessions with times (F1: FP1-3/Sprint/Qualifying/Race; WEC: FP/Qualifying/Hyperpole/Race)
 
 2. **Map Display**
    - Centered on selected circuit
@@ -179,7 +180,7 @@ mode = "smart"
    - Shows "NOW" when session is live
 
 5. **URL Routing**
-   - Format: `/f1/{round}/{session}`
+   - Format: `/{series}/{round}/{session}` (e.g. `/f1/3/race`, `/wec/1/qualifying`)
    - Shareable links
    - Browser back/forward support
 
@@ -218,6 +219,7 @@ mode = "smart"
 | Endpoint | Purpose |
 |----------|---------|
 | `/api/f1/*` | Proxies to Jolpica F1 API with 1-hour edge caching |
+| `/api/sportsdb/*` | Proxies to TheSportsDB free API with 1-hour caching (WEC schedules + venues) |
 | `/api/radar` | Proxies to RainViewer Maps API with 1-minute caching (initializes animation) |
 | `/api/tiles/*` | Proxies to RainViewer tile API with 2-hour edge caching (512px optimized) |
 | `/api/track/*` | Proxies to GitHub for GeoJSON track data with 24-hour caching |
@@ -240,6 +242,75 @@ mode = "smart"
 
 ---
 
+## Multi-Series Architecture
+
+The app supports multiple racing series through a common data contract. Each series has its own API class but all produce the same data shape.
+
+### Common Race Data Shape
+
+All series API classes must output races in this format:
+```js
+{
+  round: string,           // Round number/identifier
+  name: string,            // Event name
+  circuit: {
+    circuitId: string,     // Circuit identifier (used for track outline lookup)
+    circuitName: string,   // Display name
+  },
+  location: {
+    lat: number|null,      // Latitude (decimal)
+    long: number|null,     // Longitude (decimal)
+    locality: string,      // City
+    country: string,       // Country name (must match COUNTRY_CODES keys)
+  },
+  sessions: [{
+    id: string,            // Session identifier (e.g. 'race', 'qualifying', 'fp1')
+    name: string,          // Display name
+    date: string,          // ISO date (YYYY-MM-DD)
+    time: string|null,     // Time (HH:MM:SS) or null
+  }],
+  date: string,            // Event date (YYYY-MM-DD)
+}
+```
+
+### Series Configuration
+
+| Series | API Class | Data Source | League ID | Circuit Map |
+|--------|-----------|-------------|-----------|-------------|
+| F1 | `F1API` | Jolpica Ergast | N/A | `CIRCUIT_MAP` (Ergast ID → GeoJSON ID) |
+| WEC | `SportsDBAPI` | TheSportsDB | `4413` | `WEC_CIRCUIT_MAP` (venue name → GeoJSON ID) |
+
+### Adding a New Series
+
+1. **Worker**: No changes needed if using TheSportsDB (already proxied). If using a different API, add a new proxy route in `worker.js`
+2. **API Class**: Create a new class (or reuse `SportsDBAPI` with a different league ID) that fetches and parses data into the common race shape above
+3. **Circuit Map**: Add a `NEW_SERIES_CIRCUIT_MAP` constant mapping venue/circuit identifiers to `bacinger/f1-circuits` GeoJSON IDs (for shared circuits)
+4. **Country Codes**: Add any new countries to `COUNTRY_CODES` in `app.js`
+5. **HTML**: Add `<option value="newseries">Series Name</option>` to `#seriesSelect`
+6. **App Logic**: Add the series case to `switchSeries()` and update `handleRoute()` valid series list
+7. **AGENTS.md**: Update this document with the new series details
+
+### Coordinate Parsing
+
+The `parseCoordinates()` utility in `app.js` handles multiple coordinate formats:
+- **Decimal strings**: `"51.3890"`, `"-0.2389"` (F1 Jolpica format)
+- **DMS strings**: `"25°29′24″N 51°27′15″E"` (TheSportsDB venue format)
+- **Numeric passthrough**: Already-parsed numbers
+
+This eliminates the need for per-series hardcoded coordinate mappings.
+
+### Track Outline Coverage
+
+Track outlines are sourced from `bacinger/f1-circuits` on GitHub (GeoJSON format).
+
+**Missing WEC circuits** (no open-source GeoJSON available — contributions welcome):
+- Circuit de la Sarthe (Le Mans, France)
+- Fuji Speedway (Oyama, Japan)
+
+To add missing circuits: add a local `/public/tracks/` directory with custom GeoJSON files and update `handleTrackRequest` in `worker.js` to serve them.
+
+---
+
 ## Testing Checklist
 
 - [ ] Map tiles load on initial page load
@@ -248,7 +319,11 @@ mode = "smart"
 - [ ] Countdown displays correct time to session
 - [ ] Theme toggle updates map tiles
 - [ ] Unit toggle updates range circles
-- [ ] URL routing works (/f1/1/race)
+- [ ] URL routing works (/f1/1/race, /wec/1/qualifying)
+- [ ] Series switching loads correct schedule
+- [ ] WEC venue coordinates resolve correctly
+- [ ] Track outlines display for shared circuits (Spa, COTA, etc.)
+- [ ] Le Mans/Fuji gracefully show no track outline
 - [ ] Browser back/forward navigation works
 - [ ] Mobile responsive layout
 
@@ -280,7 +355,7 @@ npx wrangler dev
 
 ### Notes
 - This runs the full Cloudflare Worker + static assets locally, faithfully reproducing the production environment
-- All API routes (`/api/f1/*`, `/api/radar`, `/api/tiles/*`, `/api/track/*`) are handled by the local worker proxy
+- All API routes (`/api/f1/*`, `/api/sportsdb/*`, `/api/radar`, `/api/tiles/*`, `/api/track/*`) are handled by the local worker proxy
 - Deployment to Cloudflare is automatic via GitHub push to `main`
 
 ### Terminating Background Processes
