@@ -8,13 +8,14 @@
  * - Network-first with cache fallback for navigation
  */
 
-const CACHE_NAME = 'circuit-weather-v1';
+const CACHE_NAME = 'circuit-weather-v2';
 
 // App shell resources to pre-cache on install
 const APP_SHELL = [
     '/',
     '/styles.css',
-    '/app.js',
+    '/cw-app.js',
+    '/theme.js',
     '/favicon.svg',
     '/manifest.json',
     '/icon-192.png',
