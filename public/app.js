@@ -13,6 +13,7 @@ const isLocal = window.location.hostname === 'localhost' ||
 
 const CONFIG = {
     f1ApiBase: '/api/f1',
+    sportsDbApi: '/api/sportsdb',
     rainViewerApi: '/api/radar',
     trackApi: '/api/track',
     weatherApi: 'https://api.open-meteo.com/v1/forecast',
@@ -92,6 +93,21 @@ const CIRCUIT_MAP = {
 // SEC: Prevent runtime tampering with circuit mappings
 Object.freeze(CIRCUIT_MAP);
 
+// WEC Circuit Mapping (TheSportsDB venue names -> bacinger/f1-circuits GeoJSON IDs)
+// Maps WEC venues to existing F1 track outlines where circuits are shared
+const WEC_CIRCUIT_MAP = {
+    'Losail International Circuit': 'qa-2004',
+    'Imola Circuit': 'it-1953',
+    'Circuit de Spa-Francorchamps': 'be-1925',
+    'Interlagos Circuit': 'br-1940',
+    'Circuit of the Americas': 'us-2012',
+    'Bahrain International Circuit': 'bh-2002',
+    // Missing outlines (no open-source GeoJSON available):
+    // 'Circuit de la Sarthe' (Le Mans)
+    // 'Fuji Speedway'
+};
+Object.freeze(WEC_CIRCUIT_MAP);
+
 // ===================================
 // Utility Functions
 // ===================================
@@ -126,6 +142,249 @@ function escapeHtml(str) {
     // Bolt Optimization: Use single regex replacement with map lookup
     // ~3x faster than chained .replace() calls
     return String(str).replace(ESCAPE_REGEX, char => ESCAPE_MAP[char]);
+}
+
+/**
+ * Universal coordinate parser - handles multiple formats gracefully.
+ * Supports:
+ *   - Decimal strings: "51.3890", "-0.2389"
+ *   - DMS strings: "25°29′24″N 51°27′15″E" (TheSportsDB venue format)
+ *   - DMS strings without seconds: "47°56′N 0°14′E" (Le Mans)
+ *   - Already-numeric values (passthrough)
+ * @param {string|number} latInput - Latitude value in any supported format
+ * @param {string|number} lngInput - Longitude value in any supported format
+ * @returns {{lat: number, lng: number}|null} Parsed coordinates or null on failure
+ */
+function parseCoordinates(latInput, lngInput) {
+    // If both inputs provided as separate args, try direct decimal parse
+    if (latInput != null && lngInput != null) {
+        const lat = parseFloat(latInput);
+        const lng = parseFloat(lngInput);
+        if (!isNaN(lat) && !isNaN(lng)) return { lat, lng };
+    }
+
+    // If single string input containing DMS (e.g. "25°29′24″N 51°27′15″E")
+    const dmsInput = String(latInput || '');
+    if (dmsInput.includes('°')) {
+        return parseDMS(dmsInput);
+    }
+
+    return null;
+}
+
+/**
+ * Parse a DMS (Degrees, Minutes, Seconds) coordinate string.
+ * Handles formats like: "25°29′24″N 51°27′15″E" or "47°56′N 0°14′E"
+ * @param {string} dmsStr - DMS coordinate string
+ * @returns {{lat: number, lng: number}|null}
+ */
+function parseDMS(dmsStr) {
+    // Match DMS components: degrees°minutes[′seconds][″ direction
+    // Seconds are optional to support formats like Le Mans "47°56′N 0°14′E"
+    const dmsRegex = /(\d+)[°](\d+)[′'](?:(\d+(?:\.\d+)?)[″"]?)?\s*([NSns])\s+(\d+)[°](\d+)[′'](?:(\d+(?:\.\d+)?)[″"]?)?\s*([EWew])/;
+    const match = dmsStr.match(dmsRegex);
+    if (!match) return null;
+
+    const latDeg = parseInt(match[1], 10);
+    const latMin = parseInt(match[2], 10);
+    const latSec = parseFloat(match[3]) || 0;
+    const latDir = match[4].toUpperCase();
+
+    const lngDeg = parseInt(match[5], 10);
+    const lngMin = parseInt(match[6], 10);
+    const lngSec = parseFloat(match[7]) || 0;
+    const lngDir = match[8].toUpperCase();
+
+    let lat = latDeg + latMin / 60 + latSec / 3600;
+    let lng = lngDeg + lngMin / 60 + lngSec / 3600;
+
+    if (latDir === 'S') lat = -lat;
+    if (lngDir === 'W') lng = -lng;
+
+    return { lat, lng };
+}
+
+// ===================================
+// SportsDB API (WEC and other motorsport series)
+// ===================================
+
+class SportsDBAPI {
+    constructor() {
+        this.cache = new Map();
+        this.venueCache = new Map();
+    }
+
+    /**
+     * Fetch season events for a league from TheSportsDB
+     * @param {string} leagueId - TheSportsDB league ID (e.g. '4413' for WEC)
+     * @param {string} [season] - Season year (defaults to current year)
+     * @returns {Promise<Array>} Raw events array
+     */
+    async getSchedule(leagueId, season) {
+        if (!season) season = new Date().getFullYear().toString();
+        const cacheKey = `schedule_${leagueId}_${season}`;
+        if (this.cache.has(cacheKey)) return this.cache.get(cacheKey);
+
+        const response = await fetch(
+            `${CONFIG.sportsDbApi}/eventsseason.php?id=${leagueId}&s=${season}`
+        );
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+        const data = await response.json();
+        const events = data.events || [];
+
+        this.cache.set(cacheKey, events);
+        return events;
+    }
+
+    /**
+     * Fetch venue coordinates from TheSportsDB venue lookup
+     * @param {string} venueId - TheSportsDB venue ID
+     * @returns {Promise<{lat: number, lng: number}|null>}
+     */
+    async getVenueCoordinates(venueId) {
+        if (this.venueCache.has(venueId)) return this.venueCache.get(venueId);
+
+        try {
+            const response = await fetch(
+                `${CONFIG.sportsDbApi}/lookupvenue.php?id=${venueId}`
+            );
+            if (!response.ok) return null;
+
+            const data = await response.json();
+            const venue = data.venues?.[0];
+            if (!venue?.strMap) return null;
+
+            const coords = parseCoordinates(venue.strMap);
+            if (coords) {
+                this.venueCache.set(venueId, coords);
+            }
+            return coords;
+        } catch (error) {
+            console.warn('Failed to fetch venue coordinates:', error);
+            return null;
+        }
+    }
+
+    /**
+     * Parse TheSportsDB events into the common race format.
+     * Groups events by round and extracts sessions from event names.
+     * @param {Array} events - Raw events from TheSportsDB
+     * @returns {Array} Parsed races in the common {round, name, circuit, location, sessions, date} format
+     */
+    parseSchedule(events) {
+        // Group events by round
+        const roundMap = new Map();
+
+        for (const event of events) {
+            const round = event.intRound;
+            if (!round) continue;
+
+            if (!roundMap.has(round)) {
+                roundMap.set(round, {
+                    round,
+                    events: [],
+                    mainEvent: null,
+                });
+            }
+
+            const group = roundMap.get(round);
+            group.events.push(event);
+
+            // The main event has no parenthetical session type
+            // e.g. "Qatar 1812 KM" vs "Qatar 1812 KM (Qualifying)"
+            if (!event.strEvent.includes('(')) {
+                group.mainEvent = event;
+            }
+        }
+
+        // Convert to common format
+        const races = [];
+        for (const [, group] of roundMap) {
+            const main = group.mainEvent || group.events[0];
+
+            // Extract sessions from event names
+            const sessions = group.events.map(evt => {
+                const sessionType = this.extractSessionType(evt.strEvent);
+
+                let time = evt.strTime;
+                // Handle "00:00:00" as null/TBD
+                if (time === '00:00:00') time = null;
+
+                // Try explicit timestamp if available (often better formatted)
+                // strTimestamp is usually "YYYY-MM-DDTHH:MM:SS"
+                if (evt.strTimestamp) {
+                    const parts = evt.strTimestamp.split('T');
+                    if (parts.length === 2 && parts[1] !== '00:00:00' && parts[1] !== '00:00:00+00:00') {
+                        time = parts[1].substring(0, 8); // Ensure HH:MM:SS
+                    }
+                }
+
+                return {
+                    id: sessionType.id,
+                    name: sessionType.name,
+                    date: evt.dateEvent,
+                    time: time,
+                };
+            }).sort((a, b) => {
+                // Sort by date then time
+                const dateA = new Date(`${a.date}T${a.time || '00:00:00'}`);
+                const dateB = new Date(`${b.date}T${b.time || '00:00:00'}`);
+                return dateA - dateB;
+            });
+
+            races.push({
+                round: main.intRound,
+                name: main.strEvent,
+                circuit: {
+                    circuitId: main.strVenue,   // Use venue name as circuit identifier
+                    circuitName: main.strVenue,
+                },
+                location: {
+                    lat: null,  // Will be populated via venue lookup
+                    long: null,
+                    locality: main.strCity || '',
+                    country: main.strCountry || '',
+                },
+                venueId: main.idVenue,
+                sessions,
+                date: main.dateEvent,
+            });
+        }
+
+        // Sort by round number
+        races.sort((a, b) => parseInt(a.round) - parseInt(b.round));
+        return races;
+    }
+
+    /**
+     * Extract session ID and Name from event title.
+     * e.g. "Qatar 1812 KM (Qualifying)" -> {id: 'qualifying', name: 'Qualifying'}
+     * @param {string} eventName
+     * @returns {{id: string, name: string}}
+     */
+    extractSessionType(eventName) {
+        const match = eventName.match(/\(([^)]+)\)/);
+        if (!match) {
+            return { id: 'race', name: 'Race' };
+        }
+
+        const name = match[1];
+        const id = name.toLowerCase().replace(/\s+/g, '-');
+
+        // Map common session names to standard IDs if needed
+        const mapping = {
+            'free-practice-1': 'fp1',
+            'free-practice-2': 'fp2',
+            'free-practice-3': 'fp3',
+            'warm-up': 'warmup',
+        };
+
+        return {
+            id: mapping[id] || id,
+            name: name
+        };
+    }
 }
 
 // ===================================
@@ -558,11 +817,15 @@ class TrackLayer {
         this.layer.setStyle({ weight: weight });
     }
 
-    async loadTrack(circuitId) {
+    async loadTrack(circuitId, geoJsonId) {
         this.clear();
         this.currentCircuitId = circuitId;
 
-        const geoJsonId = CIRCUIT_MAP[circuitId];
+        // If no geoJsonId provided, try to look it up from the default F1 map
+        if (!geoJsonId) {
+            geoJsonId = CIRCUIT_MAP[circuitId];
+        }
+
         if (!geoJsonId) {
             console.log(`No track map found for circuit: ${circuitId}`);
             return;
@@ -2431,6 +2694,8 @@ class CircuitWeatherApp {
         this.themeManager = null;
         this.sidebarManager = null;
         this.f1Api = new F1API();
+        this.sportsDbApi = new SportsDBAPI();
+        this.currentSeries = 'f1';
         this.weatherClient = new WeatherClient();
         this.radar = null;
         this.trackLayer = null;
@@ -2448,6 +2713,7 @@ class CircuitWeatherApp {
         // Bolt Optimization: Cache frequently accessed DOM elements
         this.ui = {
             loadingOverlay: document.getElementById('loadingOverlay'),
+            seriesSelect: document.getElementById('seriesSelect'),
             roundSelect: document.getElementById('roundSelect'),
             sessionSelect: document.getElementById('sessionSelect'),
             // Race Info Banner (Sidebar)
@@ -2512,12 +2778,16 @@ class CircuitWeatherApp {
             // Always load radar immediately
             this.radar.load();
 
-            const races = await this.f1Api.getSchedule();
-            this.races = races.map(race => this.f1Api.parseRace(race));
-            this.populateRoundSelect();
+            // Determine initial series from URL or default
+            const params = this.router.getParams();
+            const initialSeries = params.series || 'f1';
+            if (this.ui.seriesSelect) this.ui.seriesSelect.value = initialSeries;
+
+            // Load schedule for the initial series
+            await this.switchSeries(initialSeries, false);
+
             this.bindEvents();
 
-            const params = this.router.getParams();
             if (params.round) {
                 await this.handleRoute(params);
             } else {
@@ -2632,6 +2902,12 @@ class CircuitWeatherApp {
     }
 
     bindEvents() {
+        if (this.ui.seriesSelect) {
+            this.ui.seriesSelect.addEventListener('change', (e) => {
+                this.switchSeries(e.target.value);
+            });
+        }
+
         if (this.ui.roundSelect) {
             this.ui.roundSelect.addEventListener('change', (e) => {
                 if (e.target.value) {
@@ -2698,18 +2974,27 @@ class CircuitWeatherApp {
         if (race.location) {
             const lat = parseFloat(race.location.lat);
             const lng = parseFloat(race.location.long);
-            this.currentCircuitCenter = [lat, lng];
-            this.mapManager.setView(lat, lng);
-            this.rangeCircles.draw([lat, lng]);
+            if (!isNaN(lat) && !isNaN(lng)) {
+                this.currentCircuitCenter = [lat, lng];
+                this.mapManager.setView(lat, lng);
+                this.rangeCircles.draw([lat, lng]);
 
-            // Load track layout
-            if (race.circuit && race.circuit.circuitId) {
-                this.trackLayer.loadTrack(race.circuit.circuitId);
-            }
+                // Load track layout (series-aware)
+                if (race.circuit && race.circuit.circuitId) {
+                    if (this.currentSeries === 'wec') {
+                        // WEC: look up GeoJSON ID via venue name
+                        const geoJsonId = WEC_CIRCUIT_MAP[race.circuit.circuitId];
+                        this.trackLayer.loadTrack(race.circuit.circuitId, geoJsonId);
+                    } else {
+                        // F1: Use circuitId directly
+                        this.trackLayer.loadTrack(race.circuit.circuitId);
+                    }
+                }
 
-            // Update recentre control
-            if (this.recentreControl) {
-                this.recentreControl.setCircuit([lat, lng]);
+                // Update recentre control
+                if (this.recentreControl) {
+                    this.recentreControl.setCircuit([lat, lng]);
+                }
             }
         }
 
@@ -2729,7 +3014,63 @@ class CircuitWeatherApp {
 
         this.updateMobileVisibility();
 
-        this.router.navigate('f1', round, null);
+        this.router.navigate(this.currentSeries, round, null);
+    }
+
+    async switchSeries(series, resetUI = true) {
+        this.currentSeries = series;
+
+        if (resetUI) {
+            // Clear current state
+            this.selectedRace = null;
+            this.selectedSession = null;
+            this.currentCircuitCenter = null;
+            this.trackLayer.clear();
+            this.rangeCircles.clear();
+            this.countdown.show(false);
+            if (this.ui.forecastSection) this.ui.forecastSection.style.display = 'none';
+            if (this.ui.raceInfoBanner) this.ui.raceInfoBanner.style.display = 'none';
+            if (this.ui.mobileRaceInfo) this.ui.mobileRaceInfo.style.display = 'none';
+        }
+
+        this.showLoading(true, `Loading ${series.toUpperCase()} schedule...`);
+
+        try {
+            if (series === 'f1') {
+                const races = await this.f1Api.getSchedule();
+                this.races = races.map(race => this.f1Api.parseRace(race));
+            } else if (series === 'wec') {
+                const events = await this.sportsDbApi.getSchedule('4413');
+                this.races = this.sportsDbApi.parseSchedule(events);
+
+                // Fetch venue coordinates for all races (async, in parallel)
+                await Promise.all(this.races.map(async (race) => {
+                    if (race.venueId && !race.location.lat) {
+                        const coords = await this.sportsDbApi.getVenueCoordinates(race.venueId);
+                        if (coords) {
+                            race.location.lat = coords.lat;
+                            race.location.long = coords.lng;
+                        }
+                    }
+                }));
+            }
+
+            this.populateRoundSelect();
+
+            if (resetUI) {
+                // Reset dropdowns
+                if (this.ui.sessionSelect) {
+                    this.ui.sessionSelect.disabled = true;
+                    this.ui.sessionSelect.innerHTML = '<option value="">Select a round first</option>';
+                }
+                // Navigate to root of series
+                this.router.navigate(series, null, null);
+            }
+        } catch (error) {
+            console.error('Failed to switch series:', error);
+        } finally {
+            this.showLoading(false);
+        }
     }
 
     updateRaceInfo(race) {
@@ -2828,7 +3169,7 @@ class CircuitWeatherApp {
             // Ensure mobile elements are visible
             this.updateMobileVisibility();
 
-            this.router.navigate('f1', this.selectedRace.round, sessionId);
+            this.router.navigate(this.currentSeries, this.selectedRace.round, sessionId);
         } catch (error) {
             console.error('Error selecting session:', error);
         } finally {
@@ -3086,7 +3427,15 @@ class CircuitWeatherApp {
     }
 
     async handleRoute({ series, round, session }) {
-        if (series !== 'f1') return;
+        // Support both F1 and WEC series URLs
+        const validSeries = ['f1', 'wec'];
+        if (!validSeries.includes(series)) return;
+
+        // If the URL is for a different series, switch to it first
+        if (series !== this.currentSeries) {
+            if (this.ui.seriesSelect) this.ui.seriesSelect.value = series;
+            await this.switchSeries(series, false);
+        }
 
         if (round) {
             if (this.ui.roundSelect) this.ui.roundSelect.value = round;

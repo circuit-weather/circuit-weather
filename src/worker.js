@@ -185,6 +185,11 @@ export default {
       return handleApiRequest(request, env, ctx);
     }
 
+    // Handle TheSportsDB proxy (WEC and other motorsport series)
+    if (path.startsWith('/api/sportsdb/')) {
+      return handleSportsDBRequest(request, env, ctx);
+    }
+
     // Handle radar requests
     if (path === '/api/radar') {
       return handleRadarRequest(request, env, ctx);
@@ -496,6 +501,163 @@ async function handleApiRequest(request, env, ctx) {
     return new Response(JSON.stringify({
       error: 'Failed to fetch from upstream',
       // SEC: Do not leak error.message
+    }), {
+      status: 502,
+      headers: getErrorHeaders(request)
+    });
+  }
+}
+
+/**
+ * Handle TheSportsDB API requests with caching
+ * Proxies requests from /api/sportsdb/* to TheSportsDB free API
+ * Used for WEC and other motorsport series schedule data
+ */
+async function handleSportsDBRequest(request, env, ctx) {
+  const url = new URL(request.url);
+  // Extract path after /api/sportsdb/
+  const apiPath = url.pathname.replace('/api/sportsdb/', '');
+
+  // SEC: Input length limit
+  if (apiPath.length > 255) {
+    return new Response(JSON.stringify({ error: 'Path too long' }), {
+      status: 400,
+      headers: getErrorHeaders(request)
+    });
+  }
+
+  // SEC: Strict whitelist - only allow specific endpoints
+  // Currently only eventsseason.php is needed
+  const ALLOWED_ENDPOINTS = ['eventsseason.php', 'lookupvenue.php'];
+  const endpoint = apiPath.split('?')[0];
+
+  if (!ALLOWED_ENDPOINTS.includes(endpoint)) {
+    return new Response(JSON.stringify({ error: 'Endpoint not allowed' }), {
+      status: 403,
+      headers: getErrorHeaders(request)
+    });
+  }
+
+  // SEC: Validate query parameters - only allow 'id' and 's'
+  const allowedParams = ['id', 's'];
+  const searchParams = url.searchParams;
+  for (const key of searchParams.keys()) {
+    if (!allowedParams.includes(key)) {
+      return new Response(JSON.stringify({ error: 'Invalid query parameter' }), {
+        status: 400,
+        headers: getErrorHeaders(request)
+      });
+    }
+  }
+
+  // SEC: Validate param values (numeric only)
+  const leagueId = searchParams.get('id');
+  const season = searchParams.get('s');
+  if ((leagueId && !/^\d+$/.test(leagueId)) || (season && !/^\d{4}$/.test(season))) {
+    return new Response(JSON.stringify({ error: 'Invalid parameter values' }), {
+      status: 400,
+      headers: getErrorHeaders(request)
+    });
+  }
+
+  // Build upstream URL with the free API key
+  const upstreamParams = new URLSearchParams();
+  if (leagueId) upstreamParams.set('id', leagueId);
+  if (season) upstreamParams.set('s', season);
+  const upstreamUrl = `https://www.thesportsdb.com/api/v1/json/3/${endpoint}?${upstreamParams.toString()}`;
+
+  // Cache key based on the full upstream URL
+  const cacheKey = new Request(upstreamUrl);
+  const cache = caches.default;
+
+  // Check cache match
+  let response = await cache.match(cacheKey);
+
+  if (response) {
+    const headers = new Headers(response.headers);
+    headers.set('X-Cache', 'HIT');
+
+    // Apply strict CORS
+    const allowedOrigin = getAllowedOrigin(request);
+    if (allowedOrigin) {
+      headers.set('Access-Control-Allow-Origin', allowedOrigin);
+      headers.set('Vary', 'Origin');
+    } else {
+      headers.delete('Access-Control-Allow-Origin');
+    }
+
+    return new Response(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers
+    });
+  }
+
+  // Fetch from upstream
+  try {
+    const upstreamResponse = await fetch(upstreamUrl, {
+      headers: {
+        'Accept': 'application/json',
+        'User-Agent': 'CircuitWeather/1.0',
+      },
+      signal: AbortSignal.timeout(API_TIMEOUT),
+    });
+
+    if (!upstreamResponse.ok) {
+      return cacheAndReturnError(request, cache, cacheKey, upstreamResponse.status, {
+        error: 'Upstream API error',
+        status: upstreamResponse.status,
+      }, ctx);
+    }
+
+    // SEC: Strict Content-Type Validation
+    const contentType = upstreamResponse.headers.get('Content-Type');
+    if (!contentType || !contentType.includes('application/json')) {
+      console.error(`SportsDB Invalid Content-Type: ${contentType}`);
+      return cacheAndReturnError(request, cache, cacheKey, 502, {
+        error: 'Invalid upstream content type',
+      }, ctx);
+    }
+
+    // Bolt Optimization: Stream response instead of buffering text
+    const [cacheBody, clientBody] = upstreamResponse.body.tee();
+
+    // Create cacheable response (1 hour)
+    const cacheHeaders = new Headers({
+      'Content-Type': 'application/json',
+      'Cache-Control': 'public, max-age=3600',
+      'X-Cache': 'MISS',
+      'Access-Control-Allow-Origin': '*',
+      ...DEFAULT_SECURITY_HEADERS
+    });
+
+    const cacheResponse = new Response(cacheBody, {
+      status: 200,
+      headers: cacheHeaders,
+    });
+
+    // Save to cache
+    ctx.waitUntil(cache.put(cacheKey, cacheResponse));
+
+    // Prepare response for client with strict CORS
+    const clientHeaders = new Headers(cacheHeaders);
+    const allowedOrigin = getAllowedOrigin(request);
+    if (allowedOrigin) {
+      clientHeaders.set('Access-Control-Allow-Origin', allowedOrigin);
+      clientHeaders.set('Vary', 'Origin');
+    } else {
+      clientHeaders.delete('Access-Control-Allow-Origin');
+    }
+
+    return new Response(clientBody, {
+      status: 200,
+      headers: clientHeaders
+    });
+
+  } catch (error) {
+    console.error('SportsDB Fetch Error:', error);
+    return new Response(JSON.stringify({
+      error: 'Failed to fetch series data',
     }), {
       status: 502,
       headers: getErrorHeaders(request)
