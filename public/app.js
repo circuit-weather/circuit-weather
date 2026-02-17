@@ -513,6 +513,17 @@ class WeatherClient {
         if (hours < 0) return `${Math.abs(hours)} hour${Math.abs(hours) !== 1 ? 's' : ''} before session`;
         return `${hours} hour${hours !== 1 ? 's' : ''} after session`;
     }
+
+    getWindDirection(degrees) {
+        const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+        const index = Math.round(degrees / 45) % 8;
+        return {
+            text: directions[index],
+            // Arrow points UP by default. Wind direction is "coming from".
+            // 0 deg (N) -> Blows South -> Rotate 180 to point Down.
+            rotation: degrees + 180
+        };
+    }
 }
 
 // ===================================
@@ -2984,67 +2995,93 @@ class CircuitWeatherApp {
         if (content) content.style.display = 'block';
         if (unavailable) unavailable.style.display = 'none';
 
+        // Rebuild Dashboard HTML
+        // Note: We rebuild the entire dashboard here because renderForecastSkeleton() destroys
+        // the internal structure (including IDs), causing cached references to become detached.
+        let currentHtml = '';
         if (weather.current) {
             const temp = Math.round(weather.current.temperature_2m);
             const wind = Math.round(weather.current.wind_speed_10m);
             const dir = weather.current.wind_direction_10m;
+
+            // Wind Direction Logic
+            const windInfo = this.weatherClient.getWindDirection(dir);
+            // Rotation: Input 0 (N) -> Blows South -> Arrow (Up) needs 180 deg rotation
+            const rotation = windInfo.rotation;
+
             // For session forecast, we look at the hourly data to find max precip probability
             let maxPrecip = 0;
             if (weather.hourly && weather.hourly.length > 0) {
                 maxPrecip = Math.max(...weather.hourly.map(h => h.precipProb));
             }
 
-            if (this.ui.weatherTemp) this.ui.weatherTemp.textContent = `${temp}${weather.units.temperature_2m}`;
-            if (this.ui.weatherWind) this.ui.weatherWind.textContent = `${wind} ${weather.units.wind_speed_10m}`;
-            if (this.ui.weatherWindDir) this.ui.weatherWindDir.textContent = `${dir}°`;
-            if (this.ui.weatherRain) this.ui.weatherRain.textContent = `${maxPrecip}%`;
+            currentHtml = `
+                <div class="weather-current">
+                    <div class="weather-metric">
+                        <span class="weather-label">Temp</span>
+                        <span class="weather-value" id="weatherTemp">${temp}${weather.units.temperature_2m}</span>
+                    </div>
+                    <div class="weather-metric">
+                        <span class="weather-label">Rain</span>
+                        <span class="weather-value" id="weatherRain">${maxPrecip}%</span>
+                    </div>
+                    <div class="weather-metric">
+                        <span class="weather-label">Wind</span>
+                        <span class="weather-value" id="weatherWind">${wind} ${weather.units.wind_speed_10m}</span>
+                        <span class="weather-sub" id="weatherWindDir" title="${dir}°" aria-label="Wind direction: ${windInfo.text} (${dir} degrees)">
+                            ${windInfo.text}
+                            <svg class="icon-wind-arrow" style="transform: rotate(${rotation}deg); width: 14px; height: 14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                                <line x1="12" y1="19" x2="12" y2="5"></line>
+                                <polyline points="5 12 12 5 19 12"></polyline>
+                            </svg>
+                        </span>
+                    </div>
+                </div>
+            `;
         }
 
-        // Render Timeline
-        // Bolt Optimization: Re-query element as it may have been recreated by skeleton loader
-        const timelineEl = document.getElementById('weatherTimeline');
-        if (timelineEl && weather.hourly) {
-            timelineEl.innerHTML = '';
-
-            // Bolt Optimization: Use DocumentFragment to batch DOM insertions
-            const fragment = document.createDocumentFragment();
-            // Palette UX: Use semantic list for timeline items
-            const list = document.createElement('ul');
-            list.className = 'weather-timeline-list';
-
-            weather.hourly.forEach(hour => {
-                const item = document.createElement('li');
-                item.className = 'weather-timeline-item';
-
+        // Timeline Logic
+        let timelineHtml = '';
+        if (weather.hourly) {
+            const items = weather.hourly.map(hour => {
                 const relTime = this.weatherClient.getRelativeTime(hour.time, sessionTime);
                 const desc = this.weatherClient.getWeatherDescription(hour.code);
-
-                // Palette Accessibility: Generate descriptive label for screen readers
                 const a11yTime = this.weatherClient.getAccessibleRelativeTime(hour.time, sessionTime);
                 const temp = Math.round(hour.temp);
                 const ariaLabel = `${a11yTime}. ${desc}. Temperature ${temp} degrees. Rain chance ${hour.precipProb}%. Wind ${hour.windSpeed} km/h.`;
 
-                item.setAttribute('aria-label', ariaLabel);
-
-                // SEC: Escape all upstream data to prevent XSS (even if trusted)
-                // Palette Accessibility: Hide visual elements from screen readers to prevent fragmented reading
-                item.innerHTML = `
-                    <div class="weather-timeline-time" aria-hidden="true">${escapeHtml(relTime)}</div>
-                    <div class="weather-timeline-condition" aria-hidden="true">
-                        ${escapeHtml(desc)}
-                        <div class="weather-timeline-wind">${escapeHtml(hour.windSpeed)} km/h</div>
-                    </div>
-                    <div class="weather-timeline-temp" aria-hidden="true">
-                        <div>${escapeHtml(temp)}°</div>
-                        <div class="weather-timeline-precip">${escapeHtml(hour.precipProb)}%</div>
-                    </div>
+                return `
+                    <li class="weather-timeline-item" aria-label="${ariaLabel}">
+                        <div class="weather-timeline-time" aria-hidden="true">${escapeHtml(relTime)}</div>
+                        <div class="weather-timeline-condition" aria-hidden="true">
+                            ${escapeHtml(desc)}
+                            <div class="weather-timeline-wind">${escapeHtml(hour.windSpeed)} km/h</div>
+                        </div>
+                        <div class="weather-timeline-temp" aria-hidden="true">
+                            <div>${escapeHtml(temp)}°</div>
+                            <div class="weather-timeline-precip">${escapeHtml(hour.precipProb)}%</div>
+                        </div>
+                    </li>
                 `;
+            }).join('');
 
-                list.appendChild(item);
-            });
+            timelineHtml = `
+                <div class="weather-timeline" id="weatherTimeline" tabindex="0" role="region" aria-label="Hourly forecast">
+                    <ul class="weather-timeline-list">
+                        ${items}
+                    </ul>
+                </div>
+            `;
+        }
 
-            fragment.appendChild(list);
-            timelineEl.appendChild(fragment);
+        // Inject into content
+        if (content) {
+            content.innerHTML = `
+                <div class="weather-dashboard">
+                    ${currentHtml}
+                    ${timelineHtml}
+                </div>
+            `;
         }
     }
 

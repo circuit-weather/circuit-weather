@@ -1546,6 +1546,13 @@ body {
     /* Blue-500 for rain/precip */
 }
 
+.icon-wind-arrow {
+    width: 0.8em;
+    height: 0.8em;
+    vertical-align: middle;
+    margin-left: 2px;
+}
+
 /* ===================================
    Map Weather Widget
    =================================== */
