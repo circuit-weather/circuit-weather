@@ -442,6 +442,9 @@ class WeatherClient {
 
         const result = [];
         const times = hourly.time;
+
+        if (!times || times.length === 0) return result;
+
         // Destructure for faster access
         const {
             temperature_2m: temps,
@@ -452,12 +455,19 @@ class WeatherClient {
             weather_code: codes
         } = hourly;
 
-        for (let i = 0; i < times.length; i++) {
+        // Bolt Optimization: Calculate start index directly (O(1)) instead of iterating from start (O(N))
+        // Open-Meteo guarantees strictly sequential hourly intervals (3600s)
+        const firstTime = times[0];
+        let startIndex = Math.floor((startTs - firstTime) / 3600);
+        // Clamp to valid range
+        startIndex = Math.max(0, startIndex);
+
+        for (let i = startIndex; i < times.length; i++) {
             const time = times[i];
             // Bolt Optimization: Stop iterating once we pass the end time
             if (time > endTs) break;
 
-            if (time >= startTs && time <= endTs) {
+            if (time >= startTs) {
                 result.push({
                     time: time,
                     temp: temps[i],
