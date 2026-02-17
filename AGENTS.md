@@ -358,6 +358,13 @@ npx wrangler dev
 - All API routes (`/api/f1/*`, `/api/sportsdb/*`, `/api/radar`, `/api/tiles/*`, `/api/track/*`) are handled by the local worker proxy
 - Deployment to Cloudflare is automatic via GitHub push to `main`
 
+### Cache Busting for Local Development
+The project uses a Service Worker for PWA support, which can aggressively cache assets during development.
+To force a refresh of the application logic (`cw-app.js`):
+1.  Update the version query string in `public/index.html` (e.g., `cw-app.js?v=6`).
+2.  Update the `CACHE_NAME` in `public/sw.js` (e.g., `circuit-weather-v2`).
+3.  This forces the browser to fetch the new file and the Service Worker to update its app shell.
+
 ### Terminating Background Processes
 
 > **Important for Google Antigravity**: The `send_command_input` tool's `Terminate` flag does **NOT** reliably kill background processes on this system. It may report success but the process continues running and holding its port. **Do not use it.** Instead, always use the following manual methods to stop background processes:
