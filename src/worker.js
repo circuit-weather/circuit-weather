@@ -88,6 +88,11 @@ class RateLimiter {
       record.tokens = Math.min(this.limit, record.tokens + refill);
       record.lastCheck = now;
 
+      // Bolt Optimization: Move to end (LRU)
+      // Delete and re-set to update insertion order
+      this.currentGen.delete(ip);
+      this.currentGen.set(ip, record);
+
       if (record.tokens >= 1) {
         record.tokens -= 1;
         return true;
