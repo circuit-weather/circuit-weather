@@ -3028,15 +3028,15 @@ class CircuitWeatherApp {
                 <div class="weather-current">
                     <div class="weather-metric">
                         <span class="weather-label">Temp</span>
-                        <span class="weather-value" id="weatherTemp">${temp}${weather.units.temperature_2m}</span>
+                        <span class="weather-value" id="weatherTemp">${escapeHtml(temp)}${escapeHtml(weather.units.temperature_2m)}</span>
                     </div>
                     <div class="weather-metric">
                         <span class="weather-label">Rain</span>
-                        <span class="weather-value" id="weatherRain">${maxPrecip}%</span>
+                        <span class="weather-value" id="weatherRain">${escapeHtml(maxPrecip)}%</span>
                     </div>
                     <div class="weather-metric">
                         <span class="weather-label">Wind</span>
-                        <span class="weather-value" id="weatherWind">${wind} ${weather.units.wind_speed_10m}</span>
+                        <span class="weather-value" id="weatherWind">${escapeHtml(wind)} ${escapeHtml(weather.units.wind_speed_10m)}</span>
                         <span class="weather-sub" id="weatherWindDir" title="${dir}°" aria-label="Wind direction: ${windInfo.text} (${dir} degrees)">
                             ${windInfo.text}
                             <svg class="icon-wind-arrow" style="transform: rotate(${rotation}deg); width: 14px; height: 14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
