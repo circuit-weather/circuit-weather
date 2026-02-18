@@ -29,3 +29,9 @@ Issue: AGENTS.md omitted Google Fonts, FlagCDN, and Buy Me a Coffee from the Thi
 Cause: Frontend assets and widgets added directly to HTML/JS were not reflected in the high-level architecture documentation.
 Fix: Added missing services to AGENTS.md with "Direct (Client-side)" connection type.
 Prevention: Audit index.html and app.js for external URLs when updating documentation or adding new features.
+
+2026-02-17 - Missing Proxied Service in Documentation
+Issue: AGENTS.md omitted Unpkg (Leaflet) from the Third-Party Services table, despite it being proxied and listed in PRIVACY.md.
+Cause: Oversight when documenting proxied services vs direct services.
+Fix: Added Unpkg (Leaflet) to AGENTS.md with "Proxied (Cached)" connection type.
+Prevention: Cross-reference PRIVACY.md and src/worker.js when updating AGENTS.md.
