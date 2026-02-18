@@ -1439,16 +1439,22 @@ class WeatherRadar {
         this.ui.time.textContent = timeStr;
 
         let relativeText = '';
+        let accessibleText = ''; // Palette A11y: New variable for screen reader text
 
         // Show relative to session if available
         if (this.ui.relative && this.sessionTime) {
             const diff = (timestamp * 1000 - this.sessionTime.getTime()) / 60000; // minutes
+            const absDiff = Math.abs(Math.round(diff));
+
             if (Math.abs(diff) < 1) {
                 relativeText = 'Session start';
+                accessibleText = 'Session start';
             } else if (diff < 0) {
-                relativeText = `${Math.abs(Math.round(diff))}m before`;
+                relativeText = `${absDiff}m before`;
+                accessibleText = `${absDiff} minute${absDiff !== 1 ? 's' : ''} before session`;
             } else {
-                relativeText = `${Math.round(diff)}m after`;
+                relativeText = `${absDiff}m after`;
+                accessibleText = `${absDiff} minute${absDiff !== 1 ? 's' : ''} after session`;
             }
             this.ui.relative.textContent = relativeText;
         } else if (this.ui.relative) {
@@ -1456,12 +1462,15 @@ class WeatherRadar {
             const diff = timestamp - now;
             if (diff > 60) {
                 relativeText = 'Forecast';
+                accessibleText = 'Forecast';
             }
             this.ui.relative.textContent = relativeText;
         }
 
         if (this.ui.slider) {
-            const ariaText = relativeText ? `${timeStr}, ${relativeText}` : timeStr;
+            // Palette A11y: Use full descriptive text for screen readers
+            const ariaSuffix = accessibleText || relativeText;
+            const ariaText = ariaSuffix ? `${timeStr}, ${ariaSuffix}` : timeStr;
             this.ui.slider.setAttribute('aria-valuetext', ariaText);
         }
     }
