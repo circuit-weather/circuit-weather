@@ -15,9 +15,50 @@ const API_TIMEOUT = 5000;
 const VALID_API_PATH_REGEX = /^[a-zA-Z0-9/._-]*$/;
 const VALID_COORD_REGEX = /^-?\d+(\.\d+)?$/;
 const VALID_TRACK_ID_REGEX = /^[a-z0-9-]+$/;
+const PRODUCTION_DOMAIN = 'https://circuit-weather.racing';
 const ALLOWED_ORIGIN_LOCALHOST_REGEX = /^http:\/\/localhost(:\d+)?$/;
 const ALLOWED_ORIGIN_127_REGEX = /^http:\/\/127\.0\.0\.1(:\d+)?$/;
 const DOTFILE_REGEX = /(?:^|\/)\./;
+
+/**
+ * Helper to validate request source (Hotlink Protection)
+ * Checks Origin and Referer headers against allowlist.
+ * Returns true if allowed, false if blocked.
+ */
+function checkRequestSource(request) {
+  const origin = request.headers.get('Origin');
+  const referer = request.headers.get('Referer');
+
+  // 1. Check Origin (Strict)
+  if (origin) {
+    if (
+      origin !== PRODUCTION_DOMAIN &&
+      !ALLOWED_ORIGIN_LOCALHOST_REGEX.test(origin) &&
+      !ALLOWED_ORIGIN_127_REGEX.test(origin)
+    ) {
+      return false; // Invalid Origin
+    }
+  }
+
+  // 2. Check Referer (Strict)
+  if (referer) {
+    try {
+      const refererUrl = new URL(referer);
+      const refOrigin = refererUrl.origin;
+      if (
+        refOrigin !== PRODUCTION_DOMAIN &&
+        !ALLOWED_ORIGIN_LOCALHOST_REGEX.test(refOrigin) &&
+        !ALLOWED_ORIGIN_127_REGEX.test(refOrigin)
+      ) {
+        return false; // Invalid Referer
+      }
+    } catch (e) {
+      return false; // Malformed Referer
+    }
+  }
+
+  return true;
+}
 
 const LEAFLET_ASSETS = new Map([
   ['leaflet.js', {
@@ -185,6 +226,14 @@ export default {
       });
     }
 
+    // SEC: Strict Origin/Referer Check (Hotlink Protection)
+    if (!checkRequestSource(request)) {
+      return new Response(JSON.stringify({ error: 'Forbidden' }), {
+        status: 403,
+        headers: getErrorHeaders(request)
+      });
+    }
+
     // Only /api/f1/* routes reach this worker (configured via run_worker_first)
     if (path.startsWith('/api/f1/')) {
       return handleApiRequest(request, env, ctx);
@@ -339,7 +388,7 @@ function getAllowedOrigin(request) {
   // 1. Production domain
   // 2. Localhost/127.0.0.1 for development
   if (
-    origin === 'https://circuit-weather.racing' ||
+    origin === PRODUCTION_DOMAIN ||
     ALLOWED_ORIGIN_LOCALHOST_REGEX.test(origin) ||
     ALLOWED_ORIGIN_127_REGEX.test(origin)
   ) {
