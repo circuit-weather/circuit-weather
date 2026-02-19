@@ -61,6 +61,7 @@ circuit-weather/
 │   ├── icon-192.png  # PWA icon (192×192)
 │   ├── icon-512.png  # PWA icon (512×512)
 │   ├── manifest.json # PWA web app manifest
+│   ├── robots.txt    # Search engine directives
 │   ├── sw.js         # Service worker (app shell caching)
 │   ├── _headers      # Cloudflare Pages custom headers (CSP, security)
 │   └── PRIVACY.md
