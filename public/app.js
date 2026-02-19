@@ -413,7 +413,7 @@ class WeatherClient {
             if (!data) {
                 // Bolt Optimization: Use rounded coordinates in URL to improve browser cache hit rate
                 // Direct call to Open-Meteo (Client-side)
-                const url = `${this.baseUrl}?latitude=${rLat}&longitude=${rLon}&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,wind_speed_10m,wind_direction_10m,weather_code&current=temperature_2m,relative_humidity_2m,wind_speed_10m,wind_direction_10m,precipitation&timeformat=unixtime&forecast_days=16`;
+                const url = `${this.baseUrl}?latitude=${rLat}&longitude=${rLon}&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,wind_speed_10m,wind_direction_10m,weather_code&current=temperature_2m,relative_humidity_2m,wind_speed_10m,wind_direction_10m,precipitation,precipitation_probability&timeformat=unixtime&forecast_days=16`;
 
                 const response = await fetch(url);
                 if (!response.ok) throw new Error('Weather API error');
@@ -1846,6 +1846,10 @@ const MapWeatherWidget = L.Control.extend({
                 <svg class="icon-weather icon-temp" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z" /></svg>
                 <span class="temp-value">--</span>
             </div>
+            <div class="weather-widget-metric" role="group" aria-label="Rain Chance" title="Rain Chance">
+                <svg class="icon-weather icon-rain" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M16 14v6"/><path d="M8 14v6"/><path d="M12 16v6"/></svg>
+                <span class="rain-value">--%</span>
+            </div>
             <div class="weather-widget-metric" role="group" aria-label="Humidity" title="Humidity">
                 <svg class="icon-weather icon-humidity" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" /></svg>
                 <span class="humid-value">--%</span>
@@ -1859,9 +1863,11 @@ const MapWeatherWidget = L.Control.extend({
         // Cache references to the dynamic elements
         this._ui = {
             temp: this._div.querySelector('.temp-value'),
+            rain: this._div.querySelector('.rain-value'),
             humid: this._div.querySelector('.humid-value'),
             wind: this._div.querySelector('.wind-value'),
             tempGroup: this._div.querySelector('.weather-widget-metric[title="Temperature"]'),
+            rainGroup: this._div.querySelector('.weather-widget-metric[title="Rain Chance"]'),
             humidGroup: this._div.querySelector('.weather-widget-metric[title="Humidity"]'),
             windGroup: this._div.querySelector('.weather-widget-metric[title="Wind"]')
         };
@@ -1878,22 +1884,26 @@ const MapWeatherWidget = L.Control.extend({
 
         if (!weather || !weather.current) {
             this._ui.temp.textContent = '--';
+            this._ui.rain.textContent = '--%';
             this._ui.humid.textContent = '--%';
             this._ui.wind.textContent = '--';
             return;
         }
 
         const temp = Math.round(weather.current.temperature_2m);
+        const rain = Math.round(weather.current.precipitation_probability || 0);
         const humidity = Math.round(weather.current.relative_humidity_2m || 0);
         const wind = Math.round(weather.current.wind_speed_10m);
 
         // Bolt Optimization: Update textContent instead of innerHTML
         this._ui.temp.textContent = `${temp}${weather.units.temperature_2m}`;
+        this._ui.rain.textContent = `${rain}%`;
         this._ui.humid.textContent = `${humidity}%`;
         this._ui.wind.textContent = `${wind} ${weather.units.wind_speed_10m}`;
 
         // Palette Accessibility: Dynamic ARIA labels
         if (this._ui.tempGroup) this._ui.tempGroup.setAttribute('aria-label', `Temperature: ${this._ui.temp.textContent}`);
+        if (this._ui.rainGroup) this._ui.rainGroup.setAttribute('aria-label', `Rain Chance: ${this._ui.rain.textContent}`);
         if (this._ui.humidGroup) this._ui.humidGroup.setAttribute('aria-label', `Humidity: ${this._ui.humid.textContent}`);
         if (this._ui.windGroup) this._ui.windGroup.setAttribute('aria-label', `Wind Speed: ${this._ui.wind.textContent}`);
     }
@@ -2479,11 +2489,6 @@ class CircuitWeatherApp {
             mobileCountryFlag: document.getElementById('mobileCountryFlag'),
             mobileRaceInfoName: document.getElementById('mobileRaceInfoName'),
             mobileRaceInfoCircuit: document.getElementById('mobileRaceInfoCircuit'),
-            // Mobile Weather Card (Live)
-            mobileWeatherCard: document.getElementById('mobileWeatherCard'),
-            mobileWeatherTemp: document.getElementById('mobileWeatherTemp'),
-            mobileWeatherWind: document.getElementById('mobileWeatherWind'),
-            mobileWeatherHumidity: document.getElementById('mobileWeatherHumidity'),
         };
     }
 
@@ -2620,21 +2625,6 @@ class CircuitWeatherApp {
         if (mobileCountdown) {
             const shouldShow = this.selectedSession && this.countdown.targetTime;
             mobileCountdown.style.display = (shouldShow && isMobile) ? 'block' : 'none';
-        }
-
-        // Update mobile weather card visibility
-        if (this.ui.mobileWeatherCard) {
-            // Check if we have valid data (renderLiveWeather sets display to none if not)
-            // But renderLiveWeather is async.
-            // For now, let's assume if we have a selected race, we want to show it (unless data failed).
-            // Actually, best to let renderLiveWeather handle the "if data exists" part,
-            // and here we just handle the "if mobile" part.
-            // But if renderLiveWeather hid it, we shouldn't show it.
-
-            const hasData = this.ui.mobileWeatherCard.style.display !== 'none';
-            if (hasData) {
-                this.ui.mobileWeatherCard.style.display = isMobile ? 'flex' : 'none';
-            }
         }
 
         // Note: Map resizing is handled by ResizeObserver in MapManager
@@ -2859,7 +2849,6 @@ class CircuitWeatherApp {
         const [lat, lng] = this.currentCircuitCenter;
         const weather = await this.weatherClient.getForecast(lat, lng, new Date());
         this.weatherWidget.update(weather);
-        this.renderLiveWeather(weather); // Also update mobile card
     }
 
     startWeatherRefreshInterval() {
@@ -2932,34 +2921,6 @@ class CircuitWeatherApp {
         }
     }
 
-    renderLiveWeather(weather) {
-        // Updates Desktop Widget and Mobile Card (Live)
-        // Independent of session forecast availability
-
-        const mobileCard = this.ui.mobileWeatherCard;
-
-        if (!weather.available || !weather.current) {
-            if (mobileCard) mobileCard.style.display = 'none';
-            return;
-        }
-
-        const isMobile = this.mobileQuery.matches;
-        if (mobileCard && isMobile) {
-            mobileCard.style.display = 'flex';
-        } else if (mobileCard) {
-            mobileCard.style.display = 'none';
-        }
-
-        const temp = Math.round(weather.current.temperature_2m);
-        const wind = Math.round(weather.current.wind_speed_10m);
-        const humidity = Math.round(weather.current.relative_humidity_2m || 0);
-        const precip = Math.round(weather.current.precipitation_probability || 0);
-
-
-        if (this.ui.mobileWeatherTemp) this.ui.mobileWeatherTemp.textContent = `${temp}${weather.units.temperature_2m}`;
-        if (this.ui.mobileWeatherWind) this.ui.mobileWeatherWind.textContent = `${wind} ${weather.units.wind_speed_10m}`;
-        if (this.ui.mobileWeatherHumidity) this.ui.mobileWeatherHumidity.textContent = `${humidity}%`;
-    }
 
     renderForecast(weather, sessionTime, sessionId) {
         // Updates Sidebar Forecast Panel ONLY
