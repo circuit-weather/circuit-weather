@@ -18,6 +18,8 @@ const VALID_TRACK_ID_REGEX = /^[a-z0-9-]+$/;
 const PRODUCTION_DOMAIN = 'https://circuit-weather.racing';
 const ALLOWED_ORIGIN_LOCALHOST_REGEX = /^http:\/\/localhost(:\d+)?$/;
 const ALLOWED_ORIGIN_127_REGEX = /^http:\/\/127\.0\.0\.1(:\d+)?$/;
+const ALLOWED_PREVIEW_REGEX = /^https:\/\/.*\.pages\.dev$/;
+const ALLOWED_WORKER_REGEX = /^https:\/\/.*\.workers\.dev$/;
 const DOTFILE_REGEX = /(?:^|\/)\./;
 
 /**
@@ -34,7 +36,9 @@ function checkRequestSource(request) {
     if (
       origin !== PRODUCTION_DOMAIN &&
       !ALLOWED_ORIGIN_LOCALHOST_REGEX.test(origin) &&
-      !ALLOWED_ORIGIN_127_REGEX.test(origin)
+      !ALLOWED_ORIGIN_127_REGEX.test(origin) &&
+      !ALLOWED_PREVIEW_REGEX.test(origin) &&
+      !ALLOWED_WORKER_REGEX.test(origin)
     ) {
       return false; // Invalid Origin
     }
@@ -48,7 +52,9 @@ function checkRequestSource(request) {
       if (
         refOrigin !== PRODUCTION_DOMAIN &&
         !ALLOWED_ORIGIN_LOCALHOST_REGEX.test(refOrigin) &&
-        !ALLOWED_ORIGIN_127_REGEX.test(refOrigin)
+        !ALLOWED_ORIGIN_127_REGEX.test(refOrigin) &&
+        !ALLOWED_PREVIEW_REGEX.test(refOrigin) &&
+        !ALLOWED_WORKER_REGEX.test(refOrigin)
       ) {
         return false; // Invalid Referer
       }
@@ -390,7 +396,9 @@ function getAllowedOrigin(request) {
   if (
     origin === PRODUCTION_DOMAIN ||
     ALLOWED_ORIGIN_LOCALHOST_REGEX.test(origin) ||
-    ALLOWED_ORIGIN_127_REGEX.test(origin)
+    ALLOWED_ORIGIN_127_REGEX.test(origin) ||
+    ALLOWED_PREVIEW_REGEX.test(origin) ||
+    ALLOWED_WORKER_REGEX.test(origin)
   ) {
     return origin;
   }
