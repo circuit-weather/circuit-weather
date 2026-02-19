@@ -2953,12 +2953,24 @@ class CircuitWeatherApp {
         const temp = Math.round(weather.current.temperature_2m);
         const wind = Math.round(weather.current.wind_speed_10m);
         const humidity = Math.round(weather.current.relative_humidity_2m || 0);
-        const precip = Math.round(weather.current.precipitation_probability || 0);
+        // const precip = Math.round(weather.current.precipitation_probability || 0); // Unused on mobile card
 
+        const tempStr = `${temp}${weather.units.temperature_2m}`;
+        const windStr = `${wind} ${weather.units.wind_speed_10m}`;
+        const humidStr = `${humidity}%`;
 
-        if (this.ui.mobileWeatherTemp) this.ui.mobileWeatherTemp.textContent = `${temp}${weather.units.temperature_2m}`;
-        if (this.ui.mobileWeatherWind) this.ui.mobileWeatherWind.textContent = `${wind} ${weather.units.wind_speed_10m}`;
-        if (this.ui.mobileWeatherHumidity) this.ui.mobileWeatherHumidity.textContent = `${humidity}%`;
+        if (this.ui.mobileWeatherTemp) this.ui.mobileWeatherTemp.textContent = tempStr;
+        if (this.ui.mobileWeatherWind) this.ui.mobileWeatherWind.textContent = windStr;
+        if (this.ui.mobileWeatherHumidity) this.ui.mobileWeatherHumidity.textContent = humidStr;
+
+        // Palette A11y: Update ARIA labels for mobile card metrics
+        const tempGroup = document.getElementById('mobileWeatherTempGroup');
+        const humidGroup = document.getElementById('mobileWeatherHumidityGroup');
+        const windGroup = document.getElementById('mobileWeatherWindGroup');
+
+        if (tempGroup) tempGroup.setAttribute('aria-label', `Temperature: ${tempStr}`);
+        if (humidGroup) humidGroup.setAttribute('aria-label', `Humidity: ${humidStr}`);
+        if (windGroup) windGroup.setAttribute('aria-label', `Wind Speed: ${windStr}`);
     }
 
     renderForecast(weather, sessionTime, sessionId) {
