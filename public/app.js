@@ -430,10 +430,18 @@ class WeatherClient {
                 this.cache.set(cacheKey, { timestamp: Date.now(), data });
             }
 
+            const hourlyFiltered = this.filterHourly(data.hourly, sessionTime);
+
+            if (hourlyFiltered.length === 0) {
+                // If there's no data for this specific time, it's either too far or an API gap
+                const availableFrom = new Date(sessionTime.getTime() - (16 * 24 * 60 * 60 * 1000));
+                return { available: false, reason: 'too_far', availableFrom };
+            }
+
             return {
                 available: true,
                 current: data.current,
-                hourly: this.filterHourly(data.hourly, sessionTime),
+                hourly: hourlyFiltered,
                 units: data.current_units
             };
         } catch (error) {
@@ -2998,21 +3006,26 @@ class CircuitWeatherApp {
         // Note: We rebuild the entire dashboard here because renderForecastSkeleton() destroys
         // the internal structure (including IDs), causing cached references to become detached.
         let currentHtml = '';
-        if (weather.current) {
-            const temp = Math.round(weather.current.temperature_2m);
-            const wind = Math.round(weather.current.wind_speed_10m);
-            const dir = weather.current.wind_direction_10m;
+
+        // Find the hourly forecast item closest to the session start time
+        let sessionWeather = null;
+        if (weather.hourly && weather.hourly.length > 0) {
+            const sessionTs = Math.floor(sessionTime.getTime() / 1000);
+            sessionWeather = weather.hourly.reduce((prev, curr) =>
+                Math.abs(curr.time - sessionTs) < Math.abs(prev.time - sessionTs) ? curr : prev
+            );
+        }
+
+        if (sessionWeather) {
+            const temp = Math.round(sessionWeather.temp);
+            const wind = Math.round(sessionWeather.windSpeed);
+            const dir = sessionWeather.windDir;
+            const maxPrecip = Math.max(...weather.hourly.map(h => h.precipProb));
 
             // Wind Direction Logic
             const windInfo = this.weatherClient.getWindDirection(dir);
             // Rotation: Input 0 (N) -> Blows South -> Arrow (Up) needs 180 deg rotation
             const rotation = windInfo.rotation;
-
-            // For session forecast, we look at the hourly data to find max precip probability
-            let maxPrecip = 0;
-            if (weather.hourly && weather.hourly.length > 0) {
-                maxPrecip = Math.max(...weather.hourly.map(h => h.precipProb));
-            }
 
             currentHtml = `
                 <div class="weather-current">
