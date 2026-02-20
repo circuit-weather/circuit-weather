@@ -499,11 +499,21 @@ class WeatherClient {
     }
 
     getRelativeTime(timestamp, sessionTime) {
-        const diffMins = (timestamp * 1000 - sessionTime.getTime()) / 60000;
+        // Bolt Optimization: Align logic to "Session Hour" for clean labels
+        // 1. Get the session start hour (e.g., 14:30 -> 14:00)
+        const sessionStartHour = new Date(sessionTime);
+        sessionStartHour.setMinutes(0, 0, 0);
 
-        if (Math.abs(diffMins) < 30) return 'Start';
-        if (diffMins < 0) return `${Math.round(diffMins / 60)}h`;
-        return `+${Math.round(diffMins / 60)}h`;
+        // 2. Calculate hour difference from that anchor
+        // Timestamp is in seconds, convert to ms
+        const diffHours = (timestamp * 1000 - sessionStartHour.getTime()) / (1000 * 60 * 60);
+
+        // 3. Round to nearest integer to handle any slight drifts (though usually exact)
+        const roundedDiff = Math.round(diffHours);
+
+        if (roundedDiff === 0) return 'Start';
+        if (roundedDiff < 0) return `${roundedDiff}h`;
+        return `+${roundedDiff}h`;
     }
 
     getAccessibleRelativeTime(timestamp, sessionTime) {
