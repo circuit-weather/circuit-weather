@@ -2948,7 +2948,9 @@ class CircuitWeatherApp {
                     if (weather.reason === 'too_far' && weather.availableFrom) {
                         const dateStr = weather.availableFrom.toLocaleDateString(undefined, {
                             month: 'short',
-                            day: 'numeric'
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
                         });
                         p.textContent = `Forecast available from ${dateStr}`;
                     } else if (weather.reason === 'error') {
