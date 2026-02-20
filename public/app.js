@@ -413,7 +413,15 @@ class WeatherClient {
             if (!data) {
                 // Bolt Optimization: Use rounded coordinates in URL to improve browser cache hit rate
                 // Direct call to Open-Meteo (Client-side)
-                const url = `${this.baseUrl}?latitude=${rLat}&longitude=${rLon}&hourly=temperature_2m,relative_humidity_2m,precipitation_probability,wind_speed_10m,wind_direction_10m,weather_code&current=temperature_2m,relative_humidity_2m,wind_speed_10m,wind_direction_10m,precipitation,precipitation_probability&timeformat=unixtime&forecast_days=16`;
+                const params = new URLSearchParams({
+                    latitude: rLat,
+                    longitude: rLon,
+                    hourly: 'temperature_2m,relative_humidity_2m,precipitation_probability,wind_speed_10m,wind_direction_10m,weather_code',
+                    current: 'temperature_2m,relative_humidity_2m,wind_speed_10m,wind_direction_10m,precipitation,precipitation_probability',
+                    timeformat: 'unixtime',
+                    forecast_days: '16'
+                });
+                const url = `${this.baseUrl}?${params.toString()}`;
 
                 const response = await fetch(url);
                 if (!response.ok) throw new Error('Weather API error');
