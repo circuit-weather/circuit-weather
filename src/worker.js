@@ -69,35 +69,51 @@ function checkRequestSource(request) {
 const LEAFLET_ASSETS = new Map([
   ['leaflet.js', {
     upstream: 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
-    contentTypes: ['application/javascript', 'text/javascript'] // Allow both standard and legacy
+    contentTypes: ['application/javascript', 'text/javascript'], // Allow both standard and legacy
+    integrity: '20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo='
   }],
   ['leaflet.css', {
     upstream: 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
-    contentTypes: ['text/css']
+    contentTypes: ['text/css'],
+    integrity: 'p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY='
   }],
   ['images/layers.png', {
     upstream: 'https://unpkg.com/leaflet@1.9.4/dist/images/layers.png',
-    contentTypes: ['image/png']
+    contentTypes: ['image/png'],
+    integrity: 'Hbvp0CjikvNvy6j4s6KNXokydU/CIVuaxp5M3s9RB8Y='
   }],
   ['images/layers-2x.png', {
     upstream: 'https://unpkg.com/leaflet@1.9.4/dist/images/layers-2x.png',
-    contentTypes: ['image/png']
+    contentTypes: ['image/png'],
+    integrity: 'Bm2sqFDY/77wB68AsG6sABVyje4nnFHzy2xxbffELt8='
   }],
   ['images/marker-icon.png', {
     upstream: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-    contentTypes: ['image/png']
+    contentTypes: ['image/png'],
+    integrity: 'V0w6XMqF9BFAhbaEFZbWLwDXyJLHsD8oy/owHesdxDc='
   }],
   ['images/marker-icon-2x.png', {
     upstream: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-    contentTypes: ['image/png']
+    contentTypes: ['image/png'],
+    integrity: 'ABecTB7oMNOhCEEq4NKU9Vd2z+sIXGASmjmqb8SuJSg='
   }],
   ['images/marker-shadow.png', {
     upstream: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-    contentTypes: ['image/png']
+    contentTypes: ['image/png'],
+    integrity: 'Jk9cZAM58ELdcpBiz8BMF/jqDymIK1OOOEjtjxDttNo='
   }],
 ]);
 
 const ALLOWED_TILE_HEADERS = ['Content-Type', 'Content-Length', 'Last-Modified', 'ETag', 'Date'];
+
+/**
+ * Calculates SHA-256 hash of a buffer and returns it as base64 string
+ */
+async function calculateHash(buffer) {
+  const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return btoa(String.fromCharCode(...hashArray));
+}
 
 /**
  * Simple In-Memory Rate Limiter
@@ -752,7 +768,19 @@ async function handleLeafletRequest(request, env, ctx) {
       return new Response('Invalid upstream content type', { status: 502, headers: getErrorHeaders(request) });
     }
 
-    const [cacheBody, clientBody] = upstreamResponse.body.tee();
+    // SEC: Buffer response for SRI Verification
+    const buffer = await upstreamResponse.arrayBuffer();
+
+    // Verify Hash
+    if (config.integrity) {
+      const hash = await calculateHash(buffer);
+      if (hash !== config.integrity) {
+        console.error(`SRI Mismatch for ${path}: expected ${config.integrity}, got ${hash}`);
+        const errorHeaders = getErrorHeaders(request);
+        errorHeaders['X-SRI-Status'] = 'mismatch';
+        return new Response('SRI Integrity Check Failed', { status: 502, headers: errorHeaders });
+      }
+    }
 
     // Use the first allowed content type as the canonical one for the client response
     const canonicalType = config.contentTypes[0];
@@ -765,8 +793,8 @@ async function handleLeafletRequest(request, env, ctx) {
       ...DEFAULT_SECURITY_HEADERS
     });
 
-    // Cache it
-    ctx.waitUntil(cache.put(cacheKey, new Response(cacheBody, { headers: cacheHeaders })));
+    // Cache it (Clone the response from buffer)
+    ctx.waitUntil(cache.put(cacheKey, new Response(buffer, { headers: cacheHeaders })));
 
     const clientHeaders = new Headers(cacheHeaders);
     const allowedOrigin = getAllowedOrigin(request);
@@ -775,7 +803,8 @@ async function handleLeafletRequest(request, env, ctx) {
       clientHeaders.set('Vary', 'Origin');
     }
 
-    return new Response(clientBody, {
+    // Return to client (from buffer)
+    return new Response(buffer, {
       status: 200,
       headers: clientHeaders
     });
