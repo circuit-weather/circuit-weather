@@ -24,6 +24,10 @@ Circuit Weather is a real-time F1 race circuit weather radar application. It dis
 - **NO sensitive data in git** - `.gitignore` excludes `.env*`, `.wrangler/`
 - **NO user authentication** - App is read-only, no user accounts
 
+### Access Control
+- **Hotlink Protection** - Strict `Origin` and `Referer` checks in `src/worker.js` prevent unauthorized embedding.
+- **Rate Limiting** - In-memory IP-based limiting (1000 req/min) protects upstream APIs from abuse.
+
 ### Third-Party Services
 | Service | Purpose | Connection |
 |---------|---------|------------|
