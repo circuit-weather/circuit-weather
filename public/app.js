@@ -2981,13 +2981,18 @@ class CircuitWeatherApp {
                 const p = unavailable.querySelector('p');
                 if (p) {
                     if (weather.reason === 'too_far' && weather.availableFrom) {
-                        const dateStr = weather.availableFrom.toLocaleDateString(undefined, {
-                            month: 'short',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                        });
-                        p.textContent = `Forecast available from ${dateStr}`;
+                        const now = new Date();
+                        if (weather.availableFrom > now) {
+                            const dateStr = weather.availableFrom.toLocaleDateString(undefined, {
+                                month: 'short',
+                                day: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                            });
+                            p.textContent = `Forecast available from ${dateStr}`;
+                        } else {
+                            p.textContent = 'Forecast available shortly';
+                        }
                     } else if (weather.reason === 'error') {
                         p.textContent = 'Unable to load forecast data';
                     } else {
