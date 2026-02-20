@@ -377,6 +377,34 @@ body {
     font-style: italic;
 }
 
+/* Empty State */
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: var(--spacing-lg);
+    margin-top: var(--spacing-md);
+    background: var(--color-surface);
+    border: 1px dashed var(--color-border);
+    border-radius: var(--radius-lg);
+    color: var(--color-text-secondary);
+}
+
+.empty-state-icon {
+    width: 2rem;
+    height: 2rem;
+    margin-bottom: var(--spacing-sm);
+    opacity: 0.5;
+}
+
+.empty-state p {
+    font-size: 0.8rem;
+    font-weight: 500;
+    margin: 0;
+}
+
 /* Weather Dashboard */
 .weather-dashboard {
     display: flex;

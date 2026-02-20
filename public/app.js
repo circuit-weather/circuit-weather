@@ -2490,6 +2490,7 @@ class CircuitWeatherApp {
             forecastSection: document.getElementById('forecastSection'),
             forecastContent: document.getElementById('forecastContent'),
             forecastUnavailable: document.getElementById('forecastUnavailable'),
+            sessionEmptyState: document.getElementById('sessionEmptyState'),
             weatherTemp: document.getElementById('weatherTemp'),
             weatherRain: document.getElementById('weatherRain'),
             weatherWind: document.getElementById('weatherWind'),
@@ -2656,6 +2657,7 @@ class CircuitWeatherApp {
                     this.selectedRace = null;
                     if (this.ui.forecastSection) this.ui.forecastSection.style.display = 'none';
                     if (this.ui.raceInfoBanner) this.ui.raceInfoBanner.style.display = 'none';
+                    if (this.ui.sessionEmptyState) this.ui.sessionEmptyState.style.display = 'none';
                     this.countdown.show(false);
                     this.trackLayer.clear();
                     this.rangeCircles.clear();
@@ -2732,6 +2734,11 @@ class CircuitWeatherApp {
         // Hide forecast section since no session is selected yet
         if (this.ui.forecastSection) {
             this.ui.forecastSection.style.display = 'none';
+        }
+
+        // Palette UX: Show empty state to prompt session selection
+        if (this.ui.sessionEmptyState) {
+            this.ui.sessionEmptyState.style.display = 'flex';
         }
 
         // Fetch current "Live" weather for the widgets
@@ -2814,6 +2821,7 @@ class CircuitWeatherApp {
 
         // Show forecast section container immediately
         if (this.ui.forecastSection) this.ui.forecastSection.style.display = 'block';
+        if (this.ui.sessionEmptyState) this.ui.sessionEmptyState.style.display = 'none';
 
         try {
             this.selectedSession = session;

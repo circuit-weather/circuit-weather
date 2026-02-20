@@ -4,3 +4,7 @@
 ## 2026-02-19 - Domain-Specific Weather Metrics
 **Learning:** For F1 racing, generic weather icons (like 'Cloudy') are insufficient; precise Precipitation Probability (Rain %) is critical for strategy. Users prefer explicit percentage over vague icons.
 **Action:** Always include actionable metrics (Rain %, Wind Speed) in primary widgets for specialized domains, using consistent color coding (Blue for Rain).
+
+## 2026-02-20 - Empty State for Selection Flows
+**Learning:** When a user action (selecting a round) clears a dependent selection (session), leaving a blank space where the result (forecast) usually appears causes confusion.
+**Action:** Always provide a descriptive empty state that guides the user to the next required action ("Select a session...").
