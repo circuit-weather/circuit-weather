@@ -245,6 +245,11 @@ export default {
       return handleApiRequest(request, env, ctx);
     }
 
+    // Handle health request
+    if (path === '/api/health') {
+      return handleHealthRequest(request, env, ctx);
+    }
+
     // Handle radar requests
     if (path === '/api/radar') {
       return handleRadarRequest(request, env, ctx);
@@ -354,6 +359,7 @@ function cacheAndReturnError(request, cache, cacheKey, status, errorData, ctx) {
     'Content-Type': 'application/json',
     'Cache-Control': `public, max-age=${errorCacheTTL}`,
     'X-Cache': 'ERROR-CACHED',
+    'X-Upstream-Status': status.toString(),
     'Access-Control-Allow-Origin': '*', // Store permissive, override on delivery
     ...DEFAULT_SECURITY_HEADERS
   });
@@ -500,10 +506,12 @@ async function handleApiRequest(request, env, ctx) {
       signal: AbortSignal.timeout(API_TIMEOUT),
     });
 
+    const status = upstreamResponse.status;
+
     if (!upstreamResponse.ok) {
-      return cacheAndReturnError(request, cache, cacheKey, upstreamResponse.status, {
+      return cacheAndReturnError(request, cache, cacheKey, status, {
         error: 'Upstream API error',
-        status: upstreamResponse.status,
+        status: status,
       }, ctx);
     }
 
@@ -526,6 +534,7 @@ async function handleApiRequest(request, env, ctx) {
       'Content-Type': 'application/json',
       'Cache-Control': 'public, max-age=3600',
       'X-Cache': 'MISS',
+      'X-Upstream-Status': status.toString(),
       'Access-Control-Allow-Origin': '*', // Store permissive, override on delivery
       ...DEFAULT_SECURITY_HEADERS
     });
@@ -623,11 +632,13 @@ async function handleTrackRequest(request, env, ctx) {
       signal: AbortSignal.timeout(API_TIMEOUT),
     });
 
+    const upstreamStatus = upstreamResponse.status;
+
     if (!upstreamResponse.ok) {
-      const status = upstreamResponse.status === 404 ? 404 : 502;
+      const status = upstreamStatus === 404 ? 404 : 502;
       return cacheAndReturnError(request, cache, cacheKey, status, {
         error: 'Track not found',
-        status: upstreamResponse.status,
+        status: upstreamStatus,
       }, ctx);
     }
 
@@ -639,6 +650,7 @@ async function handleTrackRequest(request, env, ctx) {
       'Content-Type': 'application/json',
       'Cache-Control': 'public, max-age=86400',
       'X-Cache': 'MISS',
+      'X-Upstream-Status': upstreamStatus.toString(),
       'Access-Control-Allow-Origin': '*',
       ...DEFAULT_SECURITY_HEADERS
     });
@@ -722,9 +734,12 @@ async function handleLeafletRequest(request, env, ctx) {
       signal: AbortSignal.timeout(API_TIMEOUT),
     });
 
+    const status = upstreamResponse.status;
     if (!upstreamResponse.ok) {
-      console.error(`Leaflet Fetch Error (${path}): ${upstreamResponse.status}`);
-      return new Response('Failed to load Leaflet asset', { status: 502, headers: getErrorHeaders(request) });
+      console.error(`Leaflet Fetch Error (${path}): ${status}`);
+      const errorHeaders = getErrorHeaders(request);
+      errorHeaders['X-Upstream-Status'] = status.toString();
+      return new Response('Failed to load Leaflet asset', { status: 502, headers: errorHeaders });
     }
 
     // SEC: Validate Content-Type
@@ -746,6 +761,7 @@ async function handleLeafletRequest(request, env, ctx) {
       'Content-Type': canonicalType, // Enforce strict/canonical type
       'Cache-Control': 'public, max-age=31536000, immutable', // Long cache for versioned file
       'X-Cache': 'MISS',
+      'X-Upstream-Status': status.toString(),
       ...DEFAULT_SECURITY_HEADERS
     });
 
@@ -768,6 +784,45 @@ async function handleLeafletRequest(request, env, ctx) {
     console.error('Leaflet Proxy Error:', error);
     return new Response('Leaflet fetch failed', { status: 502, headers: getErrorHeaders(request) });
   }
+}
+
+/**
+ * Handle Health Check request
+ * Checks connectivity to key upstream APIs and returns basic system status.
+ */
+async function handleHealthRequest(request, env, ctx) {
+  const upstreams = {
+    jolpica: 'https://api.jolpi.ca/ergast/f1/current.json',
+    rainviewer: 'https://api.rainviewer.com/public/weather-maps.json',
+    github: 'https://raw.githubusercontent.com/bacinger/f1-circuits/master/circuits/au-1953.geojson'
+  };
+
+  const results = {};
+  const checks = Object.entries(upstreams).map(async ([name, url]) => {
+    try {
+      const res = await fetch(url, {
+        method: 'HEAD',
+        headers: { 'User-Agent': 'CircuitWeather-Health/1.0' },
+        signal: AbortSignal.timeout(2000)
+      });
+      results[name] = res.status;
+    } catch (e) {
+      results[name] = 'unreachable';
+    }
+  });
+
+  await Promise.all(checks);
+
+  return new Response(JSON.stringify({
+    status: 'ok',
+    version: '1.1.0',
+    upstreams: results,
+    timestamp: new Date().toISOString(),
+    environment: env.ENVIRONMENT || 'production'
+  }), {
+    status: 200,
+    headers: getErrorHeaders(request)
+  });
 }
 
 /**
@@ -839,13 +894,24 @@ async function handleTileRequest(request, env, ctx) {
       signal: AbortSignal.timeout(API_TIMEOUT),
     });
 
+    const status = upstreamResponse.status;
+
+    // Log outcomes (sampled for 2xx, 100% for errors)
+    // Bolt Optimization: Use fast bucket calculation
+    const bucket = Math.floor(status / 100);
+    if (bucket >= 4 || Math.random() < 0.05) {
+      console.log(`Tile Proxy Bucket: ${bucket}xx (Status: ${status}) Path: ${tilePath}`);
+    }
+
     // 3. Error Handling - Do NOT cache errors
     if (!upstreamResponse.ok) {
-      console.error(`Upstream Tile Error ${upstreamResponse.status}: ${upstreamUrl}`);
       // Pass error status to client so frontend logic can retry or show error
+      const errorHeaders = getErrorHeaders(request);
+      errorHeaders['X-Upstream-Status'] = status.toString();
+
       return new Response(upstreamResponse.body, {
-        status: upstreamResponse.status,
-        headers: getErrorHeaders(request)
+        status: status,
+        headers: errorHeaders
       });
     }
 
@@ -873,6 +939,7 @@ async function handleTileRequest(request, env, ctx) {
 
     cacheHeaders.set('Cache-Control', 'public, max-age=7200'); // 2 Hours TTL
     cacheHeaders.set('X-Cache', 'MISS');
+    cacheHeaders.set('X-Upstream-Status', status.toString());
     cacheHeaders.set('Access-Control-Allow-Origin', '*');
 
     // SEC: Add security headers
@@ -958,18 +1025,23 @@ async function handleRadarRequest(request, env, ctx) {
       signal: AbortSignal.timeout(API_TIMEOUT),
     });
 
+    const status = upstreamResponse.status;
+
     if (!upstreamResponse.ok) {
-      console.error(`Upstream Radar API Error: Status ${upstreamResponse.status}`);
-      if (upstreamResponse.status === 429) {
+      console.error(`Upstream Radar API Error: Status ${status}`);
+      if (status === 429) {
         return new Response(JSON.stringify({ error: 'Upstream Rate Limit' }), {
           status: 429,
           headers: {
             ...getErrorHeaders(request),
+            'X-Upstream-Status': '429',
             'Retry-After': '60'
           }
         });
       }
-      return getEmptyRadarResponse(request);
+      const emptyResponse = getEmptyRadarResponse(request);
+      emptyResponse.headers.set('X-Upstream-Status', status.toString());
+      return emptyResponse;
     }
 
     // SEC: Strict Content-Type Validation
@@ -988,6 +1060,7 @@ async function handleRadarRequest(request, env, ctx) {
       'Content-Type': 'application/json',
       'Cache-Control': 'public, max-age=60', // Worker Cache TTL
       'X-Cache': 'MISS',
+      'X-Upstream-Status': status.toString(),
       'Access-Control-Allow-Origin': '*',
       ...DEFAULT_SECURITY_HEADERS
     });
@@ -1028,4 +1101,3 @@ async function handleRadarRequest(request, env, ctx) {
     });
   }
 }
-
