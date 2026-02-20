@@ -387,10 +387,10 @@ class WeatherClient {
         const now = new Date();
         const diffDays = (sessionTime - now) / (1000 * 60 * 60 * 24);
 
-        if (diffDays > 14) {
+        if (diffDays > 16) {
             // Palette UX: Calculate when the forecast will become available
-            // Open-Meteo offers ~14-16 days forecast. We use 14 for safety.
-            const availableFrom = new Date(sessionTime.getTime() - (14 * 24 * 60 * 60 * 1000));
+            // Open-Meteo offers ~14-16 days forecast. We use 16 for safety.
+            const availableFrom = new Date(sessionTime.getTime() - (16 * 24 * 60 * 60 * 1000));
             return { available: false, reason: 'too_far', availableFrom };
         }
 
