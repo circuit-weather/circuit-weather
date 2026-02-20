@@ -113,11 +113,11 @@ function debounce(func, wait) {
  * @returns {string} The escaped string
  */
 const ESCAPE_MAP = {
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#039;'
+    '&': "&amp;",
+    '<': "&lt;",
+    '>': "&gt;",
+    '"': "&quot;",
+    "'": "&#39;"
 };
 const ESCAPE_REGEX = /[&<>"']/g;
 
