@@ -419,7 +419,8 @@ class WeatherClient {
                     hourly: 'temperature_2m,relative_humidity_2m,precipitation_probability,wind_speed_10m,wind_direction_10m,weather_code',
                     current: 'temperature_2m,relative_humidity_2m,wind_speed_10m,wind_direction_10m,precipitation,precipitation_probability',
                     timeformat: 'unixtime',
-                    forecast_days: '16'
+                    forecast_days: '16',
+                    timezone: 'auto'
                 });
                 const url = `${this.baseUrl}?${params.toString()}`;
 
