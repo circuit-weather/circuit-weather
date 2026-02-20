@@ -7,3 +7,8 @@
 **Vulnerability:** `CircuitWeatherApp.renderForecast` injected weather unit strings from the Open-Meteo API directly into the DOM using `innerHTML` without sanitization. While the API is trusted, this created a potential XSS vector if the API response was compromised or spoofed.
 **Learning:** Even trusted third-party APIs should be treated as untrusted sources when rendering data into the DOM. Always sanitize or escape any external data before injecting it via `innerHTML`.
 **Prevention:** Use `textContent` where possible, or strictly escape all dynamic values when building HTML strings.
+
+## 2026-02-20 - Worker Proxy SRI Verification
+**Vulnerability:** The Cloudflare Worker proxied external Leaflet assets from `unpkg.com` without verifying their integrity. While the frontend enforced SRI via `integrity` attributes, a compromised upstream file would still be fetched and cached by the worker, causing a Denial of Service for all users as browsers blocked the mismatched resource.
+**Learning:** When building a reverse proxy for external assets, frontend-only SRI is insufficient as it protects the client but poisons the edge cache. The proxy itself must verify the integrity of the upstream response before caching it.
+**Prevention:** Implement server-side SRI verification in the proxy layer by buffering the response, calculating its SHA-256 hash, and comparing it against a strict allowlist before committing to cache or serving.
