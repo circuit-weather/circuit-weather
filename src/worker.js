@@ -932,71 +932,77 @@ async function handleTileRequest(request, env, ctx) {
       console.log(`Tile Proxy Bucket: ${bucket}xx (Status: ${status}) Path: ${tilePath}`);
     }
 
-    // 3. Error Handling - Do NOT cache errors
-    if (!upstreamResponse.ok) {
-      // Pass error status to client so frontend logic can retry or show error
-      const errorHeaders = getErrorHeaders(request);
-      errorHeaders['X-Upstream-Status'] = status.toString();
+    // 3. Cache Determination
+    // Cache success (2xx) or benign error (404). Do NOT cache 429/5xx.
+    const shouldCache = upstreamResponse.ok || status === 404;
+    const ttl = upstreamResponse.ok ? 7200 : 60;
 
-      return new Response(upstreamResponse.body, {
+    if (shouldCache) {
+      // SEC: Strict Content-Type Validation (ONLY for success responses)
+      // Prevent XSS via MIME sniffing if upstream returns non-image content (e.g. HTML)
+      // Only allow PNG as we enforced .png extension in URL. Blocks image/svg+xml.
+      if (upstreamResponse.ok) {
+        const contentType = upstreamResponse.headers.get('Content-Type');
+        if (!contentType || !contentType.startsWith('image/png')) {
+          console.error(`Upstream Tile Invalid Content-Type: ${contentType}`);
+          return new Response(JSON.stringify({ error: 'Invalid upstream content type' }), {
+            status: 502,
+            headers: getErrorHeaders(request)
+          });
+        }
+      }
+
+      // 4. Cache Response
+      const [cacheBody, clientBody] = upstreamResponse.body.tee();
+
+      // SEC: Allowlist headers to prevent leaking sensitive upstream headers
+      const cacheHeaders = new Headers();
+      for (const header of ALLOWED_TILE_HEADERS) {
+        const value = upstreamResponse.headers.get(header);
+        if (value) cacheHeaders.set(header, value);
+      }
+
+      cacheHeaders.set('Cache-Control', `public, max-age=${ttl}`);
+      cacheHeaders.set('X-Cache', 'MISS');
+      cacheHeaders.set('X-Upstream-Status', status.toString());
+      cacheHeaders.set('Access-Control-Allow-Origin', '*');
+
+      // SEC: Add security headers
+      // Ensures X-Content-Type-Options: nosniff is set on cached tiles
+      Object.entries(DEFAULT_SECURITY_HEADERS).forEach(([key, value]) => {
+        cacheHeaders.set(key, value);
+      });
+
+      const cacheResponse = new Response(cacheBody, {
         status: status,
-        headers: errorHeaders
+        headers: cacheHeaders
+      });
+
+      ctx.waitUntil(cache.put(cacheKey, cacheResponse));
+
+      // 5. Return to Client
+      const clientHeaders = new Headers(cacheHeaders);
+      const allowedOrigin = getAllowedOrigin(request);
+      if (allowedOrigin) {
+        clientHeaders.set('Access-Control-Allow-Origin', allowedOrigin);
+        clientHeaders.set('Vary', 'Origin');
+      } else {
+        clientHeaders.delete('Access-Control-Allow-Origin');
+      }
+
+      return new Response(clientBody, {
+        status: status,
+        headers: clientHeaders
       });
     }
 
-    // SEC: Strict Content-Type Validation
-    // Prevent XSS via MIME sniffing if upstream returns non-image content (e.g. HTML)
-    // Only allow PNG as we enforced .png extension in URL. Blocks image/svg+xml.
-    const contentType = upstreamResponse.headers.get('Content-Type');
-    if (!contentType || !contentType.startsWith('image/png')) {
-      console.error(`Upstream Tile Invalid Content-Type: ${contentType}`);
-      return new Response(JSON.stringify({ error: 'Invalid upstream content type' }), {
-        status: 502,
-        headers: getErrorHeaders(request)
-      });
-    }
+    // 6. Non-cacheable Error Handling (429, 5xx, etc)
+    const errorHeaders = getErrorHeaders(request);
+    errorHeaders['X-Upstream-Status'] = status.toString();
 
-    // 4. Cache Success Response
-    const [cacheBody, clientBody] = upstreamResponse.body.tee();
-
-    // SEC: Allowlist headers to prevent leaking sensitive upstream headers
-    const cacheHeaders = new Headers();
-    for (const header of ALLOWED_TILE_HEADERS) {
-      const value = upstreamResponse.headers.get(header);
-      if (value) cacheHeaders.set(header, value);
-    }
-
-    cacheHeaders.set('Cache-Control', 'public, max-age=7200'); // 2 Hours TTL
-    cacheHeaders.set('X-Cache', 'MISS');
-    cacheHeaders.set('X-Upstream-Status', status.toString());
-    cacheHeaders.set('Access-Control-Allow-Origin', '*');
-
-    // SEC: Add security headers
-    // Ensures X-Content-Type-Options: nosniff is set on cached tiles
-    Object.entries(DEFAULT_SECURITY_HEADERS).forEach(([key, value]) => {
-      cacheHeaders.set(key, value);
-    });
-
-    const cacheResponse = new Response(cacheBody, {
-      status: upstreamResponse.status,
-      headers: cacheHeaders
-    });
-
-    ctx.waitUntil(cache.put(cacheKey, cacheResponse));
-
-    // 5. Return to Client
-    const clientHeaders = new Headers(cacheHeaders);
-    const allowedOrigin = getAllowedOrigin(request);
-    if (allowedOrigin) {
-      clientHeaders.set('Access-Control-Allow-Origin', allowedOrigin);
-      clientHeaders.set('Vary', 'Origin');
-    } else {
-      clientHeaders.delete('Access-Control-Allow-Origin');
-    }
-
-    return new Response(clientBody, {
-      status: upstreamResponse.status,
-      headers: clientHeaders
+    return new Response(upstreamResponse.body, {
+      status: status,
+      headers: errorHeaders
     });
 
   } catch (error) {
