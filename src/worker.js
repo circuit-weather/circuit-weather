@@ -8,8 +8,12 @@
  * via wrangler.toml's run_worker_first and not_found_handling settings.
  */
 
-// Global timeout for all upstream API calls to prevent resource exhaustion
-const API_TIMEOUT = 5000;
+// Per-upstream timeouts to prevent resource exhaustion while allowing for slow upstreams
+const TIMEOUT_API_F1 = 5000;
+const TIMEOUT_API_RADAR = 8000;
+const TIMEOUT_API_TILES = 5000;
+const TIMEOUT_API_TRACKS = 10000;
+const TIMEOUT_API_ASSETS = 10000;
 
 // Bolt Optimization: Pre-compile regexes for hot-path performance
 const VALID_API_PATH_REGEX = /^[a-zA-Z0-9/._-]*$/;
@@ -519,7 +523,7 @@ async function handleApiRequest(request, env, ctx) {
         'Accept': 'application/json',
         'User-Agent': 'CircuitWeather/1.0',
       },
-      signal: AbortSignal.timeout(API_TIMEOUT),
+      signal: AbortSignal.timeout(TIMEOUT_API_F1),
     });
 
     const status = upstreamResponse.status;
@@ -645,7 +649,7 @@ async function handleTrackRequest(request, env, ctx) {
       headers: {
         'User-Agent': 'CircuitWeather/1.0',
       },
-      signal: AbortSignal.timeout(API_TIMEOUT),
+      signal: AbortSignal.timeout(TIMEOUT_API_TRACKS),
     });
 
     const upstreamStatus = upstreamResponse.status;
@@ -747,7 +751,7 @@ async function handleLeafletRequest(request, env, ctx) {
   try {
     const upstreamResponse = await fetch(upstreamUrl, {
       headers: { 'User-Agent': 'CircuitWeather/1.0' },
-      signal: AbortSignal.timeout(API_TIMEOUT),
+      signal: AbortSignal.timeout(TIMEOUT_API_ASSETS),
     });
 
     const status = upstreamResponse.status;
@@ -920,7 +924,7 @@ async function handleTileRequest(request, env, ctx) {
         'User-Agent': 'CircuitWeather/1.0',
         'Accept': 'image/png,image/*;q=0.8'
       },
-      signal: AbortSignal.timeout(API_TIMEOUT),
+      signal: AbortSignal.timeout(TIMEOUT_API_TILES),
     });
 
     const status = upstreamResponse.status;
@@ -1057,7 +1061,7 @@ async function handleRadarRequest(request, env, ctx) {
         'Accept': 'application/json',
         'User-Agent': 'CircuitWeather/1.0',
       },
-      signal: AbortSignal.timeout(API_TIMEOUT),
+      signal: AbortSignal.timeout(TIMEOUT_API_RADAR),
     });
 
     const status = upstreamResponse.status;
