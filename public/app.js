@@ -436,8 +436,9 @@ class WeatherClient {
 
     filterHourly(hourly, sessionTime) {
         const sessionTs = Math.floor(sessionTime.getTime() / 1000);
-        // Range: -1 hour to +3 hours relative to session start
-        const startTs = sessionTs - 3600;
+        // Range: -1.5 hours to +3 hours relative to session start
+        // Widened to 1.5h (5400s) to capture the "previous hour" data point for sessions starting at :30
+        const startTs = sessionTs - 5400;
         const endTs = sessionTs + (3 * 3600);
 
         const result = [];
