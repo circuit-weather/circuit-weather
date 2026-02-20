@@ -844,7 +844,7 @@ async function handleHealthRequest(request, env, ctx) {
 
   return new Response(JSON.stringify({
     status: 'ok',
-    version: '1.1.0',
+    version: '1.1.1',
     upstreams: results,
     timestamp: new Date().toISOString(),
     environment: env.ENVIRONMENT || 'production'
