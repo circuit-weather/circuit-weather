@@ -1,0 +1,21 @@
+import { CircuitWeatherApp } from './CircuitWeatherApp.js';
+import { PrivacyModal } from './ui/PrivacyModal.js';
+
+/**
+ * Application Entry Point
+ */
+document.addEventListener('DOMContentLoaded', () => {
+    // Initialize the main application
+    const app = new CircuitWeatherApp();
+    app.init();
+
+    // Initialize the privacy modal
+    new PrivacyModal();
+
+    // Register Service Worker for offline support and PWA features
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js').catch(err => {
+            console.error('Service Worker registration failed:', err);
+        });
+    }
+});
