@@ -17,3 +17,8 @@
 **Vulnerability:** The `handleTileRequest` in `src/worker.js` piped raw upstream response bodies (potentially HTML error pages) to the client with `Content-Type: application/json` for non-cacheable errors (429, 5xx). This could leak upstream implementation details or internal IP addresses from error pages.
 **Learning:** Always sanitize upstream error responses in a proxy. Even if the client expects an image, returning a structured JSON error is safer than passing through raw HTML content which might be misinterpreted or leak information.
 **Prevention:** Consume the upstream response body for error statuses and return a clean, generated JSON response with only necessary headers (like `Retry-After`).
+
+## 2026-02-21 - Tile Proxy HTML Injection via 404
+**Vulnerability:** The `handleTileRequest` in `src/worker.js` proxied upstream 404 responses from `rainviewer.com` regardless of content type. The upstream returned `text/html` error pages, which the worker cached and served. This allowed Reflected/Stored XSS if a user was tricked into visiting a non-existent tile URL, as the browser would render the HTML in the application's origin.
+**Learning:** API proxies must never assume the upstream response matches the requested file extension or content type, especially for error codes. Browsers may sniff or respect `Content-Type: text/html` even on `.png` URLs.
+**Prevention:** Strictly validate `Content-Type` for all proxied responses, including errors (404). If the upstream returns HTML for an image request, intercept and replace it with a safe response (JSON or generated image).
