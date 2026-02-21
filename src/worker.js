@@ -942,18 +942,50 @@ async function handleTileRequest(request, env, ctx) {
     const ttl = upstreamResponse.ok ? 7200 : 60;
 
     if (shouldCache) {
+      const contentType = upstreamResponse.headers.get('Content-Type');
+      const isPng = contentType && contentType.startsWith('image/png');
+
       // SEC: Strict Content-Type Validation (ONLY for success responses)
       // Prevent XSS via MIME sniffing if upstream returns non-image content (e.g. HTML)
       // Only allow PNG as we enforced .png extension in URL. Blocks image/svg+xml.
-      if (upstreamResponse.ok) {
-        const contentType = upstreamResponse.headers.get('Content-Type');
-        if (!contentType || !contentType.startsWith('image/png')) {
-          console.error(`Upstream Tile Invalid Content-Type: ${contentType}`);
-          return new Response(JSON.stringify({ error: 'Invalid upstream content type' }), {
-            status: 502,
-            headers: getErrorHeaders(request)
-          });
+      if (upstreamResponse.ok && !isPng) {
+        console.error(`Upstream Tile Invalid Content-Type: ${contentType}`);
+        return new Response(JSON.stringify({ error: 'Invalid upstream content type' }), {
+          status: 502,
+          headers: getErrorHeaders(request)
+        });
+      }
+
+      // SEC: Safe 404 Handling
+      // If upstream 404 is not an image (e.g. HTML error page), generate a safe response
+      // to prevent XSS via proxy. We cache this safe 404 to prevent upstream hammering.
+      if (status === 404 && !isPng) {
+        const safeBody = JSON.stringify({ error: 'Tile not found' });
+        const safeHeaders = new Headers({
+          'Content-Type': 'application/json',
+          'Cache-Control': `public, max-age=${ttl}`,
+          'X-Cache': 'MISS',
+          'X-Upstream-Status': '404',
+          'Access-Control-Allow-Origin': '*', // Store permissive, override on delivery
+          ...DEFAULT_SECURITY_HEADERS
+        });
+
+        const safeResponse = new Response(safeBody, { status: 404, headers: safeHeaders });
+
+        // Cache the safe response
+        ctx.waitUntil(cache.put(cacheKey, safeResponse.clone()));
+
+        // Return to client (strict CORS)
+        const clientHeaders = new Headers(safeHeaders);
+        const allowedOrigin = getAllowedOrigin(request);
+        if (allowedOrigin) {
+          clientHeaders.set('Access-Control-Allow-Origin', allowedOrigin);
+          clientHeaders.set('Vary', 'Origin');
+        } else {
+          clientHeaders.delete('Access-Control-Allow-Origin');
         }
+
+        return new Response(safeBody, { status: 404, headers: clientHeaders });
       }
 
       // 4. Cache Response
