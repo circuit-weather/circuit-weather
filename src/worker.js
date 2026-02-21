@@ -1001,10 +1001,22 @@ async function handleTileRequest(request, env, ctx) {
     }
 
     // 6. Non-cacheable Error Handling (429, 5xx, etc)
+    // SEC: Consume body to prevent leaking upstream details (HTML, stack traces)
     const errorHeaders = getErrorHeaders(request);
     errorHeaders['X-Upstream-Status'] = status.toString();
 
-    return new Response(upstreamResponse.body, {
+    // Preserve Retry-After for rate limits
+    if (status === 429) {
+      const retryAfter = upstreamResponse.headers.get('Retry-After');
+      if (retryAfter) {
+        errorHeaders['Retry-After'] = retryAfter;
+      }
+    }
+
+    return new Response(JSON.stringify({
+      error: 'Upstream tile error',
+      status: status
+    }), {
       status: status,
       headers: errorHeaders
     });
