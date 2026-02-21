@@ -331,6 +331,9 @@ const DEFAULT_SECURITY_HEADERS = {
   'X-Robots-Tag': 'noindex', // Prevent search engines from indexing API responses
 };
 
+// Bolt Optimization: Pre-compute entries to avoid Object.entries() allocation on every request
+const DEFAULT_SECURITY_HEADERS_ENTRIES = Object.entries(DEFAULT_SECURITY_HEADERS);
+
 // Helper to generate standard error headers (Security + CORS + No-Cache)
 function getErrorHeaders(request) {
   const headers = {
@@ -1023,7 +1026,7 @@ async function handleTileRequest(request, env, ctx) {
 
       // SEC: Add security headers
       // Ensures X-Content-Type-Options: nosniff is set on cached tiles
-      Object.entries(DEFAULT_SECURITY_HEADERS).forEach(([key, value]) => {
+      DEFAULT_SECURITY_HEADERS_ENTRIES.forEach(([key, value]) => {
         cacheHeaders.set(key, value);
       });
 
