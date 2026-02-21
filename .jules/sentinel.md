@@ -22,3 +22,10 @@
 **Vulnerability:** The `handleTileRequest` in `src/worker.js` proxied upstream 404 responses from `rainviewer.com` regardless of content type. The upstream returned `text/html` error pages, which the worker cached and served. This allowed Reflected/Stored XSS if a user was tricked into visiting a non-existent tile URL, as the browser would render the HTML in the application's origin.
 **Learning:** API proxies must never assume the upstream response matches the requested file extension or content type, especially for error codes. Browsers may sniff or respect `Content-Type: text/html` even on `.png` URLs.
 **Prevention:** Strictly validate `Content-Type` for all proxied responses, including errors (404). If the upstream returns HTML for an image request, intercept and replace it with a safe response (JSON or generated image).
+
+## 2026-02-23 - Hotlink Protection Weakness & Cloudflare Pages Scope
+**Vulnerability:** The `checkRequestSource` function allowed requests with *missing* `Origin`/`Referer` headers, enabling scripts to bypass hotlink protection. Additionally, the `ALLOWED_PREVIEW_REGEX` was overly permissive (`*.pages.dev`), inadvertently trusting any site on the shared Cloudflare Pages platform.
+**Learning:** Hotlink protection based solely on `Origin` and `Referer` headers is insufficient for non-browser clients (scripts) which can simply omit them. Furthermore, in shared hosting environments (like Cloudflare Pages or Vercel), wildcard domain whitelisting (`*.provider.com`) grants excessive trust to other tenants.
+**Prevention:**
+1. Require at least one identity header (`Origin`, `Referer`, or `Sec-Fetch-Site`) to be present; block requests that have none.
+2. Strictly scope domain regexes to the specific project name or subdomain, avoiding broad wildcards on shared platforms.
