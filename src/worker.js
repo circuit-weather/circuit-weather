@@ -22,7 +22,7 @@ const VALID_TRACK_ID_REGEX = /^[a-z0-9-]+$/;
 const PRODUCTION_DOMAIN = 'https://circuit-weather.racing';
 const ALLOWED_ORIGIN_LOCALHOST_REGEX = /^http:\/\/localhost(:\d+)?$/;
 const ALLOWED_ORIGIN_127_REGEX = /^http:\/\/127\.0\.0\.1(:\d+)?$/;
-const ALLOWED_PREVIEW_REGEX = /^https:\/\/.*\.pages\.dev$/;
+const ALLOWED_PREVIEW_REGEX = /^https:\/\/(.*\.)?circuit-weather\.pages\.dev$/;
 const ALLOWED_WORKER_REGEX = /^https:\/\/.*\.workers\.dev$/;
 const DOTFILE_REGEX = /(?:^|\/)\./;
 
@@ -34,8 +34,18 @@ const DOTFILE_REGEX = /(?:^|\/)\./;
 function checkRequestSource(request) {
   const origin = request.headers.get('Origin');
   const referer = request.headers.get('Referer');
+  const secFetchSite = request.headers.get('Sec-Fetch-Site');
 
-  // 1. Check Origin (Strict)
+  // 1. Check Sec-Fetch-Site (Strongest indicator for browsers)
+  // 'same-origin' = app API call (allow)
+  // 'same-site' = app API call from subdomain (allow)
+  // 'none' = user typed URL / bookmarks (allow for direct access)
+  // Block 'cross-site' unless Origin/Referer is whitelisted below
+  if (secFetchSite && ['same-origin', 'same-site', 'none'].includes(secFetchSite)) {
+    return true;
+  }
+
+  // 2. Check Origin (Strict)
   if (origin) {
     if (
       origin !== PRODUCTION_DOMAIN &&
@@ -48,7 +58,7 @@ function checkRequestSource(request) {
     }
   }
 
-  // 2. Check Referer (Strict)
+  // 3. Check Referer (Strict)
   if (referer) {
     try {
       const refererUrl = new URL(referer);
@@ -65,6 +75,14 @@ function checkRequestSource(request) {
     } catch (e) {
       return false; // Malformed Referer
     }
+  }
+
+  // 4. Require at least one valid identity header (Stop script scraping)
+  // If we have no Sec-Fetch-Site, no Origin, and no Referer -> Block
+  // Also block 'cross-site' requests if they lack Origin/Referer verification
+  const isSafeSite = secFetchSite && ['same-origin', 'same-site', 'none'].includes(secFetchSite);
+  if (!origin && !referer && !isSafeSite) {
+    return false;
   }
 
   return true;
