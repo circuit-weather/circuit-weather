@@ -59,7 +59,9 @@ circuit-weather/
 ├── public/           # Static assets (served by Cloudflare)
 │   ├── index.html
 │   ├── styles.css
-│   ├── app.js
+│   ├── src/          # Frontend ES modules (no build step)
+│   │   ├── main.js   # Entry point
+│   │   └── ...
 │   ├── theme.js      # Critical for FOUC prevention (load in head)
 │   ├── favicon.svg
 │   ├── icon-192.png  # PWA icon (192×192)
@@ -247,7 +249,7 @@ mode = "smart"
 1. **RainViewer Zoom Limit** - Free tier limits to zoom level 10. We use **512px tiles** with `zoomOffset: -1` and `maxNativeZoom: 8` to emulate higher resolution while reducing requests.
 2. **Radar Opacity** - Tiles must be added with small opacity (0.01) initially to trigger loading.
 3. **F1 API Rate Limits** - Edge caching via Worker mitigates this.
-4. **Current Weather Rate Limits** - The live current weather widget is enabled via `FEATURE_FLAGS.enableCurrentWeather` in `app.js`, but be aware that it triggers an Open-Meteo API call per circuit change which may hit 429 rate limits during high traffic.
+4. **Current Weather Rate Limits** - The live current weather widget is enabled via `FEATURE_FLAGS.enableCurrentWeather` in `src/config.js`, but be aware that it triggers an Open-Meteo API call per circuit change which may hit 429 rate limits during high traffic.
 
 ---
 
