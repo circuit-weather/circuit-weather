@@ -1928,12 +1928,6 @@ const MapWeatherWidget = L.Control.extend({
         this._ui.rain.textContent = `${rain}%`;
         this._ui.humid.textContent = `${humidity}%`;
         this._ui.wind.textContent = `${wind} ${weather.units.wind_speed_10m}`;
-
-        // Palette Accessibility: Dynamic ARIA labels
-        if (this._ui.tempGroup) this._ui.tempGroup.setAttribute('aria-label', `Temperature: ${this._ui.temp.textContent}`);
-        if (this._ui.rainGroup) this._ui.rainGroup.setAttribute('aria-label', `Rain Chance: ${this._ui.rain.textContent}`);
-        if (this._ui.humidGroup) this._ui.humidGroup.setAttribute('aria-label', `Humidity: ${this._ui.humid.textContent}`);
-        if (this._ui.windGroup) this._ui.windGroup.setAttribute('aria-label', `Wind Speed: ${this._ui.wind.textContent}`);
     }
 });
 
@@ -2115,11 +2109,6 @@ class WeatherWidget {
         if (tempEl) tempEl.textContent = `${temp}${weather.units.temperature_2m}`;
         if (humidEl) humidEl.textContent = `${humidity}%`;
         if (windEl) windEl.textContent = `${wind} ${weather.units.wind_speed_10m}`;
-
-        // Palette Accessibility: Dynamic ARIA labels
-        if (tempGroup && tempEl) tempGroup.setAttribute('aria-label', `Temperature: ${tempEl.textContent}`);
-        if (humidGroup && humidEl) humidGroup.setAttribute('aria-label', `Humidity: ${humidEl.textContent}`);
-        if (windGroup && windEl) windGroup.setAttribute('aria-label', `Wind Speed: ${windEl.textContent}`);
     }
 }
 

@@ -8,3 +8,7 @@
 ## 2026-02-20 - Empty State for Selection Flows
 **Learning:** When a user action (selecting a round) clears a dependent selection (session), leaving a blank space where the result (forecast) usually appears causes confusion.
 **Action:** Always provide a descriptive empty state that guides the user to the next required action ("Select a session...").
+
+## 2026-02-23 - ARIA Redundancy in Weather Widgets
+**Learning:** Dynamic `aria-label` updates that duplicate visible content (e.g., "Temperature: 20°C" when "20°C" is visible inside a group named "Temperature") cause verbose, stuttering announcements in screen readers.
+**Action:** Prefer static `aria-label` on grouping containers and let the inner content speak for itself, unless the content is purely visual/icon-based.
