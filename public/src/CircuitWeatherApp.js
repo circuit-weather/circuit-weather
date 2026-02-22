@@ -148,14 +148,24 @@ export class CircuitWeatherApp {
         }
     }
 
+    getRaceEndTime(race) {
+        const raceSession = race.sessions.find(s => s.id === 'race');
+        if (raceSession && raceSession.date && raceSession.time) {
+            const end = new Date(`${raceSession.date}T${raceSession.time}`);
+            end.setHours(end.getHours() + 4); // 4 hours duration buffer
+            return end;
+        }
+        // Fallback if no time (shouldn't happen for recent races)
+        const end = new Date(race.date);
+        end.setHours(end.getHours() + 23); // End of race day
+        return end;
+    }
+
     autoSelectNextRound() {
         const now = new Date();
         // Find next race with a session in the future
         const nextRace = this.races.find(race => {
-            const raceDate = new Date(race.date);
-            // Add 3 hours buffer for race duration
-            raceDate.setHours(raceDate.getHours() + 3);
-            return raceDate > now;
+            return this.getRaceEndTime(race) > now;
         });
 
         if (nextRace) {
@@ -246,13 +256,37 @@ export class CircuitWeatherApp {
         // Bolt Optimization: Use DocumentFragment to batch DOM insertions
         // Reduces reflows when populating the race list (~24 items)
         const fragment = document.createDocumentFragment();
+        const now = new Date();
+
+        // Identify the current/next race
+        const nextRace = this.races.find(r => this.getRaceEndTime(r) > now);
 
         this.races.forEach(race => {
             const option = document.createElement('option');
             option.value = race.round;
             const date = new Date(race.date);
             const dateStr = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-            option.textContent = `R${race.round}: ${race.name} (${dateStr})`;
+
+            let text = `R${race.round}: ${race.name} (${dateStr})`;
+
+            // Palette UX: Add visual indicator for the active/next race
+            if (race === nextRace) {
+                // Check if race is currently live (started but not finished)
+                const raceSession = race.sessions.find(s => s.id === 'race');
+                if (raceSession && raceSession.date && raceSession.time) {
+                    const start = new Date(`${raceSession.date}T${raceSession.time}`);
+                    // If now is past start time (and since it's "nextRace", we know it's before end time), it's live
+                    if (now >= start) {
+                        text += ' 🔴 LIVE';
+                    } else {
+                        text += ' (Next)';
+                    }
+                } else {
+                    text += ' (Next)';
+                }
+            }
+
+            option.textContent = text;
             fragment.appendChild(option);
         });
 
