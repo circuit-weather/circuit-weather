@@ -290,15 +290,22 @@ If you discover files that appear to be one-off agent tests (e.g., standalone ve
 
 ## Local Development
 
-```bash
-npx wrangler dev
-# Opens at http://127.0.0.1:8787
-```
+> **Note:** These instructions are for developers who want to contribute to the project. If you just want to use the site, please visit the live version at **https://circuit-weather.racing**.
 
-### Notes
-- This runs the full Cloudflare Worker + static assets locally, faithfully reproducing the production environment
-- All API routes (`/api/f1/*`, `/api/radar`, `/api/tiles/*`, `/api/track/*`) are handled by the local worker proxy
-- Deployment to Cloudflare is automatic via GitHub push to `main`
+This project uses [Cloudflare Workers](https://workers.cloudflare.com/) to proxy API requests, so a simple static web server is not enough. You'll need to use the `wrangler` CLI to run it locally.
+
+1.  **Clone the repository.**
+2.  **Install Node.js.**
+    If you don't have Node.js installed, download it from [nodejs.org](https://nodejs.org/).
+3.  **Start the local development server.**
+    Run the following command in your terminal at the root of the project:
+    ```bash
+    npx wrangler dev
+    ```
+4.  **Open the local address in your browser.**
+    Wrangler will typically open the site at `http://localhost:8787`.
+
+This setup faithfully reproduces the production environment, running both the frontend and the worker for API requests.
 
 ### Terminating Background Processes
 
@@ -324,3 +331,8 @@ kill -9 <PID>
 
 > Always verify the port is free before starting a new server instance.
 
+## Compatibility
+
+**Apple Silicon:** Development on Apple Silicon (M1/M2/M3) Macs is fully supported.
+
+**Raspberry Pi / Linux ARM:** Please note that the `wrangler` CLI may encounter an `Unsupported platform` error during installation on Linux ARM-based systems (like the Raspberry Pi). Development is recommended on an x86/x64-based machine or Apple Silicon Mac.
