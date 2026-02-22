@@ -12,3 +12,7 @@
 ## 2026-02-23 - ARIA Redundancy in Weather Widgets
 **Learning:** Dynamic `aria-label` updates that duplicate visible content (e.g., "Temperature: 20°C" when "20°C" is visible inside a group named "Temperature") cause verbose, stuttering announcements in screen readers.
 **Action:** Prefer static `aria-label` on grouping containers and let the inner content speak for itself, unless the content is purely visual/icon-based.
+
+## 2026-02-23 - Status Indicators in Selection Dropdowns
+**Learning:** For time-sensitive selections (like race schedules), simple text labels are insufficient. Users need to quickly identify "Live" or "Next" items without mentally parsing dates.
+**Action:** Enhance dropdown options with clear, emoji-based status indicators ("🔴 LIVE", "(Next)") to reduce cognitive load and guide selection.
