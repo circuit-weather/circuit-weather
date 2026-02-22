@@ -35,3 +35,9 @@ Issue: AGENTS.md omitted Unpkg (Leaflet) from the Third-Party Services table, de
 Cause: Oversight when documenting proxied services vs direct services.
 Fix: Added Unpkg (Leaflet) to AGENTS.md with "Proxied (Cached)" connection type.
 Prevention: Cross-reference PRIVACY.md and src/worker.js when updating AGENTS.md.
+
+2026-02-18 - Incorrect File Path Documentation
+Issue: AGENTS.md referenced `src/config.js` as the location for feature flags, but the file is located at `public/src/config.js`.
+Cause: Documentation error or file relocation without updating documentation.
+Fix: Updated AGENTS.md to point to the correct path `public/src/config.js`.
+Prevention: Verify file paths in documentation against the actual file system.
