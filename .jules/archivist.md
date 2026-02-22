@@ -41,3 +41,9 @@ Issue: AGENTS.md referenced `src/config.js` as the location for feature flags, b
 Cause: Documentation error or file relocation without updating documentation.
 Fix: Updated AGENTS.md to point to the correct path `public/src/config.js`.
 Prevention: Verify file paths in documentation against the actual file system.
+
+2026-02-22 - RainViewer Cache Duration Inaccuracy
+Issue: Documentation claimed "RainViewer: Weather radar tiles and metadata (2-hour edge cache)" in both AGENTS.md and PRIVACY.md.
+Cause: Likely a simplification during documentation writing that conflated tile cache (2h) with metadata cache (1m).
+Fix: Updated both files to explicitly distinguish between tile cache (2h) and metadata cache (1m).
+Prevention: Verify cache control headers in src/worker.js against documentation claims during updates.
