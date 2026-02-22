@@ -27,3 +27,7 @@
 ## 2024-05-26 - Worker Request Allocations
 **Learning:** `split('/').some()` for path validation and inline `Map` creation in request handlers create significant per-request allocation overhead (measured ~100x slower for map creation).
 **Action:** Hoist all static configuration (Maps, Arrays, Regexes) to module-level constants to leverage isolate reuse and replace string splitting with regex checks in hot paths.
+
+## 2024-05-26 - URL Parsing Overhead
+**Learning:** `new URL()` instantiation in high-traffic request handlers (like Referer/Origin validation) is significantly slower (measured ~20x) than direct string matching or pre-compiled regex checks.
+**Action:** Replace `new URL()` with `startsWith()` or Regex checks for origin validation in hot paths, especially in serverless environments where every millisecond of execution time counts.
