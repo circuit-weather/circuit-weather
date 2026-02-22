@@ -29,3 +29,8 @@
 **Prevention:**
 1. Require at least one identity header (`Origin`, `Referer`, or `Sec-Fetch-Site`) to be present; block requests that have none.
 2. Strictly scope domain regexes to the specific project name or subdomain, avoiding broad wildcards on shared platforms.
+
+## 2026-02-24 - Worker Origin Validation Bypass
+**Vulnerability:** The `ALLOWED_WORKER_REGEX` in `src/worker.js` used a permissive wildcard (`*.workers.dev`), allowing any Cloudflare Worker deployed by any user to bypass hotlink protection and proxy requests to the API. This undermined the access controls intended to restrict API usage to the official application.
+**Learning:** Wildcard allowlists for shared domains (like `workers.dev`, `herokuapp.com`, `s3.amazonaws.com`) are dangerous because they treat all tenants of the platform as trusted.
+**Prevention:** Always restrict allowlists to specific subdomains or patterns that include the project's unique identifier (e.g., `project-name.*.workers.dev`) to ensure only trusted instances are authorized.
