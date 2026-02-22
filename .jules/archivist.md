@@ -65,3 +65,9 @@ Issue: README.md Credits section omitted Open-Meteo and bacinger/f1-circuits, de
 Cause: Documentation lagged behind feature implementation (forecasts and track data).
 Fix: Added Open-Meteo and bacinger/f1-circuits to the Credits section in README.md.
 Prevention: Audit data sources and licenses when adding new features or dependencies.
+
+2025-05-15 - [SEO] Reduced H1 tag count to one
+Issue: Multiple H1 tags (sidebar and mobile header) were present on the page, which is suboptimal for SEO.
+Cause: The design used H1 tags for the site title in both the desktop sidebar and the mobile top bar.
+Fix: Converted the mobile header H1 to a span with class 'header-title' and updated CSS to maintain styling.
+Prevention: Ensure that only the primary desktop sidebar title uses H1, and other instances of the site title use non-heading elements or classes.
