@@ -329,30 +329,28 @@ export default {
   }
 };
 
-// Common security headers for all responses
-const DEFAULT_SECURITY_HEADERS = {
+// Bolt Optimization: Reduced header set for API responses (removed HTML-specific headers)
+// Removed: Permissions-Policy (~240 bytes), X-Frame-Options (redundant with CSP), X-XSS-Protection (deprecated)
+const API_SECURITY_HEADERS = {
   'X-Content-Type-Options': 'nosniff',
-  'X-XSS-Protection': '0', // Disable XSS Auditor to prevent XS-Search/Info Leakage
   'X-Permitted-Cross-Domain-Policies': 'none',
-  'Permissions-Policy': 'accelerometer=(), autoplay=(), camera=(), fullscreen=(), geolocation=(), gyroscope=(), interest-cohort=(), magnetometer=(), microphone=(), payment=(), picture-in-picture=(), usb=(), sync-xhr=()',
   'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
   'Referrer-Policy': 'strict-origin-when-cross-origin',
   'Content-Security-Policy': "upgrade-insecure-requests; default-src 'none'; frame-ancestors 'none'; frame-src 'none'; base-uri 'none'; form-action 'none';",
-  'X-Frame-Options': 'DENY',
   'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
   'Cross-Origin-Resource-Policy': 'cross-origin',
   'X-Robots-Tag': 'noindex', // Prevent search engines from indexing API responses
 };
 
 // Bolt Optimization: Pre-compute entries to avoid Object.entries() allocation on every request
-const DEFAULT_SECURITY_HEADERS_ENTRIES = Object.entries(DEFAULT_SECURITY_HEADERS);
+const API_SECURITY_HEADERS_ENTRIES = Object.entries(API_SECURITY_HEADERS);
 
 // Helper to generate standard error headers (Security + CORS + No-Cache)
 function getErrorHeaders(request) {
   const headers = {
     'Content-Type': 'application/json',
     'Cache-Control': 'no-store',
-    ...DEFAULT_SECURITY_HEADERS,
+    ...API_SECURITY_HEADERS,
   };
 
   const allowedOrigin = getAllowedOrigin(request);
@@ -367,7 +365,7 @@ function getErrorHeaders(request) {
 // Helper to handle CORS preflight requests
 function handleOptions(request) {
   const headers = {
-    ...DEFAULT_SECURITY_HEADERS,
+    ...API_SECURITY_HEADERS,
     'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type', // Standard
     'Access-Control-Max-Age': '86400',
@@ -415,7 +413,7 @@ function cacheAndReturnError(request, cache, cacheKey, status, errorData, ctx) {
     'X-Cache': 'ERROR-CACHED',
     'X-Upstream-Status': status.toString(),
     'Access-Control-Allow-Origin': '*', // Store permissive, override on delivery
-    ...DEFAULT_SECURITY_HEADERS
+    ...API_SECURITY_HEADERS
   });
 
   const errorResponse = new Response(errorBody, {
@@ -598,7 +596,7 @@ async function handleApiRequest(request, env, ctx) {
       'X-Cache': 'MISS',
       'X-Upstream-Status': status.toString(),
       'Access-Control-Allow-Origin': '*', // Store permissive, override on delivery
-      ...DEFAULT_SECURITY_HEADERS
+      ...API_SECURITY_HEADERS
     });
 
     const cacheResponse = new Response(cacheBody, {
@@ -722,7 +720,7 @@ async function handleTrackRequest(request, env, ctx) {
       'X-Cache': 'MISS',
       'X-Upstream-Status': upstreamStatus.toString(),
       'Access-Control-Allow-Origin': '*',
-      ...DEFAULT_SECURITY_HEADERS
+      ...API_SECURITY_HEADERS
     });
 
     const cacheResponse = new Response(cacheBody, {
@@ -844,7 +842,7 @@ async function handleLeafletRequest(request, env, ctx) {
       'Cache-Control': 'public, max-age=31536000, immutable', // Long cache for versioned file
       'X-Cache': 'MISS',
       'X-Upstream-Status': status.toString(),
-      ...DEFAULT_SECURITY_HEADERS
+      ...API_SECURITY_HEADERS
     });
 
     // Cache it (Clone the response from buffer)
@@ -1025,7 +1023,7 @@ async function handleTileRequest(request, env, ctx) {
           'X-Cache': 'MISS',
           'X-Upstream-Status': '404',
           'Access-Control-Allow-Origin': '*', // Store permissive, override on delivery
-          ...DEFAULT_SECURITY_HEADERS
+          ...API_SECURITY_HEADERS
         });
 
         const safeResponse = new Response(safeBody, { status: 404, headers: safeHeaders });
@@ -1063,7 +1061,7 @@ async function handleTileRequest(request, env, ctx) {
 
       // SEC: Add security headers
       // Ensures X-Content-Type-Options: nosniff is set on cached tiles
-      DEFAULT_SECURITY_HEADERS_ENTRIES.forEach(([key, value]) => {
+      API_SECURITY_HEADERS_ENTRIES.forEach(([key, value]) => {
         cacheHeaders.set(key, value);
       });
 
@@ -1211,7 +1209,7 @@ async function handleRadarRequest(request, env, ctx) {
       'X-Cache': 'MISS',
       'X-Upstream-Status': status.toString(),
       'Access-Control-Allow-Origin': '*',
-      ...DEFAULT_SECURITY_HEADERS
+      ...API_SECURITY_HEADERS
     });
 
     const cacheResponse = new Response(cacheBody, {
