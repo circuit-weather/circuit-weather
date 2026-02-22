@@ -129,6 +129,19 @@ const LEAFLET_ASSETS = new Map([
 const ALLOWED_TILE_HEADERS = ['Content-Type', 'Content-Length', 'Last-Modified', 'ETag', 'Date'];
 
 /**
+ * Helper to validate Sec-Fetch-Dest header
+ * Prevents API from being loaded as script/object (XSSI protection)
+ * Returns false if blocked, true if allowed.
+ */
+function checkFetchDest(request) {
+  const dest = request.headers.get('Sec-Fetch-Dest');
+  if (dest && ['script', 'object', 'embed', 'iframe'].includes(dest)) {
+    return false;
+  }
+  return true;
+}
+
+/**
  * Calculates SHA-256 hash of a buffer and returns it as base64 string
  */
 async function calculateHash(buffer) {
@@ -457,6 +470,14 @@ function getAllowedOrigin(request) {
  * Handle F1 API requests with caching
  */
 async function handleApiRequest(request, env, ctx) {
+  // SEC: Ensure request is not from a script tag (XSSI protection)
+  if (!checkFetchDest(request)) {
+    return new Response(JSON.stringify({ error: 'Invalid fetch destination' }), {
+      status: 403,
+      headers: getErrorHeaders(request)
+    });
+  }
+
   const url = new URL(request.url);
   // Extract path parameters after /api/f1/
   // e.g. /api/f1/current -> current
@@ -619,6 +640,14 @@ async function handleApiRequest(request, env, ctx) {
  * Handle Track GeoJSON requests with caching
  */
 async function handleTrackRequest(request, env, ctx) {
+  // SEC: Ensure request is not from a script tag (XSSI protection)
+  if (!checkFetchDest(request)) {
+    return new Response(JSON.stringify({ error: 'Invalid fetch destination' }), {
+      status: 403,
+      headers: getErrorHeaders(request)
+    });
+  }
+
   const url = new URL(request.url);
   // Extract geoJsonId from /api/track/:id
   const trackId = url.pathname.replace('/api/track/', '');
@@ -845,6 +874,14 @@ async function handleLeafletRequest(request, env, ctx) {
  * Checks connectivity to key upstream APIs and returns basic system status.
  */
 async function handleHealthRequest(request, env, ctx) {
+  // SEC: Ensure request is not from a script tag (XSSI protection)
+  if (!checkFetchDest(request)) {
+    return new Response(JSON.stringify({ error: 'Invalid fetch destination' }), {
+      status: 403,
+      headers: getErrorHeaders(request)
+    });
+  }
+
   const upstreams = {
     jolpica: 'https://api.jolpi.ca/ergast/f1/current.json',
     rainviewer: 'https://api.rainviewer.com/public/weather-maps.json',
@@ -1089,6 +1126,14 @@ async function handleTileRequest(request, env, ctx) {
  * Handle RainViewer API requests with caching
  */
 async function handleRadarRequest(request, env, ctx) {
+  // SEC: Ensure request is not from a script tag (XSSI protection)
+  if (!checkFetchDest(request)) {
+    return new Response(JSON.stringify({ error: 'Invalid fetch destination' }), {
+      status: 403,
+      headers: getErrorHeaders(request)
+    });
+  }
+
   const upstreamUrl = 'https://api.rainviewer.com/public/weather-maps.json';
   // Canonical cache key
   const cacheKey = new Request(upstreamUrl);
