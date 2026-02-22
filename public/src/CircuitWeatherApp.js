@@ -256,37 +256,13 @@ export class CircuitWeatherApp {
         // Bolt Optimization: Use DocumentFragment to batch DOM insertions
         // Reduces reflows when populating the race list (~24 items)
         const fragment = document.createDocumentFragment();
-        const now = new Date();
-
-        // Identify the current/next race
-        const nextRace = this.races.find(r => this.getRaceEndTime(r) > now);
 
         this.races.forEach(race => {
             const option = document.createElement('option');
             option.value = race.round;
             const date = new Date(race.date);
             const dateStr = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-
-            let text = `R${race.round}: ${race.name} (${dateStr})`;
-
-            // Palette UX: Add visual indicator for the active/next race
-            if (race === nextRace) {
-                // Check if race is currently live (started but not finished)
-                const raceSession = race.sessions.find(s => s.id === 'race');
-                if (raceSession && raceSession.date && raceSession.time) {
-                    const start = new Date(`${raceSession.date}T${raceSession.time}`);
-                    // If now is past start time (and since it's "nextRace", we know it's before end time), it's live
-                    if (now >= start) {
-                        text += ' 🔴 LIVE';
-                    } else {
-                        text += ' (Next)';
-                    }
-                } else {
-                    text += ' (Next)';
-                }
-            }
-
-            option.textContent = text;
+            option.textContent = `R${race.round}: ${race.name} (${dateStr})`;
             fragment.appendChild(option);
         });
 
