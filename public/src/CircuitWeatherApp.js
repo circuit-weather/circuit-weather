@@ -116,6 +116,9 @@ export class CircuitWeatherApp {
             // Start live weather refresh interval
             this.startWeatherRefreshInterval();
 
+            // Start session forecast refresh interval
+            this.startSessionForecastInterval();
+
         } catch (error) {
             console.error('Initialization failed:', error);
             this.renderError('Failed to initialize application.');
@@ -231,6 +234,9 @@ export class CircuitWeatherApp {
                     this.countdown.show(false);
                     this.trackLayer.clear();
                     this.rangeCircles.clear();
+                    
+                    // Clear the forecast update since no session is active anymore
+                    this.stopSessionForecastInterval();
                 }
             });
         }
@@ -315,6 +321,12 @@ export class CircuitWeatherApp {
         this.updateLiveWeatherForCircuit();
 
         this.updateMobileVisibility();
+
+        // Clear the forecast update since no session is active yet for this round
+        this.stopSessionForecastInterval();
+        
+        // Start polling again, it will only do work if a session is actively selected
+        this.startSessionForecastInterval();
 
         this.router.navigate('f1', round, null);
     }
@@ -451,6 +463,26 @@ export class CircuitWeatherApp {
         this.weatherRefreshInterval = setInterval(() => {
             this.updateLiveWeatherForCircuit();
         }, 300000);
+    }
+
+    startSessionForecastInterval() {
+        this.stopSessionForecastInterval();
+
+        // Refresh forecast every 15 minutes (900000ms) to match WeatherClient cache TTL
+        this.sessionForecastInterval = setInterval(() => {
+            if (this.selectedSession && this.selectedRace) {
+                const sessionTime = new Date(`${this.selectedSession.date}T${this.selectedSession.time}`);
+                // Background refresh, no loading spinner
+                this.updateSessionForecast(sessionTime, this.selectedSession.id);
+            }
+        }, 900000);
+    }
+
+    stopSessionForecastInterval() {
+        if (this.sessionForecastInterval) {
+            clearInterval(this.sessionForecastInterval);
+            this.sessionForecastInterval = null;
+        }
     }
 
 
