@@ -9,7 +9,7 @@
 
 Circuit Weather is a real-time weather radar designed specifically for Formula 1 fans. It lets you track live precipitation and weather conditions at every circuit on the F1 calendar, helping you stay ahead of the strategy during race weekends.
 
-This web app is completely and unashamedly vibe coded primarily with the use of Google antigravity and Google Jules, using anthropic opus 4.5 and 4.6 and Google Gemini 3. I created it as an exercise to investigate their capabilities and see how it goes. I'm also testing opencode to see if it can compete with the Google tools on performance and affordability.
+This web app is completely and unashamedly vibe coded primarily with the use of Google antigravity and Google Jules, using anthropic opus 4.5 and 4.6 and Google Gemini 3. It serves as an exploration into the capabilities of these technologies, as well as a test of open-source coding tools for performance and efficiency.
 
 ## What it does
 
@@ -28,9 +28,9 @@ Key features include:
 
 The application is built with vanilla HTML, CSS, and native ES modules, keeping it lightweight and fast. It uses Leaflet.js for interesting interactive maps.
 
-The frontend is organized into small, maintainable modules located in `public/src/`. We use native browser support for ES modules (`import`/`export`), which means there is **no build step** required. The files are served directly as-is, making the development workflow extremely simple.
+The frontend is organised into small, maintainable modules located in `public/src/`. It uses native browser support for ES modules (`import`/`export`), which means there is **no build step** required. The files are served directly as-is, making the development workflow extremely simple.
 
-All API requests (Jolpica F1, RainViewer) are proxied through a **Cloudflare Worker** to cache data at the edge and protect user privacy. Weather forecasts are fetched directly from Open-Meteo by the client to ensure reliability. We use optimized **512px tile caching** to reduce request volume by 75% compared to standard implementations.
+All API requests (Jolpica F1, RainViewer) are proxied through a **Cloudflare Worker** to cache data at the edge and protect user privacy. Weather forecasts are fetched directly from Open-Meteo by the client to ensure reliability. Optimised **512px tile caching** is used to reduce request volume by 75% compared to standard implementations.
 
 The map tiles are provided by Carto (based on OpenStreetMap data), ensuring a clean look that works well with the weather overlays.
 

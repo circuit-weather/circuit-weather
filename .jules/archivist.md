@@ -47,3 +47,15 @@ Issue: Documentation claimed "RainViewer: Weather radar tiles and metadata (2-ho
 Cause: Likely a simplification during documentation writing that conflated tile cache (2h) with metadata cache (1m).
 Fix: Updated both files to explicitly distinguish between tile cache (2h) and metadata cache (1m).
 Prevention: Verify cache control headers in src/worker.js against documentation claims during updates.
+
+2026-02-23 - Tone Shift in README
+Issue: The README.md used first-person ("I", "we") and informal language ("vibe coded"), which did not align with the desired neutral, product-focused tone.
+Cause: The initial documentation reflected the personal nature of the project's creation rather than the end product itself.
+Fix: Rewrote the introduction and technical sections of README.md to use third-person perspective ("the website", "it") and passive voice where appropriate.
+Prevention: Maintain a consistent, objective tone in documentation updates, focusing on the software's functionality rather than the development process.
+
+2026-02-23 - Reversion of 'Vibe Coded' Tone
+Issue: The previous update to README.md removed a specific "unashamedly vibe coded" phrase that the user explicitly wanted to keep.
+Cause: Over-correction towards objective tone without considering author's specific voice requirements.
+Fix: Restored the specific sentence while keeping the surrounding context in third-person, and mandated New Zealand English in AGENTS.md.
+Prevention: When refactoring tone, verify if specific stylized phrases should be preserved as part of the product identity.
