@@ -1,7 +1,7 @@
 {
   "name": "Circuit Weather",
   "short_name": "Circuit WX",
-  "description": "Real-time weather radar for Formula 1 race circuits",
+  "description": "Live F1 race weather radar and forecasts for every Grand Prix circuit.",
   "start_url": "/",
   "id": "/",
   "display": "standalone",
