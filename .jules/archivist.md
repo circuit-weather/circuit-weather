@@ -59,3 +59,9 @@ Issue: The previous update to README.md removed a specific "unashamedly vibe cod
 Cause: Over-correction towards objective tone without considering author's specific voice requirements.
 Fix: Restored the specific sentence while keeping the surrounding context in third-person, and mandated New Zealand English in AGENTS.md.
 Prevention: When refactoring tone, verify if specific stylized phrases should be preserved as part of the product identity.
+
+2026-02-23 - Missing Attribution in README
+Issue: README.md Credits section omitted Open-Meteo and bacinger/f1-circuits, despite their usage being core to the functionality and required by license/good practice.
+Cause: Documentation lagged behind feature implementation (forecasts and track data).
+Fix: Added Open-Meteo and bacinger/f1-circuits to the Credits section in README.md.
+Prevention: Audit data sources and licenses when adding new features or dependencies.

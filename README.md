@@ -61,10 +61,12 @@ This setup faithfully reproduces the production environment, running both the fr
 
 ## Credits
 
-Huge thanks to the free APIs that make this possible:
+Huge thanks to the free APIs and data sources that make this possible:
 *   **Jolpica F1** for the race data.
 *   **RainViewer** for the weather radar.
+*   **Open-Meteo** for the weather forecasts.
 *   **Carto & OpenStreetMap** for the map tiles.
+*   **bacinger/f1-circuits** for the circuit track data.
 
 ## License
 
