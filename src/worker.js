@@ -23,7 +23,7 @@ const PRODUCTION_DOMAIN = 'https://circuit-weather.racing';
 const ALLOWED_ORIGIN_LOCALHOST_REGEX = /^http:\/\/localhost(:\d+)?(\/|$)/;
 const ALLOWED_ORIGIN_127_REGEX = /^http:\/\/127\.0\.0\.1(:\d+)?(\/|$)/;
 const ALLOWED_PREVIEW_REGEX = /^https:\/\/(.*\.)?circuit-weather\.pages\.dev(\/|$)/;
-const ALLOWED_WORKER_REGEX = /^https:\/\/circuit-weather.*\..*\.workers\.dev(\/|$)/;
+const ALLOWED_WORKER_REGEX = /^https:\/\/([a-zA-Z0-9-]+\-)?circuit-weather.*\..*\.workers\.dev(\/|$)/;
 const DOTFILE_REGEX = /(?:^|\/)\./;
 
 /**
