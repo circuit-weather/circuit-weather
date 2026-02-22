@@ -46,6 +46,10 @@ Circuit Weather is a real-time F1 race circuit weather radar application. It dis
 - **localStorage only** for theme/unit preferences
 - **No PII collected** - See PRIVACY.md
 
+### Language & Spelling
+- **New Zealand English** - All documentation and user-facing text (e.g., UI labels, error messages) must use New Zealand English spelling conventions (e.g., 'colour', 'centre', 'programme', 'visualise').
+- **Dates** - Use DD/MM/YYYY or ISO 8601 (YYYY-MM-DD).
+
 ---
 
 ## Deployment

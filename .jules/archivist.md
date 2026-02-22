@@ -53,3 +53,9 @@ Issue: The README.md used first-person ("I", "we") and informal language ("vibe 
 Cause: The initial documentation reflected the personal nature of the project's creation rather than the end product itself.
 Fix: Rewrote the introduction and technical sections of README.md to use third-person perspective ("the website", "it") and passive voice where appropriate.
 Prevention: Maintain a consistent, objective tone in documentation updates, focusing on the software's functionality rather than the development process.
+
+2026-02-23 - Reversion of 'Vibe Coded' Tone
+Issue: The previous update to README.md removed a specific "unashamedly vibe coded" phrase that the user explicitly wanted to keep.
+Cause: Over-correction towards objective tone without considering author's specific voice requirements.
+Fix: Restored the specific sentence while keeping the surrounding context in third-person, and mandated New Zealand English in AGENTS.md.
+Prevention: When refactoring tone, verify if specific stylized phrases should be preserved as part of the product identity.
