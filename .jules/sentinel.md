@@ -34,3 +34,8 @@
 **Vulnerability:** The `ALLOWED_WORKER_REGEX` in `src/worker.js` used a permissive wildcard (`*.workers.dev`), allowing any Cloudflare Worker deployed by any user to bypass hotlink protection and proxy requests to the API. This undermined the access controls intended to restrict API usage to the official application.
 **Learning:** Wildcard allowlists for shared domains (like `workers.dev`, `herokuapp.com`, `s3.amazonaws.com`) are dangerous because they treat all tenants of the platform as trusted.
 **Prevention:** Always restrict allowlists to specific subdomains or patterns that include the project's unique identifier (e.g., `project-name.*.workers.dev`) to ensure only trusted instances are authorized.
+
+## 2026-06-15 - Unsafe HTML Attribute Injection in Vanilla JS Templates
+**Vulnerability:** The `renderForecast` method in `CircuitWeatherApp.js` correctly escaped text content but failed to escape dynamic values injected into HTML attributes (e.g., `title="${dir}"`, `aria-label="..."`). This allowed XSS via attribute breakout if the variable contained double quotes.
+**Learning:** Template literals make it easy to overlook attribute context. Escaping for text content (e.g., `<element>${var}</element>`) handles `<` and `&`, but attribute values (e.g., `attr="${var}"`) require escaping `"` to prevent breakout.
+**Prevention:** Consistently apply `escapeHtml` to ALL variables interpolated into HTML strings, regardless of context (content or attribute).
