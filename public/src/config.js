@@ -18,7 +18,6 @@ export const CONFIG = {
     defaultZoom: 3,
     circuitZoom: 10,
     radarOpacity: 0.65,
-    radarAnimationSpeed: 1000, // Default to 1x speed (1000ms per frame)
     // Speed options: slower = higher ms, faster = lower ms
     radarSpeeds: [
         { label: '0.5x', speed: 2000 },
