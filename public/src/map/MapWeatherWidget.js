@@ -31,11 +31,7 @@ export const MapWeatherWidget = L.Control.extend({
             temp: this._div.querySelector('.temp-value'),
             rain: this._div.querySelector('.rain-value'),
             humid: this._div.querySelector('.humid-value'),
-            wind: this._div.querySelector('.wind-value'),
-            tempGroup: this._div.querySelector('.weather-widget-metric[title="Temperature"]'),
-            rainGroup: this._div.querySelector('.weather-widget-metric[title="Rain Chance"]'),
-            humidGroup: this._div.querySelector('.weather-widget-metric[title="Humidity"]'),
-            windGroup: this._div.querySelector('.weather-widget-metric[title="Wind"]')
+            wind: this._div.querySelector('.wind-value')
         };
 
         return this._div;
