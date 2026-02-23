@@ -7,7 +7,6 @@ export class MapManager {
     constructor() {
         this.map = null;
         this.tileLayer = null;
-        this.currentTheme = 'light';
         this.resizeObserver = null;
     }
 
@@ -35,7 +34,6 @@ export class MapManager {
     }
 
     setTheme(theme) {
-        this.currentTheme = theme;
         const tileUrl = theme === 'dark' ? CONFIG.mapTilesDark : CONFIG.mapTiles;
 
         if (this.tileLayer) this.map.removeLayer(this.tileLayer);
