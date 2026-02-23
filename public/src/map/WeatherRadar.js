@@ -10,7 +10,6 @@ export class WeatherRadar {
         this.isPlaying = false;
         this.animationFrameId = null;
         this.lastFrameTime = 0;
-        this.pollingInterval = null;
         this.pollingTimeout = null;
         this.sessionTime = null;
         this.pastFrameCount = 0;
@@ -218,10 +217,6 @@ export class WeatherRadar {
     }
 
     stopPolling() {
-        if (this.pollingInterval) {
-            clearInterval(this.pollingInterval);
-            this.pollingInterval = null;
-        }
         if (this.pollingTimeout) {
             clearTimeout(this.pollingTimeout);
             this.pollingTimeout = null;
