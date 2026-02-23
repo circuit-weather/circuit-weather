@@ -536,28 +536,6 @@ async function handleApiRequest(request, env, ctx) {
     });
   }
 
-  // Fetch from upstream
-  const emptyResponse = () => {
-    const errorResponse = {
-      error: 'Failed to fetch weather data',
-      current: {
-        temperature_2m: null,
-        relative_humidity_2m: null,
-        wind_speed_10m: null,
-      },
-      hourly: {
-        time: [],
-        temperature_2m: [],
-        precipitation_probability: []
-      },
-      current_units: {}
-    };
-    return new Response(JSON.stringify(errorResponse), {
-      status: 502,
-      headers: getErrorHeaders(request)
-    });
-  };
-
   try {
     const upstreamResponse = await fetch(upstreamUrl, {
       headers: {
