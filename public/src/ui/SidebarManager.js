@@ -6,6 +6,7 @@ export class SidebarManager {
         this.backdrop = document.getElementById('sidebarBackdrop');
         this.isOpen = false;
         this.mobileBreakpoint = 768;
+        this._handleFocusTrap = this.handleFocusTrap.bind(this);
         this.bindEvents();
     }
 
@@ -68,6 +69,9 @@ export class SidebarManager {
             // Prevent body scroll when sidebar is open
             document.body.style.overflow = 'hidden';
 
+            // Palette A11y: Enable focus trap
+            this.sidebar.addEventListener('keydown', this._handleFocusTrap);
+
             // Update ARIA states
             if (this.mobileMenuBtn) this.mobileMenuBtn.setAttribute('aria-expanded', 'true');
             if (this.toggleBtn) this.toggleBtn.setAttribute('aria-expanded', 'true');
@@ -86,6 +90,9 @@ export class SidebarManager {
             this.isOpen = false;
             document.body.style.overflow = '';
 
+            // Palette A11y: Disable focus trap
+            this.sidebar.removeEventListener('keydown', this._handleFocusTrap);
+
             // Update ARIA states
             if (this.mobileMenuBtn) this.mobileMenuBtn.setAttribute('aria-expanded', 'false');
             if (this.toggleBtn) this.toggleBtn.setAttribute('aria-expanded', 'false');
@@ -94,6 +101,31 @@ export class SidebarManager {
             // This restores context to the user after closing the menu
             if (this.mobileMenuBtn && window.getComputedStyle(this.mobileMenuBtn).display !== 'none') {
                 this.mobileMenuBtn.focus();
+            }
+        }
+    }
+
+    handleFocusTrap(e) {
+        if (e.key !== 'Tab') return;
+
+        // We only want to trap focus within the sidebar
+        const focusableSelectors = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
+        const focusableElements = this.sidebar.querySelectorAll(focusableSelectors);
+
+        if (focusableElements.length === 0) return;
+
+        const firstElement = focusableElements[0];
+        const lastElement = focusableElements[focusableElements.length - 1];
+
+        if (e.shiftKey) {
+            if (document.activeElement === firstElement) {
+                e.preventDefault();
+                lastElement.focus();
+            }
+        } else {
+            if (document.activeElement === lastElement) {
+                e.preventDefault();
+                firstElement.focus();
             }
         }
     }

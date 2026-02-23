@@ -1115,12 +1115,16 @@ body {
         transform: translateX(calc(-1 * var(--sidebar-width)));
         z-index: 2000;
         box-shadow: var(--shadow-lg);
-        transition: transform 300ms ease;
+        /* Palette A11y: Visibility transition ensures off-screen elements aren't focusable */
+        visibility: hidden;
+        transition: transform 300ms ease, visibility 0s 300ms;
     }
 
     /* When sidebar is open on mobile, slide it back into view */
     .sidebar.sidebar--open {
         transform: translateX(0);
+        visibility: visible;
+        transition: transform 300ms ease, visibility 0s 0s;
     }
 
     /* Show sidebar toggle button */
