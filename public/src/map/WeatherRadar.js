@@ -157,7 +157,6 @@ export class WeatherRadar {
 
             // Wait for tiles to load before starting animation
             await this.waitForTilesToLoad();
-            this.hideTileError();
 
             // Start serial preload of remaining frames
             // This prevents "hammering" by loading one frame at a time in the background
@@ -521,10 +520,6 @@ export class WeatherRadar {
         this.ui.errorToast.classList.remove('visible');
         this.ui.errorToast.style.opacity = '0';
     }
-
-    // Legacy method stubs
-    showTileError() { }
-    hideTileError() { }
 
     // Bolt Optimization: Reuse Leaflet layers to reduce DOM churn
     reconcileLayers(newFrames) {
@@ -909,7 +904,6 @@ export class WeatherRadar {
     destroy() {
         this.stopPolling();
         this.pause();
-        this.hideTileError();
         this.layers.forEach(layer => {
             if (layer) this.map.removeLayer(layer);
         });
