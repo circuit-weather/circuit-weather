@@ -60,7 +60,6 @@ export const CIRCUIT_MAP = {
     'jeddah': 'sa-2021',
     'las_vegas': 'us-2023',
     'losail': 'qa-2004',
-    'magny_cours': 'fr-1960', // Historic
     'marina_bay': 'sg-2008',
     'miami': 'us-2022',
     'monaco': 'mc-1929',
