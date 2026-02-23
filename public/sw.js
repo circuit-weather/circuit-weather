@@ -32,7 +32,6 @@ const APP_SHELL = [
     '/src/ui/PrivacyModal.js',
     '/src/ui/SidebarManager.js',
     '/src/ui/ThemeManager.js',
-    '/src/ui/WeatherWidget.js',
     '/src/utils/escapeHtml.js',
     '/src/utils/storage.js',
     '/favicon.svg',
