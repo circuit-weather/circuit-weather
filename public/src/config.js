@@ -2,10 +2,6 @@
  * Circuit Weather - Configuration & Constants
  */
 
-export const isLocal = window.location.hostname === 'localhost' ||
-    window.location.hostname === '127.0.0.1' ||
-    window.location.protocol === 'file:';
-
 export const CONFIG = {
     f1ApiBase: '/api/f1',
     rainViewerApi: '/api/radar',
