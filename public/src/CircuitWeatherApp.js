@@ -51,11 +51,6 @@ export class CircuitWeatherApp {
             forecastContent: document.getElementById('forecastContent'),
             forecastUnavailable: document.getElementById('forecastUnavailable'),
             sessionEmptyState: document.getElementById('sessionEmptyState'),
-            weatherTemp: document.getElementById('weatherTemp'),
-            weatherRain: document.getElementById('weatherRain'),
-            weatherWind: document.getElementById('weatherWind'),
-            weatherWindDir: document.getElementById('weatherWindDir'),
-            weatherTimeline: document.getElementById('weatherTimeline'),
             // Mobile Race Info
             mobileRaceInfo: document.getElementById('mobileRaceInfo'),
             mobileCountryFlag: document.getElementById('mobileCountryFlag'),
