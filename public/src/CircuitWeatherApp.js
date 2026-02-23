@@ -8,7 +8,6 @@ import { RangeCircles } from './map/RangeCircles.js';
 import { MapWeatherWidget } from './map/MapWeatherWidget.js';
 import { RecentreControl } from './map/RecentreControl.js';
 import { CountdownTimer } from './ui/CountdownTimer.js';
-import { WeatherWidget } from './ui/WeatherWidget.js';
 import { Router } from './routing/Router.js';
 import { MapManager } from './map/MapManager.js';
 import { ThemeManager } from './ui/ThemeManager.js';
@@ -27,7 +26,6 @@ export class CircuitWeatherApp {
         this.radar = null;
         this.trackLayer = null;
         this.rangeCircles = null;
-        this.weatherWidget = null;
         this.countdown = new CountdownTimer();
         this.recentreControl = null;
         this.currentCircuitCenter = null;
@@ -89,9 +87,6 @@ export class CircuitWeatherApp {
             this.rangeCircles = new RangeCircles(map);
             this.trackLayer = new TrackLayer(map);
             this.radar = new WeatherRadar(map);
-
-            // Desktop current weather widget (corner)
-            this.weatherWidget = new WeatherWidget();
 
             // Map weather widget (Leaflet control)
             this.mapWeatherWidget = new MapWeatherWidget({ position: 'topright' });
@@ -449,7 +444,6 @@ export class CircuitWeatherApp {
 
         const [lat, lng] = this.currentCircuitCenter;
         const weather = await this.weatherClient.getForecast(lat, lng, new Date());
-        this.weatherWidget.update(weather);
         this.mapWeatherWidget.update(weather);
     }
 
