@@ -17,7 +17,6 @@ const TIMEOUT_API_ASSETS = 10000;
 
 // Bolt Optimization: Pre-compile regexes for hot-path performance
 const VALID_API_PATH_REGEX = /^[a-zA-Z0-9/._-]*$/;
-const VALID_COORD_REGEX = /^-?\d+(\.\d+)?$/;
 const VALID_TRACK_ID_REGEX = /^[a-z0-9-]+$/;
 const PRODUCTION_DOMAIN = 'https://circuit-weather.racing';
 const ALLOWED_ORIGIN_LOCALHOST_REGEX = /^http:\/\/localhost(:\d+)?(\/|$)/;
