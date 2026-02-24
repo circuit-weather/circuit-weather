@@ -306,9 +306,12 @@ async function handleApiRequest(request, env, ctx) {
 
     // SEC: Strict Content-Type Validation
     // Prevent cache poisoning if upstream returns HTML error page with 200 OK
+    // Bolt Security: Use strict MIME comparison, not substring check
     const contentType = upstreamResponse.headers.get('Content-Type');
-    if (!contentType || !contentType.includes('application/json')) {
-      console.error(`Upstream Invalid Content-Type: ${contentType}`);
+    const mime = contentType ? contentType.split(';')[0].trim() : '';
+
+    if (mime !== 'application/json') {
+      console.error(`Upstream Invalid Content-Type: ${contentType} (parsed: ${mime})`);
       return cacheAndReturnError(request, cache, cacheKey, 502, {
         error: 'Invalid upstream content type',
       }, ctx);
@@ -540,9 +543,10 @@ async function handleLeafletRequest(request, env, ctx) {
     }
 
     // SEC: Validate Content-Type
+    // Bolt Security: Use strict MIME comparison, not substring check
     const contentType = upstreamResponse.headers.get('Content-Type');
-    // Allow partial match (e.g. text/css; charset=utf-8) against any allowed type
-    const isValidType = config.contentTypes.some(type => contentType && contentType.includes(type));
+    const mime = contentType ? contentType.split(';')[0].trim() : '';
+    const isValidType = config.contentTypes.includes(mime);
 
     if (!isValidType) {
       console.error(`Leaflet Invalid Content-Type (${path}): ${contentType} (expected ${config.contentTypes.join(' or ')})`);
@@ -728,13 +732,15 @@ async function handleTileRequest(request, env, ctx) {
 
     if (shouldCache) {
       const contentType = upstreamResponse.headers.get('Content-Type');
-      const isPng = contentType && contentType.startsWith('image/png');
+      // Bolt Security: Use strict MIME comparison, not substring check
+      const mime = contentType ? contentType.split(';')[0].trim() : '';
+      const isPng = mime === 'image/png';
 
       // SEC: Strict Content-Type Validation (ONLY for success responses)
       // Prevent XSS via MIME sniffing if upstream returns non-image content (e.g. HTML)
       // Only allow PNG as we enforced .png extension in URL. Blocks image/svg+xml.
       if (upstreamResponse.ok && !isPng) {
-        console.error(`Upstream Tile Invalid Content-Type: ${contentType}`);
+        console.error(`Upstream Tile Invalid Content-Type: ${contentType} (parsed: ${mime})`);
         return new Response(JSON.stringify({ error: 'Invalid upstream content type' }), {
           status: 502,
           headers: getErrorHeaders(request)
@@ -922,9 +928,12 @@ async function handleRadarRequest(request, env, ctx) {
 
     // SEC: Strict Content-Type Validation
     // Prevent cache poisoning if upstream returns HTML error page (e.g. WAF/Maintenance) with 200 OK
+    // Bolt Security: Use strict MIME comparison, not substring check
     const contentType = upstreamResponse.headers.get('Content-Type');
-    if (!contentType || !contentType.includes('application/json')) {
-      console.error(`Upstream Radar Invalid Content-Type: ${contentType}`);
+    const mime = contentType ? contentType.split(';')[0].trim() : '';
+
+    if (mime !== 'application/json') {
+      console.error(`Upstream Radar Invalid Content-Type: ${contentType} (parsed: ${mime})`);
       return getEmptyRadarResponse(request);
     }
 
