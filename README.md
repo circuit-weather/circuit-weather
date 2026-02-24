@@ -44,17 +44,6 @@ Huge thanks to the free APIs and data sources that make this possible:
 *   **Carto & OpenStreetMap** for the map tiles.
 *   **bacinger/f1-circuits** for the circuit track data.
 
-## Development
-
-To run the project locally:
-
-```bash
-npm install
-npm run dev
-```
-
-For more details, see [AGENTS.md](AGENTS.md).
-
 ## License
 
 MIT License - see [LICENSE](LICENSE) for details.
