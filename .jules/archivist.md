@@ -83,3 +83,9 @@ Issue: Project version was inconsistent across files (package.json: 1.0.0, worke
 Cause: Manual version bump in worker code without updating package metadata. Redundant JSON-LD likely due to migration to dynamic injection for CSP compliance without removing the static block.
 Fix: Updated package.json to 1.1.1, added softwareVersion to dynamic JSON-LD in main.js, and removed static JSON-LD from index.html.
 Prevention: Verify all version sources (package.json, worker.js, metadata) during release. Audit index.html for redundant metadata when using dynamic injection.
+
+2026-02-25 - Documentation Enhancement: Node Version Prerequisite
+Issue: AGENTS.md did not specify the required Node.js version, leading to potential environment mismatches with CI (v20+).
+Cause: Incomplete prerequisite documentation.
+Fix: Updated AGENTS.md to explicitly recommend Node.js v20+ for local development.
+Prevention: Verify local development instructions match CI configuration.
