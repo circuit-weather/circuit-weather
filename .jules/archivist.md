@@ -95,3 +95,9 @@ Issue: The `enableCurrentWeather` flag in `config.js` was documented as disabled
 Cause: Code implementation lagged behind configuration intent, leading to a zombie feature flag.
 Fix: Implemented logic in `CircuitWeatherApp.js` to respect `FEATURE_FLAGS.enableCurrentWeather`, and updated the configuration comment to reflect the enabled state while preserving the warning about rate limits.
 Prevention: Verify that new configuration flags are actually consumed by the application logic during code review.
+
+2026-02-25 - Feature Flag Removal: enableCurrentWeather
+Issue: The `enableCurrentWeather` flag was removed entirely after code review request to just keep the feature enabled.
+Cause: Code review feedback indicated that the flag was unnecessary and the feature should be permanently enabled.
+Fix: Removed `FEATURE_FLAGS` from `public/src/config.js` and removed conditional checks in `public/src/CircuitWeatherApp.js`.
+Prevention: Revisit feature flags periodically to remove those that are no longer needed (e.g., permanently enabled features).

@@ -25,14 +25,6 @@ export const CONFIG = {
 // SEC: Prevent runtime tampering with configuration
 Object.freeze(CONFIG);
 
-// Feature Flags - Toggle features on/off without removing code
-export const FEATURE_FLAGS = {
-    // Enabled. Note: This triggers an Open-Meteo API call per circuit change
-    // which may hit 429 rate limits during high traffic.
-    enableCurrentWeather: true,
-};
-Object.freeze(FEATURE_FLAGS);
-
 // Country code mappings for flags (ISO 3166-1 alpha-2)
 export const COUNTRY_CODES = {
     'Australia': 'au', 'Austria': 'at', 'Azerbaijan': 'az', 'Bahrain': 'bh',
