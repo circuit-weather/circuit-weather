@@ -1,4 +1,4 @@
-import { CONFIG, COUNTRY_CODES } from './config.js';
+import { CONFIG, COUNTRY_CODES, FEATURE_FLAGS } from './config.js';
 import { escapeHtml } from './utils/escapeHtml.js';
 import { F1API } from './api/F1API.js';
 import { WeatherClient } from './api/WeatherClient.js';
@@ -91,8 +91,10 @@ export class CircuitWeatherApp {
             });
 
             // Map weather widget (Leaflet control)
-            this.mapWeatherWidget = new MapWeatherWidget({ position: 'topright' });
-            this.mapWeatherWidget.addTo(map);
+            if (FEATURE_FLAGS.enableCurrentWeather) {
+                this.mapWeatherWidget = new MapWeatherWidget({ position: 'topright' });
+                this.mapWeatherWidget.addTo(map);
+            }
 
             this.bindEvents();
 
@@ -111,7 +113,9 @@ export class CircuitWeatherApp {
             }
 
             // Start live weather refresh interval
-            this.startWeatherRefreshInterval();
+            if (FEATURE_FLAGS.enableCurrentWeather) {
+                this.startWeatherRefreshInterval();
+            }
 
             // Start session forecast refresh interval
             this.startSessionForecastInterval();
@@ -434,6 +438,8 @@ export class CircuitWeatherApp {
     }
 
     async updateLiveWeatherForCircuit() {
+        if (!FEATURE_FLAGS.enableCurrentWeather) return;
+
         // Only fetch weather if a circuit is selected
         if (!this.currentCircuitCenter) {
             return;
@@ -441,7 +447,9 @@ export class CircuitWeatherApp {
 
         const [lat, lng] = this.currentCircuitCenter;
         const weather = await this.weatherClient.getForecast(lat, lng, new Date());
-        this.mapWeatherWidget.update(weather);
+        if (this.mapWeatherWidget) {
+            this.mapWeatherWidget.update(weather);
+        }
     }
 
     startWeatherRefreshInterval() {
