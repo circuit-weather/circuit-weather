@@ -1,0 +1,136 @@
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+
+// Mock DOM
+const createMockElement = (id) => ({
+    id,
+    addEventListener: vi.fn(),
+    classList: {
+        add: vi.fn(),
+        remove: vi.fn(),
+        contains: vi.fn().mockReturnValue(true) // assume visible by default for test
+    },
+    style: {},
+    setAttribute: vi.fn(),
+    textContent: ''
+});
+
+const documentMock = {
+    getElementById: vi.fn((id) => createMockElement(id)),
+    addEventListener: vi.fn(),
+    activeElement: { tagName: 'BODY' },
+    createElement: vi.fn(() => createMockElement('created'))
+};
+
+const navigatorMock = { language: 'en-US' };
+
+vi.stubGlobal('document', documentMock);
+vi.stubGlobal('navigator', navigatorMock);
+vi.stubGlobal('window', { addEventListener: vi.fn() });
+vi.stubGlobal('L', { tileLayer: vi.fn(), map: vi.fn() });
+vi.stubGlobal('fetch', vi.fn());
+
+// Mock requestAnimationFrame
+let rafCallbacks = new Map();
+let nextRafId = 1;
+const requestAnimationFrameMock = vi.fn((cb) => {
+    const id = nextRafId++;
+    rafCallbacks.set(id, cb);
+    return id;
+});
+const cancelAnimationFrameMock = vi.fn((id) => {
+    rafCallbacks.delete(id);
+});
+
+vi.stubGlobal('requestAnimationFrame', requestAnimationFrameMock);
+vi.stubGlobal('cancelAnimationFrame', cancelAnimationFrameMock);
+
+// Import the class under test
+const { WeatherRadar } = await import('../public/src/map/WeatherRadar.js');
+
+describe('WeatherRadar Timer Logic', () => {
+    let radar;
+    let mockMap;
+
+    beforeEach(() => {
+        vi.clearAllMocks();
+        rafCallbacks.clear();
+        nextRafId = 1;
+
+        mockMap = {
+            removeLayer: vi.fn(),
+            invalidateSize: vi.fn(),
+            hasLayer: vi.fn(),
+            addLayer: vi.fn(),
+            on: vi.fn(),
+            off: vi.fn()
+        };
+
+        radar = new WeatherRadar(mockMap);
+    });
+
+    it('should cancel previous timer loop when showErrorToast is called again', async () => {
+        // Setup
+        radar.ui.errorToast = createMockElement('errorToast');
+        radar.ui.errorTimer = createMockElement('errorTimer');
+        radar.ui.errorTitle = createMockElement('errorTitle');
+        radar.ui.errorMessage = createMockElement('errorMessage');
+
+        // Initial call
+        radar.showErrorToast('Title 1', 'Message 1', 60);
+
+        expect(requestAnimationFrameMock).toHaveBeenCalledTimes(1);
+        // We know the ID is likely 1 because we reset nextRafId in beforeEach
+        // But let's check the mock calls if needed. Or assume sequential IDs for this simple test.
+        const firstLoopId = 1;
+
+        expect(rafCallbacks.has(firstLoopId)).toBe(true);
+        expect(radar.toastAnimationFrame).toBe(firstLoopId);
+
+        // Second call - simulates updateErrorUI being called again
+        radar.showErrorToast('Title 2', 'Message 2', 60);
+
+        expect(requestAnimationFrameMock).toHaveBeenCalledTimes(2);
+        const secondLoopId = 2;
+
+        // CRITICAL ASSERTION: The first loop MUST be cancelled.
+        expect(rafCallbacks.has(firstLoopId)).toBe(false);
+        expect(rafCallbacks.has(secondLoopId)).toBe(true);
+        expect(radar.toastAnimationFrame).toBe(secondLoopId);
+    });
+
+    it('should cancel timer loop when hiding error toast', () => {
+        radar.ui.errorToast = createMockElement('errorToast');
+        radar.ui.errorTimer = createMockElement('errorTimer');
+
+        radar.showErrorToast('Title', 'Msg', 60);
+        const loopId = 1;
+        expect(rafCallbacks.has(loopId)).toBe(true);
+
+        radar.hideErrorToast();
+
+        expect(rafCallbacks.has(loopId)).toBe(false);
+        expect(radar.toastAnimationFrame).toBe(null);
+    });
+
+    it('should correctly calculate duration in updateErrorUI', () => {
+        // Mock rate limit
+        const now = 1000000;
+        vi.setSystemTime(now);
+
+        radar.rateLimitResetTime = now + 45000; // 45s in future
+        radar.failedTiles = new Set(['tile1']);
+
+        // Spy on showErrorToast
+        const toastSpy = vi.spyOn(radar, 'showErrorToast');
+
+        radar.updateErrorUI();
+
+        expect(toastSpy).toHaveBeenCalledWith(
+            expect.any(String),
+            expect.stringContaining('Retrying 1 failed tile'),
+            45 // Duration should be 45
+        );
+
+        vi.useRealTimers();
+    });
+});

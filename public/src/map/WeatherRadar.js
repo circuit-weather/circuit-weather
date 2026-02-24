@@ -30,6 +30,7 @@ export class WeatherRadar {
         this.rateLimitResetTime = 0;
         this.retryTimer = null;
         this.activeErrorTitle = null;
+        this.toastAnimationFrame = null;
 
         // Bolt Optimization: Cache UI elements
         this.ui = {
@@ -485,6 +486,12 @@ export class WeatherRadar {
     showErrorToast(title, message, durationSec = 5) {
         if (!this.ui.errorToast) return;
 
+        // Cancel any existing timer loop to prevent overlap
+        if (this.toastAnimationFrame) {
+            cancelAnimationFrame(this.toastAnimationFrame);
+            this.toastAnimationFrame = null;
+        }
+
         this.ui.errorTitle.textContent = title;
         this.ui.errorMessage.textContent = message;
         this.ui.errorToast.classList.add('visible');
@@ -494,24 +501,35 @@ export class WeatherRadar {
         const endTime = Date.now() + (durationSec * 1000);
 
         const updateTimer = () => {
-            if (!this.ui.errorToast.classList.contains('visible')) return;
+            if (!this.ui.errorToast.classList.contains('visible')) {
+                this.toastAnimationFrame = null;
+                return;
+            }
 
             const remaining = Math.ceil((endTime - Date.now()) / 1000);
             if (remaining > 0) {
                 this.ui.errorTimer.textContent = `${remaining}s`;
-                requestAnimationFrame(updateTimer);
+                this.toastAnimationFrame = requestAnimationFrame(updateTimer);
             } else {
                 this.ui.errorTimer.textContent = '';
+                this.toastAnimationFrame = null;
                 if (durationSec < 10 && this.rateLimitResetTime < Date.now()) {
                     this.hideErrorToast();
                 }
             }
         };
-        updateTimer();
+        // Start the loop
+        this.toastAnimationFrame = requestAnimationFrame(updateTimer);
     }
 
     hideErrorToast() {
         if (!this.ui.errorToast) return;
+
+        if (this.toastAnimationFrame) {
+            cancelAnimationFrame(this.toastAnimationFrame);
+            this.toastAnimationFrame = null;
+        }
+
         this.ui.errorToast.classList.remove('visible');
         this.ui.errorToast.style.opacity = '0';
     }
