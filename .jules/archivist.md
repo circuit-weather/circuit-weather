@@ -77,3 +77,9 @@ Issue: Documentation claimed RainViewer limit was zoom 10, but code enforces zoo
 Cause: Documentation drift after API changes/findings were implemented in code but not fully updated in high-level docs.
 Fix: Updated AGENTS.md zoom limit to 7 and added sitemap.xml to file tree.
 Prevention: Check code comments (especially recent ones) when verifying documentation claims.
+
+2026-02-24 - Inconsistent Version Numbering and Redundant Metadata
+Issue: Project version was inconsistent across files (package.json: 1.0.0, worker.js: 1.1.1). Additionally, redundant JSON-LD structured data existed in both index.html (static, outdated) and main.js (dynamic).
+Cause: Manual version bump in worker code without updating package metadata. Redundant JSON-LD likely due to migration to dynamic injection for CSP compliance without removing the static block.
+Fix: Updated package.json to 1.1.1, added softwareVersion to dynamic JSON-LD in main.js, and removed static JSON-LD from index.html.
+Prevention: Verify all version sources (package.json, worker.js, metadata) during release. Audit index.html for redundant metadata when using dynamic injection.

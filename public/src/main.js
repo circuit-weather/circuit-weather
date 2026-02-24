@@ -16,6 +16,7 @@ function initStructuredData() {
         "description": "Real-time weather radar and forecasts for Formula 1 race circuits. Track precipitation and conditions at every F1 track.",
         "applicationCategory": "WeatherApplication, SportsApplication",
         "operatingSystem": "Any",
+        "softwareVersion": "1.1.1",
         "offers": {
             "@type": "Offer",
             "price": "0",
