@@ -298,7 +298,7 @@ This project uses [Cloudflare Workers](https://workers.cloudflare.com/) to proxy
 
 1.  **Clone the repository.**
 2.  **Install Node.js.**
-    If you don't have Node.js installed, download it from [nodejs.org](https://nodejs.org/).
+    If you don't have Node.js installed, download it from [nodejs.org](https://nodejs.org/). **v20+ is recommended** to match the CI environment.
 3.  **Install dependencies.**
     Run the following command in your terminal at the root of the project:
     ```bash
