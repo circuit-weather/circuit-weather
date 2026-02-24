@@ -54,3 +54,8 @@
 **Vulnerability:** When tightening regex validation for Worker origins, it is easy to inadvertently block legitimate development or preview build formats (e.g., `038ad3cf-circuit-weather.user.workers.dev`).
 **Learning:** Always verify regex changes against all known environment URL patterns, including dynamic preview builds which may have random hash prefixes.
 **Prevention:** Include examples of all environment URL formats in the test suite to ensure the regex is both secure (blocks attackers) and functional (allows dev builds).
+
+## 2026-06-25 - Loose Content-Type Validation in Worker Proxy
+**Vulnerability:** The Worker Proxy validated `Content-Type` headers using partial substring matches (e.g., `.includes('application/json')`). This allowed deceptive MIME types like `application/jsonp` (executable JSONP) or `text/javascript-malicious` to bypass security checks, potentially enabling cache poisoning or XSS via MIME confusion.
+**Learning:** Using `includes()` or `startsWith()` for MIME type validation is insufficient as it matches malicious subtypes or extensions that share the same prefix/substring.
+**Prevention:** Always parse the `Content-Type` header (splitting by `;` to remove parameters) and perform a strict equality check against the allowed MIME type (e.g., `mime === 'application/json'`).
