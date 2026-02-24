@@ -1,0 +1,82 @@
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { escapeHtml } from '../public/src/utils/escapeHtml.js';
+import { SafeStorage } from '../public/src/utils/storage.js';
+
+describe('Utility Functions', () => {
+
+  describe('escapeHtml', () => {
+    it('returns empty string for null or undefined', () => {
+      expect(escapeHtml(null)).toBe('');
+      expect(escapeHtml(undefined)).toBe('');
+    });
+
+    it('converts numbers to strings', () => {
+      expect(escapeHtml(123)).toBe('123');
+      expect(escapeHtml(0)).toBe('0');
+      expect(escapeHtml(-45.6)).toBe('-45.6');
+    });
+
+    it('escapes dangerous characters correctly', () => {
+      const input = '& < > " \'';
+      // Expected: &amp; &lt; &gt; &quot; &#39;
+      const expected = '&amp; &lt; &gt; &quot; &#39;';
+      expect(escapeHtml(input)).toBe(expected);
+    });
+
+    it('handles mixed content safely', () => {
+      const input = '<script>alert("xss")</script>';
+      const expected = '&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;';
+      expect(escapeHtml(input)).toBe(expected);
+    });
+
+    it('leaves safe strings untouched', () => {
+      const input = 'Hello World! 123';
+      expect(escapeHtml(input)).toBe(input);
+    });
+  });
+
+  describe('SafeStorage', () => {
+    const mockLocalStorage = {
+      getItem: vi.fn(),
+      setItem: vi.fn(),
+    };
+
+    beforeEach(() => {
+      vi.stubGlobal('localStorage', mockLocalStorage);
+      mockLocalStorage.getItem.mockReset();
+      mockLocalStorage.setItem.mockReset();
+    });
+
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    it('gets item safely when localStorage works', () => {
+      mockLocalStorage.getItem.mockReturnValue('test-value');
+      const result = SafeStorage.getItem('test-key');
+      expect(result).toBe('test-value');
+      expect(mockLocalStorage.getItem).toHaveBeenCalledWith('test-key');
+    });
+
+    it('sets item safely when localStorage works', () => {
+      SafeStorage.setItem('key', 'value');
+      expect(mockLocalStorage.setItem).toHaveBeenCalledWith('key', 'value');
+    });
+
+    it('returns null when localStorage.getItem throws (e.g. disabled)', () => {
+      mockLocalStorage.getItem.mockImplementation(() => {
+        throw new Error('Access Denied');
+      });
+      const result = SafeStorage.getItem('key');
+      expect(result).toBeNull();
+    });
+
+    it('fails silently when localStorage.setItem throws', () => {
+      mockLocalStorage.setItem.mockImplementation(() => {
+        throw new Error('Quota Exceeded');
+      });
+      expect(() => SafeStorage.setItem('key', 'value')).not.toThrow();
+    });
+  });
+
+});
