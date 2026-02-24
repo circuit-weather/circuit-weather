@@ -39,3 +39,8 @@
 **Vulnerability:** The `renderForecast` method in `CircuitWeatherApp.js` correctly escaped text content but failed to escape dynamic values injected into HTML attributes (e.g., `title="${dir}"`, `aria-label="..."`). This allowed XSS via attribute breakout if the variable contained double quotes.
 **Learning:** Template literals make it easy to overlook attribute context. Escaping for text content (e.g., `<element>${var}</element>`) handles `<` and `&`, but attribute values (e.g., `attr="${var}"`) require escaping `"` to prevent breakout.
 **Prevention:** Consistently apply `escapeHtml` to ALL variables interpolated into HTML strings, regardless of context (content or attribute).
+
+## 2026-06-16 - RateLimiter Memory Exhaustion via OldGen Migration
+**Vulnerability:** The `RateLimiter` class in `src/worker-utils.js` allowed indefinite memory growth when migrating records from `oldGen` to `currentGen`. It checked `maxIps` only when creating *new* records, but failed to enforce the limit when reviving existing records from the previous generation. An attacker could exploit this by rotating IPs between generations to exceed the intended memory cap.
+**Learning:** LRU caches with generational eviction must enforce capacity limits on *all* write operations, including internal migrations between generations, not just on initial insertion.
+**Prevention:** Always check `size >= capacity` before any `set()` operation on the active cache, regardless of the source of the data (new vs migrated).
