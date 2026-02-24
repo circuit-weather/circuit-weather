@@ -8,6 +8,7 @@ describe('Worker Security Regex', () => {
             'https://circuit-weather.user.workers.dev/',
             'https://dev-circuit-weather.user.workers.dev',
             'https://feature-branch-circuit-weather.user.workers.dev',
+            'https://038ad3cf-circuit-weather.joshua-allan.workers.dev/', // Dev build format
         ];
 
         const invalidUrls = [

@@ -49,3 +49,8 @@
 **Vulnerability:** The `ALLOWED_WORKER_REGEX` used to validate Cloudflare Worker origins was overly permissive (`circuit-weather.*`), allowing attackers to bypass hotlink protection by deploying workers with names that started with the target project's name (e.g., `circuit-weather-attack.attacker.workers.dev`).
 **Learning:** Regex wildcards like `.*` are dangerous when validating domains because they match any character, including hyphens that separate script names from prefixes/suffixes. A partial match on a script name (e.g., matching a prefix) without anchoring or boundary checks allows adversaries to extend the name.
 **Prevention:** When validating subdomains or script names, always enforce strict boundaries using literal dots (`\.`) or end-of-string anchors. Avoid greedy wildcards; use specific character classes (e.g., `[a-zA-Z0-9-]+`) to match only valid domain characters.
+
+## 2026-06-22 - Regex Validation for Dev Builds
+**Vulnerability:** When tightening regex validation for Worker origins, it is easy to inadvertently block legitimate development or preview build formats (e.g., `038ad3cf-circuit-weather.user.workers.dev`).
+**Learning:** Always verify regex changes against all known environment URL patterns, including dynamic preview builds which may have random hash prefixes.
+**Prevention:** Include examples of all environment URL formats in the test suite to ensure the regex is both secure (blocks attackers) and functional (allows dev builds).
