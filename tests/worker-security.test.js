@@ -4,8 +4,7 @@ import {
   checkFetchDest,
   RateLimiter,
   VALID_API_PATH_REGEX,
-  PRODUCTION_DOMAIN,
-  ALLOWED_ORIGIN_LOCALHOST_REGEX
+  PRODUCTION_DOMAIN
 } from '../src/worker-utils.js';
 
 // Mock Request object helper
