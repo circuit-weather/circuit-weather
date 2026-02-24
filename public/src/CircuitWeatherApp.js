@@ -1,4 +1,4 @@
-import { CONFIG, FEATURE_FLAGS, COUNTRY_CODES } from './config.js';
+import { CONFIG, COUNTRY_CODES } from './config.js';
 import { escapeHtml } from './utils/escapeHtml.js';
 import { F1API } from './api/F1API.js';
 import { WeatherClient } from './api/WeatherClient.js';
@@ -434,11 +434,6 @@ export class CircuitWeatherApp {
     }
 
     async updateLiveWeatherForCircuit() {
-        // Feature flag: Skip current weather to reduce API calls
-        if (!FEATURE_FLAGS.enableCurrentWeather) {
-            return;
-        }
-
         // Only fetch weather if a circuit is selected
         if (!this.currentCircuitCenter) {
             return;
