@@ -6,7 +6,7 @@ export const PRODUCTION_DOMAIN = 'https://circuit-weather.racing';
 export const ALLOWED_ORIGIN_LOCALHOST_REGEX = /^http:\/\/localhost(:\d+)?(\/|$)/;
 export const ALLOWED_ORIGIN_127_REGEX = /^http:\/\/127\.0\.0\.1(:\d+)?(\/|$)/;
 export const ALLOWED_PREVIEW_REGEX = /^https:\/\/(.*\.)?circuit-weather\.pages\.dev(\/|$)/;
-export const ALLOWED_WORKER_REGEX = /^https:\/\/([a-zA-Z0-9-]+\-)?circuit-weather.*\..*\.workers\.dev(\/|$)/;
+export const ALLOWED_WORKER_REGEX = /^https:\/\/([a-zA-Z0-9-]+\-)?circuit-weather\.[a-zA-Z0-9-]+\.workers\.dev(\/|$)/;
 export const DOTFILE_REGEX = /(?:^|\/)\./;
 
 // Bolt Optimization: Reduced header set for API responses (removed HTML-specific headers)

@@ -44,3 +44,8 @@
 **Vulnerability:** The `RateLimiter` class in `src/worker-utils.js` allowed indefinite memory growth when migrating records from `oldGen` to `currentGen`. It checked `maxIps` only when creating *new* records, but failed to enforce the limit when reviving existing records from the previous generation. An attacker could exploit this by rotating IPs between generations to exceed the intended memory cap.
 **Learning:** LRU caches with generational eviction must enforce capacity limits on *all* write operations, including internal migrations between generations, not just on initial insertion.
 **Prevention:** Always check `size >= capacity` before any `set()` operation on the active cache, regardless of the source of the data (new vs migrated).
+
+## 2026-06-21 - Loose Regex in Worker Origin Validation
+**Vulnerability:** The `ALLOWED_WORKER_REGEX` used to validate Cloudflare Worker origins was overly permissive (`circuit-weather.*`), allowing attackers to bypass hotlink protection by deploying workers with names that started with the target project's name (e.g., `circuit-weather-attack.attacker.workers.dev`).
+**Learning:** Regex wildcards like `.*` are dangerous when validating domains because they match any character, including hyphens that separate script names from prefixes/suffixes. A partial match on a script name (e.g., matching a prefix) without anchoring or boundary checks allows adversaries to extend the name.
+**Prevention:** When validating subdomains or script names, always enforce strict boundaries using literal dots (`\.`) or end-of-string anchors. Avoid greedy wildcards; use specific character classes (e.g., `[a-zA-Z0-9-]+`) to match only valid domain characters.
