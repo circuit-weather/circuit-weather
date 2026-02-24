@@ -71,3 +71,9 @@ Issue: Multiple H1 tags (sidebar and mobile header) were present on the page, wh
 Cause: The design used H1 tags for the site title in both the desktop sidebar and the mobile top bar.
 Fix: Converted the mobile header H1 to a span with class 'header-title' and updated CSS to maintain styling.
 Prevention: Ensure that only the primary desktop sidebar title uses H1, and other instances of the site title use non-heading elements or classes.
+
+2026-02-24 - Inaccurate RainViewer Limits & File Structure
+Issue: Documentation claimed RainViewer limit was zoom 10, but code enforces zoom 7 based on Jan 2026 findings. File structure missed sitemap.xml.
+Cause: Documentation drift after API changes/findings were implemented in code but not fully updated in high-level docs.
+Fix: Updated AGENTS.md zoom limit to 7 and added sitemap.xml to file tree.
+Prevention: Check code comments (especially recent ones) when verifying documentation claims.
