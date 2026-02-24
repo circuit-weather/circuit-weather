@@ -819,35 +819,6 @@ body {
     border-color: var(--color-primary);
 }
 
-/* Radar Status Indicator */
-.radar-status {
-    display: flex;
-    align-items: center;
-    gap: 0.25rem;
-    padding: 0.25rem 0.5rem;
-    background: rgba(239, 68, 68, 0.15);
-    border: 1px solid rgba(239, 68, 68, 0.4);
-    border-radius: var(--radius-md);
-    font-size: 0.65rem;
-    color: #ef4444;
-    white-space: nowrap;
-    animation: radar-status-pulse 2s ease-in-out infinite;
-}
-
-@keyframes radar-status-pulse {
-    0% {
-        opacity: 0.7;
-    }
-
-    50% {
-        opacity: 1;
-    }
-
-    100% {
-        opacity: 0.7;
-    }
-}
-
 /* Error Toast */
 .error-toast {
     position: absolute;
@@ -906,26 +877,6 @@ body {
     font-size: 0.75rem;
     font-weight: 700;
     color: var(--color-primary);
-}
-
-.radar-status-icon {
-    font-size: 0.8rem;
-}
-
-.radar-status-text {
-    font-weight: 500;
-}
-
-@keyframes radar-status-pulse {
-
-    0%,
-    100% {
-        opacity: 1;
-    }
-
-    50% {
-        opacity: 0.7;
-    }
 }
 
 /* ===================================
