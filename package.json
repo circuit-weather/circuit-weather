@@ -21,6 +21,6 @@
   "license": "MIT",
   "devDependencies": {
     "vitest": "^1.6.0",
-    "wrangler": "^3.57.0"
+    "wrangler": "^4.68.0"
   }
 }
