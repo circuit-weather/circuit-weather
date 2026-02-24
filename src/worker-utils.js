@@ -197,6 +197,12 @@ export class RateLimiter {
         record.lastCheck = now;
 
         // Move to current
+        // SEC: Prevent memory exhaustion DoS during migration
+        if (this.currentGen.size >= this.maxIps) {
+          const oldestIp = this.currentGen.keys().next().value;
+          this.currentGen.delete(oldestIp);
+        }
+
         this.currentGen.set(ip, record);
         this.oldGen.delete(ip); // Optional: keep memory lean
 
