@@ -13,6 +13,16 @@ export class TrackLayer {
         this.map.on('zoomend', () => this.updateStyle());
     }
 
+    getTrackColor() {
+        const style = getComputedStyle(document.documentElement);
+        const color = style.getPropertyValue('--color-range-circle').trim();
+        if (color) return color;
+
+        // Fallback if CSS variables are not yet loaded (e.g. during early init)
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        return isDark ? '#ff6b5b' : '#e10600';
+    }
+
     updateStyle() {
         if (!this.layer) return;
 
@@ -24,7 +34,8 @@ export class TrackLayer {
         else if (zoom >= 8) weight = 2;
         else weight = 1;
 
-        this.layer.setStyle({ weight: weight });
+        const trackColor = this.getTrackColor();
+        this.layer.setStyle({ weight: weight, color: trackColor });
     }
 
     async loadTrack(circuitId) {
@@ -75,10 +86,11 @@ export class TrackLayer {
             // Double check before rendering
             if (this.currentCircuitId !== circuitId) return;
 
+            const trackColor = this.getTrackColor();
             this.layer = L.geoJSON(data, {
                 style: {
                     interactive: false,
-                    color: '#e10600',
+                    color: trackColor,
                     weight: 4, // Initial, will be updated immediately
                     opacity: 0.8,
                     fillOpacity: 0,

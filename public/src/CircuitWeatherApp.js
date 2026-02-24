@@ -65,11 +65,6 @@ export class CircuitWeatherApp {
         try {
             const map = this.mapManager.init();
 
-            // Theme manager with callback to update map tiles
-            this.themeManager = new ThemeManager((theme) => {
-                this.mapManager.setTheme(theme);
-            });
-
             // Sidebar manager for mobile
             this.sidebarManager = new SidebarManager();
 
@@ -82,6 +77,18 @@ export class CircuitWeatherApp {
             this.rangeCircles = new RangeCircles(map);
             this.trackLayer = new TrackLayer(map);
             this.radar = new WeatherRadar(map);
+
+            // Theme manager with callback to update map tiles and overlays
+            // Bolt Optimization: Initialized after overlays so they can respond to the initial theme apply
+            this.themeManager = new ThemeManager((theme) => {
+                this.mapManager.setTheme(theme);
+                if (this.rangeCircles && this.currentCircuitCenter) {
+                    this.rangeCircles.draw(this.currentCircuitCenter);
+                }
+                if (this.trackLayer) {
+                    this.trackLayer.updateStyle();
+                }
+            });
 
             // Map weather widget (Leaflet control)
             this.mapWeatherWidget = new MapWeatherWidget({ position: 'topright' });

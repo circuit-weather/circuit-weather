@@ -53,28 +53,40 @@ export class RangeCircles {
         });
     }
 
+    getRangeColor() {
+        const style = getComputedStyle(document.documentElement);
+        const color = style.getPropertyValue('--color-range-circle').trim();
+        if (color) return color;
+
+        // Fallback if CSS variables are not yet loaded (e.g. during early init)
+        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+        return isDark ? '#ff6b5b' : '#e10600';
+    }
+
     draw(center) {
-        // Check if center has changed
+        // Check if material state has changed
         const centerChanged = !this.center || this.center[0] !== center[0] || this.center[1] !== center[1];
         const unitChanged = this.unit !== this.currentUnit;
 
         const steps = this.calculateSteps(center);
         const stepsChanged = !this.currentSteps || JSON.stringify(steps) !== JSON.stringify(this.currentSteps);
 
+        const rangeColor = this.getRangeColor();
+        const colorChanged = this.currentColor !== rangeColor;
+
         // Optimization: Only redraw if nothing material has changed
-        if (!centerChanged && !stepsChanged && !unitChanged) {
+        if (!centerChanged && !stepsChanged && !unitChanged && !colorChanged) {
             return;
         }
 
         this.center = [...center];
         this.currentSteps = steps;
         this.currentUnit = this.unit;
+        this.currentColor = rangeColor;
 
         // Bolt Optimization: Reuse existing layers (Object Pooling)
         // prevents DOM thrashing during frequent zoom events.
         const multiplier = this.unit === 'metric' ? 1000 : 1609.34;
-        // Get theme-aware color from CSS variable
-        const rangeColor = getComputedStyle(document.documentElement).getPropertyValue('--color-range-circle').trim() || '#e10600';
 
         steps.forEach((distance, index) => {
             const radius = distance * multiplier;
