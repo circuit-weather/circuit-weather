@@ -84,8 +84,8 @@ Cause: Manual version bump in worker code without updating package metadata. Red
 Fix: Updated package.json to 1.1.1, added softwareVersion to dynamic JSON-LD in main.js, and removed static JSON-LD from index.html.
 Prevention: Verify all version sources (package.json, worker.js, metadata) during release. Audit index.html for redundant metadata when using dynamic injection.
 
-2026-02-25 - Documentation Enhancement: README Dev Link & Node Version
-Issue: README.md lacked a clear link to development instructions (AGENTS.md), and AGENTS.md did not specify the required Node.js version.
-Cause: Missing cross-referencing and incomplete prerequisite documentation.
-Fix: Added a "Development" section to README.md linking to AGENTS.md. Updated AGENTS.md to explicitly recommend Node.js v20+.
-Prevention: Ensure all entry points (README.md) link to the comprehensive developer documentation (AGENTS.md).
+2026-02-25 - Documentation Enhancement: Node Version Prerequisite
+Issue: AGENTS.md did not specify the required Node.js version, leading to potential environment mismatches with CI (v20+).
+Cause: Incomplete prerequisite documentation.
+Fix: Updated AGENTS.md to explicitly recommend Node.js v20+ for local development.
+Prevention: Verify local development instructions match CI configuration.
