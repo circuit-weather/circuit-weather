@@ -1,0 +1,26 @@
+{
+  "name": "circuit-weather",
+  "version": "1.0.0",
+  "description": "Real-time F1 race circuit weather radar application.",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage"
+  },
+  "keywords": [
+    "f1",
+    "weather",
+    "radar",
+    "circuit",
+    "cloudflare-workers"
+  ],
+  "author": "Jules",
+  "license": "MIT",
+  "devDependencies": {
+    "vitest": "^1.6.0",
+    "wrangler": "^4.68.0"
+  }
+}
