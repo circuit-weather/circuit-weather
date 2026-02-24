@@ -895,14 +895,4 @@ export class WeatherRadar {
     showControls(visible) {
         if (this.ui.controls) this.ui.controls.style.display = visible ? 'flex' : 'none';
     }
-
-    destroy() {
-        this.stopPolling();
-        this.pause();
-        this.layers.forEach(layer => {
-            if (layer) this.map.removeLayer(layer);
-        });
-        this.layers = [];
-        this.showControls(false);
-    }
 }
