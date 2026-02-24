@@ -363,7 +363,7 @@ body {
     border-radius: var(--radius-lg);
 }
 
-.forecast-section h3 {
+.forecast-section h2 {
     font-size: 0.75rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
@@ -1228,7 +1228,7 @@ body {
         padding: var(--spacing-sm) var(--spacing-md);
     }
 
-    .forecast-section h3 {
+    .forecast-section h2 {
         font-size: 0.6rem;
         margin-bottom: var(--spacing-xs);
     }
