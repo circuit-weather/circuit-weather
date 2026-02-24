@@ -16,7 +16,6 @@ const mockCache = {
     cacheStore.set(key, response.clone());
     return Promise.resolve();
   }),
-  delete: vi.fn(async (key) => cacheStore.delete(key)),
 };
 
 // Mock Global Caches
