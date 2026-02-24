@@ -20,3 +20,7 @@
 ## 2026-02-23 - [Mobile Sidebar Accessibility]
 **Learning:** CSS `transform` on mobile navigation menus hides content visually but leaves it focusable for keyboard users, trapping them in invisible UI.
 **Action:** Pair `transform` transitions with `visibility: hidden` (using a transition delay) to remove off-screen elements from the accessibility tree, and implement a focus trap when open.
+
+## 2026-02-24 - Focus Trap Resilience
+**Learning:** JS-based focus traps often rely on `querySelectorAll` which returns hidden elements (e.g., inside `display: none` containers). If such an element is at the start/end of the trap boundary, the trap breaks because the browser won't focus it, causing `document.activeElement` to mismatch the expected boundary.
+**Action:** Always filter focusable candidates by checking `offsetParent !== null` to ensure the trap loop only considers interactive elements.

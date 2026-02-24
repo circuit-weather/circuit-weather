@@ -110,7 +110,9 @@ export class SidebarManager {
 
         // We only want to trap focus within the sidebar
         const focusableSelectors = 'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
-        const focusableElements = this.sidebar.querySelectorAll(focusableSelectors);
+        // Palette A11y: Filter out hidden elements to prevent focus trap from getting stuck
+        const focusableElements = Array.from(this.sidebar.querySelectorAll(focusableSelectors))
+            .filter(el => el.offsetParent !== null);
 
         if (focusableElements.length === 0) return;
 
