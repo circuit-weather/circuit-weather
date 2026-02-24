@@ -247,7 +247,6 @@ export class CircuitWeatherApp {
         const select = this.ui.roundSelect;
         if (!select) return;
 
-        select.disabled = false;
         select.innerHTML = '<option value="">Select round...</option>';
 
         // Bolt Optimization: Use DocumentFragment to batch DOM insertions
