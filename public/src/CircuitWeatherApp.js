@@ -281,6 +281,7 @@ export class CircuitWeatherApp {
         const fragment = document.createDocumentFragment();
 
         const now = new Date();
+        let nextFound = false;
 
         this.races.forEach(race => {
             const option = document.createElement('option');
@@ -289,11 +290,18 @@ export class CircuitWeatherApp {
             const dateStr = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 
             const status = getRoundStatus(race, now);
+            let isNext = false;
 
-            // Palette UX: We no longer mark rounds as "(Next)" to avoid redundancy
-            // with session-level markers. Only the absolute next session will carry
-            // the "(Next)" label for better clarity.
-            const isNext = false;
+            // Mark the first future round as Next if no round is currently Live?
+            // Or just mark the first future round regardless?
+            // Usually "Next" is useful when nothing is happening.
+            // If something is happening (LIVE), that takes precedence visually.
+            // But knowing what's AFTER the live event is also useful.
+            // Let's mark the first FUTURE one as Next.
+            if (status === 'FUTURE' && !nextFound) {
+                isNext = true;
+                nextFound = true;
+            }
 
             const label = `R${race.round}: ${race.name} (${dateStr})`;
             option.textContent = formatStatusLabel(label, status, isNext);

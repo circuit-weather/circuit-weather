@@ -75,7 +75,7 @@ describe('CircuitWeatherApp Session Labels', () => {
         vi.useRealTimers();
     });
 
-    it('should NOT mark any round as (Next)', () => {
+    it('should mark the next round as (Next)', () => {
         // Mock current time to be before Round 1
         vi.setSystemTime(new Date('2024-02-25T10:00:00Z'));
 
@@ -91,10 +91,10 @@ describe('CircuitWeatherApp Session Labels', () => {
 
         app.populateRoundSelect();
 
-        // Check that none of the options contain "(Next)"
-        options.forEach(opt => {
-            expect(opt.textContent).not.toContain('(Next)');
-        });
+        // Round 1 should be (Next)
+        expect(options[0].textContent).toContain('(Next)');
+        // Round 2 should NOT be (Next)
+        expect(options[1].textContent).not.toContain('(Next)');
     });
 
     it('should ONLY mark the globally next session as (Next)', () => {
@@ -151,5 +151,28 @@ describe('CircuitWeatherApp Session Labels', () => {
         app.selectedRace = app.races[1];
         app.populateSessionSelect(app.races[1].sessions);
         expect(options[0].textContent).not.toContain('(Next)');
+    });
+
+    it('should NOT mark a LIVE round as (Next)', () => {
+        // Mock current time to be during Round 1
+        vi.setSystemTime(new Date('2024-03-01T10:30:00Z')); // During FP1
+
+        const fragment = { appendChild: vi.fn() };
+        document.createDocumentFragment.mockReturnValue(fragment);
+
+        const options = [];
+        document.createElement.mockImplementation(() => {
+            const opt = { value: '', textContent: '' };
+            options.push(opt);
+            return opt;
+        });
+
+        app.populateRoundSelect();
+
+        // Round 1 should be LIVE, NOT (Next)
+        expect(options[0].textContent).toContain('LIVE');
+        expect(options[0].textContent).not.toContain('(Next)');
+        // Round 2 should be (Next) because Round 1 is no longer FUTURE
+        expect(options[1].textContent).toContain('(Next)');
     });
 });
