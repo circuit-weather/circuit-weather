@@ -43,7 +43,7 @@ Circuit Weather is a real-time F1 race circuit weather radar application. It dis
 | Buy Me a Coffee | Support widget | Direct (Client-side) |
 
 ### Data Handling
-- **No cookies** used
+- **No first-party cookies** used (third-party widgets may use cookies - see PRIVACY.md)
 - **localStorage only** for theme/unit preferences
 - **No PII collected** - See PRIVACY.md
 
@@ -78,9 +78,12 @@ circuit-weather/
 │   ├── _headers      # Cloudflare Pages custom headers (CSP, security)
 │   └── PRIVACY.md
 ├── src/
-│   └── worker.js     # Cloudflare Worker (API proxy + asset serving)
-├── .jules/           # Jules AI agent config (MUST be lowercase)
-├── wrangler.toml     # Cloudflare config
+│   ├── worker.js       # Cloudflare Worker (API proxy + asset serving)
+│   └── worker-utils.js # Shared worker utilities
+├── tests/              # Unit tests
+├── .jules/             # Jules AI agent config (MUST be lowercase)
+├── wrangler.toml       # Cloudflare config
+├── package.json        # Node.js dependencies
 ├── README.md
 └── LICENSE
 ```
@@ -178,7 +181,7 @@ mode = "smart"
    - Session dropdown shows FP1-3, Sprint/Qualifying/Race with times
 
 2. **Map Display**
-   - Centered on selected circuit
+   - Centred on selected circuit
    - Dark/light mode basemaps (Carto)
    - Dynamic range circles (outline only) that scale based on map zoom/bounds
    - Distance labels on circles
