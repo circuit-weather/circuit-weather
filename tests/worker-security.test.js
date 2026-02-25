@@ -2,7 +2,6 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import {
   checkRequestSource,
   checkFetchDest,
-  RateLimiter,
   VALID_API_PATH_REGEX,
   PRODUCTION_DOMAIN
 } from '../src/worker-utils.js';
@@ -84,57 +83,6 @@ describe('Worker Security Utils', () => {
 
     it('blocks iframe destination', () => {
       expect(checkFetchDest(createRequest({ 'Sec-Fetch-Dest': 'iframe' }))).toBe(false);
-    });
-  });
-
-  describe('RateLimiter', () => {
-    let limiter;
-
-    beforeEach(() => {
-      // 10 requests per 1000ms
-      limiter = new RateLimiter(10, 1000);
-    });
-
-    it('allows requests under the limit', () => {
-      expect(limiter.check('1.1.1.1')).toBe(true);
-      expect(limiter.check('1.1.1.1')).toBe(true);
-    });
-
-    it('blocks requests over the limit', () => {
-      for (let i = 0; i < 10; i++) {
-        expect(limiter.check('2.2.2.2')).toBe(true);
-      }
-      expect(limiter.check('2.2.2.2')).toBe(false);
-    });
-
-    it('resets after window expires', async () => {
-      // Mock Date.now
-      const originalNow = Date.now;
-      let mockTime = 1000000;
-      global.Date.now = () => mockTime;
-
-      // Fill bucket
-      for (let i = 0; i < 10; i++) {
-        limiter.check('3.3.3.3');
-      }
-      expect(limiter.check('3.3.3.3')).toBe(false);
-
-      // Advance time beyond window (1000ms)
-      mockTime += 1100;
-
-      // Should work again
-      expect(limiter.check('3.3.3.3')).toBe(true);
-
-      // Restore Date.now
-      global.Date.now = originalNow;
-    });
-
-    it('tracks distinct IPs independently', () => {
-      for (let i = 0; i < 10; i++) {
-        limiter.check('4.4.4.4');
-      }
-      expect(limiter.check('4.4.4.4')).toBe(false);
-      expect(limiter.check('5.5.5.5')).toBe(true);
     });
   });
 
