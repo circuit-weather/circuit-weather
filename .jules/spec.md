@@ -5,3 +5,7 @@
 ## 2026-10-24 - Manual Date.now Mocking vs Fake Timers
 **Learning:** Found legacy tests manually overriding `global.Date.now` for time-dependent logic. This is brittle and can leak into other tests or interfere with libraries relying on real time.
 **Action:** Always prefer `vi.useFakeTimers()` and `vi.setSystemTime()`/`vi.advanceTimersByTime()` for robust, isolated time manipulation in tests.
+
+## 2026-10-26 - Testing DOM Reuse Logic
+**Learning:** When testing performance optimizations that rely on object reuse (like `reconcileLayers`), standard state assertions aren't enough. You must verify *identity preservation* (the object in the new state is the exact same instance as the old state) and *explicit cleanup* of unused objects to catch memory leaks.
+**Action:** Create mock objects before the operation, pass them into the initial state, and assert that the *same* mock objects exist in the final state. Verify `removeLayer` (or equivalent cleanup method) is called for objects that should be discarded.
