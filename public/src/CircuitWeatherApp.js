@@ -12,6 +12,7 @@ import { Router } from './routing/Router.js';
 import { MapManager } from './map/MapManager.js';
 import { ThemeManager } from './ui/ThemeManager.js';
 import { SidebarManager } from './ui/SidebarManager.js';
+import { getSessionStatus, getRoundStatus, formatStatusLabel } from './utils/status.js';
 
 /**
  * Main application orchestrator for Circuit Weather.
@@ -260,12 +261,32 @@ export class CircuitWeatherApp {
         // Reduces reflows when populating the race list (~24 items)
         const fragment = document.createDocumentFragment();
 
+        const now = new Date();
+        let nextFound = false;
+
         this.races.forEach(race => {
             const option = document.createElement('option');
             option.value = race.round;
             const date = new Date(race.date);
             const dateStr = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-            option.textContent = `R${race.round}: ${race.name} (${dateStr})`;
+
+            const status = getRoundStatus(race, now);
+            let isNext = false;
+
+            // Mark the first future round as Next if no round is currently Live?
+            // Or just mark the first future round regardless?
+            // Usually "Next" is useful when nothing is happening.
+            // If something is happening (LIVE), that takes precedence visually.
+            // But knowing what's AFTER the live event is also useful.
+            // Let's mark the first FUTURE one as Next.
+            if (status === 'FUTURE' && !nextFound) {
+                isNext = true;
+                nextFound = true;
+            }
+
+            const label = `R${race.round}: ${race.name} (${dateStr})`;
+            option.textContent = formatStatusLabel(label, status, isNext);
+
             fragment.appendChild(option);
         });
 
@@ -369,6 +390,9 @@ export class CircuitWeatherApp {
         // Bolt Optimization: Use DocumentFragment to batch DOM insertions
         const fragment = document.createDocumentFragment();
 
+        const now = new Date();
+        let nextFound = false;
+
         sessions.forEach(session => {
             const option = document.createElement('option');
             option.value = session.id;
@@ -383,7 +407,16 @@ export class CircuitWeatherApp {
                 })}`;
             }
 
-            option.textContent = session.name + timeStr;
+            const label = session.name + timeStr;
+            const status = getSessionStatus(session, now);
+            let isNext = false;
+
+            if (status === 'FUTURE' && !nextFound) {
+                isNext = true;
+                nextFound = true;
+            }
+
+            option.textContent = formatStatusLabel(label, status, isNext);
             fragment.appendChild(option);
         });
 

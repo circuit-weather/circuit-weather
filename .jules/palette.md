@@ -24,3 +24,7 @@
 ## 2026-02-24 - Focus Trap Resilience
 **Learning:** JS-based focus traps often rely on `querySelectorAll` which returns hidden elements (e.g., inside `display: none` containers). If such an element is at the start/end of the trap boundary, the trap breaks because the browser won't focus it, causing `document.activeElement` to mismatch the expected boundary.
 **Action:** Always filter focusable candidates by checking `offsetParent !== null` to ensure the trap loop only considers interactive elements.
+
+## 2025-03-02 - Dropdown Status Indicators
+**Learning:** Dropdown menus often hide critical context (like "Is this happening now?"). Adding status indicators directly to the option label significantly improves decision-making speed.
+**Action:** For time-sensitive lists, always pre-calculate and append status indicators (LIVE, NEXT) to the visible label, rather than relying on external badges that might be missed.
