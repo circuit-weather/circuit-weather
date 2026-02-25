@@ -20,6 +20,7 @@
   "author": "Jules",
   "license": "MIT",
   "devDependencies": {
+    "@vitest/coverage-v8": "^1.6.1",
     "vitest": "^1.6.0",
     "wrangler": "^4.68.0"
   }
