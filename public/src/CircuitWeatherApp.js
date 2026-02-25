@@ -238,6 +238,7 @@ export class CircuitWeatherApp {
                     
                     // Clear the forecast update since no session is active anymore
                     this.stopSessionForecastInterval();
+                    this.updatePageTitle();
                 }
             });
         }
@@ -296,12 +297,32 @@ export class CircuitWeatherApp {
         select.appendChild(fragment);
     }
 
+    /**
+     * Updates the document title for SEO and browser history context.
+     * Dynamic titles improve SERP visibility and help users navigate via history.
+     */
+    updatePageTitle() {
+        const defaultTitle = 'Circuit Weather — Live F1 Race Weather Radar & Forecasts';
+
+        if (this.selectedRace && this.selectedSession) {
+            // Specific session page: "Bahrain GP Qualifying Weather - Circuit Weather"
+            document.title = `${this.selectedRace.name} ${this.selectedSession.name} Weather - Circuit Weather`;
+        } else if (this.selectedRace) {
+            // Race page: "Bahrain GP Weather - Circuit Weather"
+            document.title = `${this.selectedRace.name} Weather - Circuit Weather`;
+        } else {
+            // Default home page title
+            document.title = defaultTitle;
+        }
+    }
+
     selectRound(round) {
         const race = this.races.find(r => r.round === round);
         if (!race) return;
 
         this.selectedRace = race;
         this.selectedSession = null;
+        this.updatePageTitle();
         this.populateSessionSelect(race.sessions);
 
         if (race.location) {
@@ -440,6 +461,7 @@ export class CircuitWeatherApp {
 
         try {
             this.selectedSession = session;
+            this.updatePageTitle();
 
             // Calculate session time
             const sessionTime = new Date(`${session.date}T${session.time}`);
