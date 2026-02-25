@@ -1,11 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
-// Stub window and document globals before dynamic import
-// CountdownTimer constructor accesses window.matchMedia and document.getElementById
-vi.stubGlobal('window', {
-    matchMedia: vi.fn(() => ({ matches: false }))
-});
-
+// Stub document global before dynamic import
+// CountdownTimer constructor accesses document.getElementById
 vi.stubGlobal('document', {
     getElementById: vi.fn(() => null)
 });

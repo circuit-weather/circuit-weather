@@ -3,7 +3,6 @@ export class CountdownTimer {
         this.timer = null;
         this.targetTime = null;
         this.sessionName = '';
-        this.mobileQuery = window.matchMedia('(max-width: 768px)');
 
         // Bolt Optimization: Cache DOM elements
         this.ui = {
@@ -90,11 +89,7 @@ export class CountdownTimer {
 
     show(visible) {
         if (this.ui.card) this.ui.card.style.display = visible ? 'block' : 'none';
-        // Only show mobile countdown on mobile viewports
-        if (this.ui.mobileCard) {
-            const isMobile = this.mobileQuery.matches;
-            this.ui.mobileCard.style.display = (visible && isMobile) ? 'block' : 'none';
-        }
+        // Note: mobileCard visibility is managed by CircuitWeatherApp
     }
 
     stop() {
