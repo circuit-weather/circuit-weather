@@ -9,3 +9,7 @@
 ## 2026-10-26 - Testing DOM Reuse Logic
 **Learning:** When testing performance optimizations that rely on object reuse (like `reconcileLayers`), standard state assertions aren't enough. You must verify *identity preservation* (the object in the new state is the exact same instance as the old state) and *explicit cleanup* of unused objects to catch memory leaks.
 **Action:** Create mock objects before the operation, pass them into the initial state, and assert that the *same* mock objects exist in the final state. Verify `removeLayer` (or equivalent cleanup method) is called for objects that should be discarded.
+
+## 2026-05-22 - Testing DOM-Dependent Logic in Node Environment
+**Learning:** Testing frontend classes (like `ThemeManager`) that rely on browser globals (`window`, `document`, `localStorage`) in a Node-based test runner (Vitest) requires comprehensive global stubbing. Partial mocking of `window` (e.g., just `matchMedia`) can be sufficient if the code accesses other globals directly.
+**Action:** Use `vi.stubGlobal` to mock `document`, `window`, and `localStorage`. Ensure `document.documentElement` and event listeners are mocked to simulate browser behavior without a full DOM implementation (like jsdom) if the logic is simple enough.
