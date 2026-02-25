@@ -165,6 +165,21 @@ export class CircuitWeatherApp {
         return end;
     }
 
+    /**
+     * Finds the overall next session in the entire season across all rounds.
+     * @param {Date} now - The current date/time.
+     * @returns {Object|null} - { round, sessionId } or null.
+     */
+    getGloballyNextSession(now) {
+        for (const race of this.races) {
+            const next = race.sessions.find(s => getSessionStatus(s, now) === 'FUTURE');
+            if (next) {
+                return { round: race.round, sessionId: next.id };
+            }
+        }
+        return null;
+    }
+
     autoSelectNextRound() {
         const now = new Date();
         // Find next race with a session in the future
@@ -415,7 +430,7 @@ export class CircuitWeatherApp {
         const fragment = document.createDocumentFragment();
 
         const now = new Date();
-        let nextFound = false;
+        const globalNext = this.getGloballyNextSession(now);
 
         sessions.forEach(session => {
             const option = document.createElement('option');
@@ -433,12 +448,11 @@ export class CircuitWeatherApp {
 
             const label = session.name + timeStr;
             const status = getSessionStatus(session, now);
-            let isNext = false;
 
-            if (status === 'FUTURE' && !nextFound) {
-                isNext = true;
-                nextFound = true;
-            }
+            // Only mark as "(Next)" if it is the absolute next session globally
+            const isNext = !!(globalNext &&
+                         this.selectedRace?.round === globalNext.round &&
+                         session.id === globalNext.sessionId);
 
             option.textContent = formatStatusLabel(label, status, isNext);
             fragment.appendChild(option);
