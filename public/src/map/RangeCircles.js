@@ -9,6 +9,8 @@ export class RangeCircles {
         this.center = null;
         this.currentSteps = null;
         this.centerMarker = null;
+        // Bolt Optimization: Cache range color to avoid getComputedStyle thrashing
+        this.rangeColor = this.resolveRangeColor();
         this.bindEvents();
         this.updateToggleUI();
     }
@@ -52,7 +54,7 @@ export class RangeCircles {
         });
     }
 
-    getRangeColor() {
+    resolveRangeColor() {
         const style = getComputedStyle(document.documentElement);
         const color = style.getPropertyValue('--color-range-circle').trim();
         if (color) return color;
@@ -60,6 +62,10 @@ export class RangeCircles {
         // Fallback if CSS variables are not yet loaded (e.g. during early init)
         const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
         return isDark ? '#ff6b5b' : '#e10600';
+    }
+
+    updateTheme() {
+        this.rangeColor = this.resolveRangeColor();
     }
 
     draw(center) {
@@ -70,7 +76,7 @@ export class RangeCircles {
         const steps = this.calculateSteps(center);
         const stepsChanged = !this.currentSteps || JSON.stringify(steps) !== JSON.stringify(this.currentSteps);
 
-        const rangeColor = this.getRangeColor();
+        const rangeColor = this.rangeColor;
         const colorChanged = this.currentColor !== rangeColor;
 
         // Optimization: Only redraw if nothing material has changed
