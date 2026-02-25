@@ -10,8 +10,7 @@ export class CountdownTimer {
             session: document.getElementById('countdownSession'),
             mobileTimer: document.getElementById('mobileCountdownTimer'),
             mobileSession: document.getElementById('mobileCountdownSession'),
-            card: document.getElementById('countdownCard'),
-            mobileCard: document.getElementById('mobileCountdown')
+            card: document.getElementById('countdownCard')
         };
     }
 
