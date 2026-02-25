@@ -7,7 +7,6 @@ export class RangeCircles {
         this.labels = [];
         this.unit = this.getInitialUnit();
         this.center = null;
-        this.visibleCount = 4; // How many circles to show based on zoom
         this.currentSteps = null;
         this.centerMarker = null;
         this.bindEvents();
