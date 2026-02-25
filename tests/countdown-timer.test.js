@@ -77,7 +77,6 @@ describe('CountdownTimer', () => {
                 mobileTimer: { textContent: '', setAttribute: vi.fn(), removeAttribute: vi.fn() },
                 mobileSession: { textContent: '' },
                 card: { style: {} },
-                mobileCard: null,
             };
         });
 
@@ -126,7 +125,6 @@ describe('CountdownTimer', () => {
                 mobileTimer: { textContent: '', setAttribute: vi.fn(), removeAttribute: vi.fn() },
                 mobileSession: { textContent: '' },
                 card: { style: {} },
-                mobileCard: null,
             };
         });
 
@@ -191,7 +189,6 @@ describe('CountdownTimer', () => {
                 mobileTimer: { textContent: '', setAttribute: vi.fn(), removeAttribute: vi.fn() },
                 mobileSession: { textContent: '' },
                 card: { style: {} },
-                mobileCard: null,
             };
         });
 
@@ -223,7 +220,6 @@ describe('CountdownTimer', () => {
                 mobileTimer: null,
                 mobileSession: null,
                 card: { style: {} },
-                mobileCard: null,
             };
         });
 
