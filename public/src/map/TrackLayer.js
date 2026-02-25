@@ -6,6 +6,8 @@ export class TrackLayer {
         this.layer = null;
         this.currentCircuitId = null;
         this.cache = new Map();
+        // Bolt Optimization: Cache track color to avoid getComputedStyle thrashing
+        this.trackColor = this.resolveTrackColor();
         this.bindEvents();
     }
 
@@ -13,7 +15,7 @@ export class TrackLayer {
         this.map.on('zoomend', () => this.updateStyle());
     }
 
-    getTrackColor() {
+    resolveTrackColor() {
         const style = getComputedStyle(document.documentElement);
         const color = style.getPropertyValue('--color-range-circle').trim();
         if (color) return color;
@@ -21,6 +23,11 @@ export class TrackLayer {
         // Fallback if CSS variables are not yet loaded (e.g. during early init)
         const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
         return isDark ? '#ff6b5b' : '#e10600';
+    }
+
+    updateTheme() {
+        this.trackColor = this.resolveTrackColor();
+        this.updateStyle();
     }
 
     updateStyle() {
@@ -34,8 +41,8 @@ export class TrackLayer {
         else if (zoom >= 8) weight = 2;
         else weight = 1;
 
-        const trackColor = this.getTrackColor();
-        this.layer.setStyle({ weight: weight, color: trackColor });
+        // Use cached color
+        this.layer.setStyle({ weight: weight, color: this.trackColor });
     }
 
     async loadTrack(circuitId) {
@@ -86,7 +93,7 @@ export class TrackLayer {
             // Double check before rendering
             if (this.currentCircuitId !== circuitId) return;
 
-            const trackColor = this.getTrackColor();
+            const trackColor = this.trackColor;
             this.layer = L.geoJSON(data, {
                 style: {
                     interactive: false,

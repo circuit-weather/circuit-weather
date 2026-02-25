@@ -31,3 +31,7 @@
 ## 2024-05-26 - URL Parsing Overhead
 **Learning:** `new URL()` instantiation in high-traffic request handlers (like Referer/Origin validation) is significantly slower (measured ~20x) than direct string matching or pre-compiled regex checks.
 **Action:** Replace `new URL()` with `startsWith()` or Regex checks for origin validation in hot paths, especially in serverless environments where every millisecond of execution time counts.
+
+## 2024-05-27 - CSS Variable Access in Animation Loops
+**Learning:** `getComputedStyle(element).getPropertyValue()` forces a synchronous style recalculation (reflow), which causes significant layout thrashing when called inside frequent event handlers (like `zoomend` or `draw` loops).
+**Action:** Cache CSS variable values in component state and update them only when the theme changes (via `MutationObserver` or explicit callback), rather than querying the DOM on every render frame.

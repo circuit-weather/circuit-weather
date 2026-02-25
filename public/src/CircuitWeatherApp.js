@@ -83,11 +83,14 @@ export class CircuitWeatherApp {
             // Bolt Optimization: Initialized after overlays so they can respond to the initial theme apply
             this.themeManager = new ThemeManager((theme) => {
                 this.mapManager.setTheme(theme);
-                if (this.rangeCircles && this.currentCircuitCenter) {
-                    this.rangeCircles.draw(this.currentCircuitCenter);
+                if (this.rangeCircles) {
+                    this.rangeCircles.updateTheme();
+                    if (this.currentCircuitCenter) {
+                        this.rangeCircles.draw(this.currentCircuitCenter);
+                    }
                 }
                 if (this.trackLayer) {
-                    this.trackLayer.updateStyle();
+                    this.trackLayer.updateTheme();
                 }
             });
 
