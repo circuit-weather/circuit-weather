@@ -480,7 +480,6 @@ export class WeatherRadar {
                 layer.redraw();
             }
         });
-        console.log('[Radar] Retrying tiles after cooldown...');
     }
 
     showErrorToast(title, message, durationSec = 5) {
@@ -657,8 +656,6 @@ export class WeatherRadar {
      * Prevents the "Wall of Requests" (50+ pending) issue.
      */
     async preloadSequence() {
-        console.log('[Radar] Starting serial preload sequence...');
-
         // Order: Start from current frame + 1, wrap around.
         const sequence = [];
         for (let i = 0; i < this.frames.length; i++) {
