@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { F1API } from '../public/src/api/F1API.js';
 
 describe('F1API', () => {
@@ -36,7 +36,7 @@ describe('F1API', () => {
         });
 
         it('should correctly parse a sprint race weekend', () => {
-             const raceData = {
+            const raceData = {
                 round: "4",
                 raceName: "Azerbaijan Grand Prix",
                 Circuit: { Location: { country: "Azerbaijan" } },
@@ -67,7 +67,7 @@ describe('F1API', () => {
         });
 
         it('should handle missing sessions gracefully (e.g. Monaco usually has all, but maybe data is partial)', () => {
-             const raceData = {
+            const raceData = {
                 round: "6",
                 raceName: "Monaco Grand Prix",
                 Circuit: { Location: { country: "Monaco" } },
@@ -84,6 +84,88 @@ describe('F1API', () => {
 
             const sessionIds = result.sessions.map(s => s.id);
             expect(sessionIds).toEqual(['fp1', 'race']);
+        });
+    });
+
+    describe('getSchedule', () => {
+        let api;
+        let mockFetch;
+
+        beforeEach(() => {
+            vi.clearAllMocks();
+            mockFetch = vi.fn();
+            vi.stubGlobal('fetch', mockFetch);
+            api = new F1API();
+        });
+
+        afterEach(() => {
+            vi.restoreAllMocks();
+        });
+
+        it('fetches and returns races from the API', async () => {
+            const mockRaces = [
+                { round: '1', raceName: 'Bahrain GP' },
+                { round: '2', raceName: 'Saudi Arabian GP' },
+            ];
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: () => Promise.resolve({
+                    MRData: { RaceTable: { Races: mockRaces } }
+                }),
+            });
+
+            const result = await api.getSchedule();
+            expect(result).toEqual(mockRaces);
+            expect(mockFetch).toHaveBeenCalledTimes(1);
+        });
+
+        it('caches the result on subsequent calls', async () => {
+            const mockRaces = [{ round: '1', raceName: 'Test GP' }];
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: () => Promise.resolve({
+                    MRData: { RaceTable: { Races: mockRaces } }
+                }),
+            });
+
+            const first = await api.getSchedule();
+            const second = await api.getSchedule();
+
+            expect(first).toEqual(mockRaces);
+            expect(second).toEqual(mockRaces);
+            // fetch should only be called once due to caching
+            expect(mockFetch).toHaveBeenCalledTimes(1);
+        });
+
+        it('throws on non-OK HTTP response', async () => {
+            mockFetch.mockResolvedValueOnce({
+                ok: false,
+                status: 500,
+            });
+
+            await expect(api.getSchedule()).rejects.toThrow('HTTP 500');
+        });
+
+        it('returns empty array when RaceTable has no Races', async () => {
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: () => Promise.resolve({
+                    MRData: { RaceTable: {} }
+                }),
+            });
+
+            const result = await api.getSchedule();
+            expect(result).toEqual([]);
+        });
+
+        it('returns empty array when MRData is missing', async () => {
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: () => Promise.resolve({}),
+            });
+
+            const result = await api.getSchedule();
+            expect(result).toEqual([]);
         });
     });
 });
