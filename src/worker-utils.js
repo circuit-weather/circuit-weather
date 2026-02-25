@@ -6,7 +6,6 @@ export const PRODUCTION_DOMAIN = 'https://circuit-weather.racing';
 export const ALLOWED_ORIGIN_LOCALHOST_REGEX = /^http:\/\/localhost(:\d+)?(\/|$)/;
 export const ALLOWED_ORIGIN_127_REGEX = /^http:\/\/127\.0\.0\.1(:\d+)?(\/|$)/;
 export const ALLOWED_PREVIEW_REGEX = /^https:\/\/(.*\.)?circuit-weather\.pages\.dev(\/|$)/;
-export const ALLOWED_WORKER_REGEX = /^https:\/\/([a-zA-Z0-9-]+\-)?circuit-weather\.[a-zA-Z0-9-]+\.workers\.dev(\/|$)/;
 export const DOTFILE_REGEX = /(?:^|\/)\./;
 
 // Bolt Optimization: Reduced header set for API responses (removed HTML-specific headers)
@@ -41,8 +40,7 @@ export function getAllowedOrigin(request) {
     origin === PRODUCTION_DOMAIN ||
     ALLOWED_ORIGIN_LOCALHOST_REGEX.test(origin) ||
     ALLOWED_ORIGIN_127_REGEX.test(origin) ||
-    ALLOWED_PREVIEW_REGEX.test(origin) ||
-    ALLOWED_WORKER_REGEX.test(origin)
+    ALLOWED_PREVIEW_REGEX.test(origin)
   ) {
     return origin;
   }
@@ -54,8 +52,11 @@ export function getAllowedOrigin(request) {
  * Helper to validate request source (Hotlink Protection)
  * Checks Origin and Referer headers against allowlist.
  * Returns true if allowed, false if blocked.
+ *
+ * @param {Request} request
+ * @param {URL} requestUrl - The parsed URL of the current request (for Same-Origin check)
  */
-export function checkRequestSource(request) {
+export function checkRequestSource(request, requestUrl) {
   const origin = request.headers.get('Origin');
   const referer = request.headers.get('Referer');
   const secFetchSite = request.headers.get('Sec-Fetch-Site');
@@ -72,12 +73,15 @@ export function checkRequestSource(request) {
   // 2. Check Origin (Strict)
   // Bolt Optimization: Regexes now support optional trailing slash/path, which is fine for Origin too
   if (origin) {
-    if (
+    // SEC: Strict Same-Origin Check (allows self-hosted workers/previews)
+    if (requestUrl && origin === requestUrl.origin) {
+      // Allowed (Same-Origin)
+    }
+    else if (
       origin !== PRODUCTION_DOMAIN &&
       !ALLOWED_ORIGIN_LOCALHOST_REGEX.test(origin) &&
       !ALLOWED_ORIGIN_127_REGEX.test(origin) &&
-      !ALLOWED_PREVIEW_REGEX.test(origin) &&
-      !ALLOWED_WORKER_REGEX.test(origin)
+      !ALLOWED_PREVIEW_REGEX.test(origin)
     ) {
       return false; // Invalid Origin
     }
@@ -90,12 +94,15 @@ export function checkRequestSource(request) {
     if (referer === PRODUCTION_DOMAIN || referer.startsWith(PRODUCTION_DOMAIN + '/')) {
       // Allowed
     }
+    // SEC: Strict Same-Origin Check (allows self-hosted workers/previews)
+    else if (requestUrl && referer.startsWith(requestUrl.origin + '/')) {
+      // Allowed (Same-Origin)
+    }
     // 3b. Check regexes (updated to support full URL matching)
     else if (
       ALLOWED_ORIGIN_LOCALHOST_REGEX.test(referer) ||
       ALLOWED_ORIGIN_127_REGEX.test(referer) ||
-      ALLOWED_PREVIEW_REGEX.test(referer) ||
-      ALLOWED_WORKER_REGEX.test(referer)
+      ALLOWED_PREVIEW_REGEX.test(referer)
     ) {
       // Allowed
     } else {

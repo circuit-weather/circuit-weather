@@ -107,7 +107,7 @@ export default {
     }
 
     // SEC: Strict Origin/Referer Check (Hotlink Protection)
-    if (!checkRequestSource(request)) {
+    if (!checkRequestSource(request, url)) {
       return new Response(JSON.stringify({ error: 'Forbidden' }), {
         status: 403,
         headers: getErrorHeaders(request)

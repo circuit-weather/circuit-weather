@@ -59,3 +59,8 @@
 **Vulnerability:** The Worker Proxy validated `Content-Type` headers using partial substring matches (e.g., `.includes('application/json')`). This allowed deceptive MIME types like `application/jsonp` (executable JSONP) or `text/javascript-malicious` to bypass security checks, potentially enabling cache poisoning or XSS via MIME confusion.
 **Learning:** Using `includes()` or `startsWith()` for MIME type validation is insufficient as it matches malicious subtypes or extensions that share the same prefix/substring.
 **Prevention:** Always parse the `Content-Type` header (splitting by `;` to remove parameters) and perform a strict equality check against the allowed MIME type (e.g., `mime === 'application/json'`).
+
+## 2026-06-30 - Regex for Shared Domains (workers.dev)
+**Vulnerability:** The `ALLOWED_WORKER_REGEX` was too broad, allowing any Cloudflare user to deploy a worker with the script name `circuit-weather` and bypass hotlink protection. Relying on regexes for shared domains like `workers.dev` is inherently risky as it's difficult to restrict the tenant (subdomain) without blocking legitimate preview builds.
+**Learning:** For self-hosted or preview environments on shared domains, regex validation of the Origin header is often insufficient or overly complex. A strictly enforced "Same-Origin" check (`origin === request.url.origin`) is a more robust and secure pattern.
+**Prevention:** Replace regex allowlists with a dynamic Same-Origin check for supporting self-hosted instances. This automatically trusts the current deployment domain while blocking external domains, without needing complex pattern matching.
