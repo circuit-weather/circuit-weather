@@ -13,57 +13,78 @@ const createRequest = (headers = {}) => ({
   }
 });
 
+// Default target URL (Production)
+const PROD_URL = new URL('https://circuit-weather.racing/api/test');
+
 describe('Worker Security Utils', () => {
 
   describe('checkRequestSource (Hotlink Protection)', () => {
     it('allows requests with Sec-Fetch-Site: same-origin', () => {
       const req = createRequest({ 'Sec-Fetch-Site': 'same-origin' });
-      expect(checkRequestSource(req)).toBe(true);
+      expect(checkRequestSource(req, PROD_URL)).toBe(true);
     });
 
     it('allows requests with Sec-Fetch-Site: same-site', () => {
       const req = createRequest({ 'Sec-Fetch-Site': 'same-site' });
-      expect(checkRequestSource(req)).toBe(true);
+      expect(checkRequestSource(req, PROD_URL)).toBe(true);
     });
 
     it('allows requests with Sec-Fetch-Site: none (direct navigation)', () => {
       const req = createRequest({ 'Sec-Fetch-Site': 'none' });
-      expect(checkRequestSource(req)).toBe(true);
+      expect(checkRequestSource(req, PROD_URL)).toBe(true);
     });
 
     it('allows requests from Production Domain (Origin)', () => {
       const req = createRequest({ 'Origin': PRODUCTION_DOMAIN });
-      expect(checkRequestSource(req)).toBe(true);
+      expect(checkRequestSource(req, PROD_URL)).toBe(true);
     });
 
     it('allows requests from Production Domain (Referer)', () => {
       const req = createRequest({ 'Referer': PRODUCTION_DOMAIN });
-      expect(checkRequestSource(req)).toBe(true);
+      expect(checkRequestSource(req, PROD_URL)).toBe(true);
     });
 
     it('allows requests from Localhost (Origin)', () => {
       const req = createRequest({ 'Origin': 'http://localhost:8787' });
-      expect(checkRequestSource(req)).toBe(true);
+      expect(checkRequestSource(req, PROD_URL)).toBe(true);
     });
 
     it('allows requests from Localhost (Referer)', () => {
       const req = createRequest({ 'Referer': 'http://localhost:8787/' });
-      expect(checkRequestSource(req)).toBe(true);
+      expect(checkRequestSource(req, PROD_URL)).toBe(true);
+    });
+
+    it('allows Same-Origin requests from Workers.dev (Preview)', () => {
+      const origin = 'https://circuit-weather.user.workers.dev';
+      const req = createRequest({ 'Origin': origin });
+      const url = new URL(origin + '/api/test');
+
+      // Should be allowed because Origin matches Request URL Origin
+      expect(checkRequestSource(req, url)).toBe(true);
+    });
+
+    it('blocks Cross-Origin requests from Attacker Worker', () => {
+      const attackerOrigin = 'https://circuit-weather.attacker.workers.dev';
+      const targetUrl = PROD_URL; // Target is Production
+      const req = createRequest({ 'Origin': attackerOrigin });
+
+      // Should be blocked because it's not Same-Origin AND not in Allowlist (regex removed)
+      expect(checkRequestSource(req, targetUrl)).toBe(false);
     });
 
     it('blocks requests from unknown Origin', () => {
       const req = createRequest({ 'Origin': 'https://evil.com' });
-      expect(checkRequestSource(req)).toBe(false);
+      expect(checkRequestSource(req, PROD_URL)).toBe(false);
     });
 
     it('blocks requests from unknown Referer', () => {
       const req = createRequest({ 'Referer': 'https://evil.com/hack' });
-      expect(checkRequestSource(req)).toBe(false);
+      expect(checkRequestSource(req, PROD_URL)).toBe(false);
     });
 
     it('blocks requests with no identity headers (Script Scraping)', () => {
       const req = createRequest({}); // No Origin, Referer, or Sec-Fetch-Site
-      expect(checkRequestSource(req)).toBe(false);
+      expect(checkRequestSource(req, PROD_URL)).toBe(false);
     });
   });
 
