@@ -30,6 +30,14 @@ describe('status utils', () => {
             expect(getSessionStatus(session, live)).toBe('LIVE');
             expect(getSessionStatus(session, past)).toBe('PAST');
         });
+
+        it('returns UNKNOWN for invalid inputs', () => {
+            const now = new Date();
+            expect(getSessionStatus(null, now)).toBe('UNKNOWN');
+            expect(getSessionStatus({}, now)).toBe('UNKNOWN');
+            expect(getSessionStatus({ date: '2023-03-05' }, now)).toBe('UNKNOWN');
+            expect(getSessionStatus({ time: '15:00:00Z' }, now)).toBe('UNKNOWN');
+        });
     });
 
     describe('getRoundStatus', () => {
@@ -58,6 +66,24 @@ describe('status utils', () => {
         it('identifies PAST round', () => {
             const now = new Date('2023-03-05T19:01:00Z'); // Race ends at 15:00 + 4h = 19:00
             expect(getRoundStatus(race, now)).toBe('PAST');
+        });
+
+        it('returns UNKNOWN for invalid inputs', () => {
+            const now = new Date();
+            expect(getRoundStatus(null, now)).toBe('UNKNOWN');
+            expect(getRoundStatus({}, now)).toBe('UNKNOWN');
+            expect(getRoundStatus({ sessions: [] }, now)).toBe('UNKNOWN');
+        });
+
+        it('handles malformed sessions in round', () => {
+            const now = new Date();
+            const raceWithBadSessions = {
+                sessions: [
+                    { id: 'bad1' }, // Missing date/time
+                    { id: 'bad2', date: '2023-03-05' } // Missing time
+                ]
+            };
+            expect(getRoundStatus(raceWithBadSessions, now)).toBe('UNKNOWN');
         });
     });
 
