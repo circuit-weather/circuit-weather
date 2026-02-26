@@ -106,11 +106,12 @@ circuit-weather/
 npx wrangler dev
 
 # Deploy to Cloudflare
-# Deployment is automatic via Cloudflare Pages integration when changes are merged to the 'main' branch.
+# Deployment is automatic via Cloudflare Git Integration (Workers with Assets)
+# when changes are merged to the 'main' branch.
 # See "Git Workflow for Changes" below.
 ```
 
-**Note**: The project is connected to Cloudflare Pages via GitHub integration. Pushing to `main` triggers automatic deployment - no manual `wrangler deploy` needed.
+**Note**: The project is connected to Cloudflare via GitHub integration. Pushing to `main` triggers automatic deployment - no manual `wrangler deploy` needed.
 
 ### Git Workflow for Changes
 
@@ -258,7 +259,7 @@ mode = "smart"
 1. **RainViewer Zoom Limit** - Free tier limits to zoom level 7 (Jan 2026). We use **512px tiles** with `zoomOffset: -1` and `maxNativeZoom: 8` to emulate higher resolution while reducing requests.
 2. **Radar Opacity** - Tiles must be added with small opacity (0.01) initially to trigger loading.
 3. **F1 API Rate Limits** - Edge caching via Worker mitigates this.
-4. **Current Weather Rate Limits** - The live current weather widget is enabled via `FEATURE_FLAGS.enableCurrentWeather` in `public/src/config.js`, but be aware that it triggers an Open-Meteo API call per circuit change which may hit 429 rate limits during high traffic.
+4. **Current Weather Rate Limits** - The live current weather widget triggers an Open-Meteo API call per circuit change, which may hit 429 rate limits during high traffic.
 
 ---
 
