@@ -613,6 +613,32 @@ async function handleHealthRequest(request, env, ctx) {
     });
   }
 
+  // Caching Strategy: Cache the health check for 60 seconds
+  // Prevents abuse of the health endpoint as a DDOS vector against upstreams
+  const cacheKey = new Request(request.url);
+  const cache = caches.default;
+
+  let response = await cache.match(cacheKey);
+
+  if (response) {
+    const headers = new Headers(response.headers);
+    headers.set('X-Cache', 'HIT');
+
+    // Apply strict CORS
+    const allowedOrigin = getAllowedOrigin(request);
+    if (allowedOrigin) {
+      headers.set('Access-Control-Allow-Origin', allowedOrigin);
+      headers.set('Vary', 'Origin');
+    } else {
+      headers.delete('Access-Control-Allow-Origin');
+    }
+
+    return new Response(response.body, {
+      status: response.status,
+      headers
+    });
+  }
+
   const upstreams = {
     jolpica: 'https://api.jolpi.ca/ergast/f1/current.json',
     rainviewer: 'https://api.rainviewer.com/public/weather-maps.json',
@@ -635,15 +661,41 @@ async function handleHealthRequest(request, env, ctx) {
 
   await Promise.all(checks);
 
-  return new Response(JSON.stringify({
+  // Create cacheable response
+  const body = JSON.stringify({
     status: 'ok',
     version: '1.1.1',
     upstreams: results,
     timestamp: new Date().toISOString(),
     environment: env.ENVIRONMENT || 'production'
-  }), {
+  });
+
+  const headers = new Headers({
+    'Content-Type': 'application/json',
+    'Cache-Control': 'public, max-age=60', // Cache for 60s
+    'X-Cache': 'MISS',
+    ...API_SECURITY_HEADERS
+  });
+
+  const newResponse = new Response(body, {
     status: 200,
-    headers: getErrorHeaders(request)
+    headers: headers
+  });
+
+  // Save to cache
+  ctx.waitUntil(cache.put(cacheKey, newResponse.clone()));
+
+  // Return to client (strict CORS)
+  const clientHeaders = new Headers(headers);
+  const allowedOrigin = getAllowedOrigin(request);
+  if (allowedOrigin) {
+    clientHeaders.set('Access-Control-Allow-Origin', allowedOrigin);
+    clientHeaders.set('Vary', 'Origin');
+  }
+
+  return new Response(body, {
+    status: 200,
+    headers: clientHeaders
   });
 }
 
