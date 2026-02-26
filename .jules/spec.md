@@ -17,3 +17,7 @@
 ## 2026-01-02 - Mocking Leaflet Class Extension
 **Learning:** Testing components that use `L.Control.extend` (or `L.Class.extend`) requires mocking the inheritance mechanism, as `extend` returns a constructor, not an instance.
 **Action:** Mock `L.Control.extend` to return a class (constructor) that: 1. Accepts `options` and assigns them to `this.options`. 2. Mixes in the passed prototype methods (via `Object.assign`). 3. Explicitly implements base methods like `addTo` and `remove` which would normally be inherited from `L.Control`, to allow chaining and lifecycle management in tests.
+
+## 2026-06-25 - Testing Browser APIs in Node (without jsdom)
+**Learning:** `TrackLayer.js` relies on `document.documentElement.style.getPropertyValue` and `getComputedStyle` for theming logic. Since `vitest` runs in Node by default (faster than jsdom), these globals are missing.
+**Action:** Mock `document` and `getComputedStyle` using `vi.stubGlobal`. Crucially, `document` must be defined *before* importing the module under test if the module accesses `document` at the top level. Also, ensure `getComputedStyle` returns an object with a `getPropertyValue` method.
