@@ -17,10 +17,10 @@ export default defineConfig({
       // Coverage thresholds — CI will fail if coverage drops below these
       thresholds: {
         // Overall project thresholds (conservative baseline)
-        lines: 60,
-        functions: 70,
-        branches: 80,
-        statements: 60,
+        lines: 63,
+        functions: 72,
+        branches: 81,
+        statements: 63,
       },
       // Report formats: text for CI logs, lcov for future GitHub integration
       reporter: ['text', 'text-summary'],
