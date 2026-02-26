@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 // Mock config before importing WeatherClient
 vi.mock('../public/src/config.js', () => ({
@@ -209,6 +209,157 @@ describe('WeatherClient', () => {
                 expect(result.text).toBe(text);
                 expect(result.rotation).toBe(rotation);
             });
+        });
+    });
+
+    describe('getForecast', () => {
+        let mockFetch;
+
+        beforeEach(() => {
+            mockFetch = vi.fn();
+            vi.stubGlobal('fetch', mockFetch);
+            vi.useFakeTimers();
+            vi.setSystemTime(1700000000000); // Fixed "now"
+        });
+
+        afterEach(() => {
+            vi.useRealTimers();
+            vi.restoreAllMocks();
+        });
+
+        const makeMockResponse = (hourly, current = {}) => ({
+            ok: true,
+            json: () => Promise.resolve({
+                hourly,
+                current,
+                current_units: { temperature_2m: '°C', wind_speed_10m: 'km/h' },
+            }),
+        });
+
+        it('returns too_far when session is more than 16 days away', async () => {
+            const futureSession = new Date(Date.now() + 17 * 24 * 60 * 60 * 1000);
+            const result = await client.getForecast(0, 0, futureSession);
+
+            expect(result.available).toBe(false);
+            expect(result.reason).toBe('too_far');
+            expect(result.availableFrom).toBeInstanceOf(Date);
+            expect(mockFetch).not.toHaveBeenCalled();
+        });
+
+        it('fetches forecast and returns available data', async () => {
+            // Session 1 day from now (well within range)
+            const sessionTime = new Date(Date.now() + 1 * 24 * 60 * 60 * 1000);
+            const sessionTs = Math.floor(sessionTime.getTime() / 1000);
+
+            const hourly = {
+                time: [sessionTs],
+                temperature_2m: [22],
+                relative_humidity_2m: [55],
+                precipitation_probability: [10],
+                wind_speed_10m: [8],
+                wind_direction_10m: [180],
+                weather_code: [1],
+            };
+
+            mockFetch.mockResolvedValueOnce(makeMockResponse(hourly, { temperature_2m: 21 }));
+
+            const result = await client.getForecast(50.123456, 14.987654, sessionTime);
+
+            expect(result.available).toBe(true);
+            expect(result.hourly).toHaveLength(1);
+            expect(result.current).toEqual({ temperature_2m: 21 });
+            expect(mockFetch).toHaveBeenCalledOnce();
+        });
+
+        it('rounds coordinates to 2 decimal places in fetch URL', async () => {
+            const sessionTime = new Date(Date.now() + 1 * 24 * 60 * 60 * 1000);
+            const sessionTs = Math.floor(sessionTime.getTime() / 1000);
+
+            const hourly = {
+                time: [sessionTs],
+                temperature_2m: [22],
+                relative_humidity_2m: [55],
+                precipitation_probability: [10],
+                wind_speed_10m: [8],
+                wind_direction_10m: [180],
+                weather_code: [1],
+            };
+
+            mockFetch.mockResolvedValueOnce(makeMockResponse(hourly));
+
+            await client.getForecast(50.123456, 14.987654, sessionTime);
+
+            const calledUrl = mockFetch.mock.calls[0][0];
+            expect(calledUrl).toContain('latitude=50.12');
+            expect(calledUrl).toContain('longitude=14.99');
+        });
+
+        it('uses cache on second call with same coordinates', async () => {
+            const sessionTime = new Date(Date.now() + 1 * 24 * 60 * 60 * 1000);
+            const sessionTs = Math.floor(sessionTime.getTime() / 1000);
+
+            const hourly = {
+                time: [sessionTs],
+                temperature_2m: [22],
+                relative_humidity_2m: [55],
+                precipitation_probability: [10],
+                wind_speed_10m: [8],
+                wind_direction_10m: [180],
+                weather_code: [1],
+            };
+
+            mockFetch.mockResolvedValueOnce(makeMockResponse(hourly));
+
+            // First call — fetches
+            await client.getForecast(50.12, 14.99, sessionTime);
+            expect(mockFetch).toHaveBeenCalledOnce();
+
+            // Second call — should use cache, no new fetch
+            const result = await client.getForecast(50.12, 14.99, sessionTime);
+            expect(mockFetch).toHaveBeenCalledOnce(); // Still only 1 call
+            expect(result.available).toBe(true);
+        });
+
+        it('returns error result when fetch fails', async () => {
+            const sessionTime = new Date(Date.now() + 1 * 24 * 60 * 60 * 1000);
+            mockFetch.mockRejectedValueOnce(new Error('Network error'));
+
+            const result = await client.getForecast(0, 0, sessionTime);
+
+            expect(result.available).toBe(false);
+            expect(result.reason).toBe('error');
+        });
+
+        it('returns error result when response is not ok', async () => {
+            const sessionTime = new Date(Date.now() + 1 * 24 * 60 * 60 * 1000);
+            mockFetch.mockResolvedValueOnce({ ok: false, status: 500 });
+
+            const result = await client.getForecast(0, 0, sessionTime);
+
+            expect(result.available).toBe(false);
+            expect(result.reason).toBe('error');
+        });
+
+        it('returns too_far when hourly data is empty after filtering', async () => {
+            const sessionTime = new Date(Date.now() + 1 * 24 * 60 * 60 * 1000);
+
+            // Return data that won't match the session window
+            const hourly = {
+                time: [0], // Way in the past, won't match
+                temperature_2m: [22],
+                relative_humidity_2m: [55],
+                precipitation_probability: [10],
+                wind_speed_10m: [8],
+                wind_direction_10m: [180],
+                weather_code: [1],
+            };
+
+            mockFetch.mockResolvedValueOnce(makeMockResponse(hourly));
+
+            const result = await client.getForecast(0, 0, sessionTime);
+
+            expect(result.available).toBe(false);
+            expect(result.reason).toBe('too_far');
         });
     });
 });
