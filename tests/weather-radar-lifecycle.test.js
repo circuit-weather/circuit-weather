@@ -449,5 +449,25 @@ describe('WeatherRadar Lifecycle & Playback', () => {
             radar.updateTimeDisplay(null);
             // Should not throw or modify textContent
         });
+
+        it('shows "Forecast" when timestamp is > 60s in the future and no session time is set', () => {
+             // Set system time to 100000
+             const now = 100000 * 1000;
+             vi.setSystemTime(now);
+
+             // Ensure no session time
+             radar.sessionTime = null;
+
+             // Timestamp 61 seconds in the future
+             const futureTimestamp = 100000 + 61;
+
+             radar.updateTimeDisplay(futureTimestamp);
+
+             expect(radar.ui.relative.textContent).toBe('Forecast');
+             expect(radar.ui.slider.setAttribute).toHaveBeenCalledWith(
+                 'aria-valuetext',
+                 expect.stringContaining('Forecast')
+             );
+         });
     });
 });
