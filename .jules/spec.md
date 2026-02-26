@@ -13,3 +13,7 @@
 ## 2026-05-22 - Testing DOM-Dependent Logic in Node Environment
 **Learning:** Testing frontend classes (like `ThemeManager`) that rely on browser globals (`window`, `document`, `localStorage`) in a Node-based test runner (Vitest) requires comprehensive global stubbing. Partial mocking of `window` (e.g., just `matchMedia`) can be sufficient if the code accesses other globals directly.
 **Action:** Use `vi.stubGlobal` to mock `document`, `window`, and `localStorage`. Ensure `document.documentElement` and event listeners are mocked to simulate browser behavior without a full DOM implementation (like jsdom) if the logic is simple enough.
+
+## 2026-01-02 - Mocking Leaflet Class Extension
+**Learning:** Testing components that use `L.Control.extend` (or `L.Class.extend`) requires mocking the inheritance mechanism, as `extend` returns a constructor, not an instance.
+**Action:** Mock `L.Control.extend` to return a class (constructor) that: 1. Accepts `options` and assigns them to `this.options`. 2. Mixes in the passed prototype methods (via `Object.assign`). 3. Explicitly implements base methods like `addTo` and `remove` which would normally be inherited from `L.Control`, to allow chaining and lifecycle management in tests.
