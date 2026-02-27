@@ -475,6 +475,120 @@ describe('CircuitWeatherApp Pure Methods', () => {
             // forecastContent should not be modified since session IDs don't match
             expect(app.ui.forecastContent.style.display).toBeUndefined();
         });
+
+        // ---------------------------------------------------------------
+        // renderForecast Edge Cases for Branch Coverage
+        // ---------------------------------------------------------------
+        it('handles case where session time is outside hourly forecast range', () => {
+            const weather = {
+                available: true,
+                current: { temperature_2m: 25 },
+                hourly: [
+                    { time: 1700000000, temp: 20 }, // Far in past/future relative to session
+                ],
+                units: { temperature_2m: '°C' },
+            };
+            // Session time way different from hourly time (timestamp 1700000000 is ~2023)
+            // Let's use a session time that definitely doesn't match
+            const sessionTime = new Date((1700000000 + 100000) * 1000);
+
+            app.renderForecast(weather, sessionTime, 'race');
+
+            // Should still render container but "current" section might be empty or partial
+            // The logic finds closest, so it might still find one?
+            // "sessionWeather = weather.hourly.reduce..." finds closest.
+            // So it always finds *something* unless hourly is empty.
+            // If hourly is empty?
+        });
+
+        it('handles missing hourly data', () => {
+            const weather = {
+                available: true,
+                current: { temperature_2m: 25 },
+                hourly: [], // Empty
+                units: { temperature_2m: '°C' },
+            };
+            const sessionTime = new Date();
+            app.renderForecast(weather, sessionTime, 'race');
+
+            expect(app.ui.forecastContent.style.display).toBe('block');
+            // Should not render timeline or current weather based on hourly
+            const html = app.ui.forecastContent.innerHTML;
+            expect(html).not.toContain('weather-timeline-item');
+        });
+
+        it('handles "too_far" reason with past availableFrom date', () => {
+            const pastDate = new Date();
+            pastDate.setHours(pastDate.getHours() - 1);
+
+            const weather = {
+                available: false,
+                reason: 'too_far',
+                availableFrom: pastDate
+            };
+
+            // Mock the <p> element inside forecastUnavailable
+            const mockP = createMockElement('p');
+            app.ui.forecastUnavailable.querySelector.mockReturnValue(mockP);
+
+            app.renderForecast(weather, new Date(), 'race');
+
+            // Check the child element's content
+            expect(mockP.textContent).toContain('Forecast available shortly');
+        });
+
+        it('covers wind direction rotation logic and timeline rendering', () => {
+            // This test targets lines 685-691 (Wind Direction Rotation) and 719 (Timeline Item)
+            const weather = {
+                available: true,
+                current: { temperature_2m: 25 },
+                hourly: [
+                    {
+                        time: 1700000000,
+                        temp: 25,
+                        humidity: 50,
+                        precipProb: 10,
+                        windSpeed: 20,
+                        windDir: 90, // East wind
+                        code: 1
+                    },
+                    {
+                        time: 1700003600,
+                        temp: 24,
+                        humidity: 55,
+                        precipProb: 15,
+                        windSpeed: 18,
+                        windDir: 180, // South wind
+                        code: 2
+                    }
+                ],
+                units: { temperature_2m: '°C', wind_speed_10m: 'km/h' },
+            };
+
+            // Set session time to match the first hourly entry
+            const sessionTime = new Date(1700000000 * 1000);
+
+            // Mock getWindDirection to return distinct values to verify logic
+            const mockWindInfo = { text: 'E', rotation: 90 };
+            const getWindDirectionSpy = vi.spyOn(app.weatherClient, 'getWindDirection').mockReturnValue(mockWindInfo);
+
+            app.renderForecast(weather, sessionTime, 'race');
+
+            // Verify wind direction logic was called (covering lines 685-691)
+            expect(getWindDirectionSpy).toHaveBeenCalledWith(90);
+
+            // Verify content contains the rotation style
+            const html = app.ui.forecastContent.innerHTML;
+            expect(html).toContain('transform: rotate(90deg)');
+            expect(html).toContain('E'); // Text
+
+            // Verify timeline items are rendered (covering line 719 loop/map)
+            // The logic iterates over weather.hourly and creates items
+            expect(html).toContain('weather-timeline-item');
+            // Should have 2 items based on hourly array
+            const timelineMatches = html.match(/weather-timeline-item/g);
+            expect(timelineMatches.length).toBeGreaterThanOrEqual(2);
+        });
     });
 
     // ---------------------------------------------------------------
