@@ -724,6 +724,80 @@ describe('CircuitWeatherApp Pure Methods', () => {
     });
 
     // ---------------------------------------------------------------
+    // Weather Refresh Interval Logic
+    // ---------------------------------------------------------------
+    describe('Weather Refresh Interval Logic', () => {
+        beforeEach(() => {
+            vi.useFakeTimers();
+            // Mock updateLiveWeatherForCircuit to track calls
+            app.updateLiveWeatherForCircuit = vi.fn();
+            app.currentCircuitCenter = [10, 20];
+        });
+
+        afterEach(() => {
+            vi.useRealTimers();
+            if (app.weatherRefreshInterval) {
+                clearInterval(app.weatherRefreshInterval);
+            }
+        });
+
+        it('starts an interval that updates weather every 5 minutes', () => {
+            app.startWeatherRefreshInterval();
+
+            expect(app.updateLiveWeatherForCircuit).not.toHaveBeenCalled();
+
+            // Advance 5 minutes
+            vi.advanceTimersByTime(300000);
+            expect(app.updateLiveWeatherForCircuit).toHaveBeenCalledTimes(1);
+
+            // Advance another 5 minutes
+            vi.advanceTimersByTime(300000);
+            expect(app.updateLiveWeatherForCircuit).toHaveBeenCalledTimes(2);
+        });
+
+        it('clears existing interval before starting a new one', () => {
+            // Manually set a dummy interval ID
+            app.weatherRefreshInterval = 888;
+
+            // Spy on global.clearInterval
+            // Note: Since we use fake timers, we need to be careful.
+            // But here we just want to know if the function was called with the ID.
+            const clearIntervalSpy = vi.spyOn(global, 'clearInterval');
+
+            app.startWeatherRefreshInterval();
+
+            expect(clearIntervalSpy).toHaveBeenCalledWith(888);
+
+            expect(app.weatherRefreshInterval).not.toBe(888);
+            expect(app.weatherRefreshInterval).toBeTruthy();
+
+            clearIntervalSpy.mockRestore();
+        });
+
+        it('updateLiveWeatherForCircuit fetches forecast when circuit is selected', async () => {
+             // We need to restore the mock since we overwrote it in beforeEach
+             app.updateLiveWeatherForCircuit = CircuitWeatherApp.prototype.updateLiveWeatherForCircuit.bind(app);
+             app.currentCircuitCenter = [26.0, 50.0];
+
+             await app.updateLiveWeatherForCircuit();
+
+             expect(app.weatherClient.getForecast).toHaveBeenCalledWith(26.0, 50.0, expect.any(Date));
+             expect(app.mapWeatherWidget.update).toHaveBeenCalled();
+        });
+
+        it('updateLiveWeatherForCircuit returns early if no circuit is selected', async () => {
+            // We need to restore the mock since we overwrote it in beforeEach
+            app.updateLiveWeatherForCircuit = CircuitWeatherApp.prototype.updateLiveWeatherForCircuit.bind(app);
+            app.currentCircuitCenter = null;
+
+            await app.updateLiveWeatherForCircuit();
+
+            expect(app.weatherClient.getForecast).not.toHaveBeenCalled();
+            expect(app.mapWeatherWidget.update).not.toHaveBeenCalled();
+        });
+    });
+
+    // ---------------------------------------------------------------
     // Session Forecast Interval Logic
     // ---------------------------------------------------------------
     describe('Session Forecast Interval Logic', () => {
