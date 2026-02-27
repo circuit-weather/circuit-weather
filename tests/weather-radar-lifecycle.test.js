@@ -470,4 +470,32 @@ describe('WeatherRadar Lifecycle & Playback', () => {
              );
          });
     });
+
+    // ---------------------------------------------------------------
+    // getLayer - edge cases
+    // ---------------------------------------------------------------
+    describe('getLayer - edge cases', () => {
+         it('returns null if layer index is invalid', () => {
+              expect(radar.getLayer(-1)).toBeNull();
+              expect(radar.getLayer(999)).toBeNull();
+         });
+
+         it('lazily creates layer if not exists', () => {
+             radar.frames = [{ time: 100, path: '/p1', url: '/u1' }];
+             radar.layers = [null];
+
+             const layer = radar.getLayer(0);
+             expect(layer).toBeTruthy();
+             expect(radar.layers[0]).toBe(layer);
+         });
+
+         it('returns existing layer if already created', () => {
+              radar.frames = [{ time: 100, path: '/p1', url: '/u1' }];
+              const existingLayer = { id: 'mock' };
+              radar.layers = [existingLayer];
+
+              const layer = radar.getLayer(0);
+              expect(layer).toBe(existingLayer);
+         });
+    });
 });
