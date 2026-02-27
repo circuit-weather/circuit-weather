@@ -39,6 +39,25 @@
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#e10600">
 
+    <!-- Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "WebApplication",
+            "name": "Circuit Weather",
+            "url": "https://circuit-weather.racing",
+            "description": "Real-time weather radar and forecasts for every Formula 1 Grand Prix circuit. Track rain, wind, and conditions live during every race session.",
+            "applicationCategory": "SportsApplication",
+            "operatingSystem": "Any",
+            "offers": {
+                "@type": "Offer",
+                "price": "0",
+                "priceCurrency": "USD"
+            },
+            "featureList": "Live Weather Radar, Session Countdown, Track Maps, Hourly Forecasts"
+        }
+    </script>
+
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
