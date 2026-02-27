@@ -183,6 +183,103 @@ describe('Worker Logic', () => {
       expect(data.radar.past).toEqual([]);
       expect(res.headers.get('X-Upstream-Status')).toBe('500');
     });
+
+    it('handles fetch exceptions gracefully', async () => {
+      mockFetch.mockRejectedValueOnce(new Error('Network error'));
+
+      const req = createRequest('/api/radar');
+      const res = await worker.fetch(req, global.env, global.ctx);
+
+      expect(res.status).toBe(502);
+      const data = await res.json();
+      expect(data.error).toBe('Failed to fetch radar data');
+    });
+
+    it('blocks invalid content-type from upstream radar', async () => {
+      mockFetch.mockResolvedValueOnce(new Response(JSON.stringify({}), {
+        status: 200,
+        headers: { 'Content-Type': 'text/html' }
+      }));
+
+      const req = createRequest('/api/radar');
+      const res = await worker.fetch(req, global.env, global.ctx);
+
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      // Returns empty radar response for invalid content type
+      expect(data.radar.past).toEqual([]);
+    });
+
+    it('sets CORS headers when valid Origin is provided', async () => {
+      mockFetch.mockResolvedValueOnce(new Response(JSON.stringify({ radar: { past: [] } }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      }));
+
+      const req = createRequest('/api/radar', {
+        headers: { 'Origin': 'https://circuit-weather.racing' }
+      });
+      const res = await worker.fetch(req, global.env, global.ctx);
+
+      expect(res.status).toBe(200);
+      expect(res.headers.get('Access-Control-Allow-Origin')).toBe('https://circuit-weather.racing');
+      expect(res.headers.get('Vary')).toBe('Origin');
+    });
+
+    it('handles upstream rate limit (429) for radar', async () => {
+      mockFetch.mockResolvedValueOnce(new Response(JSON.stringify({ error: 'Rate Limit' }), {
+        status: 429,
+        headers: { 'Content-Type': 'application/json', 'Retry-After': '60' }
+      }));
+
+      const req = createRequest('/api/radar');
+      const res = await worker.fetch(req, global.env, global.ctx);
+
+      expect(res.status).toBe(429);
+      const data = await res.json();
+      expect(data.error).toBe('Upstream Rate Limit');
+      expect(res.headers.get('Retry-After')).toBe('60');
+    });
+
+    it('returns cached response for radar with valid origin', async () => {
+        const cachedData = { version: '2.0', host: 'https://x.com', radar: {} };
+        const cacheResponse = new Response(JSON.stringify(cachedData), {
+          headers: { 'Content-Type': 'application/json' }
+        });
+        cacheStore.set('https://api.rainviewer.com/public/weather-maps.json', cacheResponse);
+
+        const req = createRequest('/api/radar', {
+          headers: { 'Origin': 'https://circuit-weather.racing' }
+        });
+        const res = await worker.fetch(req, global.env, global.ctx);
+
+        expect(res.status).toBe(200);
+        expect(await res.json()).toEqual(cachedData);
+        expect(res.headers.get('X-Cache')).toBe('HIT');
+        expect(res.headers.get('Access-Control-Allow-Origin')).toBe('https://circuit-weather.racing');
+        expect(mockFetch).not.toHaveBeenCalled();
+      });
+
+    it('blocks radar request with invalid fetch destination', async () => {
+      const req = new Request('https://circuit-weather.racing/api/radar', {
+        headers: { 'Sec-Fetch-Dest': 'script', 'Sec-Fetch-Site': 'same-origin' }
+      });
+      const res = await worker.fetch(req, global.env, global.ctx);
+      expect(res.status).toBe(403);
+    });
+
+    it('returns radar response without CORS when origin is missing', async () => {
+        mockFetch.mockResolvedValueOnce(new Response(JSON.stringify({ radar: { past: [] } }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        }));
+
+        const req = createRequest('/api/radar'); // No Origin header by default
+        const res = await worker.fetch(req, global.env, global.ctx);
+
+        expect(res.status).toBe(200);
+        expect(res.headers.get('Access-Control-Allow-Origin')).toBeNull();
+      });
   });
 
   describe('Track Proxy (/api/track/*)', () => {

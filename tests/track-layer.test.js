@@ -40,6 +40,15 @@ vi.stubGlobal('document', documentMock);
 import { TrackLayer } from '../public/src/map/TrackLayer.js';
 import { CIRCUIT_MAP, CONFIG } from '../public/src/config.js';
 
+// Mock config to allow overriding frozen properties
+vi.mock('../public/src/config.js', async (importOriginal) => {
+    const actual = await importOriginal();
+    return {
+        ...actual,
+        CONFIG: { ...actual.CONFIG }
+    };
+});
+
 describe('TrackLayer', () => {
     let trackLayer;
     let mapMock;
@@ -201,5 +210,34 @@ describe('TrackLayer', () => {
         expect(mapMock.removeLayer).toHaveBeenCalledWith(layerMock);
         expect(trackLayer.layer).toBeNull();
         expect(trackLayer.currentCircuitId).toBeNull();
+    });
+
+    it('should handle unknown circuit ID', async () => {
+        const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+        await trackLayer.loadTrack('non_existent_circuit');
+        expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('No track map found'));
+        expect(fetchMock).not.toHaveBeenCalled();
+    });
+
+    it('should support full URL for trackApi (GitHub mode)', async () => {
+        const originalApi = CONFIG.trackApi;
+        // @ts-ignore - overriding for test
+        CONFIG.trackApi = 'https://raw.githubusercontent.com/bacinger/f1-circuits/master/circuits';
+
+        const circuitId = 'monaco';
+        const geoJsonId = CIRCUIT_MAP[circuitId];
+        fetchMock.mockResolvedValueOnce({
+            ok: true,
+            json: async () => ({ type: 'FeatureCollection', features: [] })
+        });
+
+        await trackLayer.loadTrack(circuitId);
+
+        // Should include .geojson extension in GitHub mode
+        expect(fetchMock).toHaveBeenCalledWith(`${CONFIG.trackApi}/${geoJsonId}.geojson`);
+
+        // Restore
+        // @ts-ignore
+        CONFIG.trackApi = originalApi;
     });
 });

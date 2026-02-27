@@ -607,7 +607,7 @@ export class CircuitWeatherApp {
     }
 
 
-    renderForecast(weather, sessionTime, sessionId) {
+    renderForecast(weather, sessionTime, sessionId, overrideNow = null) {
         // Updates Sidebar Forecast Panel ONLY
 
         // Guard: If no session is currently selected (e.g., user switched rounds while fetching),
@@ -631,7 +631,7 @@ export class CircuitWeatherApp {
                 const p = unavailable.querySelector('p');
                 if (p) {
                     if (weather.reason === 'too_far' && weather.availableFrom) {
-                        const now = new Date();
+                        const now = overrideNow || new Date();
                         if (weather.availableFrom > now) {
                             const dateStr = weather.availableFrom.toLocaleDateString(undefined, {
                                 month: 'short',

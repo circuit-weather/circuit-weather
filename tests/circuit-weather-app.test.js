@@ -1,25 +1,31 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // --- Global Mocks (same pattern as seo.test.js) ---
-const createMockElement = (id) => ({
-    id,
-    addEventListener: vi.fn(),
-    classList: {
-        add: vi.fn(),
-        remove: vi.fn(),
-        contains: vi.fn().mockReturnValue(true),
-        toggle: vi.fn(),
-    },
-    style: {},
-    setAttribute: vi.fn(),
-    removeAttribute: vi.fn(),
-    textContent: '',
-    value: '',
-    innerHTML: '',
-    disabled: false,
-    querySelector: vi.fn(() => createMockElement('child')),
-    appendChild: vi.fn(),
-});
+const createMockElement = (id) => {
+    const el = {
+        id,
+        addEventListener: vi.fn(),
+        classList: {
+            add: vi.fn(),
+            remove: vi.fn(),
+            contains: vi.fn().mockReturnValue(true),
+            toggle: vi.fn(),
+        },
+        style: {},
+        setAttribute: vi.fn(),
+        removeAttribute: vi.fn(),
+        textContent: '',
+        value: '',
+        innerHTML: '',
+        disabled: false,
+        querySelector: vi.fn((sel) => {
+            if (sel === 'p') return el._p || (el._p = createMockElement('p'));
+            return createMockElement('child');
+        }),
+        appendChild: vi.fn(),
+    };
+    return el;
+};
 
 const documentMock = {
     title: 'Circuit Weather — Live F1 Race Weather Radar & Forecasts',
@@ -474,6 +480,63 @@ describe('CircuitWeatherApp Pure Methods', () => {
 
             // forecastContent should not be modified since session IDs don't match
             expect(app.ui.forecastContent.style.display).toBeUndefined();
+        });
+
+        it('handles "too_far" with availableFrom in the past', () => {
+            const now = new Date('2024-04-02');
+            const weather = {
+                available: false,
+                reason: 'too_far',
+                availableFrom: new Date('2024-04-01')
+            };
+            app.renderForecast(weather, new Date(), 'race', now);
+
+            const p = app.ui.forecastUnavailable.querySelector('p');
+            expect(p.textContent).toBe('Forecast available shortly');
+        });
+
+        it('handles other unavailable reasons', () => {
+            const weather = { available: false, reason: 'unknown' };
+            app.renderForecast(weather, new Date(), 'race');
+
+            const p = app.ui.forecastUnavailable.querySelector('p');
+            expect(p.textContent).toBe('Forecast available closer to session');
+        });
+
+        it('handles "too_far" with availableFrom in the future', () => {
+             const now = new Date('2024-03-31');
+             const weather = {
+                 available: false,
+                 reason: 'too_far',
+                 availableFrom: new Date('2024-04-01T10:00:00')
+             };
+             app.renderForecast(weather, new Date(), 'race', now);
+
+             const p = app.ui.forecastUnavailable.querySelector('p');
+             // .toLocaleDateString output varies by locale, but we expect it to contain the date
+             expect(p.textContent).toContain('Forecast available from');
+        });
+
+        it('finds the closest hourly forecast point', () => {
+            const sessionTime = new Date('2024-03-01T14:00:00Z');
+            const weather = {
+                available: true,
+                current: { temperature_2m: 25 },
+                hourly: [
+                    { time: Math.floor(new Date('2024-03-01T13:00:00Z').getTime() / 1000), temp: 24, windSpeed: 10, windDir: 0, precipProb: 0, code: 0 },
+                    { time: Math.floor(new Date('2024-03-01T14:15:00Z').getTime() / 1000), temp: 26, windSpeed: 10, windDir: 0, precipProb: 0, code: 0 },
+                    { time: Math.floor(new Date('2024-03-01T16:00:00Z').getTime() / 1000), temp: 28, windSpeed: 10, windDir: 0, precipProb: 0, code: 0 },
+                ],
+                units: { temperature_2m: '°C', wind_speed_10m: 'km/h' }
+            };
+
+            app.renderForecast(weather, sessionTime, 'race');
+
+            // The closest point is 14:15 (26 degrees)
+            // We check that the primary temperature value is 26
+            expect(app.ui.forecastContent.innerHTML).toContain('id="weatherTemp">26°C</span>');
+            // 24 should still be in the timeline, but not the primary temp
+            expect(app.ui.forecastContent.innerHTML).toContain('<div>24°</div>');
         });
     });
 
