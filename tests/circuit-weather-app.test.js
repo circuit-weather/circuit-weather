@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 // --- Global Mocks (same pattern as seo.test.js) ---
 const createMockElement = (id) => {
@@ -592,6 +592,102 @@ describe('CircuitWeatherApp Pure Methods', () => {
             app.ui.loadingOverlay = createMockElement('loadingOverlay');
             app.showLoading(false);
             expect(app.ui.loadingOverlay.classList.toggle).toHaveBeenCalledWith('visible', false);
+        });
+    });
+
+    // ---------------------------------------------------------------
+    // autoSelectNextRound — outcome: correct round and session selected based on time
+    // ---------------------------------------------------------------
+    describe('autoSelectNextRound', () => {
+        beforeEach(() => {
+            // Setup races with sessions
+            app.races = [
+                {
+                    round: '1',
+                    name: 'Past GP',
+                    date: '2024-01-01',
+                    sessions: [{ id: 'race', date: '2024-01-01', time: '14:00:00' }]
+                },
+                {
+                    round: '2',
+                    name: 'Next GP',
+                    date: '2024-02-01',
+                    sessions: [
+                        { id: 'fp1', date: '2024-02-01', time: '10:00:00' },
+                        { id: 'race', date: '2024-02-03', time: '14:00:00' }
+                    ]
+                }
+            ];
+
+            // Mock UI elements
+            app.ui.roundSelect = createMockElement('roundSelect');
+            app.ui.sessionSelect = createMockElement('sessionSelect');
+
+            // Spy on methods called to verify side effects without executing them
+            vi.spyOn(app, 'selectRound').mockImplementation(() => {});
+            vi.spyOn(app, 'selectSession').mockImplementation(() => {});
+        });
+
+        afterEach(() => {
+            vi.useRealTimers();
+        });
+
+        it('selects the next race and its first future session', () => {
+            // Time: Before Round 2 FP1
+            vi.useFakeTimers();
+            vi.setSystemTime(new Date('2024-01-15T12:00:00Z'));
+
+            app.autoSelectNextRound();
+
+            expect(app.selectRound).toHaveBeenCalledWith('2');
+            // The value is set on the DOM element too
+            expect(app.ui.roundSelect.value).toBe('2');
+
+            expect(app.selectSession).toHaveBeenCalledWith('fp1');
+            expect(app.ui.sessionSelect.value).toBe('fp1');
+        });
+
+        it('selects the next session if strictly between sessions (logic check)', () => {
+            // Time: After FP1 (Feb 1) but before Race (Feb 3)
+            vi.useFakeTimers();
+            vi.setSystemTime(new Date('2024-02-02T12:00:00Z'));
+
+            app.autoSelectNextRound();
+
+            expect(app.selectRound).toHaveBeenCalledWith('2');
+            expect(app.selectSession).toHaveBeenCalledWith('race');
+        });
+
+        it('does nothing if no future races exist', () => {
+            // Time: Way in the future
+            vi.useFakeTimers();
+            vi.setSystemTime(new Date('2025-01-01T00:00:00Z'));
+
+            app.autoSelectNextRound();
+
+            expect(app.selectRound).not.toHaveBeenCalled();
+            expect(app.selectSession).not.toHaveBeenCalled();
+        });
+
+        it('ignores sessions with missing date or time', () => {
+            // Setup a race with sessions missing time
+            app.races = [
+                 {
+                    round: '1',
+                    date: '2024-02-01',
+                    sessions: [
+                        { id: 'fp1', date: '2024-02-01' }, // Missing time
+                        { id: 'fp2', date: '2024-02-01', time: '14:00:00' }
+                    ]
+                 }
+            ];
+            vi.useFakeTimers();
+            vi.setSystemTime(new Date('2024-01-01T00:00:00Z')); // Before everything
+
+            app.autoSelectNextRound();
+
+            // Should skip fp1 and pick fp2
+            expect(app.selectSession).toHaveBeenCalledWith('fp2');
         });
     });
 });
