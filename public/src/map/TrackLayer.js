@@ -51,7 +51,6 @@ export class TrackLayer {
 
         const geoJsonId = CIRCUIT_MAP[circuitId];
         if (!geoJsonId) {
-            console.log(`No track map found for circuit: ${circuitId}`);
             return;
         }
 
