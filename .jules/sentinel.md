@@ -64,3 +64,8 @@
 **Vulnerability:** The `ALLOWED_WORKER_REGEX` was too broad, allowing any Cloudflare user to deploy a worker with the script name `circuit-weather` and bypass hotlink protection. Relying on regexes for shared domains like `workers.dev` is inherently risky as it's difficult to restrict the tenant (subdomain) without blocking legitimate preview builds.
 **Learning:** For self-hosted or preview environments on shared domains, regex validation of the Origin header is often insufficient or overly complex. A strictly enforced "Same-Origin" check (`origin === request.url.origin`) is a more robust and secure pattern.
 **Prevention:** Replace regex allowlists with a dynamic Same-Origin check for supporting self-hosted instances. This automatically trusts the current deployment domain while blocking external domains, without needing complex pattern matching.
+
+## 2024-05-31 - [High] Regex Spoofing Vulnerability in Preview URL Validation
+**Vulnerability:** The CORS and Hotlink Protection in `src/worker-utils.js` used a vulnerable regex `^https:\/\/(.*\.)?circuit-weather\.pages\.dev(\/|$)` to validate Cloudflare Pages preview environments. The `(.*\.)?` group matched greedily and allowed attackers to prepend their own domains (e.g., `https://attacker.com/foo.circuit-weather.pages.dev/`), completely bypassing origin checks.
+**Learning:** Wildcards like `.*` in origin-matching regular expressions are inherently dangerous and prone to prefix/suffix spoofing attacks, especially when validating dynamic environments like `.workers.dev` or `.pages.dev`.
+**Prevention:** Always restrict subdomains to valid characters (e.g., `[a-zA-Z0-9-]+`) rather than using greedy matchers. Use `(?:[a-zA-Z0-9-]+\.)*` to safely validate multiple subdomains.

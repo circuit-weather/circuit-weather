@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import {
   checkRequestSource,
   checkFetchDest,
+  getAllowedOrigin,
   VALID_API_PATH_REGEX,
   PRODUCTION_DOMAIN
 } from '../src/worker-utils.js';
@@ -104,6 +105,37 @@ describe('Worker Security Utils', () => {
 
     it('blocks iframe destination', () => {
       expect(checkFetchDest(createRequest({ 'Sec-Fetch-Dest': 'iframe' }))).toBe(false);
+    });
+  });
+
+  describe('Malicious Origin Validation', () => {
+    it('rejects attacker origins spoofing preview domain via path', () => {
+      const attackerOrigin = 'https://attacker.com/foo.circuit-weather.pages.dev/';
+      const targetUrl = PROD_URL;
+      const req = createRequest({ 'Origin': attackerOrigin });
+
+      expect(checkRequestSource(req, targetUrl)).toBe(false);
+      expect(getAllowedOrigin(req)).toBe(null);
+    });
+
+    it('rejects attacker origins spoofing preview domain via subdomain', () => {
+      const attackerOrigin = 'https://circuit-weather.pages.dev.attacker.com/';
+      const targetUrl = PROD_URL;
+      const req = createRequest({ 'Origin': attackerOrigin });
+
+      expect(checkRequestSource(req, targetUrl)).toBe(false);
+      expect(getAllowedOrigin(req)).toBe(null);
+    });
+
+    it('allows legitimate preview domains', () => {
+      const origin = 'https://feature-branch.circuit-weather.pages.dev';
+      const targetUrl = PROD_URL;
+      const req = createRequest({ 'Origin': origin });
+
+      // In checkRequestSource, cross-origin requests matching preview regex without same-origin check:
+      // Oh wait, checkRequestSource checks Origin against ALLOWED_PREVIEW_REGEX, so it returns true!
+      expect(checkRequestSource(req, targetUrl)).toBe(true);
+      expect(getAllowedOrigin(req)).toBe(origin);
     });
   });
 
