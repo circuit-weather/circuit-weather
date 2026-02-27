@@ -330,12 +330,7 @@ npm test
 
 #### Test Coverage
 
-The CI pipeline enforces strict code coverage thresholds. Pull requests will fail if coverage drops below these values:
-
-- **Statements**: 87.14%
-- **Branches**: 90.34%
-- **Functions**: 92.25%
-- **Lines**: 87.14%
+The CI pipeline enforces strict code coverage thresholds defined in `vitest.config.js`. Pull requests will fail if coverage drops below these values.
 
 To verify coverage locally before pushing:
 
