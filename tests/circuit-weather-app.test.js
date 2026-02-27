@@ -160,7 +160,7 @@ vi.mock('../public/src/routing/Router.js', () => ({
 vi.mock('../public/src/map/MapManager.js', () => ({
     MapManager: vi.fn().mockImplementation(function () {
         return {
-            init: vi.fn(),
+            init: vi.fn(() => ({})), // init returns map instance
             setView: vi.fn(),
             setTheme: vi.fn()
         }
@@ -179,6 +179,7 @@ const { TrackLayer } = await import('../public/src/map/TrackLayer.js');
 const { WeatherRadar } = await import('../public/src/map/WeatherRadar.js');
 const { RecentreControl } = await import('../public/src/map/RecentreControl.js');
 const { MapWeatherWidget } = await import('../public/src/map/MapWeatherWidget.js');
+const { ThemeManager } = await import('../public/src/ui/ThemeManager.js');
 
 describe('CircuitWeatherApp Pure Methods', () => {
     let app;
@@ -801,6 +802,156 @@ describe('CircuitWeatherApp Pure Methods', () => {
              app.startSessionForecastInterval();
              vi.advanceTimersByTime(900000);
              expect(app.updateSessionForecast).not.toHaveBeenCalled();
+        });
+    });
+
+    // ---------------------------------------------------------------
+    // Init Lifecycle
+    // ---------------------------------------------------------------
+    describe('init Lifecycle', () => {
+        let app;
+
+        beforeEach(() => {
+            vi.clearAllMocks();
+            app = new CircuitWeatherApp();
+            app.showLoading = vi.fn();
+            app.autoSelectNextRound = vi.fn();
+            app.populateRoundSelect = vi.fn();
+            app.startWeatherRefreshInterval = vi.fn();
+            app.startSessionForecastInterval = vi.fn();
+
+            // Mock map init to return a map-like object so that RangeCircles etc don't crash
+            app.mapManager.init = vi.fn().mockReturnValue({});
+        });
+
+        it('successfully initializes components and fetches schedule', async () => {
+            // Act
+            await app.init();
+
+            // Assert
+            expect(app.showLoading).toHaveBeenCalledWith(true, expect.any(String));
+            expect(app.mapManager.init).toHaveBeenCalled();
+            expect(app.f1Api.getSchedule).toHaveBeenCalled();
+            expect(app.autoSelectNextRound).toHaveBeenCalled();
+            expect(app.startWeatherRefreshInterval).toHaveBeenCalled();
+            expect(app.startSessionForecastInterval).toHaveBeenCalled();
+            expect(app.showLoading).toHaveBeenCalledWith(false);
+        });
+
+        it('initializes with route params instead of auto-select', async () => {
+            // Mock route params
+            app.router.getParams = vi.fn().mockReturnValue({ round: '1' });
+            app.handleRoute = vi.fn().mockResolvedValue();
+
+            // Act
+            await app.init();
+
+            // Assert
+            expect(app.handleRoute).toHaveBeenCalledWith({ round: '1' });
+            expect(app.autoSelectNextRound).not.toHaveBeenCalled();
+        });
+
+        it('catches initialization errors and renders error state', async () => {
+            // Arrange
+            const error = new Error('Network failure');
+            app.f1Api.getSchedule.mockRejectedValue(error);
+            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+            // Stub renderError to avoid complex DOM interactions
+            const renderErrorSpy = vi.spyOn(app, 'renderError').mockImplementation(() => {});
+
+            // Act
+            await app.init();
+
+            // Assert
+            expect(renderErrorSpy).toHaveBeenCalledWith('Failed to initialize application.');
+            expect(app.showLoading).toHaveBeenCalledWith(false);
+
+            consoleSpy.mockRestore();
+        });
+
+        it('initializes ThemeManager and sets theme callback', async () => {
+            // Act
+            await app.init();
+
+            // Assert
+            expect(ThemeManager).toHaveBeenCalled();
+            // Verify callback sets map theme
+            const callback = ThemeManager.mock.calls[0][0];
+            const theme = 'dark';
+            callback(theme);
+            expect(app.mapManager.setTheme).toHaveBeenCalledWith(theme);
+        });
+
+        it('wires up retry button in renderError', () => {
+             // We need to test renderError specifically here, not init
+             // This tests the side-effects of renderError on the DOM
+             const mockContent = createMockElement('content');
+             const mockBtn = createMockElement('btn');
+
+             // Setup querySelector mocks
+             vi.spyOn(document, 'querySelector').mockReturnValue(mockContent);
+             mockContent.querySelector.mockReturnValue(mockBtn);
+
+             app.renderError('Boom');
+
+             expect(mockContent.innerHTML).toContain('Connection Failed');
+             // Verify click listener is added
+             expect(mockBtn.addEventListener).toHaveBeenCalledWith('click', expect.any(Function));
+
+             // Verify the listener reloads the page
+             const clickHandler = mockBtn.addEventListener.mock.calls[0][1];
+             clickHandler();
+             expect(window.location.reload).toHaveBeenCalled();
+        });
+
+        it('renderError gracefully handles missing sidebar content', () => {
+             // Mock querySelector to return null
+             vi.spyOn(document, 'querySelector').mockReturnValue(null);
+
+             // Should not throw
+             expect(() => app.renderError('Boom')).not.toThrow();
+        });
+
+        it('renderError gracefully handles missing retry button', () => {
+             const mockContent = createMockElement('content');
+             // Mock content found, but button missing
+             vi.spyOn(document, 'querySelector').mockReturnValue(mockContent);
+             mockContent.querySelector.mockReturnValue(null);
+
+             // Should not throw
+             expect(() => app.renderError('Boom')).not.toThrow();
+             expect(mockContent.innerHTML).toContain('Connection Failed');
+        });
+
+        it('ThemeManager callback handles missing currentCircuitCenter', async () => {
+            await app.init();
+            const callback = ThemeManager.mock.calls[0][0];
+
+            // Set currentCircuitCenter to null (default state)
+            app.currentCircuitCenter = null;
+            app.rangeCircles.draw = vi.fn();
+
+            // Invoke callback
+            callback('light');
+
+            // Should update theme but NOT draw circles
+            expect(app.mapManager.setTheme).toHaveBeenCalledWith('light');
+            expect(app.rangeCircles.updateTheme).toHaveBeenCalled();
+            expect(app.rangeCircles.draw).not.toHaveBeenCalled();
+        });
+
+        it('ThemeManager callback handles missing rangeCircles', async () => {
+            await app.init();
+            const callback = ThemeManager.mock.calls[0][0];
+
+            // Set rangeCircles to null
+            app.rangeCircles = null;
+
+            // Invoke callback
+            // Should not throw
+            expect(() => callback('light')).not.toThrow();
+            expect(app.mapManager.setTheme).toHaveBeenCalledWith('light');
         });
     });
 });
