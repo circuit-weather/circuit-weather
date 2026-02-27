@@ -221,4 +221,41 @@ describe('RangeCircles Logic', () => {
             expect(rangeCircles.rangeColor).toBe('#e10600');
         });
     });
+
+    describe('Visibility & Clearing', () => {
+        beforeEach(() => {
+            rangeCircles = new RangeCircles(mockMap);
+        });
+
+        it('clears all layers including center marker', () => {
+            // Setup layers
+            const mockLabel = { addTo: vi.fn(), remove: vi.fn() };
+            rangeCircles.circles = [mockCircle];
+            rangeCircles.labels = [mockLabel];
+            rangeCircles.centerMarker = mockMarker;
+
+            rangeCircles.clear();
+
+            expect(mockMap.removeLayer).toHaveBeenCalledWith(mockCircle);
+            expect(mockMap.removeLayer).toHaveBeenCalledWith(mockLabel);
+            expect(mockMap.removeLayer).toHaveBeenCalledWith(mockMarker);
+            expect(rangeCircles.circles).toHaveLength(0);
+            expect(rangeCircles.labels).toHaveLength(0);
+            expect(rangeCircles.centerMarker).toBeNull();
+        });
+
+        it('updates visibility by redrawing if center is set', () => {
+            const spy = vi.spyOn(rangeCircles, 'draw').mockImplementation(() => {});
+
+            // No center -> no draw
+            rangeCircles.center = null;
+            rangeCircles.updateVisibility();
+            expect(spy).not.toHaveBeenCalled();
+
+            // Center set -> draw called
+            rangeCircles.center = [0, 0];
+            rangeCircles.updateVisibility();
+            expect(spy).toHaveBeenCalledWith([0, 0]);
+        });
+    });
 });
