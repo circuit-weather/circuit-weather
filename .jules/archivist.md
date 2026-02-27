@@ -111,5 +111,5 @@ Prevention: Review vitest.config.js when updating testing documentation.
 2026-02-28 - Test Coverage Threshold Drift
 Issue: The actual test coverage thresholds in `vitest.config.js` were stricter (Statements: 92.36%, Branches: 92.71%, Functions: 96.12%, Lines: 92.36%) than those documented in `AGENTS.md` (Statements: 87.14%, etc.).
 Cause: `vitest.config.js` was updated to enforce higher quality standards, but the documentation was not updated to reflect this change.
-Fix: Updated `AGENTS.md` to match the exact values in `vitest.config.js`.
-Prevention: When updating CI configuration, especially regarding quality gates, always grep for the old values in the documentation to ensure consistency.
+Fix: Removed explicit thresholds from `AGENTS.md` in favor of referencing `vitest.config.js` as the single source of truth.
+Prevention: Avoid duplicating configuration values in documentation; reference the config file instead.
