@@ -39,12 +39,24 @@ vi.stubGlobal('L', {
     latLng: vi.fn((lat, lng) => ({ lat, lng })),
 });
 
+// Mock DOM elements for UI tests
+const mockUnitOption = {
+    dataset: { unit: 'metric' },
+    classList: {
+        toggle: vi.fn(),
+    },
+    setAttribute: vi.fn(),
+    closest: vi.fn((selector) => selector === '.unit-option' ? mockUnitOption : null),
+};
+
+const mockToggle = {
+    addEventListener: vi.fn(),
+};
+
 // Mock DOM
 vi.stubGlobal('document', {
-    getElementById: vi.fn(() => ({
-        addEventListener: vi.fn(),
-    })),
-    querySelectorAll: vi.fn(() => []),
+    getElementById: vi.fn((id) => id === 'unitToggle' ? mockToggle : null),
+    querySelectorAll: vi.fn(() => [mockUnitOption]),
     documentElement: {
         getAttribute: vi.fn(() => 'dark'),
         style: {
@@ -85,6 +97,11 @@ describe('RangeCircles Logic', () => {
             value: 'en-US',
             configurable: true
         });
+
+        // Reset DOM mocks
+        mockUnitOption.classList.toggle.mockClear();
+        mockUnitOption.setAttribute.mockClear();
+        mockToggle.addEventListener.mockClear();
     });
 
     describe('Initialization & Unit Detection', () => {
@@ -107,11 +124,31 @@ describe('RangeCircles Logic', () => {
         });
 
         it('binds events correctly', () => {
-            const addEventListener = vi.fn();
-            document.getElementById.mockReturnValue({ addEventListener });
             rangeCircles = new RangeCircles(mockMap);
-            expect(addEventListener).toHaveBeenCalledWith('click', expect.any(Function));
+            expect(mockToggle.addEventListener).toHaveBeenCalledWith('click', expect.any(Function));
             expect(mockMap.on).toHaveBeenCalledWith('zoomend', expect.any(Function));
+        });
+
+        it('updates UI classes based on active unit', () => {
+            SafeStorage.getItem.mockReturnValue('metric');
+            rangeCircles = new RangeCircles(mockMap);
+
+            // mockUnitOption.dataset.unit is 'metric'
+            expect(mockUnitOption.classList.toggle).toHaveBeenCalledWith('active', true);
+            expect(mockUnitOption.setAttribute).toHaveBeenCalledWith('aria-pressed', true);
+        });
+
+        it('handles UI interaction for unit toggle', () => {
+            rangeCircles = new RangeCircles(mockMap);
+
+            // Get the click handler
+            const clickHandler = mockToggle.addEventListener.mock.calls[0][1];
+
+            // Simulate click on option
+            clickHandler({ target: mockUnitOption });
+
+            expect(SafeStorage.setItem).toHaveBeenCalledWith('unit', 'metric');
+            expect(rangeCircles.unit).toBe('metric');
         });
     });
 
@@ -141,7 +178,6 @@ describe('RangeCircles Logic', () => {
             rangeCircles.draw(center1);
 
             const initialCallCount = L.circle.mock.calls.length;
-            const initialAddCount = mockCircle.addTo.mock.calls.length;
 
             // Update with slightly different center to force redraw but keep step count same
             const center2 = [51.51, -0.11];
@@ -152,6 +188,20 @@ describe('RangeCircles Logic', () => {
 
             // Should update existing circles
             expect(mockCircle.setLatLng).toHaveBeenCalledWith(center2);
+        });
+
+        it('skips redraw when state is unchanged', () => {
+            const center = [51.5, -0.1];
+            rangeCircles.draw(center);
+
+            // Reset mocks to track subsequent calls
+            mockCircle.setLatLng.mockClear();
+
+            // Call draw again with same parameters
+            rangeCircles.draw(center);
+
+            // Should not have updated anything
+            expect(mockCircle.setLatLng).not.toHaveBeenCalled();
         });
 
         it('removes extra circles when steps decrease', () => {
