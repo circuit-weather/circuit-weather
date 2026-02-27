@@ -101,3 +101,9 @@ Issue: The `enableCurrentWeather` flag was removed entirely after code review re
 Cause: Code review feedback indicated that the flag was unnecessary and the feature should be permanently enabled.
 Fix: Removed `FEATURE_FLAGS` from `public/src/config.js` and removed conditional checks in `public/src/CircuitWeatherApp.js`.
 Prevention: Revisit feature flags periodically to remove those that are no longer needed (e.g., permanently enabled features).
+
+2026-02-27 - Undocumented Test Coverage Thresholds
+Issue: vitest.config.js enforces strict coverage thresholds (Lines: 87.14%, etc.) which are not documented in AGENTS.md, causing CI failures for unaware contributors.
+Cause: CI configuration (vitest.config.js) was updated without reflecting changes in developer documentation.
+Fix: Documented the specific thresholds and the verification command in AGENTS.md.
+Prevention: Review vitest.config.js when updating testing documentation.

@@ -328,6 +328,21 @@ This project uses `vitest` for unit testing the Worker logic.
 npm test
 ```
 
+#### Test Coverage
+
+The CI pipeline enforces strict code coverage thresholds. Pull requests will fail if coverage drops below these values:
+
+- **Statements**: 87.14%
+- **Branches**: 90.34%
+- **Functions**: 92.25%
+- **Lines**: 87.14%
+
+To verify coverage locally before pushing:
+
+```bash
+npm run test:coverage
+```
+
 ### Terminating Background Processes
 
 > **Important for Google Antigravity**: The `send_command_input` tool's `Terminate` flag does **NOT** reliably kill background processes on this system. It may report success but the process continues running and holding its port. **Do not use it.** Instead, always use the following manual methods to stop background processes:
