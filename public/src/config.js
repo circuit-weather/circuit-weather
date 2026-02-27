@@ -32,7 +32,7 @@ export const COUNTRY_CODES = {
     'Hungary': 'hu', 'Italy': 'it', 'Japan': 'jp', 'Mexico': 'mx',
     'Monaco': 'mc', 'Netherlands': 'nl', 'Qatar': 'qa', 'Saudi Arabia': 'sa',
     'Singapore': 'sg', 'Spain': 'es', 'UAE': 'ae', 'UK': 'gb',
-    'USA': 'us', 'United States': 'us', 'Las Vegas': 'us', 'Miami': 'us',
+    'USA': 'us', 'United States': 'us',
 };
 // SEC: Prevent runtime tampering with country codes
 Object.freeze(COUNTRY_CODES);
