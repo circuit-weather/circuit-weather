@@ -401,6 +401,54 @@ describe('Worker Logic', () => {
 
       expect(res.status).toBe(502); // Bad Gateway
     });
+
+    it('returns safe JSON error for upstream 404 (non-image) and caches it', async () => {
+      // Simulate upstream returning HTML error page (e.g. standard 404)
+      mockFetch.mockResolvedValueOnce(new Response('<html>Not Found</html>', {
+        status: 404,
+        headers: { 'Content-Type': 'text/html' }
+      }));
+
+      const req = createRequest('/api/tiles/v2/radar/missing.png');
+      const res = await worker.fetch(req, global.env, global.ctx);
+
+      expect(res.status).toBe(404);
+      expect(res.headers.get('Content-Type')).toBe('application/json');
+      const body = await res.json();
+      expect(body.error).toBe('Tile not found');
+
+      // Verify caching behavior
+      expect(mockCache.put).toHaveBeenCalled();
+    });
+
+    it('handles upstream rate limit (429) correctly', async () => {
+      mockFetch.mockResolvedValueOnce(new Response('Rate Limit', {
+        status: 429,
+        headers: {
+          'Retry-After': '120',
+          'Content-Type': 'text/plain'
+        }
+      }));
+
+      const req = createRequest('/api/tiles/v2/radar/limit.png');
+      const res = await worker.fetch(req, global.env, global.ctx);
+
+      expect(res.status).toBe(429);
+      expect(res.headers.get('Retry-After')).toBe('120');
+      expect(res.headers.get('X-Upstream-Status')).toBe('429');
+    });
+
+    it('handles upstream server error (500) correctly', async () => {
+      mockFetch.mockResolvedValueOnce(new Response('Server Error', {
+        status: 500
+      }));
+
+      const req = createRequest('/api/tiles/v2/radar/error.png');
+      const res = await worker.fetch(req, global.env, global.ctx);
+
+      expect(res.status).toBe(500);
+      expect(res.headers.get('X-Upstream-Status')).toBe('500');
+    });
   });
 
 });
