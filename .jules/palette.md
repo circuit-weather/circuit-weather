@@ -28,3 +28,7 @@
 ## 2025-03-02 - Dropdown Status Indicators
 **Learning:** Dropdown menus often hide critical context (like "Is this happening now?"). Adding status indicators directly to the option label significantly improves decision-making speed.
 **Action:** For time-sensitive lists, always pre-calculate and append status indicators (LIVE, NEXT) to the visible label, rather than relying on external badges that might be missed.
+
+## 2025-03-04 - Deep Linking Visibility
+**Learning:** Users often want to share specific views (e.g., a specific race/session) but mobile browser UI (bottom bars, minimal address bars) makes the URL less accessible.
+**Action:** Expose explicit 'Share' actions near the relevant context (e.g., race title) to encourage deep linking and make sharing effortless.
