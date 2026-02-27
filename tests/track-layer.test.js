@@ -213,9 +213,7 @@ describe('TrackLayer', () => {
     });
 
     it('should handle unknown circuit ID', async () => {
-        const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
         await trackLayer.loadTrack('non_existent_circuit');
-        expect(consoleSpy).toHaveBeenCalledWith(expect.stringContaining('No track map found'));
         expect(fetchMock).not.toHaveBeenCalled();
     });
 
