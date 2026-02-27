@@ -57,9 +57,6 @@ export class CircuitWeatherApp {
             mobileCountryFlag: document.getElementById('mobileCountryFlag'),
             mobileRaceInfoName: document.getElementById('mobileRaceInfoName'),
             mobileRaceInfoCircuit: document.getElementById('mobileRaceInfoCircuit'),
-            // Share Buttons
-            shareBtn: document.getElementById('shareBtn'),
-            mobileShareBtn: document.getElementById('mobileShareBtn'),
         };
     }
 
@@ -271,52 +268,6 @@ export class CircuitWeatherApp {
 
         // Note: Weather updates are now pinned to circuit, not triggered by map pan
         // This reduces API calls significantly - weather only updates when circuit changes or every 5 minutes
-
-        if (this.ui.shareBtn) {
-            this.ui.shareBtn.addEventListener('click', (e) => this.handleShare(e.currentTarget));
-        }
-        if (this.ui.mobileShareBtn) {
-            this.ui.mobileShareBtn.addEventListener('click', (e) => this.handleShare(e.currentTarget));
-        }
-    }
-
-    async handleShare(btn) {
-        if (!navigator.clipboard) {
-            console.warn('Clipboard API not available');
-            return;
-        }
-
-        try {
-            await navigator.clipboard.writeText(window.location.href);
-
-            // Store original icon
-            if (!btn.dataset.originalIcon) {
-                btn.dataset.originalIcon = btn.innerHTML;
-            }
-
-            // Swap to success icon
-            btn.innerHTML = `
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
-            `;
-            btn.setAttribute('aria-label', 'Copied!');
-            btn.setAttribute('title', 'Copied!');
-            btn.style.color = 'var(--color-primary)';
-
-            // Revert after timeout
-            setTimeout(() => {
-                if (btn.dataset.originalIcon) {
-                    btn.innerHTML = btn.dataset.originalIcon;
-                }
-                btn.setAttribute('aria-label', 'Share URL');
-                btn.setAttribute('title', 'Share URL');
-                btn.style.color = '';
-            }, 2000);
-
-        } catch (err) {
-            console.error('Failed to copy URL:', err);
-        }
     }
 
     populateRoundSelect() {
