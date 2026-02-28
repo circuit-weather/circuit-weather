@@ -204,6 +204,13 @@ describe('PrivacyModal', () => {
             expect(html).toContain('rel="noopener noreferrer"');
         });
 
+
+        it('returns block unchanged if it starts with < but not h or ul', () => {
+            const md = '**bold**';
+            const html = modal.parseMarkdown(md);
+            expect(html).toBe('<strong>bold</strong>');
+        });
+
         it('returns empty string for empty input', () => {
             const html = modal.parseMarkdown('');
             expect(html).toBe('');
@@ -220,6 +227,28 @@ describe('PrivacyModal', () => {
             expect(modal.closeBtn.addEventListener).toHaveBeenCalledWith('click', expect.any(Function));
             expect(modal.backdrop.addEventListener).toHaveBeenCalledWith('click', expect.any(Function));
             expect(document.addEventListener).toHaveBeenCalledWith('keydown', expect.any(Function));
+        });
+
+
+        it('triggers open when privacy link is clicked', () => {
+            const openSpy = vi.spyOn(modal, 'open').mockImplementation(() => {});
+            const clickHandler = modal.privacyLink.addEventListener.mock.calls.find(call => call[0] === 'click')[1];
+            clickHandler({ preventDefault: vi.fn() });
+            expect(openSpy).toHaveBeenCalled();
+        });
+
+        it('closes when backdrop is clicked directly', () => {
+            const closeSpy = vi.spyOn(modal, 'close').mockImplementation(() => {});
+            const clickHandler = modal.backdrop.addEventListener.mock.calls.find(call => call[0] === 'click')[1];
+            clickHandler({ target: modal.backdrop });
+            expect(closeSpy).toHaveBeenCalled();
+        });
+
+        it('does not close when inner content of backdrop is clicked', () => {
+            const closeSpy = vi.spyOn(modal, 'close').mockImplementation(() => {});
+            const clickHandler = modal.backdrop.addEventListener.mock.calls.find(call => call[0] === 'click')[1];
+            clickHandler({ target: {} });
+            expect(closeSpy).not.toHaveBeenCalled();
         });
 
         it('opens, fetches content, and locks focus', async () => {
