@@ -68,29 +68,6 @@
    Base Styles
    =================================== */
 
-/* Skip Link */
-.skip-link {
-    position: absolute;
-    top: 0;
-    left: 50%;
-    transform: translate(-50%, -100%);
-    background: var(--color-surface);
-    color: var(--color-primary);
-    padding: var(--spacing-sm) var(--spacing-md);
-    border-radius: 0 0 var(--radius-md) var(--radius-md);
-    box-shadow: var(--shadow-md);
-    z-index: 9999;
-    font-weight: 600;
-    text-decoration: none;
-    transition: transform var(--transition-normal);
-}
-
-.skip-link:focus-visible {
-    transform: translate(-50%, 0);
-    outline: 2px solid var(--color-primary);
-    outline-offset: 2px;
-}
-
 *,
 *::before,
 *::after {
