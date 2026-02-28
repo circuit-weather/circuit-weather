@@ -253,7 +253,7 @@ export class CircuitWeatherApp {
                     
                     // Clear the forecast update since no session is active anymore
                     this.stopSessionForecastInterval();
-                    this.updatePageTitle();
+                    this.updatePageMetadata();
                 }
             });
         }
@@ -313,22 +313,56 @@ export class CircuitWeatherApp {
     }
 
     /**
-     * Updates the document title for SEO and browser history context.
-     * Dynamic titles improve SERP visibility and help users navigate via history.
+     * Updates the document title and metadata for SEO and browser history context.
+     * Dynamic titles and meta tags improve SERP visibility and rich social sharing.
      */
-    updatePageTitle() {
+    updatePageMetadata() {
         const defaultTitle = 'Circuit Weather — Live F1 Race Weather Radar & Forecasts';
+        const defaultDesc = 'Stay ahead of the rain with Circuit Weather. Real-time weather radar, live forecasts, and session countdowns for every Formula 1 Grand Prix circuit worldwide.';
+
+        let title = defaultTitle;
+        let desc = defaultDesc;
 
         if (this.selectedRace && this.selectedSession) {
             // Specific session page: "Bahrain GP Qualifying Weather - Circuit Weather"
-            document.title = `${this.selectedRace.name} ${this.selectedSession.name} Weather - Circuit Weather`;
+            title = `${this.selectedRace.name} ${this.selectedSession.name} Weather - Circuit Weather`;
+            desc = `Live weather radar, forecasts, and session countdowns for the ${this.selectedRace.name} ${this.selectedSession.name}. Track rain and conditions in real-time.`;
         } else if (this.selectedRace) {
             // Race page: "Bahrain GP Weather - Circuit Weather"
-            document.title = `${this.selectedRace.name} Weather - Circuit Weather`;
+            title = `${this.selectedRace.name} Weather - Circuit Weather`;
+            desc = `Live weather radar and forecasts for the ${this.selectedRace.name}. Track rain and conditions live during every Grand Prix session.`;
         } else {
             // Default home page title
-            document.title = defaultTitle;
+            title = defaultTitle;
         }
+
+        // Update Title: Crucial for primary SERP display and browser history
+        document.title = title;
+
+        // Update Meta Description: Improves click-through rates from search results by providing context
+        const metaDesc = document.querySelector('meta[name="description"]');
+        if (metaDesc) metaDesc.setAttribute('content', desc);
+
+        // Update Canonical URL: Prevents duplicate content issues across different routing states
+        const canonical = document.querySelector('link[rel="canonical"]');
+        if (canonical) canonical.setAttribute('href', window.location.href);
+
+        // Update Open Graph (OG) Tags: Enhances rich previews when shared on platforms like Facebook/LinkedIn
+        const ogTitle = document.querySelector('meta[property="og:title"]');
+        if (ogTitle) ogTitle.setAttribute('content', title);
+
+        const ogDesc = document.querySelector('meta[property="og:description"]');
+        if (ogDesc) ogDesc.setAttribute('content', desc);
+
+        const ogUrl = document.querySelector('meta[property="og:url"]');
+        if (ogUrl) ogUrl.setAttribute('content', window.location.href);
+
+        // Update Twitter Card Tags: Enhances rich previews when shared on Twitter
+        const twitterTitle = document.querySelector('meta[name="twitter:title"]');
+        if (twitterTitle) twitterTitle.setAttribute('content', title);
+
+        const twitterDesc = document.querySelector('meta[name="twitter:description"]');
+        if (twitterDesc) twitterDesc.setAttribute('content', desc);
     }
 
     selectRound(round) {
@@ -337,7 +371,7 @@ export class CircuitWeatherApp {
 
         this.selectedRace = race;
         this.selectedSession = null;
-        this.updatePageTitle();
+        this.updatePageMetadata();
         this.populateSessionSelect(race.sessions);
 
         if (race.location) {
@@ -475,7 +509,7 @@ export class CircuitWeatherApp {
 
         try {
             this.selectedSession = session;
-            this.updatePageTitle();
+            this.updatePageMetadata();
 
             // Calculate session time
             const sessionTime = new Date(`${session.date}T${session.time}`);
