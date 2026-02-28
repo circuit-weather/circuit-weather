@@ -252,8 +252,6 @@ mode = "smart"
 
 > **Do NOT add a "Skip to content" link.** This is a single-page application with only one view — there is no repeated navigation block to skip past. A "Skip to content" link serves no purpose here and should not be introduced.
 
-* **Skip Links**: As mentioned above, do **not** implement "Skip to Content" links. This is a single-page application and does not have the kind of repetitive navigation that requires skipping.
-
 ---
 
 ## Known Limitations

@@ -1,11 +1,6 @@
 ## 2024-05-22 - Skip Link Implementation
 **Learning:** While the "no custom CSS" rule is important for design system consistency, fundamental accessibility features like "Skip to Content" links require specific positioning and visual behavior (visible only on focus) that may not exist in standard utility classes.
 **Action:** Treat accessibility utility classes (like `.skip-link`) as necessary infrastructure rather than "custom design," and ensure they reuse existing design tokens (colors, spacing) to blend in.
-
-## 2026-02-28 - Skip Link Incompatibility
-**Learning:** This project is a single-page application without lengthy, repetitive navigation that precedes main content. Because there is no content to "skip from" or "skip to" in this layout, a "Skip to Content" link is unnecessary and explicitly unwanted.
-**Action:** Do not implement "Skip to Content" links in this project. Focus accessibility efforts on interactive elements within the existing single-page layout (like focus traps and ARIA states).
-
 ## 2026-02-19 - Domain-Specific Weather Metrics
 **Learning:** For F1 racing, generic weather icons (like 'Cloudy') are insufficient; precise Precipitation Probability (Rain %) is critical for strategy. Users prefer explicit percentage over vague icons.
 **Action:** Always include actionable metrics (Rain %, Wind Speed) in primary widgets for specialized domains, using consistent color coding (Blue for Rain).
