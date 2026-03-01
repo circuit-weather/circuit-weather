@@ -4,6 +4,9 @@
 export const MapWeatherWidget = L.Control.extend({
     onAdd: function (map) {
         this._div = L.DomUtil.create('div', 'leaflet-control-weather');
+        this._div.setAttribute('role', 'region');
+        this._div.setAttribute('aria-label', 'Current circuit weather');
+        this._div.setAttribute('tabindex', '0');
 
         // Bolt Optimization: Create DOM structure once and reuse
         // This avoids frequent innerHTML parsing/GC during map interactions
