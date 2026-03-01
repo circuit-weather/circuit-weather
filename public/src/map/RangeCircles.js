@@ -187,7 +187,6 @@ export class RangeCircles {
         // Calculate dynamic steps based on current view bounds
         const bounds = this.map.getBounds();
         const north = bounds.getNorth();
-        const centerLat = center[0];
 
         // Approximate visible radius in meters (center to top edge)
         // This is a rough heuristic to ensure rings fit on screen
