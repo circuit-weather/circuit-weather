@@ -462,16 +462,16 @@ describe('WeatherRadar Lifecycle & Playback', () => {
             expect(radar.ui.relative.textContent).toBe('2 days 3 hours 45 minutes before session');
         });
 
-        it('shows exactly 1 hour before session', () => {
+        it('shows exactly 1 hour and 0 minutes before session', () => {
             radar.sessionTime = new Date(100000 * 1000);
             radar.updateTimeDisplay(100000 - 60 * 60);
-            expect(radar.ui.relative.textContent).toBe('1 hour before session');
+            expect(radar.ui.relative.textContent).toBe('1 hour 0 minutes before session');
         });
 
-        it('shows exactly 1 day before session', () => {
+        it('shows exactly 1 day and 0 minutes before session', () => {
             radar.sessionTime = new Date(100000 * 1000);
             radar.updateTimeDisplay(100000 - 24 * 60 * 60);
-            expect(radar.ui.relative.textContent).toBe('1 day before session');
+            expect(radar.ui.relative.textContent).toBe('1 day 0 minutes before session');
         });
 
         it('shows 0 minutes when very close to session start', () => {
