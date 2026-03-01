@@ -243,3 +243,243 @@ describe('SidebarManager', () => {
         });
     });
 });
+
+    describe('initialization robustness', () => {
+        it('handles missing DOM elements safely during bindEvents', () => {
+            // Delete mock elements to simulate them missing from the DOM
+            Object.keys(elements).forEach(key => delete elements[key]);
+            document.getElementById = vi.fn(() => null);
+
+            // Re-instantiate manager, which calls constructor -> bindEvents
+            expect(() => {
+                const safeManager = new SidebarManager();
+                expect(safeManager.sidebar).toBeNull();
+                expect(safeManager.toggleBtn).toBeNull();
+            }).not.toThrow();
+        });
+
+
+    describe('interaction events missing elements', () => {
+        beforeEach(() => {
+            vi.clearAllMocks();
+        });
+
+        it('handles missing DOM elements safely during bindEvents', () => {
+            document.getElementById.mockImplementation(() => null);
+            expect(() => {
+                const safeManager = new SidebarManager();
+                expect(safeManager.sidebar).toBeNull();
+                expect(safeManager.toggleBtn).toBeNull();
+            }).not.toThrow();
+        });
+
+        it('covers missing mobileMenuBtn inside open and close', () => {
+            document.getElementById.mockImplementation((id) => {
+                if (id === 'sidebar') return createMockElement('sidebar');
+                return null;
+            });
+            const sm = new SidebarManager();
+            sm.open(); // Hits missing toggleBtn/mobileMenuBtn branches inside open
+            expect(sm.isOpen).toBe(true);
+
+            sm.close(); // Hits missing toggleBtn/mobileMenuBtn branches inside close
+            expect(sm.isOpen).toBe(false);
+        });
+
+        it('covers close branch with mobileMenuBtn hidden (display: none)', () => {
+            const m = createMockElement('mobileMenuBtn');
+            document.getElementById.mockImplementation((id) => {
+                if (id === 'sidebar') return createMockElement('sidebar');
+                if (id === 'mobileMenuBtn') return m;
+                return null;
+            });
+            window.getComputedStyle.mockImplementation(() => ({ display: 'none' }));
+            const sm = new SidebarManager();
+            sm.open();
+            sm.close();
+            expect(m.focus).not.toHaveBeenCalled();
+
+            window.getComputedStyle.mockImplementation(() => ({ display: 'block' }));
+        });
+
+        it('handles null offsetParent for elements during focusTrap', () => {
+            const first = createMockElement('first');
+            first.offsetParent = null; // simulate hidden
+            const second = createMockElement('second');
+            second.offsetParent = document;
+
+            document.getElementById.mockImplementation((id) => {
+                if (id === 'sidebar') return createMockElement('sidebar');
+                return null;
+            });
+
+            const sm = new SidebarManager();
+            sm.sidebar = createMockElement('sidebar');
+            sm.sidebar.querySelectorAll = vi.fn(() => [first, second]);
+
+            const event = { key: 'Tab', shiftKey: false, preventDefault: vi.fn() };
+            document.activeElement = second;
+            sm.handleFocusTrap(event);
+
+            expect(first.offsetParent).toBeNull();
+        });
+    });
+
+
+    describe('interaction events missing elements extra coverage', () => {
+        beforeEach(() => {
+            vi.clearAllMocks();
+        });
+
+        it('covers early return for toggleBtn click handler inside bindEvents', () => {
+            // we want to cover lines 17-18 and 25-26 in SidebarManager
+            // 17-18 is: if (this.toggleBtn) { ... e.stopPropagation(); this.toggle(); ... }
+            // 25-26 is: if (this.mobileMenuBtn) { ... e.stopPropagation(); this.toggle(); ... }
+
+            // To hit the inner handler, we need the event listener to be bound, then triggered, while we have coverage measuring.
+
+            const btn1 = createMockElement('sidebarToggle');
+            const btn2 = createMockElement('mobileMenuBtn');
+
+            document.getElementById.mockImplementation((id) => {
+                if (id === 'sidebarToggle') return btn1;
+                if (id === 'mobileMenuBtn') return btn2;
+                return createMockElement(id);
+            });
+
+            const sm = new SidebarManager();
+            const spy = vi.spyOn(sm, 'toggle').mockImplementation(() => {});
+
+            const e1 = { stopPropagation: vi.fn() };
+            const click1 = btn1.addEventListener.mock.calls.find(c => c[0] === 'click')[1];
+            click1(e1);
+            expect(e1.stopPropagation).toHaveBeenCalled();
+            expect(spy).toHaveBeenCalledTimes(1);
+
+            const e2 = { stopPropagation: vi.fn() };
+            const click2 = btn2.addEventListener.mock.calls.find(c => c[0] === 'click')[1];
+            click2(e2);
+            expect(e2.stopPropagation).toHaveBeenCalled();
+            expect(spy).toHaveBeenCalledTimes(2);
+        });
+    });
+
+    // ---------------------------------------------------------------
+    // Outcome: Initialization robustness and missing element fallbacks
+    // ---------------------------------------------------------------
+    describe('initialization robustness and fallbacks', () => {
+        it('handles missing DOM elements safely during bindEvents', () => {
+            document.getElementById.mockImplementation(() => null);
+            expect(() => {
+                const safeManager = new SidebarManager();
+                expect(safeManager.sidebar).toBeNull();
+                expect(safeManager.toggleBtn).toBeNull();
+            }).not.toThrow();
+
+            // Restore document.getElementById for other tests handled by vi.clearAllMocks in beforeEach
+            document.getElementById.mockImplementation((id) => {
+                if (!elements[id]) elements[id] = createMockElement(id);
+                return elements[id];
+            });
+        });
+
+        it('covers missing mobileMenuBtn inside open and close', () => {
+            document.getElementById.mockImplementation((id) => {
+                if (id === 'sidebar') return createMockElement('sidebar');
+                return null;
+            });
+            const sm = new SidebarManager();
+            sm.open(); // Hits missing toggleBtn/mobileMenuBtn branches inside open
+            expect(sm.isOpen).toBe(true);
+
+            sm.close(); // Hits missing toggleBtn/mobileMenuBtn branches inside close
+            expect(sm.isOpen).toBe(false);
+
+            // Restore document.getElementById for other tests handled by vi.clearAllMocks in beforeEach
+            document.getElementById.mockImplementation((id) => {
+                if (!elements[id]) elements[id] = createMockElement(id);
+                return elements[id];
+            });
+        });
+
+        it('covers close branch with mobileMenuBtn hidden (display: none)', () => {
+            const m = createMockElement('mobileMenuBtn');
+            document.getElementById.mockImplementation((id) => {
+                if (id === 'sidebar') return createMockElement('sidebar');
+                if (id === 'mobileMenuBtn') return m;
+                return null;
+            });
+            window.getComputedStyle.mockImplementation(() => ({ display: 'none' }));
+            const sm = new SidebarManager();
+            sm.open();
+            sm.close();
+            // Should not focus m if display is none
+            expect(m.focus).not.toHaveBeenCalled();
+
+            // Restore computedStyle for other tests
+            window.getComputedStyle.mockImplementation(() => ({ display: 'block' }));
+            document.getElementById.mockImplementation((id) => {
+                if (!elements[id]) elements[id] = createMockElement(id);
+                return elements[id];
+            });
+        });
+
+        it('handles null offsetParent for elements during focusTrap', () => {
+            const first = createMockElement('first');
+            first.offsetParent = null; // simulate hidden
+            const second = createMockElement('second');
+            second.offsetParent = document;
+
+            document.getElementById.mockImplementation((id) => {
+                if (id === 'sidebar') return createMockElement('sidebar');
+                return null;
+            });
+
+            const sm = new SidebarManager();
+            sm.sidebar = createMockElement('sidebar');
+            sm.sidebar.querySelectorAll = vi.fn(() => [first, second]);
+
+            const event = { key: 'Tab', shiftKey: false, preventDefault: vi.fn() };
+            document.activeElement = second;
+            sm.handleFocusTrap(event);
+
+            expect(first.offsetParent).toBeNull();
+
+            document.getElementById.mockImplementation((id) => {
+                if (!elements[id]) elements[id] = createMockElement(id);
+                return elements[id];
+            });
+        });
+
+        it('covers early return for toggleBtn and mobileMenuBtn click handler inside bindEvents', () => {
+            const btn1 = createMockElement('sidebarToggle');
+            const btn2 = createMockElement('mobileMenuBtn');
+
+            document.getElementById.mockImplementation((id) => {
+                if (id === 'sidebarToggle') return btn1;
+                if (id === 'mobileMenuBtn') return btn2;
+                return createMockElement(id);
+            });
+
+            const sm = new SidebarManager();
+            const spy = vi.spyOn(sm, 'toggle').mockImplementation(() => {});
+
+            const e1 = { stopPropagation: vi.fn() };
+            const click1 = btn1.addEventListener.mock.calls.find(c => c[0] === 'click')[1];
+            click1(e1);
+            expect(e1.stopPropagation).toHaveBeenCalled();
+            expect(spy).toHaveBeenCalledTimes(1);
+
+            const e2 = { stopPropagation: vi.fn() };
+            const click2 = btn2.addEventListener.mock.calls.find(c => c[0] === 'click')[1];
+            click2(e2);
+            expect(e2.stopPropagation).toHaveBeenCalled();
+            expect(spy).toHaveBeenCalledTimes(2);
+
+            document.getElementById.mockImplementation((id) => {
+                if (!elements[id]) elements[id] = createMockElement(id);
+                return elements[id];
+            });
+        });
+    });
+});
