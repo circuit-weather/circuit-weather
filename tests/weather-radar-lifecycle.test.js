@@ -442,7 +442,7 @@ describe('WeatherRadar Lifecycle & Playback', () => {
             // 30 minutes before
             radar.updateTimeDisplay(100000 - 30 * 60);
 
-            expect(radar.ui.relative.textContent).toBe('30 minutes before');
+            expect(radar.ui.relative.textContent).toBe('30 minutes before session');
         });
 
         it('shows hours and minutes before session', () => {
@@ -450,7 +450,7 @@ describe('WeatherRadar Lifecycle & Playback', () => {
             // 90 minutes before (1h 30m)
             radar.updateTimeDisplay(100000 - 90 * 60);
 
-            expect(radar.ui.relative.textContent).toBe('1 hour 30 minutes before');
+            expect(radar.ui.relative.textContent).toBe('1 hour 30 minutes before session');
         });
 
         it('shows days, hours and minutes before session', () => {
@@ -459,19 +459,19 @@ describe('WeatherRadar Lifecycle & Playback', () => {
             const mins = (2 * 24 * 60) + (3 * 60) + 45;
             radar.updateTimeDisplay(100000 - mins * 60);
 
-            expect(radar.ui.relative.textContent).toBe('2 days 3 hours 45 minutes before');
+            expect(radar.ui.relative.textContent).toBe('2 days 3 hours 45 minutes before session');
         });
 
         it('shows exactly 1 hour before session', () => {
             radar.sessionTime = new Date(100000 * 1000);
             radar.updateTimeDisplay(100000 - 60 * 60);
-            expect(radar.ui.relative.textContent).toBe('1 hour before');
+            expect(radar.ui.relative.textContent).toBe('1 hour before session');
         });
 
         it('shows exactly 1 day before session', () => {
             radar.sessionTime = new Date(100000 * 1000);
             radar.updateTimeDisplay(100000 - 24 * 60 * 60);
-            expect(radar.ui.relative.textContent).toBe('1 day before');
+            expect(radar.ui.relative.textContent).toBe('1 day before session');
         });
 
         it('shows 0 minutes when very close to session start', () => {

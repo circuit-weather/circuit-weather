@@ -793,10 +793,10 @@ export class WeatherRadar {
                 relativeText = 'Session start';
                 accessibleText = 'Session start';
             } else if (diff < 0) {
-                relativeText = `${durationText} before`;
+                relativeText = `${durationText} before session`;
                 accessibleText = `${durationText} before session`;
             } else {
-                relativeText = `${durationText} after`;
+                relativeText = `${durationText} after session`;
                 accessibleText = `${durationText} after session`;
             }
             this.ui.relative.textContent = relativeText;
