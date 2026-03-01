@@ -462,6 +462,29 @@ describe('WeatherRadar Lifecycle & Playback', () => {
             expect(radar.ui.relative.textContent).toBe('2 days 3 hours 45 minutes before');
         });
 
+        it('shows exactly 1 hour before session', () => {
+            radar.sessionTime = new Date(100000 * 1000);
+            radar.updateTimeDisplay(100000 - 60 * 60);
+            expect(radar.ui.relative.textContent).toBe('1 hour before');
+        });
+
+        it('shows exactly 1 day before session', () => {
+            radar.sessionTime = new Date(100000 * 1000);
+            radar.updateTimeDisplay(100000 - 24 * 60 * 60);
+            expect(radar.ui.relative.textContent).toBe('1 day before');
+        });
+
+        it('shows 0 minutes when very close to session start', () => {
+            radar.sessionTime = new Date(100000 * 1000);
+            // 10 seconds before (rounds to 0 minutes, should trigger "Session start" or "0 minutes before" depending on logic)
+            // Current logic in WeatherRadar.js:
+            // Math.abs(diff) < 1 -> "Session start"
+            // diff < 0 -> "X before"
+            // Let's test 30 seconds before (0.5 mins)
+            radar.updateTimeDisplay(100000 - 30);
+            expect(radar.ui.relative.textContent).toBe('Session start');
+        });
+
         it('does nothing when timestamp is null', () => {
             radar.updateTimeDisplay(null);
             // Should not throw or modify textContent
