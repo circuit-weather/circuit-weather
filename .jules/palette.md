@@ -33,3 +33,7 @@
 ## 2025-03-02 - Dropdown Status Indicators
 **Learning:** Dropdown menus often hide critical context (like "Is this happening now?"). Adding status indicators directly to the option label significantly improves decision-making speed.
 **Action:** For time-sensitive lists, always pre-calculate and append status indicators (LIVE, NEXT) to the visible label, rather than relying on external badges that might be missed.
+
+## 2026-03-06 - Interactive Regions and Accessible Grouping
+**Learning:** When creating widgets like Map controls or scrollable containers (like `PrivacyModal`), native keyboard users and screen reader users cannot explore their contents directly unless those containers have `tabindex="0"`. Additionally, creating an overarching descriptive `aria-label` and `role="region"` for parents prevents the stuttering caused by over-labeled children while maintaining total discoverability.
+**Action:** Always apply `tabindex="0"` and `role="region"` to custom widgets and scrollable containers to establish them as interactive semantic landmarks, while letting the inner content speak for itself.
