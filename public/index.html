@@ -76,7 +76,8 @@
     <div class="app-layout">
         <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
-            <div class="sidebar-header">
+            <!-- Scout: Upgraded generic div to semantic header for better accessibility and structure -->
+            <header class="sidebar-header">
                 <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar"
                     title="Close sidebar (Esc)" aria-keyshortcuts="Escape" aria-expanded="false"
                     aria-controls="sidebar">
@@ -113,7 +114,7 @@
                         <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
                     </svg>
                 </button>
-            </div>
+            </header>
 
             <div class="sidebar-content">
                 <!-- Selection Controls -->
@@ -220,7 +221,8 @@
                     crossorigin="anonymous"></script>
             </div>
 
-            <div class="sidebar-footer">
+            <!-- Scout: Upgraded generic div to semantic footer for better structure -->
+            <footer class="sidebar-footer">
                 <button type="button" id="privacyLink" class="link-button">Privacy</button>
                 <span>•</span>
                 <a href="https://github.com/circuit-weather/circuit-weather" target="_blank" rel="noopener noreferrer"
@@ -234,7 +236,7 @@
                     </svg>
                     <span class="sr-only">(opens in a new tab)</span>
                 </a>
-            </div>
+            </footer>
         </aside>
 
         <!-- Sidebar Backdrop (for mobile overlay) -->
