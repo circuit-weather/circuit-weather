@@ -113,3 +113,7 @@ Issue: The actual test coverage thresholds in `vitest.config.js` were stricter (
 Cause: `vitest.config.js` was updated to enforce higher quality standards, but the documentation was not updated to reflect this change.
 Fix: Removed explicit thresholds from `AGENTS.md` in favor of referencing `vitest.config.js` as the single source of truth.
 Prevention: Avoid duplicating configuration values in documentation; reference the config file instead.
+
+## 2026-03-01 - Phantom Package Manager Instructions
+**Learning:** `AGENTS.md` contained multiple `npm` commands (`npm install`, `npm test`, etc.) despite the project memory indicating the use of `pnpm` (evidenced by `pnpm-lock.yaml`). Additionally, the documentation claimed `vitest` only tested "the Worker logic," whereas `vitest.config.js` explicitly includes `public/src/**/*.js` (frontend components).
+**Action:** Updated all `npm` references to `pnpm` in `AGENTS.md` and corrected the scope of `vitest` to include frontend components to match the test runner configuration.

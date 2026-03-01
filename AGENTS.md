@@ -286,7 +286,7 @@ mode = "smart"
 1. **No ad-hoc test files** - Scripts like `verify_*.py`, `test_*.js`, or similar should not be committed
 2. **No screenshots or artifacts** - Files like `verification.png`, `debug_output.txt`, etc. must be deleted after use
 3. **Clean up after yourself** - If you create temporary files for testing, remove them before completing your task
-4. **Use proper test locations** - Persistent unit tests should be placed in the `tests/` directory and must pass `npm test`.
+4. **Use proper test locations** - Persistent unit tests should be placed in the `tests/` directory and must pass `pnpm test`.
 
 ### If You Find Orphaned Test Files
 
@@ -306,12 +306,12 @@ This project uses [Cloudflare Workers](https://workers.cloudflare.com/) to proxy
 3.  **Install dependencies.**
     Run the following command in your terminal at the root of the project:
     ```bash
-    npm install
+    pnpm install
     ```
 4.  **Start the local development server.**
     Run the following command:
     ```bash
-    npm run dev
+    pnpm run dev
     # OR
     npx wrangler dev
     ```
@@ -322,10 +322,10 @@ This setup faithfully reproduces the production environment, running both the fr
 
 ### Running Tests
 
-This project uses `vitest` for unit testing the Worker logic.
+This project uses `vitest` for unit testing both the Worker logic and frontend components.
 
 ```bash
-npm test
+pnpm test
 ```
 
 #### Test Coverage
@@ -335,7 +335,7 @@ The CI pipeline enforces strict code coverage thresholds defined in `vitest.conf
 To verify coverage locally before pushing:
 
 ```bash
-npm run test:coverage
+pnpm run test:coverage
 ```
 
 ### Terminating Background Processes
