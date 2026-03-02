@@ -363,6 +363,42 @@ export class CircuitWeatherApp {
 
         const twitterDesc = document.querySelector('meta[name="twitter:description"]');
         if (twitterDesc) twitterDesc.setAttribute('content', desc);
+
+        // Scout: Inject dynamic JSON-LD structured data for the selected session
+        // Value: Improves rich snippets in SERP by providing explicit event details (SportsEvent) to search engines.
+        if (this.selectedRace && this.selectedSession && this.selectedSession.date && this.selectedSession.time) {
+            let jsonLdScript = document.getElementById('dynamic-json-ld');
+            if (!jsonLdScript) {
+                jsonLdScript = document.createElement('script');
+                jsonLdScript.id = 'dynamic-json-ld';
+                jsonLdScript.type = 'application/ld+json';
+                document.head.appendChild(jsonLdScript);
+            }
+
+            const sessionStart = new Date(`${this.selectedSession.date}T${this.selectedSession.time}`).toISOString();
+
+            const schema = {
+                "@context": "https://schema.org",
+                "@type": "SportsEvent",
+                "name": `${this.selectedRace.name} - ${this.selectedSession.name}`,
+                "startDate": sessionStart,
+                "location": {
+                    "@type": "Place",
+                    "name": this.selectedRace.circuit ? this.selectedRace.circuit.circuitName : this.selectedRace.location.country,
+                    "address": {
+                        "@type": "PostalAddress",
+                        "addressCountry": this.selectedRace.location ? this.selectedRace.location.country : ""
+                    }
+                }
+            };
+            jsonLdScript.textContent = JSON.stringify(schema);
+        } else {
+            // Remove the dynamic schema if no specific session is selected
+            const existingScript = document.getElementById('dynamic-json-ld');
+            if (existingScript && existingScript.parentNode) {
+                existingScript.parentNode.removeChild(existingScript);
+            }
+        }
     }
 
     selectRound(round) {
