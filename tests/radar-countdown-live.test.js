@@ -89,11 +89,11 @@ describe('WeatherRadar Live Countdown', () => {
 
         radar.updateTimeDisplay(frameTime);
 
-        // DESIRED BEHAVIOR: Should show 5 minutes before (from current time)
+        // Should show 5 minutes before (from current time)
         expect(radar.ui.relative.textContent).toBe('5 minutes before session');
     });
 
-    it('uses frame timestamp for historical frames session offset', () => {
+    it('applies real-time drift to historical frames session offset', () => {
         // Session starts at T=1000
         const sessionTime = new Date(1000 * 60000);
         radar.setSessionTime(sessionTime);
@@ -103,46 +103,51 @@ describe('WeatherRadar Live Countdown', () => {
         radar.pastFrameCount = 2;
         radar.visibleLayerIndex = 0; // Viewing historical
 
-        // System time is T=995
+        // System time is T=995 (5 mins drift since latest frame at T=990)
         vi.setSystemTime(new Date(995 * 60000));
 
         radar.updateTimeDisplay(980 * 60);
 
-        // Should show 20 minutes before (from historical frame timestamp)
-        expect(radar.ui.relative.textContent).toBe('20 minutes before session');
+        // T=980 + 5m drift = T=985.
+        // Session start at T=1000. 1000 - 985 = 15 minutes before.
+        expect(radar.ui.relative.textContent).toBe('15 minutes before session');
     });
 
     it('shows "Live" for latest frame when no session is active', () => {
         radar.sessionTime = null;
 
-        const frameTime = 995 * 60;
+        const frameTime = 990 * 60;
         radar.frames = [{ time: frameTime }];
         radar.pastFrameCount = 1;
         radar.visibleLayerIndex = 0;
 
-        // System time is T=995
+        // System time is T=995 (5 mins later)
         vi.setSystemTime(new Date(995 * 60000));
 
         radar.updateTimeDisplay(frameTime);
 
+        // Drift (5m) makes T=990 become T=995. Current time is T=995.
+        // Diff = 0m -> "Live"
         expect(radar.ui.relative.textContent).toBe('Live');
     });
 
     it('shows "X mins ago" for past frames when no session is active', () => {
         radar.sessionTime = null;
 
-        // Historical frame at T=980
+        // Latest at T=990. Historical at T=980.
         const frameTime = 980 * 60;
-        radar.frames = [{ time: frameTime }, { time: 995 * 60 }];
+        radar.frames = [{ time: frameTime }, { time: 990 * 60 }];
         radar.pastFrameCount = 2;
         radar.visibleLayerIndex = 0;
 
-        // System time is T=995 (15 mins later)
+        // System time is T=995 (5 mins drift since latest frame at T=990)
         vi.setSystemTime(new Date(995 * 60000));
 
         radar.updateTimeDisplay(frameTime);
 
-        expect(radar.ui.relative.textContent).toBe('15 mins ago');
+        // T=980 + 5m drift = T=985.
+        // Current time is T=995. 995 - 985 = 10 mins ago.
+        expect(radar.ui.relative.textContent).toBe('10 mins ago');
     });
 
     it('shows "Session start" when time is exactly at session start', () => {

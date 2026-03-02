@@ -790,8 +790,18 @@ export class WeatherRadar {
     updateTimeDisplay(timestamp) {
         if (!this.ui.time || !timestamp) return;
 
+        // Palette UX: Calculate the "drift" between the latest radar data and real-time.
+        // We apply this drift to ALL frames in the playback so that the countdown
+        // updates every minute and maintains consistent spacing during cycling.
+        let drift = 0;
+        const latestFrame = this.frames[this.pastFrameCount - 1];
+        if (latestFrame) {
+            drift = Date.now() - (latestFrame.time * 1000);
+        }
+
+        const effectiveTimeMs = (timestamp * 1000) + drift;
+
         // Bolt Optimization: Use shared formatter and cached elements
-        // This runs every animation frame, so efficiency matters.
         const date = new Date(timestamp * 1000);
         const timeStr = this.timeFormatter.format(date);
 
@@ -802,12 +812,7 @@ export class WeatherRadar {
 
         // Show relative to session if available
         if (this.ui.relative && this.sessionTime) {
-            // Palette UX: If we are viewing the LATEST available past frame, use real-time
-            // to calculate the countdown/offset so it updates every minute.
-            const isLatest = this.visibleLayerIndex >= 0 && this.visibleLayerIndex === this.pastFrameCount - 1;
-            const refTime = isLatest ? Date.now() : (timestamp * 1000);
-
-            const diff = (refTime - this.sessionTime.getTime()) / 60000; // minutes
+            const diff = (effectiveTimeMs - this.sessionTime.getTime()) / 60000; // minutes
             const absDiff = Math.abs(Math.round(diff));
             const durationText = this.formatDuration(absDiff);
 
@@ -823,18 +828,16 @@ export class WeatherRadar {
             }
             this.ui.relative.textContent = relativeText;
         } else if (this.ui.relative) {
-            const now = Date.now();
-            const diffSec = timestamp - (now / 1000);
+            const diffSec = timestamp - (Date.now() / 1000);
 
             if (diffSec > 60) {
                 relativeText = 'Forecast';
                 accessibleText = 'Forecast';
             } else {
                 // Palette UX: For past frames when no session is selected, show "X mins ago"
-                const isLatest = this.visibleLayerIndex >= 0 && this.visibleLayerIndex === this.pastFrameCount - 1;
-                const diffMin = Math.round((now - timestamp * 1000) / 60000);
+                const diffMin = Math.round((Date.now() - effectiveTimeMs) / 60000);
 
-                if (isLatest && diffMin < 1) {
+                if (diffMin < 1) {
                     relativeText = 'Live';
                     accessibleText = 'Live radar';
                 } else if (diffMin >= 1) {
