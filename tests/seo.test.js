@@ -21,12 +21,25 @@ const createMockElement = (id) => ({
     appendChild: vi.fn(),
 });
 
+const _elements = {};
 const documentMock = {
     title: 'Circuit Weather — Live F1 Race Weather Radar & Forecasts',
-    getElementById: vi.fn((id) => createMockElement(id)),
+    getElementById: vi.fn((id) => _elements[id] || null),
     addEventListener: vi.fn(),
     querySelector: vi.fn((sel) => createMockElement(sel)),
-    createElement: vi.fn((tag) => createMockElement(tag)),
+    createElement: vi.fn((tag) => {
+        const el = createMockElement(tag);
+        // Special case for id assignment on creation
+        let _id = '';
+        Object.defineProperty(el, 'id', {
+            get: () => _id,
+            set: (val) => {
+                _id = val;
+                _elements[val] = el;
+            }
+        });
+        return el;
+    }),
     createDocumentFragment: vi.fn(() => ({ appendChild: vi.fn() })),
     head: { appendChild: vi.fn() },
     body: { appendChild: vi.fn() },
@@ -130,6 +143,7 @@ describe('SEO Title Updates', () => {
 
     beforeEach(() => {
         vi.clearAllMocks();
+        for (const key in _elements) delete _elements[key]; // Clear mocked DOM
         document.title = 'Circuit Weather — Live F1 Race Weather Radar & Forecasts'; // Reset title
 
         app = new CircuitWeatherApp();
@@ -143,13 +157,15 @@ describe('SEO Title Updates', () => {
                     { id: 'fp1', name: 'Practice 1', date: '2024-03-01', time: '10:00:00' },
                     { id: 'qualifying', name: 'Qualifying', date: '2024-03-01', time: '14:00:00' }
                 ],
-                location: { lat: 0, long: 0 }
+                location: { lat: 0, long: 0, country: 'Bahrain' }
             }
         ];
 
         // Mock UI elements
-        app.ui.roundSelect = createMockElement('roundSelect');
-        app.ui.sessionSelect = createMockElement('sessionSelect');
+        app.ui.roundSelect = document.createElement('select');
+        app.ui.roundSelect.id = 'roundSelect';
+        app.ui.sessionSelect = document.createElement('select');
+        app.ui.sessionSelect.id = 'sessionSelect';
 
         // Initialize components that are usually set in init()
         app.rangeCircles = new RangeCircles();
@@ -171,22 +187,61 @@ describe('SEO Title Updates', () => {
     });
 
     it('should reset title when selection is cleared', () => {
-        // Since we can't easily trigger the event listener, we'll manually call the update logic
-        // if we expose it, or check if we can invoke the handler.
-        // For this test, we assume the app will have updatePageTitle method.
-
         app.selectRound('1');
-        // Manually reset state as the event handler would
         app.selectedSession = null;
         app.selectedRace = null;
+        app.updatePageMetadata();
+        expect(document.title).toBe('Circuit Weather — Live F1 Race Weather Radar & Forecasts');
+    });
 
-        // Check if the method exists (it will be added) and call it
-        if (app.updatePageTitle) {
-            app.updatePageTitle();
-            expect(document.title).toBe('Circuit Weather — Live F1 Race Weather Radar & Forecasts');
-        } else {
-            // If method doesn't exist yet (before implementation), this test might be tricky.
-            // But we will implement it.
-        }
+    it('should inject JSON-LD schema when session is selected', async () => {
+        app.selectRound('1');
+        await app.selectSession('qualifying');
+
+        const script = document.getElementById('dynamic-json-ld');
+        expect(script).toBeDefined();
+        expect(script.type).toBe('application/ld+json');
+
+        const schema = JSON.parse(script.textContent);
+        expect(schema['@type']).toBe('SportsEvent');
+        expect(schema.name).toBe('Bahrain Grand Prix - Qualifying');
+        expect(schema.startDate).toBe('2024-03-01T14:00:00.000Z');
+        expect(schema.location.address.addressCountry).toBe('Bahrain');
+    });
+
+    it('should update existing JSON-LD schema when switching sessions', async () => {
+        app.selectRound('1');
+        await app.selectSession('fp1');
+
+        const script = document.getElementById('dynamic-json-ld');
+        let schema = JSON.parse(script.textContent);
+        expect(schema.name).toBe('Bahrain Grand Prix - Practice 1');
+
+        // Ensure appendChild is spied to check it doesn't add multiple scripts
+        const appendSpy = vi.spyOn(document.head, 'appendChild');
+
+        await app.selectSession('qualifying');
+
+        schema = JSON.parse(script.textContent);
+        expect(schema.name).toBe('Bahrain Grand Prix - Qualifying');
+        expect(appendSpy).not.toHaveBeenCalled(); // Script already exists, shouldn't append again
+    });
+
+    it('should remove JSON-LD schema when selection is cleared', async () => {
+        app.selectRound('1');
+        await app.selectSession('qualifying');
+
+        const script = document.getElementById('dynamic-json-ld');
+        expect(script).toBeDefined();
+
+        // Mock removeChild to verify it's called
+        const removeSpy = vi.fn();
+        script.parentNode = { removeChild: removeSpy };
+
+        app.selectedSession = null;
+        app.selectedRace = null;
+        app.updatePageMetadata();
+
+        expect(removeSpy).toHaveBeenCalledWith(script);
     });
 });
