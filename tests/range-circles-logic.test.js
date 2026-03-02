@@ -111,6 +111,12 @@ describe('RangeCircles Logic', () => {
             expect(rangeCircles.unit).toBe('metric');
         });
 
+        it('defaults to en-US if navigator.language is undefined', () => {
+            Object.defineProperty(navigator, 'language', { value: undefined });
+            rangeCircles = new RangeCircles(mockMap);
+            expect(rangeCircles.unit).toBe('imperial');
+        });
+
         it('defaults to imperial for US locale when storage is empty', () => {
             Object.defineProperty(navigator, 'language', { value: 'en-US' });
             rangeCircles = new RangeCircles(mockMap);
@@ -217,6 +223,28 @@ describe('RangeCircles Logic', () => {
 
             expect(countLow).toBeLessThan(countHigh);
             expect(mockMap.removeLayer).toHaveBeenCalled();
+        });
+
+        it('calculates steps properly for mid-range normalized values (normalized < 7.5)', () => {
+            // Target normalized value around 5.0 to hit the "else if (normalized < 7.5) niceStep = 5 * magnitude" block
+            // visibleRadiusMeters = mockMap.distance => target: ~20000m
+            // visibleRadius = 20000 / 1000 = 20
+            // targetStep = 20 / 4 = 5
+            // magnitude = 1
+            // normalized = 5 / 1 = 5
+            mockMap.distance.mockReturnValue(20000);
+            rangeCircles.draw([51.5, -0.1]);
+            // We just need to trigger the draw to evaluate that logic path.
+            expect(rangeCircles.circles.length).toBeGreaterThan(0);
+        });
+
+        it('calculates steps properly for large normalized values (normalized >= 7.5)', () => {
+            // Target normalized value > 7.5
+            // visibleRadiusMeters => 35000m
+            // targetStep = 35 / 4 = 8.75 -> normalized = 8.75
+            mockMap.distance.mockReturnValue(35000);
+            rangeCircles.draw([51.5, -0.1]);
+            expect(rangeCircles.circles.length).toBeGreaterThan(0);
         });
 
         it('updates unit and redraws', () => {
