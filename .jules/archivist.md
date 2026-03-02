@@ -117,3 +117,7 @@ Prevention: Avoid duplicating configuration values in documentation; reference t
 ## 2026-03-01 - Phantom Package Manager Instructions
 **Learning:** `AGENTS.md` contained multiple `npm` commands (`npm install`, `npm test`, etc.) despite the project memory indicating the use of `pnpm` (evidenced by `pnpm-lock.yaml`). Additionally, the documentation claimed `vitest` only tested "the Worker logic," whereas `vitest.config.js` explicitly includes `public/src/**/*.js` (frontend components).
 **Action:** Updated all `npm` references to `pnpm` in `AGENTS.md` and corrected the scope of `vitest` to include frontend components to match the test runner configuration.
+
+## 2026-03-02 - CI Pipeline Package Manager Drift
+**Learning:** The project strictly uses `pnpm` (configured via `pnpm-lock.yaml` and documented in `AGENTS.md`), but the automated CI workflow (`.github/workflows/ci.yml`) was still using `npm ci` and `npm run test:coverage`. This caused a discrepancy between local test environments and the CI pipeline.
+**Action:** Updated `ci.yml` to use `pnpm/action-setup@v4` with `pnpm install --frozen-lockfile` to ensure exact matching behavior between local development and CI execution.
