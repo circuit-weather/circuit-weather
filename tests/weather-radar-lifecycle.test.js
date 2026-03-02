@@ -442,7 +442,47 @@ describe('WeatherRadar Lifecycle & Playback', () => {
             // 30 minutes before
             radar.updateTimeDisplay(100000 - 30 * 60);
 
-            expect(radar.ui.relative.textContent).toBe('30m before');
+            expect(radar.ui.relative.textContent).toBe('30 minutes before session');
+        });
+
+        it('shows hours and minutes before session', () => {
+            radar.sessionTime = new Date(100000 * 1000);
+            // 90 minutes before (1h 30m)
+            radar.updateTimeDisplay(100000 - 90 * 60);
+
+            expect(radar.ui.relative.textContent).toBe('1 hour 30 minutes before session');
+        });
+
+        it('shows days, hours and minutes before session', () => {
+            radar.sessionTime = new Date(100000 * 1000);
+            // 2 days, 3 hours, 45 minutes before
+            const mins = (2 * 24 * 60) + (3 * 60) + 45;
+            radar.updateTimeDisplay(100000 - mins * 60);
+
+            expect(radar.ui.relative.textContent).toBe('2 days 3 hours 45 minutes before session');
+        });
+
+        it('shows exactly 1 hour and 0 minutes before session', () => {
+            radar.sessionTime = new Date(100000 * 1000);
+            radar.updateTimeDisplay(100000 - 60 * 60);
+            expect(radar.ui.relative.textContent).toBe('1 hour 0 minutes before session');
+        });
+
+        it('shows exactly 1 day and 0 minutes before session', () => {
+            radar.sessionTime = new Date(100000 * 1000);
+            radar.updateTimeDisplay(100000 - 24 * 60 * 60);
+            expect(radar.ui.relative.textContent).toBe('1 day 0 minutes before session');
+        });
+
+        it('shows 0 minutes when very close to session start', () => {
+            radar.sessionTime = new Date(100000 * 1000);
+            // 10 seconds before (rounds to 0 minutes, should trigger "Session start" or "0 minutes before" depending on logic)
+            // Current logic in WeatherRadar.js:
+            // Math.abs(diff) < 1 -> "Session start"
+            // diff < 0 -> "X before"
+            // Let's test 30 seconds before (0.5 mins)
+            radar.updateTimeDisplay(100000 - 30);
+            expect(radar.ui.relative.textContent).toBe('Session start');
         });
 
         it('does nothing when timestamp is null', () => {

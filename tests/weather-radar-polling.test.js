@@ -43,6 +43,7 @@ describe('WeatherRadar Polling Logic', () => {
     beforeEach(() => {
         vi.clearAllMocks();
         vi.useFakeTimers();
+        vi.spyOn(global, 'setInterval');
 
         mockMap = {
             removeLayer: vi.fn(),
@@ -74,7 +75,8 @@ describe('WeatherRadar Polling Logic', () => {
 
             radar.scheduleNextPoll(); // Manual call
 
-            expect(vi.getTimerCount()).toBe(1);
+            // 1 from constructor (relativeTimeInterval) + 1 from scheduleNextPoll
+            expect(vi.getTimerCount()).toBe(2);
 
             // Spy on the recursive call
             const spy = vi.spyOn(radar, 'scheduleNextPoll');
@@ -221,6 +223,18 @@ describe('WeatherRadar Polling Logic', () => {
 
             expect(stopSpy).toHaveBeenCalled();
             expect(scheduleSpy).toHaveBeenCalled();
+        });
+    });
+
+    describe('Relative Time Update Control', () => {
+        it('should clear interval on stopRelativeTimeUpdate', () => {
+            radar.relativeTimeInterval = 456;
+            const spy = vi.spyOn(global, 'clearInterval');
+
+            radar.stopRelativeTimeUpdate();
+
+            expect(spy).toHaveBeenCalledWith(456);
+            expect(radar.relativeTimeInterval).toBeNull();
         });
     });
 });

@@ -54,6 +54,13 @@ export class WeatherRadar {
         this.boundLoop = this.loop.bind(this);
         this.bindEvents();
         this.updateSpeedLabel();
+
+        // Palette UX: Start a 1-minute timer to keep the relative time updated
+        this.relativeTimeInterval = setInterval(() => {
+            if (this.visibleLayerIndex >= 0) {
+                this.updateTimeDisplay(this.frames[this.visibleLayerIndex]?.time);
+            }
+        }, 60000);
     }
 
     bindEvents() {
@@ -221,6 +228,16 @@ export class WeatherRadar {
         if (this.pollingTimeout) {
             clearTimeout(this.pollingTimeout);
             this.pollingTimeout = null;
+        }
+    }
+
+    /**
+     * Stop the periodic relative time display refresh.
+     */
+    stopRelativeTimeUpdate() {
+        if (this.relativeTimeInterval) {
+            clearInterval(this.relativeTimeInterval);
+            this.relativeTimeInterval = null;
         }
     }
 
@@ -787,16 +804,17 @@ export class WeatherRadar {
         if (this.ui.relative && this.sessionTime) {
             const diff = (timestamp * 1000 - this.sessionTime.getTime()) / 60000; // minutes
             const absDiff = Math.abs(Math.round(diff));
+            const durationText = this.formatDuration(absDiff);
 
             if (Math.abs(diff) < 1) {
                 relativeText = 'Session start';
                 accessibleText = 'Session start';
             } else if (diff < 0) {
-                relativeText = `${absDiff}m before`;
-                accessibleText = `${absDiff} minute${absDiff !== 1 ? 's' : ''} before session`;
+                relativeText = `${durationText} before session`;
+                accessibleText = `${durationText} before session`;
             } else {
-                relativeText = `${absDiff}m after`;
-                accessibleText = `${absDiff} minute${absDiff !== 1 ? 's' : ''} after session`;
+                relativeText = `${durationText} after session`;
+                accessibleText = `${durationText} after session`;
             }
             this.ui.relative.textContent = relativeText;
         } else if (this.ui.relative) {
@@ -909,5 +927,26 @@ export class WeatherRadar {
 
     showControls(visible) {
         if (this.ui.controls) this.ui.controls.style.display = visible ? 'flex' : 'none';
+    }
+
+    /**
+     * Formats a duration in minutes into a readable string.
+     * Always includes minutes to prevent layout jumps during playback.
+     * @param {number} totalMinutes
+     * @returns {string} e.g. "1 day 2 hours 30 minutes"
+     */
+    formatDuration(totalMinutes) {
+        const days = Math.floor(totalMinutes / (24 * 60));
+        const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
+        const minutes = totalMinutes % 60;
+
+        const parts = [];
+        if (days > 0) parts.push(`${days} day${days !== 1 ? 's' : ''}`);
+        if (hours > 0) parts.push(`${hours} hour${hours !== 1 ? 's' : ''}`);
+
+        // Always show minutes to prevent justification jumps in the UI
+        parts.push(`${minutes} minute${minutes !== 1 ? 's' : ''}`);
+
+        return parts.join(' ');
     }
 }
