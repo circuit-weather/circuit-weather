@@ -112,13 +112,30 @@ export class PrivacyModal {
         // SEC: Sanitize URLs to prevent XSS (e.g. javascript: links)
         const sanitizeUrl = (url) => {
             // SEC: Remove all whitespace/control chars to prevent scheme bypass (e.g. java\nscript:)
-            const clean = String(url).replace(/[\s\x00-\x1F\x7F-\x9F]/g, '');
+            let clean = String(url).replace(/[\s\x00-\x1F\x7F-\x9F]/g, '');
+
+            // SEC: Decode ALL HTML entities that could bypass the scheme check (e.g. j&#x61;vascript:alert(1))
+            // The browser decodes entities in the href attribute before parsing the URL scheme,
+            // so we must check the fully decoded value.
+            try {
+                const doc = new DOMParser().parseFromString(clean, 'text/html');
+                if (doc && doc.documentElement) {
+                    clean = doc.documentElement.textContent || clean;
+                }
+            } catch (e) {
+                // Fallback if DOMParser fails
+            }
+
+            // Remove control characters and whitespace AGAIN after decoding, as entities might decode to them
+            clean = clean.replace(/[\s\x00-\x1F\x7F-\x9F]/g, '');
 
             // Allowlist approach: Check for protocol scheme
             // Regex: Start with letter, followed by valid scheme chars, then colon
             if (/^[a-z][a-z0-9+.-]*:/i.test(clean)) {
                 // If scheme exists, it MUST be in our allowlist
                 if (/^(?:https?|mailto):/i.test(clean)) {
+                    // SEC: Return the original (encoded) string if it's safe, or the decoded one?
+                    // Safe to return the decoded one since it's verified.
                     return clean;
                 }
                 // Block file:, javascript:, vbscript:, data:, blob:, etc.
