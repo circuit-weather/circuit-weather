@@ -184,6 +184,24 @@ describe('PrivacyModal', () => {
             const html = modal.parseMarkdown(md);
             expect(extractHref(html)).toBe('HTTPS://EXAMPLE.COM');
         });
+
+        it('falls back to original string if DOMParser fails', () => {
+            // Temporarily mock DOMParser to throw an error
+            const originalDOMParser = global.DOMParser;
+            class ErrorDOMParser {
+                parseFromString() {
+                    throw new Error('Simulated DOMParser error');
+                }
+            }
+            global.DOMParser = ErrorDOMParser;
+
+            const md = '[link](https://example.com/safe)';
+            const html = modal.parseMarkdown(md);
+            expect(extractHref(html)).toBe('https://example.com/safe');
+
+            // Restore original mock
+            global.DOMParser = originalDOMParser;
+        });
     });
 
     // ---------------------------------------------------------------
