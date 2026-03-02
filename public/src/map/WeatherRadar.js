@@ -790,8 +790,18 @@ export class WeatherRadar {
     updateTimeDisplay(timestamp) {
         if (!this.ui.time || !timestamp) return;
 
+        // Palette UX: Calculate the "drift" between the latest radar data and real-time.
+        // We apply this drift to ALL frames in the playback so that the countdown
+        // updates every minute and maintains consistent spacing during cycling.
+        let drift = 0;
+        const latestFrame = this.frames[this.pastFrameCount - 1];
+        if (latestFrame) {
+            drift = Date.now() - (latestFrame.time * 1000);
+        }
+
+        const effectiveTimeMs = (timestamp * 1000) + drift;
+
         // Bolt Optimization: Use shared formatter and cached elements
-        // This runs every animation frame, so efficiency matters.
         const date = new Date(timestamp * 1000);
         const timeStr = this.timeFormatter.format(date);
 
@@ -802,7 +812,7 @@ export class WeatherRadar {
 
         // Show relative to session if available
         if (this.ui.relative && this.sessionTime) {
-            const diff = (timestamp * 1000 - this.sessionTime.getTime()) / 60000; // minutes
+            const diff = (effectiveTimeMs - this.sessionTime.getTime()) / 60000; // minutes
             const absDiff = Math.abs(Math.round(diff));
             const durationText = this.formatDuration(absDiff);
 
@@ -818,11 +828,22 @@ export class WeatherRadar {
             }
             this.ui.relative.textContent = relativeText;
         } else if (this.ui.relative) {
-            const now = Date.now() / 1000;
-            const diff = timestamp - now;
-            if (diff > 60) {
+            const diffSec = timestamp - (Date.now() / 1000);
+
+            if (diffSec > 60) {
                 relativeText = 'Forecast';
                 accessibleText = 'Forecast';
+            } else {
+                // Palette UX: For past frames when no session is selected, show "X mins ago"
+                const diffMin = Math.round((Date.now() - effectiveTimeMs) / 60000);
+
+                if (diffMin < 1) {
+                    relativeText = 'Live';
+                    accessibleText = 'Live radar';
+                } else if (diffMin >= 1) {
+                    relativeText = `${diffMin} min${diffMin !== 1 ? 's' : ''} ago`;
+                    accessibleText = relativeText;
+                }
             }
             this.ui.relative.textContent = relativeText;
         }
