@@ -240,6 +240,7 @@ export class CircuitWeatherApp {
                     // Palette UX: Reset session select when round is cleared
                     if (this.ui.sessionSelect) {
                         this.ui.sessionSelect.disabled = true;
+                        this.ui.sessionSelect.setAttribute('aria-disabled', 'true');
                         this.ui.sessionSelect.innerHTML = '<option value="">Select a round first</option>';
                     }
                     this.selectedSession = null;
@@ -494,6 +495,7 @@ export class CircuitWeatherApp {
         if (!select) return;
 
         select.disabled = false;
+        select.setAttribute('aria-disabled', 'false');
         select.innerHTML = '<option value="">Select session...</option>';
 
         // Bolt Optimization: Use DocumentFragment to batch DOM insertions

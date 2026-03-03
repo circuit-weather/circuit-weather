@@ -36,4 +36,6 @@
 
 ## 2026-03-06 - Interactive Regions and Accessible Grouping
 **Learning:** When creating widgets like Map controls or scrollable containers (like `PrivacyModal`), native keyboard users and screen reader users cannot explore their contents directly unless those containers have `tabindex="0"`. Additionally, creating an overarching descriptive `aria-label` and `role="region"` for parents prevents the stuttering caused by over-labeled children while maintaining total discoverability.
-**Action:** Always apply `tabindex="0"` and `role="region"` to custom widgets and scrollable containers to establish them as interactive semantic landmarks, while letting the inner content speak for itself.
+**Action:** Always apply `tabindex="0"` and `role="region"` to custom widgets and scrollable containers to establish them as interactive semantic landmarks, while letting the inner content speak for itself.## 2024-05-18 - Redundant ARIA Attributes
+**Learning:** Native HTML form controls like `<select>` automatically communicate their `disabled` state semantically to screen readers via the native `disabled` attribute. Adding `aria-disabled="true"` to these elements is redundant, provides no extra accessibility benefit, and violates the "First Rule of ARIA" (which favors using native semantic HTML over ARIA).
+**Action:** Do not implement explicit `aria-disabled` logic for native form controls that already use the `disabled` boolean attribute.

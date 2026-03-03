@@ -8,6 +8,7 @@ const createMockElement = (id) => ({
     appendChild: vi.fn(),
     disabled: false,
     value: '',
+    setAttribute: vi.fn(),
 });
 
 vi.stubGlobal('document', {
