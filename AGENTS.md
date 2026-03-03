@@ -8,46 +8,51 @@ Circuit Weather is a real-time F1 race circuit weather radar application. It dis
 
 ## Technology Stack
 
-| Layer | Technology |
-|-------|------------|
-| Frontend | Vanilla HTML/CSS/JS |
-| Mapping | Leaflet.js with Carto basemaps |
-| Backend | Cloudflare Workers with Assets |
-| APIs | Jolpica F1, RainViewer, Open-Meteo, GitHub (Tracks) |
+| Layer    | Technology                                          |
+| -------- | --------------------------------------------------- |
+| Frontend | Vanilla HTML/CSS/JS                                 |
+| Mapping  | Leaflet.js with Carto basemaps                      |
+| Backend  | Cloudflare Workers with Assets                      |
+| APIs     | Jolpica F1, RainViewer, Open-Meteo, GitHub (Tracks) |
 
 ---
 
 ## Security Requirements
 
 ### API Keys & Secrets
+
 - **NO API keys in frontend code** - All external APIs used are free/keyless
 - **NO sensitive data in git** - `.gitignore` excludes `.env*`, `.wrangler/`
 - **NO user authentication** - App is read-only, no user accounts
 
 ### Access Control
+
 - **Hotlink Protection** - Strict `Sec-Fetch-Site`, `Origin`, and `Referer` checks in `src/worker.js` prevent unauthorized embedding.
 - **XSSI Protection** - Validates `Sec-Fetch-Dest` to prevent API endpoints from being loaded as scripts or objects.
 - **Rate Limiting** - In-memory IP-based limiting (1000 req/min) protects upstream APIs from abuse.
 
 ### Third-Party Services
-| Service | Purpose | Connection |
-|---------|---------|------------|
-| Jolpica F1 API | Race schedule data | Proxied (Cached) |
-| RainViewer | Weather radar tiles (2-hour cache) and metadata (1-minute cache) | Proxied (Cached) |
-| Open-Meteo | Weather forecasts | Direct (Client-side) |
-| Carto | Map basemap tiles | Direct (Client-side) |
-| GitHub | Track GeoJSON data | Proxied (Cached) |
-| Unpkg (Leaflet) | Map library assets | Proxied (Cached) |
-| Google Fonts | Typography | Direct (Client-side) |
-| FlagCDN | Country flags | Direct (Client-side) |
-| Buy Me a Coffee | Support widget | Direct (Client-side) |
+
+| Service         | Purpose                                                          | Connection           |
+| --------------- | ---------------------------------------------------------------- | -------------------- |
+| Jolpica F1 API  | Race schedule data                                               | Proxied (Cached)     |
+| RainViewer      | Weather radar tiles (2-hour cache) and metadata (1-minute cache) | Proxied (Cached)     |
+| Open-Meteo      | Weather forecasts                                                | Direct (Client-side) |
+| Carto           | Map basemap tiles                                                | Direct (Client-side) |
+| GitHub          | Track GeoJSON data                                               | Proxied (Cached)     |
+| Unpkg (Leaflet) | Map library assets                                               | Proxied (Cached)     |
+| Google Fonts    | Typography                                                       | Direct (Client-side) |
+| FlagCDN         | Country flags                                                    | Direct (Client-side) |
+| Buy Me a Coffee | Support widget                                                   | Direct (Client-side) |
 
 ### Data Handling
+
 - **No first-party cookies** used (third-party widgets may use cookies - see PRIVACY.md)
 - **localStorage only** for theme/unit preferences
 - **No PII collected** - See PRIVACY.md
 
 ### Language & Spelling
+
 - **New Zealand English** - All documentation and user-facing text (e.g., UI labels, error messages) must use New Zealand English spelling conventions (e.g., 'colour', 'centre', 'programme', 'visualise').
 - **Dates** - Use DD/MM/YYYY or ISO 8601 (YYYY-MM-DD).
 
@@ -56,9 +61,11 @@ Circuit Weather is a real-time F1 race circuit weather radar application. It dis
 ## Deployment
 
 ### Platform
+
 Cloudflare Workers with Static Assets
 
 ### Repository Structure
+
 ```
 circuit-weather/
 ├── public/           # Static assets (served by Cloudflare)
@@ -92,18 +99,21 @@ circuit-weather/
 
 ### Image Assets
 
-| File | Format | Size | Purpose | Source |
-|------|--------|------|---------|--------|
-| `favicon.svg` | SVG | 24×24 viewBox | Browser tab icon | Hand-authored (red rounded rect + white F1 flag) |
-| `icon-192.png` | PNG | 192×192 px | PWA icon (Android install, Apple touch icon) | Generated from `favicon.svg` |
-| `icon-512.png` | PNG | 512×512 px | PWA splash screen / maskable icon | Generated from `favicon.svg` |
+| File           | Format | Size          | Purpose                                      | Source                                           |
+| -------------- | ------ | ------------- | -------------------------------------------- | ------------------------------------------------ |
+| `favicon.svg`  | SVG    | 24×24 viewBox | Browser tab icon                             | Hand-authored (red rounded rect + white F1 flag) |
+| `icon-192.png` | PNG    | 192×192 px    | PWA icon (Android install, Apple touch icon) | Generated from `favicon.svg`                     |
+| `icon-512.png` | PNG    | 512×512 px    | PWA splash screen / maskable icon            | Generated from `favicon.svg`                     |
 
 **Regenerating icons**: If `favicon.svg` is updated, regenerate the PNGs at 192×192 and 512×512 using any SVG-to-PNG converter (e.g. `cairosvg`, Inkscape, or Pillow with manual drawing). The icons must visually match the favicon design.
 
 ### Build & Deploy
+
 ```bash
 # Local development
 npx wrangler dev
+# OR for strict pnpm environment consistency:
+# pnpm run dev
 
 # Deploy to Cloudflare
 # Deployment is automatic via Cloudflare Git Integration (Workers with Assets)
@@ -118,6 +128,7 @@ npx wrangler dev
 All code changes must follow this workflow:
 
 1. **Create a new branch** from `main`:
+
    ```bash
    git checkout main
    git pull origin main
@@ -127,6 +138,7 @@ All code changes must follow this workflow:
 2. **Make your changes** on the new branch
 
 3. **Commit and push** to the repository:
+
    ```bash
    git add .
    git commit -m "Brief description of changes"
@@ -144,6 +156,7 @@ All code changes must follow this workflow:
 > **Important**: Direct pushes to `main` should be avoided. All changes should go through the PR review process.
 
 ### Cloudflare Configuration (wrangler.toml)
+
 ```toml
 name = "circuit-weather"
 main = "src/worker.js"
@@ -167,6 +180,7 @@ mode = "smart"
 ```
 
 ### Environment
+
 - No environment variables required (optional: `ENVIRONMENT` defaults to 'production')
 - No build step required (vanilla JS)
 
@@ -237,14 +251,14 @@ mode = "smart"
 
 ### API Endpoints
 
-| Endpoint | Purpose |
-|----------|---------|
-| `/api/f1/*` | Proxies to Jolpica F1 API with 1-hour edge caching |
-| `/api/radar` | Proxies to RainViewer Maps API with 1-minute caching (initializes animation) |
-| `/api/tiles/*` | Proxies to RainViewer tile API with 2-hour edge caching (512px optimized) |
-| `/api/track/*` | Proxies to GitHub for GeoJSON track data with 24-hour caching |
+| Endpoint        | Purpose                                                                        |
+| --------------- | ------------------------------------------------------------------------------ |
+| `/api/f1/*`     | Proxies to Jolpica F1 API with 1-hour edge caching                             |
+| `/api/radar`    | Proxies to RainViewer Maps API with 1-minute caching (initializes animation)   |
+| `/api/tiles/*`  | Proxies to RainViewer tile API with 2-hour edge caching (512px optimized)      |
+| `/api/track/*`  | Proxies to GitHub for GeoJSON track data with 24-hour caching                  |
 | `/api/assets/*` | Proxies to unpkg for Leaflet assets with 1-year immutable caching (strict CSP) |
-| `/api/health` | System status check (connectivity to upstreams, version, env) |
+| `/api/health`   | System status check (connectivity to upstreams, version, env)                  |
 
 ---
 
@@ -311,9 +325,9 @@ This project uses [Cloudflare Workers](https://workers.cloudflare.com/) to proxy
 4.  **Start the local development server.**
     Run the following command:
     ```bash
-    pnpm run dev
-    # OR
     npx wrangler dev
+    # OR for strict pnpm environment consistency:
+    # pnpm run dev
     ```
 5.  **Open the local address in your browser.**
     Wrangler will typically open the site at `http://localhost:8787`.
@@ -343,6 +357,7 @@ pnpm run test:coverage
 > **Important for Google Antigravity**: The `send_command_input` tool's `Terminate` flag does **NOT** reliably kill background processes on this system. It may report success but the process continues running and holding its port. **Do not use it.** Instead, always use the following manual methods to stop background processes:
 
 **Windows (PowerShell):**
+
 ```powershell
 # Find the PIDs listening on the target port (e.g. 8787 for wrangler dev)
 netstat -ano | findstr ":8787"
@@ -352,6 +367,7 @@ taskkill /PID <pid> /F
 ```
 
 **Linux / macOS (Bash):**
+
 ```bash
 # Find the PIDs listening on the target port
 lsof -i :8787
