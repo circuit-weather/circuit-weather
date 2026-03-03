@@ -383,6 +383,20 @@ describe('Worker Logic', () => {
       expect(mockCache.put).toHaveBeenCalled();
     });
 
+    it('returns tile response without CORS when origin is missing', async () => {
+      const mockImage = new ArrayBuffer(10);
+      mockFetch.mockResolvedValueOnce(new Response(mockImage, {
+        status: 200,
+        headers: { 'Content-Type': 'image/png' }
+      }));
+
+      const req = createRequest('/api/tiles/v2/radar/1/2/3/512/1/1_1.png');
+      const res = await worker.fetch(req, global.env, global.ctx);
+
+      expect(res.status).toBe(200);
+      expect(res.headers.get('Access-Control-Allow-Origin')).toBeNull();
+    });
+
     it('blocks non-png requests', async () => {
       const req = createRequest('/api/tiles/hack.exe');
       const res = await worker.fetch(req, global.env, global.ctx);
