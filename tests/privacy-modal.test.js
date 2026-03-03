@@ -39,6 +39,29 @@ vi.stubGlobal('document', {
 
 vi.stubGlobal('fetch', vi.fn());
 
+// Mock DOMParser for tests since it's not natively available in the Node.js test environment
+class MockDOMParser {
+    parseFromString(str, type) {
+        // Simple mock implementation to handle entity decoding for our specific test cases
+        let decoded = str;
+        // Run a few times to handle nested encoded strings like `&amp;colon;` becoming `&colon;` then `:`
+        for (let i = 0; i < 3; i++) {
+            decoded = decoded
+                .replace(/&amp;/gi, '&')
+                .replace(/&colon;/gi, ':')
+                .replace(/&#58;/gi, ':')
+                .replace(/&#x3a;/gi, ':');
+        }
+
+        return {
+            documentElement: {
+                textContent: decoded
+            }
+        };
+    }
+}
+vi.stubGlobal('DOMParser', MockDOMParser);
+
 const { PrivacyModal } = await import('../public/src/ui/PrivacyModal.js');
 
 describe('PrivacyModal', () => {
@@ -138,10 +161,46 @@ describe('PrivacyModal', () => {
             expect(extractHref(html)).toBe('#unsafe-url');
         });
 
+        it('blocks HTML entity encoded scheme bypasses (&colon;)', () => {
+            const md = '[click](javascript&colon;alert(1))';
+            const html = modal.parseMarkdown(md);
+            expect(extractHref(html)).toBe('#unsafe-url');
+        });
+
+        it('blocks HTML entity encoded scheme bypasses (&#58;)', () => {
+            const md = '[click](javascript&#58;alert(1))';
+            const html = modal.parseMarkdown(md);
+            expect(extractHref(html)).toBe('#unsafe-url');
+        });
+
+        it('blocks HTML entity encoded scheme bypasses (&#x3a;)', () => {
+            const md = '[click](javascript&#x3a;alert(1))';
+            const html = modal.parseMarkdown(md);
+            expect(extractHref(html)).toBe('#unsafe-url');
+        });
+
         it('allows HTTPS in uppercase', () => {
             const md = '[link](HTTPS://EXAMPLE.COM)';
             const html = modal.parseMarkdown(md);
             expect(extractHref(html)).toBe('HTTPS://EXAMPLE.COM');
+        });
+
+        it('falls back to original string if DOMParser fails', () => {
+            // Temporarily mock DOMParser to throw an error
+            const originalDOMParser = global.DOMParser;
+            class ErrorDOMParser {
+                parseFromString() {
+                    throw new Error('Simulated DOMParser error');
+                }
+            }
+            global.DOMParser = ErrorDOMParser;
+
+            const md = '[link](https://example.com/safe)';
+            const html = modal.parseMarkdown(md);
+            expect(extractHref(html)).toBe('https://example.com/safe');
+
+            // Restore original mock
+            global.DOMParser = originalDOMParser;
         });
     });
 
