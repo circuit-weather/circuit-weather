@@ -111,7 +111,9 @@ circuit-weather/
 
 ```bash
 # Local development
-pnpm run dev
+npx wrangler dev
+# OR for strict pnpm environment consistency:
+# pnpm run dev
 
 # Deploy to Cloudflare
 # Deployment is automatic via Cloudflare Git Integration (Workers with Assets)
@@ -323,7 +325,9 @@ This project uses [Cloudflare Workers](https://workers.cloudflare.com/) to proxy
 4.  **Start the local development server.**
     Run the following command:
     ```bash
-    pnpm run dev
+    npx wrangler dev
+    # OR for strict pnpm environment consistency:
+    # pnpm run dev
     ```
 5.  **Open the local address in your browser.**
     Wrangler will typically open the site at `http://localhost:8787`.
