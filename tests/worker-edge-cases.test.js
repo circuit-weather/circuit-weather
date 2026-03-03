@@ -16,12 +16,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Import worker-utils for helper mocking
 import {
-    checkRequestSource,
-    checkFetchDest,
     getErrorHeaders,
     getAllowedOrigin,
-    RateLimiter,
-    API_SECURITY_HEADERS,
 } from '../src/worker-utils.js';
 
 // Import the worker default export
