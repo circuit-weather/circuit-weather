@@ -1024,6 +1024,7 @@ describe('CircuitWeatherApp Pure Methods', () => {
              app.renderError('Boom');
 
              expect(mockContent.innerHTML).toContain('Connection Failed');
+             expect(mockContent.innerHTML).toContain('Boom');
              // Verify click listener is added
              expect(mockBtn.addEventListener).toHaveBeenCalledWith('click', expect.any(Function));
 
