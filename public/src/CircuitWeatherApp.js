@@ -141,7 +141,7 @@ export class CircuitWeatherApp {
                         </svg>
                     </div>
                     <h3>Connection Failed</h3>
-                    <p>Unable to load race schedule.</p>
+                    <p>${escapeHtml(message)}</p>
                     <button class="retry-btn" type="button">Retry</button>
                 </div>
             `;
