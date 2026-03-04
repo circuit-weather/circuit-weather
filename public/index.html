@@ -292,7 +292,8 @@
             <div id="map" class="map"></div>
 
             <!-- Radar Timeline -->
-            <div class="radar-controls" id="radarControls" style="display: none;">
+            <!-- Scout: Upgraded generic div to semantic section for better structure and screen reader landmarks -->
+            <section class="radar-controls" id="radarControls" aria-label="Radar Playback Controls" style="display: none;">
                 <button class="radar-play-btn" id="radarPlayBtn" aria-label="Play radar animation" title="Play (Space)"
                     aria-keyshortcuts="Space">
                     <svg class="icon-play" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor">
@@ -318,25 +319,27 @@
                     <span id="radarSpeedLabel">1x</span>
                 </button>
 
-            </div>
+            </section>
 
             <!-- Mobile Countdown Overlay (visible only on mobile) -->
-            <div class="mobile-countdown" id="mobileCountdown" style="display: none;">
+            <!-- Scout: Upgraded generic div to semantic section for consistent landmarks -->
+            <section class="mobile-countdown" id="mobileCountdown" aria-label="Mobile Session Countdown" style="display: none;">
                 <div class="mobile-countdown-label">Starts in</div>
                 <div class="mobile-countdown-timer" id="mobileCountdownTimer" role="timer">--:--:--</div>
                 <div class="mobile-countdown-session" id="mobileCountdownSession"></div>
-            </div>
+            </section>
 
             <!-- Mobile UI Overlay Stack -->
             <div class="mobile-ui-layout">
                 <!-- Mobile Race Info Overlay (visible only on mobile) -->
-                <div class="mobile-race-info" id="mobileRaceInfo" style="display: none;">
+                <!-- Scout: Upgraded generic div to semantic section for consistent landmarks -->
+                <section class="mobile-race-info" id="mobileRaceInfo" aria-label="Mobile Circuit Information" style="display: none;">
                     <img id="mobileCountryFlag" class="mobile-race-info-flag" alt="">
                     <div class="mobile-race-info-text">
                         <span id="mobileRaceInfoName"></span>
                         <span id="mobileRaceInfoCircuit"></span>
                     </div>
-                </div>
+                </section>
             </div>
 
             <!-- Loading Overlay -->
