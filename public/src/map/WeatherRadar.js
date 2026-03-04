@@ -439,10 +439,10 @@ export class WeatherRadar {
             const message = `Retrying ${count} failed tile${count > 1 ? 's' : ''}...`;
 
             // Fix Timer Sync: Use actual remaining time if a retry cooldown is active
-            let duration = 60;
+            let duration = 0;
             if (this.rateLimitResetTime > Date.now()) {
-                duration = Math.ceil((this.rateLimitResetTime - Date.now()) / 1000);
-                duration = Math.max(1, duration); // Ensure at least 1s
+                duration = (this.rateLimitResetTime - Date.now()) / 1000;
+                duration = Math.max(0.1, duration); // Ensure at least 100ms
             }
 
             this.showErrorToast(
@@ -471,7 +471,7 @@ export class WeatherRadar {
         this.activeErrorTitle = title; // Track title for consistency
 
         // Show persistent toast
-        this.showErrorToast(title, message, Math.ceil(waitTimeMs / 1000));
+        this.showErrorToast(title, message, waitTimeMs / 1000);
 
         // Schedule Retry
         if (this.retryTimer) clearTimeout(this.retryTimer);
@@ -514,28 +514,32 @@ export class WeatherRadar {
         this.ui.errorToast.style.opacity = '1';
 
         // Handle Countdown UI
-        const endTime = Date.now() + (durationSec * 1000);
+        if (durationSec > 0) {
+            const endTime = Date.now() + (durationSec * 1000);
 
-        const updateTimer = () => {
-            if (!this.ui.errorToast.classList.contains('visible')) {
-                this.toastAnimationFrame = null;
-                return;
-            }
-
-            const remaining = Math.ceil((endTime - Date.now()) / 1000);
-            if (remaining > 0) {
-                this.ui.errorTimer.textContent = `${remaining}s`;
-                this.toastAnimationFrame = requestAnimationFrame(updateTimer);
-            } else {
-                this.ui.errorTimer.textContent = '';
-                this.toastAnimationFrame = null;
-                if (durationSec < 10 && this.rateLimitResetTime < Date.now()) {
-                    this.hideErrorToast();
+            const updateTimer = () => {
+                if (!this.ui.errorToast.classList.contains('visible')) {
+                    this.toastAnimationFrame = null;
+                    return;
                 }
-            }
-        };
-        // Start the loop
-        this.toastAnimationFrame = requestAnimationFrame(updateTimer);
+
+                const remaining = Math.ceil((endTime - Date.now()) / 1000);
+                if (remaining > 0) {
+                    this.ui.errorTimer.textContent = `${remaining}s`;
+                    this.toastAnimationFrame = requestAnimationFrame(updateTimer);
+                } else {
+                    this.ui.errorTimer.textContent = '';
+                    this.toastAnimationFrame = null;
+                    if (durationSec < 10 && this.rateLimitResetTime < Date.now()) {
+                        this.hideErrorToast();
+                    }
+                }
+            };
+            // Start the loop
+            this.toastAnimationFrame = requestAnimationFrame(updateTimer);
+        } else {
+            this.ui.errorTimer.textContent = '';
+        }
     }
 
     hideErrorToast() {
