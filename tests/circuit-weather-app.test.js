@@ -344,6 +344,10 @@ describe('CircuitWeatherApp Pure Methods', () => {
             app.ui.forecastSection = createMockElement('forecastSection');
             app.ui.sessionEmptyState = createMockElement('sessionEmptyState');
             app.ui.raceInfoBanner = createMockElement('raceInfoBanner');
+            app.ui.mobileRaceInfo = createMockElement('mobileRaceInfo');
+            app.ui.mobileCountryFlag = createMockElement('mobileCountryFlag');
+            app.ui.mobileRaceInfoName = createMockElement('mobileRaceInfoName');
+            app.ui.mobileRaceInfoCircuit = createMockElement('mobileRaceInfoCircuit');
         });
 
         it('stores the selected race', () => {
@@ -418,7 +422,21 @@ describe('CircuitWeatherApp Pure Methods', () => {
             app.ui.sessionEmptyState = createMockElement('sessionEmptyState');
             app.ui.forecastContent = createMockElement('forecastContent');
             app.ui.forecastUnavailable = createMockElement('forecastUnavailable');
+            app.ui.mobileRaceInfo = createMockElement('mobileRaceInfo');
+            app.ui.mobileCountryFlag = createMockElement('mobileCountryFlag');
+            app.ui.mobileRaceInfoName = createMockElement('mobileRaceInfoName');
+            app.ui.mobileRaceInfoCircuit = createMockElement('mobileRaceInfoCircuit');
             app.ui.loadingOverlay = createMockElement('loadingOverlay');
+        });
+
+        it('catches and logs errors during session selection', async () => {
+            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+            app.radar.load = vi.fn().mockRejectedValue(new Error('Radar Error'));
+
+            await app.selectSession('race');
+
+            expect(consoleSpy).toHaveBeenCalledWith('Error selecting session:', expect.any(Error));
+            consoleSpy.mockRestore();
         });
 
         it('sets the selected session', async () => {
@@ -470,6 +488,10 @@ describe('CircuitWeatherApp Pure Methods', () => {
             app.selectedRace = { name: 'Bahrain GP' };
             app.ui.forecastContent = createMockElement('forecastContent');
             app.ui.forecastUnavailable = createMockElement('forecastUnavailable');
+            app.ui.mobileRaceInfo = createMockElement('mobileRaceInfo');
+            app.ui.mobileCountryFlag = createMockElement('mobileCountryFlag');
+            app.ui.mobileRaceInfoName = createMockElement('mobileRaceInfoName');
+            app.ui.mobileRaceInfoCircuit = createMockElement('mobileRaceInfoCircuit');
         });
 
         it('shows unavailable message when forecast is not available', () => {
@@ -594,6 +616,10 @@ describe('CircuitWeatherApp Pure Methods', () => {
             app.ui.forecastSection = createMockElement('forecastSection');
             app.ui.sessionEmptyState = createMockElement('sessionEmptyState');
             app.ui.raceInfoBanner = createMockElement('raceInfoBanner');
+            app.ui.mobileRaceInfo = createMockElement('mobileRaceInfo');
+            app.ui.mobileCountryFlag = createMockElement('mobileCountryFlag');
+            app.ui.mobileRaceInfoName = createMockElement('mobileRaceInfoName');
+            app.ui.mobileRaceInfoCircuit = createMockElement('mobileRaceInfoCircuit');
             app.ui.forecastContent = createMockElement('forecastContent');
             app.ui.forecastUnavailable = createMockElement('forecastUnavailable');
             app.ui.loadingOverlay = createMockElement('loadingOverlay');
@@ -882,6 +908,34 @@ describe('CircuitWeatherApp Pure Methods', () => {
     // ---------------------------------------------------------------
     // Init Lifecycle
     // ---------------------------------------------------------------
+    // ---------------------------------------------------------------
+    // bindEvents — outcome: events are attached to DOM elements
+    // ---------------------------------------------------------------
+    describe('bindEvents', () => {
+        beforeEach(() => {
+            app.ui.sessionSelect = createMockElement('sessionSelect');
+            app.selectedRace = {};
+            app.selectSession = vi.fn();
+        });
+
+        it('binds sessionSelect change event to selectSession', () => {
+            app.bindEvents();
+
+            // Extract the event listener added to sessionSelect
+            const addEventListenerCalls = app.ui.sessionSelect.addEventListener.mock.calls;
+            const changeEventCall = addEventListenerCalls.find(call => call[0] === 'change');
+            expect(changeEventCall).toBeTruthy();
+
+            const changeHandler = changeEventCall[1];
+
+            // Invoke the handler manually
+            changeHandler({ target: { value: 'race' } });
+
+            // Verify selectSession was called
+            expect(app.selectSession).toHaveBeenCalledWith('race');
+        });
+    });
+
     describe('init Lifecycle', () => {
         let app;
 
