@@ -527,6 +527,29 @@ describe('CircuitWeatherApp Pure Methods', () => {
             expect(app.ui.forecastContent.innerHTML).toContain('weather-dashboard');
         });
 
+        it('escapes windInfo.text and rotation in the forecast dashboard', () => {
+            app.weatherClient.getWindDirection = vi.fn().mockReturnValue({
+                text: '<script>alert("xss")</script>',
+                rotation: '"><img src=x onerror=alert(1)>'
+            });
+
+            const weather = {
+                available: true,
+                current: { temperature_2m: 28 },
+                hourly: [
+                    { time: 1700000000, temp: 28, humidity: 40, precipProb: 5, windSpeed: 12, windDir: 180, code: 0 },
+                ],
+                units: { temperature_2m: '°C', wind_speed_10m: 'km/h' },
+            };
+            const sessionTime = new Date(1700000000 * 1000);
+            app.renderForecast(weather, sessionTime, 'race');
+
+            expect(app.ui.forecastContent.innerHTML).toContain('&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;');
+            expect(app.ui.forecastContent.innerHTML).toContain('&quot;&gt;&lt;img src=x onerror=alert(1)&gt;');
+            expect(app.ui.forecastContent.innerHTML).not.toContain('<script>alert("xss")</script>');
+            expect(app.ui.forecastContent.innerHTML).not.toContain('"><img src=x onerror=alert(1)>');
+        });
+
         it('skips rendering if session has changed', () => {
             app.selectedSession = { id: 'qualifying', name: 'Qualifying' };
             const weather = { available: true, hourly: [], units: {} };

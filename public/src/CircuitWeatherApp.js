@@ -765,9 +765,9 @@ export class CircuitWeatherApp {
                     <div class="weather-metric">
                         <span class="weather-label">Wind</span>
                         <span class="weather-value" id="weatherWind">${escapeHtml(wind)} ${escapeHtml(weather.units.wind_speed_10m)}</span>
-                        <span class="weather-sub" id="weatherWindDir" title="${escapeHtml(dir)}°" aria-label="Wind direction: ${windInfo.text} (${escapeHtml(dir)} degrees)">
-                            ${windInfo.text}
-                            <svg class="icon-wind-arrow" style="transform: rotate(${rotation}deg); width: 14px; height: 14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <span class="weather-sub" id="weatherWindDir" title="${escapeHtml(dir)}°" aria-label="Wind direction: ${escapeHtml(windInfo.text)} (${escapeHtml(dir)} degrees)">
+                            ${escapeHtml(windInfo.text)}
+                            <svg class="icon-wind-arrow" style="transform: rotate(${escapeHtml(rotation)}deg); width: 14px; height: 14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                 <line x1="12" y1="19" x2="12" y2="5"></line>
                                 <polyline points="5 12 12 5 19 12"></polyline>
                             </svg>
