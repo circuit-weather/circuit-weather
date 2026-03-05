@@ -1346,6 +1346,7 @@ body {
     font-weight: 700;
     color: var(--color-text);
     line-height: 1.2;
+    margin: 0;
 }
 
 .race-info-circuit {
@@ -1433,13 +1434,14 @@ body {
         gap: 1px;
     }
 
-    .mobile-race-info-text span:first-child {
+    .mobile-race-info-text h2 {
         font-size: 0.85rem;
         font-weight: 600;
         color: var(--color-text);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        margin: 0;
     }
 
     .mobile-race-info-text span:last-child {
