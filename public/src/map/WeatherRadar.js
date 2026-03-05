@@ -115,6 +115,7 @@ export class WeatherRadar {
             // Palette Accessibility: Update ARIA label with current state
             if (this.ui.speedBtn) {
                 this.ui.speedBtn.setAttribute('aria-label', `Playback speed: ${label}`);
+                this.ui.speedBtn.setAttribute('title', `Playback speed: ${label}`);
             }
         }
     }
