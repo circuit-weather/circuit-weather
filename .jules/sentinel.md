@@ -70,6 +70,11 @@
 **Learning:** Wildcards like `.*` in origin-matching regular expressions are inherently dangerous and prone to prefix/suffix spoofing attacks, especially when validating dynamic environments like `.workers.dev` or `.pages.dev`.
 **Prevention:** Always restrict subdomains to valid characters (e.g., `[a-zA-Z0-9-]+`) rather than using greedy matchers. Use `(?:[a-zA-Z0-9-]+\.)*` to safely validate multiple subdomains.
 
+## 2026-07-07 - XSS in CircuitWeatherApp Forecast Wind Information
+**Vulnerability:** `CircuitWeatherApp.renderForecast` injected `windInfo.text` and `rotation` values directly into the DOM using `innerHTML` without sanitization inside an SVG attribute (`transform: rotate(...)`) and span `aria-label`s. This created a potential XSS vector if the `weatherClient.getWindDirection()` method returned untrusted or compromised data.
+**Learning:** Even data computed from internal utility functions should be treated as potentially unsafe when injected into HTML strings, particularly when placed directly into element attributes (like `aria-label` or `style`).
+**Prevention:** Consistently apply `escapeHtml` to ALL dynamically passed parameters in DOM-injecting methods, even if the current callers appear to pass safe or hardcoded values.
+
 ## 2026-06-30 - HTML Entity Bypass in URL Sanitization
 **Vulnerability:** The `sanitizeUrl` function in `PrivacyModal.js` used a regular expression to validate the protocol scheme (`/^[a-z][a-z0-9+.-]*:/i`) and block dangerous ones like `javascript:`. However, it failed to account for HTML entity encoding in the input. Because the markdown parser called `escapeHtml()` prior to this check, an attacker could provide `[click](javascript&colon;alert(1))` which was encoded to `javascript&amp;colon;alert(1)`. The regex failed to match the `&` or the scheme, passing it through as a "safe" relative URL. When injected into the DOM via `innerHTML`, the browser decoded the entities back to `javascript:alert(1)`, allowing XSS execution upon clicking.
 **Learning:** URL sanitization must occur on the fully decoded string that the browser will eventually parse. Browsers decode HTML entities in attributes like `href` *before* evaluating the URL scheme. Validating an encoded string allows attackers to hide malicious schemes (like `javascript:`) behind entities.
