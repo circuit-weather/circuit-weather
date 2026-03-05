@@ -136,12 +136,32 @@ describe('Worker Logic', () => {
       });
       cacheStore.set('https://api.jolpi.ca/ergast/f1/current', cacheResponse);
 
-      const req = createRequest('/api/f1/current');
+      const req = createRequest('/api/f1/current', {
+        headers: { 'Origin': 'https://circuit-weather.racing' }
+      });
       const res = await worker.fetch(req, global.env, global.ctx);
 
       expect(res.status).toBe(200);
       expect(await res.json()).toEqual(cachedData);
       expect(res.headers.get('X-Cache')).toBe('HIT');
+      expect(res.headers.get('Access-Control-Allow-Origin')).toBe('https://circuit-weather.racing');
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it('returns cached response without CORS when origin is missing', async () => {
+      const cachedData = { cached: true };
+      const cacheResponse = new Response(JSON.stringify(cachedData), {
+        headers: { 'Content-Type': 'application/json' }
+      });
+      cacheStore.set('https://api.jolpi.ca/ergast/f1/current', cacheResponse);
+
+      const req = createRequest('/api/f1/current'); // No Origin header by default
+      const res = await worker.fetch(req, global.env, global.ctx);
+
+      expect(res.status).toBe(200);
+      expect(await res.json()).toEqual(cachedData);
+      expect(res.headers.get('X-Cache')).toBe('HIT');
+      expect(res.headers.get('Access-Control-Allow-Origin')).toBeNull();
       expect(mockFetch).not.toHaveBeenCalled();
     });
 
@@ -257,6 +277,23 @@ describe('Worker Logic', () => {
         expect(await res.json()).toEqual(cachedData);
         expect(res.headers.get('X-Cache')).toBe('HIT');
         expect(res.headers.get('Access-Control-Allow-Origin')).toBe('https://circuit-weather.racing');
+        expect(mockFetch).not.toHaveBeenCalled();
+      });
+
+    it('returns cached response for radar without CORS when origin is missing', async () => {
+        const cachedData = { version: '2.0', host: 'https://x.com', radar: {} };
+        const cacheResponse = new Response(JSON.stringify(cachedData), {
+          headers: { 'Content-Type': 'application/json' }
+        });
+        cacheStore.set('https://api.rainviewer.com/public/weather-maps.json', cacheResponse);
+
+        const req = createRequest('/api/radar');
+        const res = await worker.fetch(req, global.env, global.ctx);
+
+        expect(res.status).toBe(200);
+        expect(await res.json()).toEqual(cachedData);
+        expect(res.headers.get('X-Cache')).toBe('HIT');
+        expect(res.headers.get('Access-Control-Allow-Origin')).toBeNull();
         expect(mockFetch).not.toHaveBeenCalled();
       });
 
@@ -462,6 +499,15 @@ describe('Worker Logic', () => {
 
       expect(res.status).toBe(500);
       expect(res.headers.get('X-Upstream-Status')).toBe('500');
+    });
+
+    it('handles fetch exceptions gracefully', async () => {
+      mockFetch.mockRejectedValueOnce(new Error('Network error'));
+
+      const req = createRequest('/api/tiles/v2/radar/error.png');
+      const res = await worker.fetch(req, global.env, global.ctx);
+
+      expect(res.status).toBe(502);
     });
   });
 
