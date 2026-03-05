@@ -229,6 +229,11 @@ mode = "smart"
    - Persists in localStorage
    - Updates range circles
 
+8. **Weather Forecast**
+   - Session-specific weather forecast (temperature, rain probability, wind)
+   - Fetched directly from Open-Meteo API
+   - Hourly forecast timeline
+
 ### UI Layout
 
 ```
@@ -283,6 +288,7 @@ mode = "smart"
 - [ ] Radar tiles visible at circuit zoom level
 - [ ] Radar animation plays/pauses correctly
 - [ ] Countdown displays correct time to session
+- [ ] Session forecast data loads and displays correctly
 - [ ] Theme toggle updates map tiles
 - [ ] Unit toggle updates range circles
 - [ ] URL routing works (/f1/1/race)

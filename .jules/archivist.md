@@ -128,3 +128,8 @@ Prevention: Avoid duplicating configuration values in documentation; reference t
 
 **Learning:** `README.md` claimed "All API requests (Jolpica F1, RainViewer) are proxied" but omitted GitHub (track data) and Unpkg (Leaflet assets), which were later proxied for CSP compliance and privacy.
 **Action:** Always cross-reference `README.md` architecture claims with `worker.js` and `PRIVACY.md` when asset or data fetching strategies evolve.
+
+## 2026-03-04 - Omitted major feature in Core Features
+
+**Learning:** `AGENTS.md` omitted "Weather Forecast" (Open-Meteo) from its "Core Features" section and "Testing Checklist", even though the feature was fully implemented, documented in `PRIVACY.md` and `README.md`, and is a primary value proposition of the app.
+**Action:** Added the "Weather Forecast" feature and its verification step to `AGENTS.md` to ensure a single source of truth for application capabilities and testing requirements.
