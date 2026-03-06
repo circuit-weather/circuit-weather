@@ -379,6 +379,7 @@ describe('PrivacyModal', () => {
         });
 
         it('handles fetch errors gracefully', async () => {
+            const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
             global.fetch.mockRejectedValue(new Error('Network error'));
 
             await modal.open();
@@ -388,6 +389,8 @@ describe('PrivacyModal', () => {
             // Implementation sets loaded=true only on success? No, let's check code.
             // Code sets loaded=true ONLY in try block. So it remains false.
             expect(modal.loaded).toBe(false);
+            expect(errorSpy).toHaveBeenCalled();
+            errorSpy.mockRestore();
         });
     });
 

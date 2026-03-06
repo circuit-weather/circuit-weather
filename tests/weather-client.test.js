@@ -321,6 +321,7 @@ describe('WeatherClient', () => {
         });
 
         it('returns error result when fetch fails', async () => {
+            const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
             const sessionTime = new Date(Date.now() + 1 * 24 * 60 * 60 * 1000);
             mockFetch.mockRejectedValueOnce(new Error('Network error'));
 
@@ -328,9 +329,12 @@ describe('WeatherClient', () => {
 
             expect(result.available).toBe(false);
             expect(result.reason).toBe('error');
+            expect(errorSpy).toHaveBeenCalled();
+            errorSpy.mockRestore();
         });
 
         it('returns error result when response is not ok', async () => {
+            const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
             const sessionTime = new Date(Date.now() + 1 * 24 * 60 * 60 * 1000);
             mockFetch.mockResolvedValueOnce({ ok: false, status: 500 });
 
@@ -338,6 +342,8 @@ describe('WeatherClient', () => {
 
             expect(result.available).toBe(false);
             expect(result.reason).toBe('error');
+            expect(errorSpy).toHaveBeenCalled();
+            errorSpy.mockRestore();
         });
 
         it('returns too_far when hourly data is empty after filtering', async () => {
