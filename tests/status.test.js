@@ -53,9 +53,9 @@ describe('status utils', () => {
             expect(getRoundStatus(race, now)).toBe('LIVE');
         });
 
-        it('identifies LIVE round between sessions', () => {
+        it('identifies CURRENT round between sessions', () => {
             const now = new Date('2023-03-04T12:00:00Z'); // Between FP1 and Race
-            expect(getRoundStatus(race, now)).toBe('LIVE');
+            expect(getRoundStatus(race, now)).toBe('CURRENT');
         });
 
         it('identifies FUTURE round', () => {
@@ -91,6 +91,10 @@ describe('status utils', () => {
         it('formats LIVE correctly', () => {
             expect(formatStatusLabel('Round 1', 'LIVE', false)).toBe('🔴 LIVE Round 1');
             expect(formatStatusLabel('Round 1', 'LIVE', true)).toBe('🔴 LIVE Round 1');
+        });
+
+        it('formats CURRENT correctly', () => {
+            expect(formatStatusLabel('Round 1', 'CURRENT', false)).toBe('(Current) Round 1');
         });
 
         it('formats NEXT correctly', () => {

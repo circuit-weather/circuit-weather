@@ -37,6 +37,7 @@ export function getRoundStatus(race, now) {
     // Find earliest start and latest end
     let minStart = null;
     let maxEnd = null;
+    let anySessionLive = false;
 
     race.sessions.forEach(session => {
         if (!session.date || !session.time) return;
@@ -49,12 +50,18 @@ export function getRoundStatus(race, now) {
 
         if (!minStart || start < minStart) minStart = start;
         if (!maxEnd || end > maxEnd) maxEnd = end;
+
+        if (now >= start && now <= end) {
+            anySessionLive = true;
+        }
     });
 
     if (!minStart || !maxEnd) return 'UNKNOWN';
 
-    if (now >= minStart && now <= maxEnd) {
+    if (anySessionLive) {
         return 'LIVE';
+    } else if (now >= minStart && now <= maxEnd) {
+        return 'CURRENT';
     } else if (now < minStart) {
         return 'FUTURE';
     } else {
@@ -65,13 +72,16 @@ export function getRoundStatus(race, now) {
 /**
  * Formats a label with status indicators.
  * @param {string} label - The original label.
- * @param {string} status - The status ('LIVE', 'FUTURE', 'PAST').
+ * @param {string} status - The status ('LIVE', 'FUTURE', 'PAST', 'CURRENT').
  * @param {boolean} isNext - Whether this item is the next upcoming one.
  * @returns {string} - The formatted label.
  */
 export function formatStatusLabel(label, status, isNext) {
     if (status === 'LIVE') {
         return `🔴 LIVE ${label}`;
+    }
+    if (status === 'CURRENT') {
+        return `(Current) ${label}`;
     }
     if (isNext) {
         return `(Next) ${label}`;
