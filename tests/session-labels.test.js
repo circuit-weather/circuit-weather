@@ -9,6 +9,7 @@ const createMockElement = (id) => ({
     disabled: false,
     value: '',
     setAttribute: vi.fn(),
+    removeAttribute: vi.fn(),
 });
 
 vi.stubGlobal('document', {
