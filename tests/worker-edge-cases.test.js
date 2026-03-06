@@ -207,6 +207,7 @@ describe('Worker Edge Cases', () => {
         });
 
         it('returns 502 when upstream track fetch fails', async () => {
+            const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
             const originalFetch = globalThis.fetch;
             globalThis.fetch = vi.fn().mockRejectedValueOnce(new Error('Network error'));
 
@@ -216,6 +217,8 @@ describe('Worker Edge Cases', () => {
             expect(response.status).toBe(502);
 
             globalThis.fetch = originalFetch;
+            expect(errorSpy).toHaveBeenCalled();
+            errorSpy.mockRestore();
         });
     });
 

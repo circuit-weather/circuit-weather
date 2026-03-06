@@ -191,6 +191,7 @@ describe('Worker Logic', () => {
     });
 
     it('handles upstream errors gracefully (empty response)', async () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       mockFetch.mockResolvedValueOnce(new Response('Error', { status: 500 }));
 
       const req = createRequest('/api/radar');
@@ -202,9 +203,12 @@ describe('Worker Logic', () => {
       expect(data.radar).toBeDefined();
       expect(data.radar.past).toEqual([]);
       expect(res.headers.get('X-Upstream-Status')).toBe('500');
+      expect(errorSpy).toHaveBeenCalled();
+      errorSpy.mockRestore();
     });
 
     it('handles fetch exceptions gracefully', async () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       mockFetch.mockRejectedValueOnce(new Error('Network error'));
 
       const req = createRequest('/api/radar');
@@ -213,9 +217,12 @@ describe('Worker Logic', () => {
       expect(res.status).toBe(502);
       const data = await res.json();
       expect(data.error).toBe('Failed to fetch radar data');
+      expect(errorSpy).toHaveBeenCalled();
+      errorSpy.mockRestore();
     });
 
     it('blocks invalid content-type from upstream radar', async () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       mockFetch.mockResolvedValueOnce(new Response(JSON.stringify({}), {
         status: 200,
         headers: { 'Content-Type': 'text/html' }
@@ -228,6 +235,8 @@ describe('Worker Logic', () => {
       const data = await res.json();
       // Returns empty radar response for invalid content type
       expect(data.radar.past).toEqual([]);
+      expect(errorSpy).toHaveBeenCalled();
+      errorSpy.mockRestore();
     });
 
     it('sets CORS headers when valid Origin is provided', async () => {
@@ -247,6 +256,7 @@ describe('Worker Logic', () => {
     });
 
     it('handles upstream rate limit (429) for radar', async () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       mockFetch.mockResolvedValueOnce(new Response(JSON.stringify({ error: 'Rate Limit' }), {
         status: 429,
         headers: { 'Content-Type': 'application/json', 'Retry-After': '60' }
@@ -259,6 +269,8 @@ describe('Worker Logic', () => {
       const data = await res.json();
       expect(data.error).toBe('Upstream Rate Limit');
       expect(res.headers.get('Retry-After')).toBe('60');
+      expect(errorSpy).toHaveBeenCalled();
+      errorSpy.mockRestore();
     });
 
     it('returns cached response for radar with valid origin', async () => {
@@ -382,6 +394,7 @@ describe('Worker Logic', () => {
     });
 
     it('blocks asset with SRI mismatch', async () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       setupCryptoMock(false); // Returns random hash
 
       const mockScript = 'console.log("hacked")';
@@ -395,6 +408,8 @@ describe('Worker Logic', () => {
 
       expect(res.status).toBe(502); // Bad Gateway (SRI failed)
       expect(await res.text()).toContain('SRI Integrity Check Failed');
+      expect(errorSpy).toHaveBeenCalled();
+      errorSpy.mockRestore();
     });
 
     it('returns 404 for unknown asset', async () => {
@@ -441,6 +456,7 @@ describe('Worker Logic', () => {
     });
 
     it('enforces strict upstream content-type (anti-sniffing)', async () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       mockFetch.mockResolvedValueOnce(new Response('<html>Error</html>', {
         status: 200,
         headers: { 'Content-Type': 'text/html' }
@@ -451,6 +467,8 @@ describe('Worker Logic', () => {
       const res = await worker.fetch(req, global.env, global.ctx);
 
       expect(res.status).toBe(502); // Bad Gateway
+      expect(errorSpy).toHaveBeenCalled();
+      errorSpy.mockRestore();
     });
 
     it('returns safe JSON error for upstream 404 (non-image) and caches it', async () => {
@@ -502,12 +520,15 @@ describe('Worker Logic', () => {
     });
 
     it('handles fetch exceptions gracefully', async () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       mockFetch.mockRejectedValueOnce(new Error('Network error'));
 
       const req = createRequest('/api/tiles/v2/radar/error.png');
       const res = await worker.fetch(req, global.env, global.ctx);
 
       expect(res.status).toBe(502);
+      expect(errorSpy).toHaveBeenCalled();
+      errorSpy.mockRestore();
     });
   });
 

@@ -84,6 +84,7 @@ describe('Worker Security: Strict Content-Type Validation', () => {
     });
 
     it('blocks deceptive type: application/jsonp', async () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       mockFetch.mockResolvedValueOnce(new Response('callback({})', {
         status: 200,
         headers: { 'Content-Type': 'application/jsonp' }
@@ -99,9 +100,12 @@ describe('Worker Security: Strict Content-Type Validation', () => {
         throw new Error('FAILED: Accepted application/jsonp');
       }
       expect(res.status).toBe(502);
+      expect(errorSpy).toHaveBeenCalled();
+      errorSpy.mockRestore();
     });
 
     it('blocks deceptive type: application/json-evil', async () => {
+        const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
         mockFetch.mockResolvedValueOnce(new Response('{}', {
           status: 200,
           headers: { 'Content-Type': 'application/json-evil' }
@@ -114,11 +118,14 @@ describe('Worker Security: Strict Content-Type Validation', () => {
             throw new Error('FAILED: Accepted application/json-evil');
         }
         expect(res.status).toBe(502);
+        expect(errorSpy).toHaveBeenCalled();
+        errorSpy.mockRestore();
       });
   });
 
   describe('Radar API Proxy (/api/radar)', () => {
     it('blocks deceptive type: application/json-evil', async () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       mockFetch.mockResolvedValueOnce(new Response('{}', {
         status: 200,
         headers: { 'Content-Type': 'application/json-evil' }
@@ -145,6 +152,8 @@ describe('Worker Security: Strict Content-Type Validation', () => {
 
       // Correct behavior: returns empty radar structure
       expect(data.radar).toBeDefined();
+      expect(errorSpy).toHaveBeenCalled();
+      errorSpy.mockRestore();
     });
   });
 
@@ -170,6 +179,7 @@ describe('Worker Security: Strict Content-Type Validation', () => {
     });
 
     it('blocks deceptive type: text/javascript-evil', async () => {
+        const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
         // Valid hash for leaflet.js
         const hash = '20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=';
         const buffer = Uint8Array.from(atob(hash), c => c.charCodeAt(0)).buffer;
@@ -191,6 +201,8 @@ describe('Worker Security: Strict Content-Type Validation', () => {
             throw new Error('FAILED: Accepted text/javascript-evil');
         }
         expect(res.status).toBe(502);
+        expect(errorSpy).toHaveBeenCalled();
+        errorSpy.mockRestore();
     });
   });
 
@@ -207,6 +219,7 @@ describe('Worker Security: Strict Content-Type Validation', () => {
     });
 
     it('blocks deceptive type: image/png-evil', async () => {
+        const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
         mockFetch.mockResolvedValueOnce(new Response(new ArrayBuffer(10), {
             status: 200,
             headers: { 'Content-Type': 'image/png-evil' }
@@ -221,6 +234,8 @@ describe('Worker Security: Strict Content-Type Validation', () => {
             throw new Error('FAILED: Accepted image/png-evil');
         }
         expect(res.status).toBe(502);
+        expect(errorSpy).toHaveBeenCalled();
+        errorSpy.mockRestore();
     });
   });
 

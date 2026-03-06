@@ -299,12 +299,15 @@ describe('WeatherRadar Lifecycle & Playback', () => {
         });
 
         it('always starts polling even if load fails', async () => {
+            const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
             global.fetch.mockRejectedValueOnce(new Error('Network Error'));
             const pollSpy = vi.spyOn(radar, 'startPolling');
 
             await radar.load();
 
             expect(pollSpy).toHaveBeenCalled();
+            expect(errorSpy).toHaveBeenCalled();
+            errorSpy.mockRestore();
         });
     });
 

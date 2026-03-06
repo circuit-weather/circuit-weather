@@ -98,6 +98,7 @@ describe('Worker Logic - Tile Errors', () => {
   });
 
   it('handles network exception for tiles', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     mockFetch.mockRejectedValueOnce(new Error('Network error'));
 
     const req = createRequest('/api/tiles/v2/radar/1/2/3/512/1/1_1.png');
@@ -105,5 +106,7 @@ describe('Worker Logic - Tile Errors', () => {
 
     expect(res.status).toBe(502);
     expect(await res.text()).toBe('Tile proxy failed');
+    expect(errorSpy).toHaveBeenCalled();
+    errorSpy.mockRestore();
   });
 });
