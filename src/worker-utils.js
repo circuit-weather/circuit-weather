@@ -18,6 +18,7 @@ export const API_SECURITY_HEADERS = {
   'Content-Security-Policy': "upgrade-insecure-requests; default-src 'none'; frame-ancestors 'none'; frame-src 'none'; base-uri 'none'; form-action 'none';",
   'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
   'Cross-Origin-Resource-Policy': 'cross-origin',
+  'X-Frame-Options': 'DENY', // SEC: Defense-in-depth against clickjacking
   'X-Robots-Tag': 'noindex', // Prevent search engines from indexing API responses
 };
 
