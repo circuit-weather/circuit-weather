@@ -1,8 +1,13 @@
 /**
  * Cloudflare Worker with Asset Handling
  * 
- * Handles:
- * 1. API proxy requests to /api/f1/*
+ * Handles API proxy requests to:
+ * - /api/f1/*
+ * - /api/health
+ * - /api/radar
+ * - /api/tiles/*
+ * - /api/track/*
+ * - /api/assets/*
  * 
  * Static assets and SPA fallback are handled by Cloudflare's asset configuration
  * via wrangler.toml's run_worker_first and not_found_handling settings.

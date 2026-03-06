@@ -133,3 +133,8 @@ Prevention: Avoid duplicating configuration values in documentation; reference t
 
 **Learning:** `AGENTS.md` omitted "Weather Forecast" (Open-Meteo) from its "Core Features" section and "Testing Checklist", even though the feature was fully implemented, documented in `PRIVACY.md` and `README.md`, and is a primary value proposition of the app.
 **Action:** Added the "Weather Forecast" feature and its verification step to `AGENTS.md` to ensure a single source of truth for application capabilities and testing requirements.
+
+## 2026-03-05 - Incomplete Worker API Route Documentation
+
+**Learning:** The docstring at the top of `src/worker.js` only listed `/api/f1/*` as the handled route, despite the worker expanding to proxy multiple other services (e.g., `/api/health`, `/api/radar`, `/api/tiles/*`, `/api/track/*`, `/api/assets/*`) for caching and CSP compliance. This caused ambiguity for developers reading the entry point.
+**Action:** Updated the `src/worker.js` header docstring to list all actively handled API proxy routes to match the actual `fetch` handler implementation.
