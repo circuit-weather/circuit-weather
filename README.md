@@ -39,11 +39,11 @@ The map tiles are provided by Carto (based on OpenStreetMap data), ensuring a cl
 
 Huge thanks to the free APIs and data sources that make this possible:
 
-- **Jolpica F1** for the race data.
-- **RainViewer** for the weather radar.
-- **Open-Meteo** for the weather forecasts.
-- **Carto & OpenStreetMap** for the map tiles.
-- **bacinger/f1-circuits** for the circuit track data.
+- **[Jolpica F1](https://jolpi.ca/)** for the race data.
+- **[RainViewer](https://www.rainviewer.com/)** for the weather radar.
+- **[Open-Meteo](https://open-meteo.com/)** for the weather forecasts.
+- **[Carto](https://carto.com/)** & **[OpenStreetMap](https://www.openstreetmap.org/)** for the map tiles.
+- **[bacinger/f1-circuits](https://github.com/bacinger/f1-circuits)** for the circuit track data.
 
 ## License
 
