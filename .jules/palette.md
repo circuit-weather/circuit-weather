@@ -41,3 +41,6 @@
 ## 2024-05-18 - Redundant ARIA Attributes
 **Learning:** Native HTML form controls like `<select>` automatically communicate their `disabled` state semantically to screen readers via the native `disabled` attribute. Adding `aria-disabled="true"` to these elements is redundant, provides no extra accessibility benefit, and violates the "First Rule of ARIA" (which favors using native semantic HTML over ARIA).
 **Action:** Do not implement explicit `aria-disabled` logic for native form controls that already use the `disabled` boolean attribute.
+## 2024-05-25 - Async Modal Loading States
+**Learning:** When modals fetch content asynchronously (like privacy policies or terms) before opening, the UI appears frozen to the user after they click the trigger button.
+**Action:** Always open the modal immediately and display a skeleton loading state inside the modal body while the asynchronous content is being fetched, providing instant interaction feedback.
