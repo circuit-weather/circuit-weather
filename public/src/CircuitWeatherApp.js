@@ -192,15 +192,15 @@ export class CircuitWeatherApp {
             this.selectRound(nextRace.round);
 
             // Find next upcoming session within this round
-            const nextSession = nextRace.sessions.find(session => {
-                if (!session.date || !session.time) return false;
-                const sessionTime = new Date(`${session.date}T${session.time}`);
-                return sessionTime > now;
-            });
+            // Priority: LIVE > FUTURE
+            let targetSession = nextRace.sessions.find(session => getSessionStatus(session, now) === 'LIVE');
+            if (!targetSession) {
+                targetSession = nextRace.sessions.find(session => getSessionStatus(session, now) === 'FUTURE');
+            }
 
-            if (nextSession) {
-                if (this.ui.sessionSelect) this.ui.sessionSelect.value = nextSession.id;
-                this.selectSession(nextSession.id);
+            if (targetSession) {
+                if (this.ui.sessionSelect) this.ui.sessionSelect.value = targetSession.id;
+                this.selectSession(targetSession.id);
             }
         }
     }
