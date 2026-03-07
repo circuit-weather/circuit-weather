@@ -202,6 +202,57 @@ describe('PrivacyModal', () => {
             // Restore original mock
             global.DOMParser = originalDOMParser;
         });
+
+        it('handles DOMParser returning null doc', () => {
+            const originalDOMParser = global.DOMParser;
+            class NullDocDOMParser {
+                parseFromString() {
+                    return null;
+                }
+            }
+            global.DOMParser = NullDocDOMParser;
+
+            const md = '[link](https://example.com/safe)';
+            const html = modal.parseMarkdown(md);
+            expect(extractHref(html)).toBe('https://example.com/safe');
+
+            // Restore original mock
+            global.DOMParser = originalDOMParser;
+        });
+
+        it('handles DOMParser returning doc without documentElement', () => {
+            const originalDOMParser = global.DOMParser;
+            class NullDocDOMParser {
+                parseFromString() {
+                    return {};
+                }
+            }
+            global.DOMParser = NullDocDOMParser;
+
+            const md = '[link](https://example.com/safe)';
+            const html = modal.parseMarkdown(md);
+            expect(extractHref(html)).toBe('https://example.com/safe');
+
+            // Restore original mock
+            global.DOMParser = originalDOMParser;
+        });
+
+        it('handles DOMParser missing documentElement textContent', () => {
+            const originalDOMParser = global.DOMParser;
+            class NoTextContentDOMParser {
+                parseFromString() {
+                    return { documentElement: {} };
+                }
+            }
+            global.DOMParser = NoTextContentDOMParser;
+
+            const md = '[link](https://example.com/safe)';
+            const html = modal.parseMarkdown(md);
+            expect(extractHref(html)).toBe('https://example.com/safe');
+
+            // Restore original mock
+            global.DOMParser = originalDOMParser;
+        });
     });
 
     // ---------------------------------------------------------------
