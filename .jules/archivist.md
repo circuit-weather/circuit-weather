@@ -138,3 +138,8 @@ Prevention: Avoid duplicating configuration values in documentation; reference t
 
 **Learning:** The docstring at the top of `src/worker.js` only listed `/api/f1/*` as the handled route, despite the worker expanding to proxy multiple other services (e.g., `/api/health`, `/api/radar`, `/api/tiles/*`, `/api/track/*`, `/api/assets/*`) for caching and CSP compliance. This caused ambiguity for developers reading the entry point.
 **Action:** Updated the `src/worker.js` header docstring to list all actively handled API proxy routes to match the actual `fetch` handler implementation.
+
+## 2026-03-08 - Target Audience for Documentation
+
+**Learning:** Human developers are not the target audience for `README.md` local development instructions; this project is explicitly meant for AI agents to build and run.
+**Action:** Removed generic local setup steps from `README.md` and explicitly annotated `AGENTS.md` to reflect that the repository is agent-driven and does not target human contributors.

@@ -316,7 +316,7 @@ If you discover files that appear to be one-off agent tests (e.g., standalone ve
 
 ## Local Development
 
-> **Note:** These instructions are for developers who want to contribute to the project. If you just want to use the site, please visit the live version at **https://circuit-weather.racing**.
+> **Note:** These instructions are for **AI Agents** working on the project. This project does not intend to onboard human developers; human developers do not need instructions on how to run the project locally. If you just want to use the site, please visit the live version at **https://circuit-weather.racing**.
 
 This project uses [Cloudflare Workers](https://workers.cloudflare.com/) to proxy API requests, so a simple static web server is not enough. You'll need to use the `wrangler` CLI to run it locally.
 
