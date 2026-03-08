@@ -44,3 +44,6 @@
 ## 2024-05-25 - Async Modal Loading States
 **Learning:** When modals fetch content asynchronously (like privacy policies or terms) before opening, the UI appears frozen to the user after they click the trigger button.
 **Action:** Always open the modal immediately and display a skeleton loading state inside the modal body while the asynchronous content is being fetched, providing instant interaction feedback.
+## 2024-05-20 - Adding immediate feedback to synchronous page reloads
+**Learning:** When a UI action triggers a synchronous `window.location.reload()`, the browser can appear to freeze for a moment before the navigation occurs. Adding immediate visual feedback (disabling the button, changing text to "Retrying...", updating `aria-label`) right before the reload significantly improves perceived performance and reassures the user that their action was registered, especially on slower network connections.
+**Action:** Always add intermediate loading states to buttons that trigger full page navigations or reloads, rather than relying solely on the browser's native loading indicator.

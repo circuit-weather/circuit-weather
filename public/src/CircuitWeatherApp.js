@@ -142,12 +142,17 @@ export class CircuitWeatherApp {
                     </div>
                     <h3>Connection Failed</h3>
                     <p>${escapeHtml(message)}</p>
-                    <button class="retry-btn" type="button">Retry</button>
+                    <button class="retry-btn" type="button" aria-label="Retry connection">Retry</button>
                 </div>
             `;
             const btn = sidebarContent.querySelector('.retry-btn');
             if (btn) {
-                btn.addEventListener('click', () => window.location.reload());
+                btn.addEventListener('click', () => {
+                    btn.disabled = true;
+                    btn.textContent = 'Retrying...';
+                    btn.setAttribute('aria-label', 'Retrying connection');
+                    window.location.reload();
+                });
             }
         }
     }
