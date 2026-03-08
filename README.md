@@ -35,27 +35,6 @@ External API and asset requests (Jolpica F1, RainViewer, GitHub for track layout
 
 The map tiles are provided by Carto (based on OpenStreetMap data), ensuring a clean look that works well with the weather overlays.
 
-## Local Development
-
-To run this project locally, you will need **Node.js v20+** installed.
-
-1. Install dependencies:
-
-   ```bash
-   pnpm install
-   ```
-
-2. Start the development server (uses Cloudflare Wrangler):
-
-   ```bash
-   npx wrangler dev
-   ```
-
-3. Run the test suite:
-   ```bash
-   pnpm test
-   ```
-
 ## Credits
 
 Huge thanks to the free APIs and data sources that make this possible:
