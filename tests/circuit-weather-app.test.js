@@ -936,9 +936,11 @@ describe('CircuitWeatherApp Pure Methods', () => {
     // ---------------------------------------------------------------
     describe('bindEvents', () => {
         beforeEach(() => {
+            app.ui.roundSelect = createMockElement('roundSelect');
             app.ui.sessionSelect = createMockElement('sessionSelect');
             app.selectedRace = {};
             app.selectSession = vi.fn();
+            app.selectRound = vi.fn();
         });
 
         it('binds sessionSelect change event to selectSession', () => {
@@ -956,6 +958,52 @@ describe('CircuitWeatherApp Pure Methods', () => {
 
             // Verify selectSession was called
             expect(app.selectSession).toHaveBeenCalledWith('race');
+        });
+
+        it('binds roundSelect change event to selectRound when value is present', () => {
+            app.bindEvents();
+
+            const addEventListenerCalls = app.ui.roundSelect.addEventListener.mock.calls;
+            const changeEventCall = addEventListenerCalls.find(call => call[0] === 'change');
+            expect(changeEventCall).toBeTruthy();
+
+            const changeHandler = changeEventCall[1];
+            changeHandler({ target: { value: 'round-1' } });
+
+            expect(app.selectRound).toHaveBeenCalledWith('round-1');
+        });
+
+        it('clears state when roundSelect change event has no value', () => {
+            app.stopSessionForecastInterval = vi.fn();
+            app.updatePageMetadata = vi.fn();
+            app.countdown.show = vi.fn();
+            app.trackLayer.clear = vi.fn();
+            app.rangeCircles.clear = vi.fn();
+            app.ui.forecastSection = createMockElement('forecastSection');
+            app.ui.raceInfoBanner = createMockElement('raceInfoBanner');
+            app.ui.sessionEmptyState = createMockElement('sessionEmptyState');
+
+            app.bindEvents();
+
+            const addEventListenerCalls = app.ui.roundSelect.addEventListener.mock.calls;
+            const changeEventCall = addEventListenerCalls.find(call => call[0] === 'change');
+
+            const changeHandler = changeEventCall[1];
+            changeHandler({ target: { value: '' } });
+
+            expect(app.selectedSession).toBeNull();
+            expect(app.selectedRace).toBeNull();
+            expect(app.ui.forecastSection.style.display).toBe('none');
+            expect(app.ui.raceInfoBanner.style.display).toBe('none');
+            expect(app.ui.sessionEmptyState.style.display).toBe('none');
+            expect(app.countdown.show).toHaveBeenCalledWith(false);
+            expect(app.trackLayer.clear).toHaveBeenCalled();
+            expect(app.rangeCircles.clear).toHaveBeenCalled();
+            expect(app.stopSessionForecastInterval).toHaveBeenCalled();
+            expect(app.updatePageMetadata).toHaveBeenCalled();
+            expect(app.ui.sessionSelect.disabled).toBe(true);
+            expect(app.ui.sessionSelect.title).toBe('Select a round first');
+            expect(app.ui.sessionSelect.innerHTML).toBe('<option value="">Select a round first</option>');
         });
     });
 
