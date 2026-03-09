@@ -58,70 +58,90 @@ vi.stubGlobal('navigator', { serviceWorker: { register: vi.fn() } });
 
 // Mock dependencies
 vi.mock('../public/src/api/F1API.js', () => ({
-    F1API: vi.fn().mockImplementation(function() { return {
-        getSchedule: vi.fn().mockResolvedValue([]),
-        parseRace: vi.fn(r => r),
-    }})
+    F1API: vi.fn().mockImplementation(function () {
+        return {
+            getSchedule: vi.fn().mockResolvedValue([]),
+            parseRace: vi.fn(r => r),
+        }
+    })
 }));
 vi.mock('../public/src/api/WeatherClient.js', () => ({
-    WeatherClient: vi.fn().mockImplementation(function() { return {
-        getForecast: vi.fn().mockResolvedValue({ available: false }),
-        getRelativeTime: vi.fn(),
-        getWeatherDescription: vi.fn(),
-        getAccessibleRelativeTime: vi.fn(),
-        getWindDirection: vi.fn(() => ({ text: 'N', rotation: 0 }))
-    }})
+    WeatherClient: vi.fn().mockImplementation(function () {
+        return {
+            getForecast: vi.fn().mockResolvedValue({ available: false }),
+            getRelativeTime: vi.fn(),
+            getWeatherDescription: vi.fn(),
+            getAccessibleRelativeTime: vi.fn(),
+            getWindDirection: vi.fn(() => ({ text: 'N', rotation: 0 }))
+        }
+    })
 }));
 vi.mock('../public/src/map/TrackLayer.js', () => ({
-    TrackLayer: vi.fn().mockImplementation(function() { return {
-        loadTrack: vi.fn(),
-        clear: vi.fn(),
-        updateTheme: vi.fn()
-    }})
+    TrackLayer: vi.fn().mockImplementation(function () {
+        return {
+            loadTrack: vi.fn(),
+            clear: vi.fn(),
+            updateTheme: vi.fn()
+        }
+    })
 }));
 vi.mock('../public/src/map/WeatherRadar.js', () => ({
-    WeatherRadar: vi.fn().mockImplementation(function() { return {
-        load: vi.fn().mockResolvedValue(),
-        setSessionTime: vi.fn(),
-        setSession: vi.fn()
-    }})
+    WeatherRadar: vi.fn().mockImplementation(function () {
+        return {
+            load: vi.fn().mockResolvedValue(),
+            setSessionTime: vi.fn(),
+            setSession: vi.fn()
+        }
+    })
 }));
 vi.mock('../public/src/map/RangeCircles.js', () => ({
-    RangeCircles: vi.fn().mockImplementation(function() { return {
-        draw: vi.fn(),
-        clear: vi.fn(),
-        updateTheme: vi.fn()
-    }})
+    RangeCircles: vi.fn().mockImplementation(function () {
+        return {
+            draw: vi.fn(),
+            clear: vi.fn(),
+            updateTheme: vi.fn()
+        }
+    })
 }));
 vi.mock('../public/src/map/MapWeatherWidget.js', () => ({
-    MapWeatherWidget: vi.fn().mockImplementation(function() { return {
-        addTo: vi.fn(),
-        update: vi.fn()
-    }})
+    MapWeatherWidget: vi.fn().mockImplementation(function () {
+        return {
+            addTo: vi.fn(),
+            update: vi.fn()
+        }
+    })
 }));
 vi.mock('../public/src/map/RecentreControl.js', () => ({
-    RecentreControl: vi.fn().mockImplementation(function() { return {
-        setCircuit: vi.fn()
-    }})
+    RecentreControl: vi.fn().mockImplementation(function () {
+        return {
+            setCircuit: vi.fn()
+        }
+    })
 }));
 vi.mock('../public/src/ui/CountdownTimer.js', () => ({
-    CountdownTimer: vi.fn().mockImplementation(function() { return {
-        show: vi.fn(),
-        start: vi.fn()
-    }})
+    CountdownTimer: vi.fn().mockImplementation(function () {
+        return {
+            show: vi.fn(),
+            start: vi.fn()
+        }
+    })
 }));
 vi.mock('../public/src/routing/Router.js', () => ({
-    Router: vi.fn().mockImplementation(function() { return {
-        getParams: vi.fn(() => ({})),
-        navigate: vi.fn()
-    }})
+    Router: vi.fn().mockImplementation(function () {
+        return {
+            getParams: vi.fn(() => ({})),
+            navigate: vi.fn()
+        }
+    })
 }));
 vi.mock('../public/src/map/MapManager.js', () => ({
-    MapManager: vi.fn().mockImplementation(function() { return {
-        init: vi.fn(),
-        setView: vi.fn(),
-        setTheme: vi.fn()
-    }})
+    MapManager: vi.fn().mockImplementation(function () {
+        return {
+            init: vi.fn(),
+            setView: vi.fn(),
+            setTheme: vi.fn()
+        }
+    })
 }));
 vi.mock('../public/src/ui/ThemeManager.js', () => ({
     ThemeManager: vi.fn()
@@ -154,8 +174,8 @@ describe('SEO Title Updates', () => {
                 round: '1',
                 name: 'Bahrain Grand Prix',
                 sessions: [
-                    { id: 'fp1', name: 'Practice 1', date: '2024-03-01', time: '10:00:00' },
-                    { id: 'qualifying', name: 'Qualifying', date: '2024-03-01', time: '14:00:00' }
+                    { id: 'fp1', name: 'Practice 1', date: '2024-03-01', time: '10:00:00Z' },
+                    { id: 'qualifying', name: 'Qualifying', date: '2024-03-01', time: '14:00:00Z' }
                 ],
                 location: { lat: 0, long: 0, country: 'Bahrain' }
             }

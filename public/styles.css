@@ -323,35 +323,6 @@ body {
     z-index: 1;
 }
 
-/* Countdown Card */
-.countdown-card {
-    margin-top: var(--spacing-md);
-    padding: var(--spacing-md);
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-lg);
-    text-align: center;
-}
-
-.countdown-label {
-    font-size: 0.7rem;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--color-text-secondary);
-}
-
-.countdown-timer {
-    font-size: 1.75rem;
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
-    color: var(--color-primary);
-    margin: var(--spacing-xs) 0;
-}
-
-.countdown-session {
-    font-size: 0.8rem;
-    color: var(--color-text-secondary);
-}
 
 /* Forecast Section */
 .forecast-section {
@@ -1199,24 +1170,6 @@ body {
         font-size: 0.7rem;
     }
 
-    /* Compact countdown card */
-    .countdown-card {
-        margin-top: var(--spacing-sm);
-        padding: var(--spacing-sm) var(--spacing-md);
-    }
-
-    .countdown-label {
-        font-size: 0.6rem;
-    }
-
-    .countdown-timer {
-        font-size: 1.25rem;
-        margin: 2px 0;
-    }
-
-    .countdown-session {
-        font-size: 0.7rem;
-    }
 
     /* Compact forecast section */
     .forecast-section {
@@ -1238,6 +1191,10 @@ body {
         padding: var(--spacing-xs) var(--spacing-md);
         font-size: 0.65rem;
     }
+
+}
+
+@media (max-width: 1024px) {
 
     /* Radar controls adjustments */
     .radar-controls {
@@ -1293,10 +1250,6 @@ body {
 
     .sidebar-header h1 {
         font-size: 0.875rem;
-    }
-
-    .countdown-timer {
-        font-size: 1.1rem;
     }
 
     .select {
@@ -1454,52 +1407,55 @@ body {
 }
 
 /* ===================================
-   Mobile Countdown Overlay
+   Map Countdown Overlay
    =================================== */
 
-.mobile-countdown {
-    display: none;
+.map-countdown {
+    position: absolute;
+    left: 20px;
+    bottom: var(--spacing-md);
+    display: block;
+    background: var(--sidebar-bg);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--spacing-md);
+    box-shadow: var(--shadow-lg);
+    z-index: 400;
+    text-align: center;
+    min-width: 140px;
+    max-width: 160px;
 }
 
-@media (max-width: 768px) {
-    .mobile-countdown {
-        position: absolute;
+.map-countdown-label {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-text-secondary);
+}
+
+.map-countdown-timer {
+    font-size: 1.25rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--color-primary);
+    margin: 4px 0;
+}
+
+.map-countdown-session {
+    font-size: 0.7rem;
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+@media (max-width: 1024px) {
+    .map-countdown {
         left: 8px;
         bottom: 84px;
-        display: block;
-        background: var(--sidebar-bg);
-        backdrop-filter: var(--glass-blur);
-        -webkit-backdrop-filter: var(--glass-blur);
-        border: 1px solid var(--color-border);
-        border-radius: var(--radius-md);
-        padding: var(--spacing-sm) var(--spacing-md);
-        box-shadow: var(--shadow-md);
-        z-index: 400;
-        text-align: center;
         max-width: 160px;
-    }
-
-    .mobile-countdown-label {
-        font-size: 0.65rem;
-        text-transform: uppercase;
-        letter-spacing: 0.05em;
-        color: var(--color-text-secondary);
-    }
-
-    .mobile-countdown-timer {
-        font-size: 1.25rem;
-        font-weight: 700;
-        font-variant-numeric: tabular-nums;
-        color: var(--color-primary);
-        margin: 4px 0;
-    }
-
-    .mobile-countdown-session {
-        font-size: 0.7rem;
-        color: var(--color-text-secondary);
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
     }
 }
 
