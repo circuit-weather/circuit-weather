@@ -14,8 +14,16 @@ export class PrivacyModal {
 
     bindEvents() {
         if (this.privacyLink) {
-            this.privacyLink.addEventListener('click', () => {
+            this.privacyLink.addEventListener('click', (e) => {
+                e.preventDefault();
                 this.open();
+            });
+            // Palette A11y: Ensure keyboard users can activate the link functioning as a button
+            this.privacyLink.addEventListener('keydown', (e) => {
+                if (e.key === ' ' || e.key === 'Spacebar') {
+                    e.preventDefault();
+                    this.open();
+                }
             });
         }
 
