@@ -340,11 +340,48 @@ describe('PrivacyModal', () => {
         });
 
 
+
+
         it('triggers open when privacy link is clicked', () => {
             const openSpy = vi.spyOn(modal, 'open').mockImplementation(() => {});
             const clickHandler = modal.privacyLink.addEventListener.mock.calls.find(call => call[0] === 'click')[1];
             clickHandler({ preventDefault: vi.fn() });
             expect(openSpy).toHaveBeenCalled();
+        });
+
+
+
+        it('triggers open when privacy link is activated via keyboard (Space)', () => {
+            const openSpy = vi.spyOn(modal, 'open').mockImplementation(() => {});
+            const keydownHandler = modal.privacyLink.addEventListener.mock.calls.find(call => call[0] === 'keydown')[1];
+
+            const event = { key: ' ', preventDefault: vi.fn() };
+            keydownHandler(event);
+
+            expect(event.preventDefault).toHaveBeenCalled();
+            expect(openSpy).toHaveBeenCalled();
+        });
+
+        it('triggers open when privacy link is activated via keyboard (Spacebar)', () => {
+            const openSpy = vi.spyOn(modal, 'open').mockImplementation(() => {});
+            const keydownHandler = modal.privacyLink.addEventListener.mock.calls.find(call => call[0] === 'keydown')[1];
+
+            const event = { key: 'Spacebar', preventDefault: vi.fn() };
+            keydownHandler(event);
+
+            expect(event.preventDefault).toHaveBeenCalled();
+            expect(openSpy).toHaveBeenCalled();
+        });
+
+        it('does not trigger open for other keys on privacy link', () => {
+            const openSpy = vi.spyOn(modal, 'open').mockImplementation(() => {});
+            const keydownHandler = modal.privacyLink.addEventListener.mock.calls.find(call => call[0] === 'keydown')[1];
+
+            const event = { key: 'Enter', preventDefault: vi.fn() };
+            keydownHandler(event);
+
+            expect(event.preventDefault).not.toHaveBeenCalled();
+            expect(openSpy).not.toHaveBeenCalled();
         });
 
         it('closes when backdrop is clicked directly', () => {
