@@ -1192,6 +1192,10 @@ body {
         font-size: 0.65rem;
     }
 
+}
+
+@media (max-width: 1024px) {
+
     /* Radar controls adjustments */
     .radar-controls {
         width: auto;
@@ -1447,7 +1451,7 @@ body {
     text-overflow: ellipsis;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
     .map-countdown {
         left: 8px;
         bottom: 84px;
