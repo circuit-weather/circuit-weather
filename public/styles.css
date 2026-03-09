@@ -1413,7 +1413,7 @@ body {
 .map-countdown {
     position: absolute;
     left: 20px;
-    bottom: 28px;
+    bottom: 100px;
     display: block;
     background: var(--sidebar-bg);
     backdrop-filter: var(--glass-blur);
