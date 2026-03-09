@@ -143,3 +143,8 @@ Prevention: Avoid duplicating configuration values in documentation; reference t
 
 **Learning:** Human developers are not the target audience for `README.md` local development instructions; this project is explicitly meant for AI agents to build and run.
 **Action:** Removed generic local setup steps from `README.md` and explicitly annotated `AGENTS.md` to reflect that the repository is agent-driven and does not target human contributors.
+
+## 2026-03-09 - Undocumented Health Check Cache Duration
+
+**Learning:** `AGENTS.md` listed the `/api/health` endpoint but omitted its 60-second edge cache duration, which is crucial for understanding its DDOS protection strategy as implemented in `src/worker.js`.
+**Action:** Updated `AGENTS.md` to explicitly document the 60-second caching for the `/api/health` endpoint.

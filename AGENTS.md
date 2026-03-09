@@ -263,7 +263,7 @@ mode = "smart"
 | `/api/tiles/*`  | Proxies to RainViewer tile API with 2-hour edge caching (512px optimized)      |
 | `/api/track/*`  | Proxies to GitHub for GeoJSON track data with 24-hour caching                  |
 | `/api/assets/*` | Proxies to unpkg for Leaflet assets with 1-year immutable caching (strict CSP) |
-| `/api/health`   | System status check (connectivity to upstreams, version, env)                  |
+| `/api/health`   | System status check (connectivity to upstreams, version, env) with 60-second caching |
 
 ---
 
