@@ -226,11 +226,11 @@ export class CircuitWeatherApp {
             this.ui.mobileRaceInfo.style.display = (this.selectedRace && isMobile) ? 'flex' : 'none';
         }
 
-        // Update mobile countdown visibility
-        const mobileCountdown = document.getElementById('mobileCountdown');
-        if (mobileCountdown) {
+        // Update map countdown visibility
+        const mapCountdown = document.getElementById('mapCountdown');
+        if (mapCountdown) {
             const shouldShow = this.selectedSession && this.countdown.targetTime;
-            mobileCountdown.style.display = (shouldShow && isMobile) ? 'block' : 'none';
+            mapCountdown.style.display = shouldShow ? 'block' : 'none';
         }
 
         // Note: Map resizing is handled by ResizeObserver in MapManager

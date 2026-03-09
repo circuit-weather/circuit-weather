@@ -74,8 +74,6 @@ describe('CountdownTimer', () => {
             timer.ui = {
                 timer: { textContent: '', setAttribute: vi.fn(), removeAttribute: vi.fn() },
                 session: { textContent: '' },
-                mobileTimer: { textContent: '', setAttribute: vi.fn(), removeAttribute: vi.fn() },
-                mobileSession: { textContent: '' },
                 card: { style: {} },
             };
         });
@@ -122,8 +120,6 @@ describe('CountdownTimer', () => {
             timer.ui = {
                 timer: { textContent: '', setAttribute: vi.fn(), removeAttribute: vi.fn() },
                 session: { textContent: '' },
-                mobileTimer: { textContent: '', setAttribute: vi.fn(), removeAttribute: vi.fn() },
-                mobileSession: { textContent: '' },
                 card: { style: {} },
             };
         });
@@ -186,8 +182,6 @@ describe('CountdownTimer', () => {
             timer.ui = {
                 timer: { textContent: '', setAttribute: vi.fn(), removeAttribute: vi.fn() },
                 session: { textContent: '' },
-                mobileTimer: { textContent: '', setAttribute: vi.fn(), removeAttribute: vi.fn() },
-                mobileSession: { textContent: '' },
                 card: { style: {} },
             };
         });
@@ -217,8 +211,6 @@ describe('CountdownTimer', () => {
             timer.ui = {
                 timer: null,
                 session: null,
-                mobileTimer: null,
-                mobileSession: null,
                 card: { style: {} },
             };
         });
