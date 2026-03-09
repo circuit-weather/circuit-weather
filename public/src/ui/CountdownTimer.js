@@ -77,7 +77,6 @@ export class CountdownTimer {
 
     show(visible) {
         if (this.ui.card) this.ui.card.style.display = visible ? 'block' : 'none';
-        // Note: mobileCard visibility is managed by CircuitWeatherApp
     }
 
     stop() {

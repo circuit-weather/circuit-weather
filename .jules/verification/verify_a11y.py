@@ -16,10 +16,10 @@ def verify_a11y(page):
     """)
 
     page.evaluate("""
-        const card = document.getElementById('countdownCard');
+        const card = document.getElementById('mapCountdown');
         if (card) {
             card.style.display = 'block';
-            const timer = document.getElementById('countdownTimer');
+            const timer = document.getElementById('mapCountdownTimer');
             if (timer) {
                 timer.style.border = '4px solid green';
             }
