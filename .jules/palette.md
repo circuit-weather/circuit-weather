@@ -47,3 +47,6 @@
 ## 2024-05-20 - Adding immediate feedback to synchronous page reloads
 **Learning:** When a UI action triggers a synchronous `window.location.reload()`, the browser can appear to freeze for a moment before the navigation occurs. Adding immediate visual feedback (disabling the button, changing text to "Retrying...", updating `aria-label`) right before the reload significantly improves perceived performance and reassures the user that their action was registered, especially on slower network connections.
 **Action:** Always add intermediate loading states to buttons that trigger full page navigations or reloads, rather than relying solely on the browser's native loading indicator.
+## 2024-05-24 - Semantic Landmark Headings
+**Learning:** When a `<section>` semantic landmark has an internal heading (like an `<h2>`), applying a static `aria-label` creates redundancy and often less descriptive context for screen reader users than the dynamic heading itself.
+**Action:** Always use `aria-labelledby="[heading-id]"` to tie the structural landmark directly to its internal heading, especially when the heading text updates dynamically (e.g., changing to the name of a newly selected race).
