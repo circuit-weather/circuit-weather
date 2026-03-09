@@ -6,11 +6,9 @@ export class CountdownTimer {
 
         // Bolt Optimization: Cache DOM elements
         this.ui = {
-            timer: document.getElementById('countdownTimer'),
-            session: document.getElementById('countdownSession'),
-            mobileTimer: document.getElementById('mobileCountdownTimer'),
-            mobileSession: document.getElementById('mobileCountdownSession'),
-            card: document.getElementById('countdownCard')
+            timer: document.getElementById('mapCountdownTimer'),
+            session: document.getElementById('mapCountdownSession'),
+            card: document.getElementById('mapCountdown')
         };
     }
 
@@ -32,10 +30,6 @@ export class CountdownTimer {
             if (this.ui.timer) {
                 this.ui.timer.textContent = 'NOW';
                 this.ui.timer.removeAttribute('aria-label');
-            }
-            if (this.ui.mobileTimer) {
-                this.ui.mobileTimer.textContent = 'NOW';
-                this.ui.mobileTimer.removeAttribute('aria-label');
             }
             this.stop();
             return;
@@ -59,12 +53,7 @@ export class CountdownTimer {
             this.ui.timer.textContent = timeText;
             this.ui.timer.setAttribute('aria-label', accessibleText);
         }
-        if (this.ui.mobileTimer) {
-            this.ui.mobileTimer.textContent = timeText;
-            this.ui.mobileTimer.setAttribute('aria-label', accessibleText);
-        }
         if (this.ui.session) this.ui.session.textContent = this.sessionName;
-        if (this.ui.mobileSession) this.ui.mobileSession.textContent = this.sessionName;
     }
 
     getAccessibleDuration(diff) {
