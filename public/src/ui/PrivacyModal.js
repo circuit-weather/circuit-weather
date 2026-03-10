@@ -160,13 +160,13 @@ export class PrivacyModal {
                 if (/^(?:https?|mailto):/i.test(clean)) {
                     // SEC: Return the original (encoded) string if it's safe, or the decoded one?
                     // Safe to return the decoded one since it's verified.
-                    return clean;
+                    return escapeHtml(clean);
                 }
                 // Block file:, javascript:, vbscript:, data:, blob:, etc.
                 return '#unsafe-url';
             }
             // No scheme (relative URL), allow
-            return clean;
+            return escapeHtml(clean);
         };
 
         return escapeHtml(md)
