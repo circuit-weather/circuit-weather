@@ -1155,3 +1155,24 @@ describe('CircuitWeatherApp Pure Methods', () => {
         });
     });
 });
+
+    describe('Mobile Visibility', () => {
+        let app;
+        beforeEach(() => {
+            vi.clearAllMocks();
+            app = new CircuitWeatherApp();
+            app.ui.mobileRaceInfo = createMockElement('mobileRaceInfo');
+        });
+
+        it('updates mobile visibility based on media query', () => {
+            app.mobileQuery = { matches: true };
+            app.selectedRace = { round: 1 };
+            app.updateMobileVisibility();
+            expect(app.ui.mobileRaceInfo.style.display).toBe("flex");
+
+            app.mobileQuery = { matches: false };
+            app.updateMobileVisibility();
+            expect(app.ui.mobileRaceInfo.style.display).toBe("none");
+
+    });
+});
