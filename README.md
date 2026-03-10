@@ -9,8 +9,6 @@
 
 Circuit Weather is a real-time weather radar designed specifically for Formula 1 fans. It lets you track live precipitation and weather conditions at every circuit on the F1 calendar, helping you stay ahead of the strategy during race weekends.
 
-This web app is completely and unashamedly vibe coded primarily with the use of Google antigravity and Google Jules, using anthropic opus 4.5 and 4.6 and Google Gemini 3. It serves as an exploration into the capabilities of these technologies, as well as a test of open-source coding tools for performance and efficiency.
-
 ## What it does
 
 The site provides a live weather radar overlay on top of the circuit map. You can see past weather movement and a short-term forecast to predict if rain is incoming. It automatically loads the schedule for the current F1 season, allowing you to jump between different rounds and sessions (like Qualifying or the Race).
