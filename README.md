@@ -44,6 +44,9 @@ Huge thanks to the free APIs and data sources that make this possible:
 - **[Open-Meteo](https://open-meteo.com/)** for the weather forecasts.
 - **[Carto](https://carto.com/)** & **[OpenStreetMap](https://www.openstreetmap.org/)** for the map tiles.
 - **[bacinger/f1-circuits](https://github.com/bacinger/f1-circuits)** for the circuit track data.
+- **[Google Fonts](https://fonts.google.com/)** for the typography.
+- **[FlagCDN](https://flagcdn.com/)** for the country flags.
+- **[Buy Me a Coffee](https://www.buymeacoffee.com/)** for the support widget.
 
 ## License
 
