@@ -148,3 +148,8 @@ Prevention: Avoid duplicating configuration values in documentation; reference t
 
 **Learning:** `AGENTS.md` listed the `/api/health` endpoint but omitted its 60-second edge cache duration, which is crucial for understanding its DDOS protection strategy as implemented in `src/worker.js`.
 **Action:** Updated `AGENTS.md` to explicitly document the 60-second caching for the `/api/health` endpoint.
+
+## 2026-03-11 - Node.js Runner Upgrade
+
+**Learning:** GitHub Actions deprecated Node 20 runners, requiring an upgrade to Node 24 for the CI environment. Documentation must be kept in sync with the CI configuration to ensure developer environment consistency.
+**Action:** Updated `.github/workflows/ci.yml` to use Node 24.x and updated `AGENTS.md` to recommend Node 24+ for local development.
