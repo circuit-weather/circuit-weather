@@ -229,7 +229,9 @@ export class CircuitWeatherApp {
         // Update map countdown visibility
         const mapCountdown = document.getElementById('mapCountdown');
         if (mapCountdown) {
-            const shouldShow = this.selectedSession && this.countdown.targetTime;
+            const now = new Date();
+            const isFuture = this.countdown.targetTime && this.countdown.targetTime > now;
+            const shouldShow = this.selectedSession && isFuture;
             mapCountdown.style.display = shouldShow ? 'block' : 'none';
         }
 

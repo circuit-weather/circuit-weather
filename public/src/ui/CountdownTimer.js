@@ -17,9 +17,16 @@ export class CountdownTimer {
         this.targetTime = targetTime;
         this.sessionName = sessionName;
 
-        this.show(true);
-        this.update();
-        this.timer = setInterval(() => this.update(), 1000);
+        const now = new Date();
+        const diff = this.targetTime - now;
+
+        if (diff > 0) {
+            this.show(true);
+            this.update();
+            this.timer = setInterval(() => this.update(), 1000);
+        } else {
+            this.show(false);
+        }
     }
 
     update() {
@@ -27,10 +34,7 @@ export class CountdownTimer {
         const diff = this.targetTime - now;
 
         if (diff <= 0) {
-            if (this.ui.timer) {
-                this.ui.timer.textContent = 'NOW';
-                this.ui.timer.removeAttribute('aria-label');
-            }
+            this.show(false);
             this.stop();
             return;
         }

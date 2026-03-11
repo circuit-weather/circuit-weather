@@ -89,13 +89,19 @@ describe('CountdownTimer', () => {
             expect(timer.sessionName).toBe('Race');
         });
 
-        it('makes the card visible', () => {
+        it('makes the card visible for future targets', () => {
             const target = new Date(Date.now() + 3600000);
             timer.start(target, 'FP1');
             expect(timer.ui.card.style.display).toBe('block');
         });
 
-        it('starts an interval timer', () => {
+        it('hides the card for past targets', () => {
+            const target = new Date(Date.now() - 3600000);
+            timer.start(target, 'FP1');
+            expect(timer.ui.card.style.display).toBe('none');
+        });
+
+        it('starts an interval timer for future targets', () => {
             const target = new Date(Date.now() + 3600000);
             timer.start(target, 'FP1');
             expect(timer.timer).not.toBeNull();
@@ -128,10 +134,10 @@ describe('CountdownTimer', () => {
             vi.useRealTimers();
         });
 
-        it('displays NOW when target is in the past', () => {
+        it('hides the card when target is reached', () => {
             timer.targetTime = new Date(Date.now() - 1000);
             timer.update();
-            expect(timer.ui.timer.textContent).toBe('NOW');
+            expect(timer.ui.card.style.display).toBe('none');
         });
 
         it('displays HH:MM:SS for countdown under 24 hours', () => {
@@ -166,11 +172,6 @@ describe('CountdownTimer', () => {
             );
         });
 
-        it('removes aria-label when showing NOW', () => {
-            timer.targetTime = new Date(Date.now() - 1000);
-            timer.update();
-            expect(timer.ui.timer.removeAttribute).toHaveBeenCalledWith('aria-label');
-        });
     });
 
     describe('stop', () => {
