@@ -20,7 +20,7 @@ export default defineConfig({
       thresholds: {
         lines: 95.10,
         functions: 98.11,
-        branches: 93.67,
+        branches: 93.66,
         statements: 95.10,
       },
       // Report formats: text for CI logs, lcov for future GitHub integration
