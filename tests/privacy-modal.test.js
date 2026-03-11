@@ -50,7 +50,8 @@ class MockDOMParser {
                 .replace(/&amp;/gi, '&')
                 .replace(/&colon;/gi, ':')
                 .replace(/&#58;/gi, ':')
-                .replace(/&#x3a;/gi, ':');
+                .replace(/&#x3a;/gi, ':')
+                .replace(/&quot;/gi, '"');
         }
 
         return {
@@ -183,6 +184,12 @@ describe('PrivacyModal', () => {
             const md = '[link](HTTPS://EXAMPLE.COM)';
             const html = modal.parseMarkdown(md);
             expect(extractHref(html)).toBe('HTTPS://EXAMPLE.COM');
+        });
+
+        it('re-escapes entities that decode to quotes to prevent attribute breakout', () => {
+            const md = '[link](https://example.com/&quot;onmouseover=&quot;alert=1)';
+            const html = modal.parseMarkdown(md);
+            expect(extractHref(html)).toBe('https://example.com/&quot;onmouseover=&quot;alert=1');
         });
 
         it('falls back to original string if DOMParser fails', () => {
