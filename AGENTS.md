@@ -82,7 +82,7 @@ circuit-weather/
 │   ├── robots.txt    # Search engine directives
 │   ├── sitemap.xml   # XML Sitemap for SEO
 │   ├── sw.js         # Service worker (app shell caching)
-│   ├── _headers      # Cloudflare Pages custom headers (CSP, security)
+│   ├── _headers      # Custom HTTP headers (CSP, security)
 │   └── PRIVACY.md
 ├── src/
 │   ├── worker.js       # Cloudflare Worker (API proxy + asset serving)

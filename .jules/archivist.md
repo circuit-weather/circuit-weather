@@ -153,3 +153,7 @@ Prevention: Avoid duplicating configuration values in documentation; reference t
 
 **Learning:** GitHub Actions deprecated Node 20 runners, requiring an upgrade to Node 24 for the CI environment. Documentation must be kept in sync with the CI configuration to ensure developer environment consistency.
 **Action:** Updated `.github/workflows/ci.yml` to use Node 24.x and updated `AGENTS.md` to recommend Node 24+ for local development.
+
+## 2026-03-12 - Legacy Cloudflare Pages References
+**Learning:** The project migrated to Cloudflare Workers with Static Assets, but PRIVACY.md and AGENTS.md file tree still incorrectly referenced Cloudflare Pages.
+**Action:** Removed mentions of Cloudflare Pages to accurately reflect the single-worker architecture.
