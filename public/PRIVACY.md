@@ -19,7 +19,7 @@ However, the application relies on third-party services and infrastructure which
 ## Infrastructure & Caching
 
 ### Cloudflare
-This website is hosted on **Cloudflare Pages** and utilizes **Cloudflare Workers** to power its API. We leverage Cloudflare's global edge network to aggressively cache data close to you.
+This website is hosted on **Cloudflare Workers** (using Static Assets) which serves both the website and powers its API. We leverage Cloudflare's global edge network to aggressively cache data close to you.
 
 - **Privacy Proxy:** To enhance your privacy, requests for F1 schedules, Track Layouts, and **all RainViewer Radar Tiles** are proxied through our Cloudflare Worker. This hides your IP address from these third-party services.
 - **Advanced Caching:** We utilize advanced edge caching features to store API responses on Cloudflare's servers. This minimizes data usage and reduces load on the open-source community APIs we rely on.
