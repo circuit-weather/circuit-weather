@@ -1141,6 +1141,18 @@ describe('CircuitWeatherApp Pure Methods', () => {
             expect(app.rangeCircles.draw).not.toHaveBeenCalled();
         });
 
+        it('ThemeManager callback draws circles if currentCircuitCenter is set', async () => {
+            await app.init();
+            const callback = ThemeManager.mock.calls[0][0];
+
+            app.currentCircuitCenter = [10, 20];
+            app.rangeCircles.draw = vi.fn();
+
+            callback('light');
+
+            expect(app.rangeCircles.draw).toHaveBeenCalledWith([10, 20]);
+        });
+
         it('ThemeManager callback handles missing rangeCircles', async () => {
             await app.init();
             const callback = ThemeManager.mock.calls[0][0];
@@ -1174,5 +1186,27 @@ describe('CircuitWeatherApp Pure Methods', () => {
             app.updateMobileVisibility();
             expect(app.ui.mobileRaceInfo.style.display).toBe("none");
 
-    });
+        });
+
+        it('bindResizeHandler calls updateMobileVisibility on query change', () => {
+            app.updateMobileVisibility = vi.fn();
+
+            // Setup a mock media query object to capture the event listener
+            const handlers = {};
+            app.mobileQuery = {
+                addEventListener: vi.fn((event, cb) => {
+                    handlers[event] = cb;
+                }),
+                matches: true
+            };
+
+            app.bindResizeHandler();
+
+            expect(app.mobileQuery.addEventListener).toHaveBeenCalledWith('change', expect.any(Function));
+
+            // Trigger the change event
+            handlers['change']();
+
+            expect(app.updateMobileVisibility).toHaveBeenCalled();
+        });
 });

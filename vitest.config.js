@@ -18,10 +18,10 @@ export default defineConfig({
       // Note: Branch coverage may vary slightly between local and CI environments
       // due to V8 engine differences. Thresholds are ratcheted to match CI results.
       thresholds: {
-        lines: 95.10,
+        lines: 95.21,
         functions: 98.11,
-        branches: 93.58,
-        statements: 95.10,
+        branches: 93.70,
+        statements: 95.21,
       },
       // Report formats: text for CI logs, lcov for future GitHub integration
       reporter: ['text', 'text-summary'],
