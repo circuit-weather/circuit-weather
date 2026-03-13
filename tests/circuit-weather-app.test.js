@@ -611,7 +611,7 @@ describe('CircuitWeatherApp Pure Methods', () => {
 
             // The closest point is 14:15 (26 degrees)
             // We check that the primary temperature value is 26
-            expect(app.ui.forecastContent.innerHTML).toContain('id="weatherTemp">26°C</span>');
+            expect(app.ui.forecastContent.innerHTML).toContain('id="weatherTemp">26°C</dd>');
             // 24 should still be in the timeline, but not the primary temp
             expect(app.ui.forecastContent.innerHTML).toContain('<div>24°</div>');
         });

@@ -648,21 +648,21 @@ export class CircuitWeatherApp {
             content.style.display = 'block';
             content.innerHTML = `
                 <div class="weather-dashboard" aria-hidden="true">
-                    <div class="weather-current">
+                    <dl class="weather-current">
                         <div class="weather-metric">
-                            <span class="weather-label skeleton"><span class="skeleton-text" style="width: 30px"></span></span>
-                            <span class="weather-value skeleton"><span class="skeleton-text" style="width: 40px"></span></span>
+                            <dt class="weather-label skeleton"><span class="skeleton-text" style="width: 30px"></span></dt>
+                            <dd class="weather-value skeleton"><span class="skeleton-text" style="width: 40px"></span></dd>
                         </div>
                         <div class="weather-metric">
-                            <span class="weather-label skeleton"><span class="skeleton-text" style="width: 30px"></span></span>
-                            <span class="weather-value skeleton"><span class="skeleton-text" style="width: 40px"></span></span>
+                            <dt class="weather-label skeleton"><span class="skeleton-text" style="width: 30px"></span></dt>
+                            <dd class="weather-value skeleton"><span class="skeleton-text" style="width: 40px"></span></dd>
                         </div>
                         <div class="weather-metric">
-                            <span class="weather-label skeleton"><span class="skeleton-text" style="width: 30px"></span></span>
-                            <span class="weather-value skeleton"><span class="skeleton-text" style="width: 40px"></span></span>
-                            <span class="weather-sub skeleton"><span class="skeleton-text" style="width: 20px"></span></span>
+                            <dt class="weather-label skeleton"><span class="skeleton-text" style="width: 30px"></span></dt>
+                            <dd class="weather-value skeleton"><span class="skeleton-text" style="width: 40px"></span></dd>
+                            <dd class="weather-sub skeleton"><span class="skeleton-text" style="width: 20px"></span></dd>
                         </div>
-                    </div>
+                    </dl>
                     <div class="weather-timeline" id="weatherTimeline">
                         <div class="weather-timeline-item">
                             <div class="weather-timeline-time skeleton"><span class="skeleton-text" style="width: 30px"></span></div>
@@ -762,27 +762,27 @@ export class CircuitWeatherApp {
             const rotation = windInfo.rotation;
 
             currentHtml = `
-                <div class="weather-current">
+                <dl class="weather-current">
                     <div class="weather-metric">
-                        <span class="weather-label">Temp</span>
-                        <span class="weather-value" id="weatherTemp">${escapeHtml(temp)}${escapeHtml(weather.units.temperature_2m)}</span>
+                        <dt class="weather-label">Temp</dt>
+                        <dd class="weather-value" id="weatherTemp">${escapeHtml(temp)}${escapeHtml(weather.units.temperature_2m)}</dd>
                     </div>
                     <div class="weather-metric">
-                        <span class="weather-label">Rain</span>
-                        <span class="weather-value" id="weatherRain">${escapeHtml(maxPrecip)}%</span>
+                        <dt class="weather-label">Rain</dt>
+                        <dd class="weather-value" id="weatherRain">${escapeHtml(maxPrecip)}%</dd>
                     </div>
                     <div class="weather-metric">
-                        <span class="weather-label">Wind</span>
-                        <span class="weather-value" id="weatherWind">${escapeHtml(wind)} ${escapeHtml(weather.units.wind_speed_10m)}</span>
-                        <span class="weather-sub" id="weatherWindDir" title="${escapeHtml(dir)}°" aria-label="Wind direction: ${escapeHtml(windInfo.text)} (${escapeHtml(dir)} degrees)">
+                        <dt class="weather-label">Wind</dt>
+                        <dd class="weather-value" id="weatherWind">${escapeHtml(wind)} ${escapeHtml(weather.units.wind_speed_10m)}</dd>
+                        <dd class="weather-sub" id="weatherWindDir" title="${escapeHtml(dir)}°" aria-label="Wind direction: ${escapeHtml(windInfo.text)} (${escapeHtml(dir)} degrees)">
                             ${escapeHtml(windInfo.text)}
                             <svg class="icon-wind-arrow" style="transform: rotate(${escapeHtml(rotation)}deg); width: 14px; height: 14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                 <line x1="12" y1="19" x2="12" y2="5"></line>
                                 <polyline points="5 12 12 5 19 12"></polyline>
                             </svg>
-                        </span>
+                        </dd>
                     </div>
-                </div>
+                </dl>
             `;
         }
 
