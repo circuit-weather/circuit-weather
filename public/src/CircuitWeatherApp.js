@@ -761,6 +761,7 @@ export class CircuitWeatherApp {
             // Rotation: Input 0 (N) -> Blows South -> Arrow (Up) needs 180 deg rotation
             const rotation = windInfo.rotation;
 
+            // Scout: Upgraded weather metrics to a semantic description list (<dl>) to define explicit key-value relationships, allowing search engines to parse structured weather data for SERP snippets.
             currentHtml = `
                 <dl class="weather-current">
                     <div class="weather-metric">
