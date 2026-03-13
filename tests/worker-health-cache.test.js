@@ -63,6 +63,39 @@ describe('Worker Health Check Caching', () => {
     });
   };
 
+  it('rejects requests from invalid fetch destinations (XSSI)', async () => {
+    const req = createRequest('/api/health');
+    // Override to an invalid destination
+    req.headers.set('Sec-Fetch-Dest', 'script');
+
+    const res = await worker.fetch(req, global.env, global.ctx);
+    expect(res.status).toBe(403);
+
+    const body = await res.json();
+    expect(body.error).toBe('Invalid fetch destination');
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
+
+  it('marks upstream as unreachable on fetch error', async () => {
+    // Mock upstream to throw error
+    mockFetch.mockRejectedValue(new Error('Network failure'));
+
+    const req = createRequest('/api/health');
+    const res = await worker.fetch(req, global.env, global.ctx);
+
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.status).toBe('ok');
+
+    // Check that all 3 upstreams are marked unreachable
+    expect(body.upstreams.jolpica).toBe('unreachable');
+    expect(body.upstreams.rainviewer).toBe('unreachable');
+    expect(body.upstreams.github).toBe('unreachable');
+
+    expect(mockFetch).toHaveBeenCalledTimes(3);
+    expect(mockCache.put).toHaveBeenCalled();
+  });
+
   it('serves subsequent requests from cache (cache hit)', async () => {
     // Mock upstream responses
     mockFetch.mockResolvedValue({
