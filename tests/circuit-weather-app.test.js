@@ -378,7 +378,7 @@ describe('CircuitWeatherApp Pure Methods', () => {
 
         it('updates page title to race name', () => {
             app.selectRound('1');
-            expect(document.title).toBe('Bahrain Grand Prix Weather - Circuit Weather');
+            expect(document.title).toBe('Circuit Weather — Live F1 Weather: Bahrain Grand Prix');
         });
 
         it('navigates to round URL', () => {
@@ -465,7 +465,7 @@ describe('CircuitWeatherApp Pure Methods', () => {
 
         it('updates page title with session name', async () => {
             await app.selectSession('race');
-            expect(document.title).toBe('Bahrain Grand Prix Race Weather - Circuit Weather');
+            expect(document.title).toBe('Circuit Weather — Live F1 Weather: Bahrain Grand Prix');
         });
 
         it('navigates to session URL', async () => {
