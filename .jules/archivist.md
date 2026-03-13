@@ -157,3 +157,8 @@ Prevention: Avoid duplicating configuration values in documentation; reference t
 ## 2026-03-12 - Legacy Cloudflare Pages References
 **Learning:** The project migrated to Cloudflare Workers with Static Assets, but PRIVACY.md and AGENTS.md file tree still incorrectly referenced Cloudflare Pages.
 **Action:** Removed mentions of Cloudflare Pages to accurately reflect the single-worker architecture.
+
+## 2026-03-13 - Standardizing Local Dev Runner Command
+
+**Learning:** `AGENTS.md` local development instructions incorrectly suggested using `npx wrangler dev` alongside a commented-out `# pnpm run dev` fallback. This created ambiguity in a project that strictly relies on `pnpm` (as enforced in CI). Using `npx` dynamically downloads packages outside the `pnpm` cache, leading to potential version mismatches or "module not found" errors when `node_modules` is empty but the user assumes they are using the correct command.
+**Action:** Removed all references to `npx` in `AGENTS.md` and replaced the development start command exclusively with `pnpm run dev` to ensure absolute alignment with the project's single source of truth for dependencies.
