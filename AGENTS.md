@@ -111,9 +111,7 @@ circuit-weather/
 
 ```bash
 # Local development
-npx wrangler dev
-# OR for strict pnpm environment consistency:
-# pnpm run dev
+pnpm run dev # or 'npx wrangler dev' / 'wrangler dev' based on environment availability
 
 # Deploy to Cloudflare
 # Deployment is automatic via Cloudflare Git Integration (Workers with Assets)
@@ -329,11 +327,16 @@ This project uses [Cloudflare Workers](https://workers.cloudflare.com/) to proxy
     pnpm install
     ```
 4.  **Start the local development server.**
-    Run the following command:
+    Run the following command based on your environment:
     ```bash
+    # Standard: Ensures the exact 'wrangler' version defined in package.json is used (matches CI)
+    pnpm run dev
+
+    # Alternative 1: If you have 'wrangler' installed globally on your system
+    wrangler dev
+
+    # Alternative 2: If 'pnpm' is unavailable and you need to fetch 'wrangler' dynamically
     npx wrangler dev
-    # OR for strict pnpm environment consistency:
-    # pnpm run dev
     ```
 5.  **Open the local address in your browser.**
     Wrangler will typically open the site at `http://localhost:8787`.
