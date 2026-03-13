@@ -331,14 +331,15 @@ export class CircuitWeatherApp {
         let title = defaultTitle;
         let desc = defaultDesc;
 
-        if (this.selectedRace && this.selectedSession) {
-            // Specific session page: "Bahrain GP Qualifying Weather - Circuit Weather"
-            title = `${this.selectedRace.name} ${this.selectedSession.name} Weather - Circuit Weather`;
-            desc = `Live weather radar, forecasts, and session countdowns for the ${this.selectedRace.name} ${this.selectedSession.name}. Track rain and conditions in real-time.`;
-        } else if (this.selectedRace) {
-            // Race page: "Bahrain GP Weather - Circuit Weather"
-            title = `${this.selectedRace.name} Weather - Circuit Weather`;
-            desc = `Live weather radar and forecasts for the ${this.selectedRace.name}. Track rain and conditions live during every Grand Prix session.`;
+        if (this.selectedRace) {
+            // Scout: Prioritize brand and general intent in title, followed by specific GP name.
+            // Value: Maintains site-wide SEO authority and clear generic purpose while providing context for specific race landing pages.
+            // Session information is excluded to keep titles concise and avoid over-specialization that might mislead users.
+            title = `Circuit Weather — Live F1 Weather: ${this.selectedRace.name}`;
+
+            // Scout: Consolidation of session-specific descriptions to prioritize general intent.
+            // Value: Helps search engines understand the broader utility of the site (all GPs) while still acknowledging the current context.
+            desc = `Real-time weather radar and forecasts for every Formula 1 Grand Prix, including the ${this.selectedRace.name}. Track rain and conditions live during every session.`;
         } else {
             // Default home page title
             title = defaultTitle;
@@ -388,7 +389,7 @@ export class CircuitWeatherApp {
             const schema = {
                 "@context": "https://schema.org",
                 "@type": "SportsEvent",
-                "name": `${this.selectedRace.name} - ${this.selectedSession.name}`,
+                "name": this.selectedRace.name,
                 "startDate": sessionStart,
                 "location": {
                     "@type": "Place",
