@@ -123,6 +123,7 @@ describe('Worker Logic', () => {
       expect(res.status).toBe(200);
       expect(await res.json()).toEqual(upstreamData);
       expect(mockCache.put).toHaveBeenCalled();
+      expect(res.headers.get('Access-Control-Allow-Origin')).toBeNull();
       expect(mockFetch).toHaveBeenCalledWith(
         expect.stringContaining('api.jolpi.ca/ergast/f1/current'),
         expect.any(Object)
@@ -435,7 +436,24 @@ describe('Worker Logic', () => {
       expect(mockCache.put).toHaveBeenCalled();
     });
 
-    it('returns tile response without CORS when origin is missing', async () => {
+
+    it('returns tile response with CORS when valid origin is provided', async () => {
+      const mockImage = new ArrayBuffer(10);
+      mockFetch.mockResolvedValueOnce(new Response(mockImage, {
+        status: 200,
+        headers: { 'Content-Type': 'image/png' }
+      }));
+
+      const req = createRequest('/api/tiles/v2/radar/1/2/3/512/1/1_1.png', {
+        headers: { 'Origin': 'https://circuit-weather.racing' }
+      });
+      const res = await worker.fetch(req, global.env, global.ctx);
+
+      expect(res.status).toBe(200);
+      expect(res.headers.get('Access-Control-Allow-Origin')).toBe('https://circuit-weather.racing');
+      expect(res.headers.get('Vary')).toBe('Origin');
+    });
+it('returns tile response without CORS when origin is missing', async () => {
       const mockImage = new ArrayBuffer(10);
       mockFetch.mockResolvedValueOnce(new Response(mockImage, {
         status: 200,
@@ -449,7 +467,51 @@ describe('Worker Logic', () => {
       expect(res.headers.get('Access-Control-Allow-Origin')).toBeNull();
     });
 
-    it('blocks non-png requests', async () => {
+
+    it('returns cached tile response and properly sets CORS headers on cache HIT', async () => {
+      const mockImage = new ArrayBuffer(10);
+      const cacheResponse = new Response(mockImage, {
+        status: 200,
+        headers: { 'Content-Type': 'image/png' }
+      });
+      // Simulate that cache.match returns a response
+      cacheStore.set('https://tilecache.rainviewer.com/v2/radar/1/2/3/512/1/1_1.png', cacheResponse);
+
+      const req = createRequest('/api/tiles/v2/radar/1/2/3/512/1/1_1.png', {
+        headers: { 'Origin': 'https://circuit-weather.racing' }
+      });
+      const res = await worker.fetch(req, global.env, global.ctx);
+
+      expect(res.status).toBe(200);
+      expect(res.headers.get('X-Cache')).toBe('HIT');
+      expect(res.headers.get('Access-Control-Allow-Origin')).toBe('https://circuit-weather.racing');
+      expect(res.headers.get('Vary')).toBe('Origin');
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it('returns cached tile response without CORS when origin is missing on cache HIT', async () => {
+      const mockImage = new ArrayBuffer(10);
+      const cacheResponse = new Response(mockImage, {
+        status: 200,
+        headers: { 'Content-Type': 'image/png', 'Access-Control-Allow-Origin': '*' } // cache might store wildcard
+      });
+      cacheStore.set('https://tilecache.rainviewer.com/v2/radar/1/2/3/512/1/1_1.png', cacheResponse);
+
+      const req = createRequest('/api/tiles/v2/radar/1/2/3/512/1/1_1.png');
+      const res = await worker.fetch(req, global.env, global.ctx);
+
+      expect(res.status).toBe(200);
+      expect(res.headers.get('X-Cache')).toBe('HIT');
+      expect(res.headers.get('Access-Control-Allow-Origin')).toBeNull();
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it('blocks tile paths that contain invalid characters', async () => {
+      const req = createRequest('/api/tiles/v2/radar/<script>.png');
+      const res = await worker.fetch(req, global.env, global.ctx);
+      expect(res.status).toBe(400);
+    });
+it('blocks non-png requests', async () => {
       const req = createRequest('/api/tiles/hack.exe');
       const res = await worker.fetch(req, global.env, global.ctx);
       expect(res.status).toBe(400);
@@ -490,7 +552,25 @@ describe('Worker Logic', () => {
       expect(mockCache.put).toHaveBeenCalled();
     });
 
-    it('handles upstream rate limit (429) correctly', async () => {
+
+    it('returns safe JSON error for upstream 404 (non-image) and caches it, returning CORS headers for valid origin', async () => {
+      // Simulate upstream returning HTML error page (e.g. standard 404)
+      mockFetch.mockResolvedValueOnce(new Response('<html>Not Found</html>', {
+        status: 404,
+        headers: { 'Content-Type': 'text/html' }
+      }));
+
+      const req = createRequest('/api/tiles/v2/radar/missing.png', {
+        headers: { 'Origin': 'https://circuit-weather.racing' }
+      });
+      const res = await worker.fetch(req, global.env, global.ctx);
+
+      expect(res.status).toBe(404);
+      expect(res.headers.get('Content-Type')).toBe('application/json');
+      expect(res.headers.get('Access-Control-Allow-Origin')).toBe('https://circuit-weather.racing');
+      expect(res.headers.get('Vary')).toBe('Origin');
+    });
+it('handles upstream rate limit (429) correctly', async () => {
       mockFetch.mockResolvedValueOnce(new Response('Rate Limit', {
         status: 429,
         headers: {

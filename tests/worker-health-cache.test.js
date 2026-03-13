@@ -93,4 +93,58 @@ describe('Worker Health Check Caching', () => {
     // Should return cache hit
     expect(res2.headers.get('X-Cache')).toBe('HIT');
   });
+
+  it('returns CORS headers for valid origin and handles upstream fetch failure', async () => {
+    // Simulate one upstream succeeding and one failing
+    mockFetch.mockResolvedValueOnce(new Response(null, { status: 200 }));
+    mockFetch.mockRejectedValueOnce(new Error('Network Error'));
+    mockFetch.mockResolvedValueOnce(new Response(null, { status: 404 }));
+
+    const req = new Request('https://circuit-weather.racing/api/health', {
+      method: 'GET',
+      headers: {
+        'Origin': 'https://circuit-weather.racing',
+        'Sec-Fetch-Site': 'same-origin'
+      }
+    });
+
+    const res = await worker.fetch(req, global.env, global.ctx);
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get('Access-Control-Allow-Origin')).toBe('https://circuit-weather.racing');
+    expect(res.headers.get('Vary')).toBe('Origin');
+
+    const data = await res.json();
+    expect(data.upstreams.jolpica).toBeDefined();
+    expect(data.upstreams.rainviewer).toBeDefined();
+    expect(data.upstreams.github).toBeDefined();
+    // One of them will be 'unreachable'
+    const values = Object.values(data.upstreams);
+    expect(values).toContain('unreachable');
+  });
+
+  it('serves cache hit with CORS for valid origin', async () => {
+    // Set a mock cache response
+    const cacheResponse = new Response(JSON.stringify({ status: 'ok' }), {
+      status: 200,
+      headers: {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*'
+      }
+    });
+    cacheStore.set('https://circuit-weather.racing/api/health', cacheResponse);
+
+    const req = new Request('https://circuit-weather.racing/api/health', {
+      method: 'GET',
+      headers: {
+        'Origin': 'https://circuit-weather.racing',
+        'Sec-Fetch-Site': 'same-origin'
+      }
+    });
+
+    const res = await worker.fetch(req, global.env, global.ctx);
+    expect(res.status).toBe(200);
+    expect(res.headers.get('Access-Control-Allow-Origin')).toBe('https://circuit-weather.racing');
+    expect(mockFetch).not.toHaveBeenCalled();
+  });
 });
