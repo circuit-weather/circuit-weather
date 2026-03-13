@@ -160,5 +160,5 @@ Prevention: Avoid duplicating configuration values in documentation; reference t
 
 ## 2026-03-13 - Standardizing Local Dev Runner Command
 
-**Learning:** `AGENTS.md` local development instructions incorrectly suggested using `npx wrangler dev` alongside a commented-out `# pnpm run dev` fallback. This created ambiguity in a project that strictly relies on `pnpm` (as enforced in CI). Using `npx` dynamically downloads packages outside the `pnpm` cache, leading to potential version mismatches or "module not found" errors when `node_modules` is empty but the user assumes they are using the correct command.
-**Action:** Removed all references to `npx` in `AGENTS.md` and replaced the development start command exclusively with `pnpm run dev` to ensure absolute alignment with the project's single source of truth for dependencies.
+**Learning:** `AGENTS.md` local development instructions incorrectly suggested using `npx wrangler dev` alongside a commented-out `# pnpm run dev` fallback. While standardizing on `pnpm run dev` ensures exact version matching with CI, developers may not have `pnpm` available, or may have `wrangler` installed globally. Documenting a single standard path without explaining *why* or providing fallbacks for varying environments creates friction for contributors.
+**Action:** Updated `AGENTS.md` to explicitly state `pnpm run dev` as the standard (for CI parity), while actively documenting `wrangler dev` (for global installs) and `npx wrangler dev` (for dynamic fetching) as explicitly reasoned fallbacks.
