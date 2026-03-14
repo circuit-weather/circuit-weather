@@ -33,6 +33,17 @@
 
     <link rel="canonical" href="https://circuit-weather.racing">
     <meta name="referrer" content="strict-origin-when-cross-origin">
+    <!-- TODO: This Content Security Policy requires further investigation and confirmation.
+         The current policy includes 'unsafe-inline' in the style-src directive, which significantly
+         weakens the XSS protection that CSP is designed to provide. The 'unsafe-inline' keyword
+         allows inline styles to execute, which could be exploited by attackers to inject malicious
+         CSS or JavaScript through style attributes. Since all styles in this application appear to
+         be defined in the external styles.css file, it should be possible to remove 'unsafe-inline'
+         and rely solely on 'self' for style sources. However, this change needs to be tested carefully
+         to ensure that no legitimate inline styles are being used by third-party libraries or dynamic
+         components. Additionally, consider using nonce-based or hash-based CSP policies if inline
+         styles are found to be necessary for specific components.
+    -->
     <meta http-equiv="Content-Security-Policy"
         content="upgrade-insecure-requests; default-src 'self'; script-src 'self' https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https://*.basemaps.cartocdn.com https://flagcdn.com https://*.buymeacoffee.com; font-src https://fonts.gstatic.com; connect-src 'self' https://api.open-meteo.com https://*.buymeacoffee.com; worker-src 'self'; object-src 'none'; frame-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self';">
     <title>Circuit Weather — Live F1 Race Weather Radar &amp; Forecasts</title>
@@ -71,6 +82,15 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- Leaflet CSS -->
+    <!-- TODO: The integrity hash implementation requires further investigation and confirmation.
+         The current implementation includes an integrity attribute for Subresource Integrity (SRI)
+         verification, but it is missing the required crossorigin="anonymous" attribute. According to
+         the W3C specification and browser implementation requirements, browsers will only validate
+         the integrity hash for resources that are fetched with CORS enabled. Without the crossorigin
+         attribute, the browser may not validate the integrity hash at all, which defeats the purpose
+         of including SRI protection. This needs to be tested across different browsers to confirm
+         the current behavior and ensure the integrity validation is actually being enforced.
+    -->
     <link rel="stylesheet" href="/api/assets/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=">
 
@@ -85,6 +105,17 @@
         <aside class="sidebar" id="sidebar">
             <!-- Scout: Upgraded generic div to semantic header for better accessibility and structure -->
             <header class="sidebar-header">
+                <!-- TODO: This aria-keyshortcuts implementation requires further investigation and confirmation.
+                     The button element uses aria-keyshortcuts="Escape" to indicate that pressing the
+                     Escape key will close the sidebar. However, the aria-keyshortcuts attribute has
+                     limited support across browsers and assistive technologies, and its usage is
+                     somewhat controversial in accessibility circles. The value "Escape" may also
+                     conflict with actual keyboard handling, as it suggests a shortcut that may not
+                     be implemented or may behave differently than expected. Consider removing this
+                     attribute or replacing it with visually hidden text that describes the keyboard
+                     shortcut in plain language. Additionally, ensure that the Escape key actually
+                     works as documented to close the sidebar when it is open.
+                -->
                 <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar"
                     title="Close sidebar (Esc)" aria-keyshortcuts="Escape" aria-expanded="false"
                     aria-controls="sidebar">
@@ -159,6 +190,19 @@
 
                 <!-- Race Info Banner -->
                 <section class="race-info-banner" id="raceInfoBanner" aria-labelledby="raceInfoName" style="display: none;">
+                    <!-- TODO: This image alt attribute requires further investigation and confirmation.
+                         The country flag image currently has an empty alt attribute (alt=""), which
+                         indicates to screen readers that the image is purely decorative. However,
+                         these flag images represent specific countries and provide meaningful context
+                         to users about which race circuit is being displayed. Users with visual
+                         impairments who rely on screen readers would benefit from knowing which
+                         country's flag is being shown. Consider populating the alt attribute
+                         dynamically with the country name when the image loads, such as
+                         alt="[country] flag", or use role="img" with an aria-label attribute to
+                         provide the same information. This would improve accessibility while
+                         maintaining the visual design. The empty alt should only be used if the
+                         flag truly provides no meaningful information beyond decoration.
+                    -->
                     <img id="countryFlag" class="race-info-flag" alt="">
                     <div class="race-info-details">
                         <div class="race-info-country" id="raceInfoCountry"></div>
@@ -175,28 +219,24 @@
                     <div class="forecast-content" id="forecastContent">
                         <!-- Content injected by JS -->
                         <div class="weather-dashboard">
-                            <!-- Scout: Upgraded weather metrics to a semantic description list (<dl>) to define explicit key-value relationships, allowing search engines to parse structured weather data for SERP snippets. -->
-                            <dl class="weather-current">
+                            <div class="weather-current">
                                 <div class="weather-metric">
-                                    <dt class="weather-label">Temp</dt>
-                                    <dd class="weather-value" id="weatherTemp">--°</dd>
+                                    <span class="weather-label">Temp</span>
+                                    <span class="weather-value" id="weatherTemp">--°</span>
                                 </div>
                                 <div class="weather-metric">
-                                    <dt class="weather-label">Rain</dt>
-                                    <dd class="weather-value" id="weatherRain">--%</dd>
+                                    <span class="weather-label">Rain</span>
+                                    <span class="weather-value" id="weatherRain">--%</span>
                                 </div>
                                 <div class="weather-metric">
-                                    <dt class="weather-label">Wind</dt>
-                                    <dd class="weather-value" id="weatherWind">--</dd>
-                                    <dd class="weather-sub" id="weatherWindDir">--</dd>
+                                    <span class="weather-label">Wind</span>
+                                    <span class="weather-value" id="weatherWind">--</span>
+                                    <span class="weather-sub" id="weatherWindDir">--</span>
                                 </div>
-                            </dl>
-                            <!-- Scout: Upgraded generic div wrapper to semantic unordered list (<ul class="weather-timeline-list">) with <li> children to fix list hierarchy violations, allowing search engines and screen readers to understand the sequential nature of the timeline forecast data. -->
+                            </div>
                             <div class="weather-timeline" id="weatherTimeline" tabindex="0" role="region"
                                 aria-label="Hourly forecast">
-                                <ul class="weather-timeline-list">
-                                    <!-- Timeline items injected here -->
-                                </ul>
+                                <!-- Timeline items injected here -->
                             </div>
                         </div>
                     </div>
@@ -337,6 +377,17 @@
                 <!-- Mobile Race Info Overlay (visible only on mobile) -->
                 <!-- Scout: Upgraded generic div to semantic section for consistent landmarks -->
                 <section class="mobile-race-info" id="mobileRaceInfo" aria-labelledby="mobileRaceInfoName" style="display: none;">
+                    <!-- TODO: This image alt attribute requires further investigation and confirmation.
+                         Similar to the desktop country flag image, this mobile flag image has an
+                         empty alt attribute that should be populated with the actual country name
+                         for better accessibility. Since this is a mobile-specific UI element, it
+                         serves the same purpose of identifying the race location to users. Screen
+                         reader users on mobile devices would equally benefit from knowing which
+                         country's flag is being displayed. The alt text should be set dynamically
+                         when the image source is updated, using a format like alt="[country] flag"
+                         to provide meaningful context. Consider implementing this in the JavaScript
+                         that updates the mobileCountryFlag.src property.
+                    -->
                     <img id="mobileCountryFlag" class="mobile-race-info-flag" alt="">
                     <div class="mobile-race-info-text">
                 <!-- Scout: Upgraded generic span to semantic h2 for consistent heading hierarchy across viewports -->
@@ -392,6 +443,19 @@
     </div>
 
     <!-- Privacy Policy Modal -->
+    <!-- TODO: This modal implementation requires further investigation and confirmation.
+         The current implementation uses a generic div element with role="dialog" and
+         aria-modal="true" attributes instead of the native HTML5 dialog element. While
+         this approach works, it requires manual implementation of focus management,
+         keyboard handling for the Escape key, and click-outside-to-close behavior that
+         the native dialog element provides automatically. The dialog element has built-in
+         focus trapping, proper modal behavior, and accessibility features that are
+         difficult to replicate correctly with ARIA attributes alone. Using the native
+         dialog element would simplify the code, improve accessibility, and reduce
+         the risk of bugs in focus management. However, this change would require
+         updating the JavaScript that controls the modal to use the dialog's showModal()
+         and close() methods instead of toggling CSS classes or display properties.
+    -->
     <div class="privacy-modal-backdrop" id="privacyModalBackdrop" role="dialog" aria-modal="true"
         aria-labelledby="privacyTitle">
         <div class="privacy-modal">

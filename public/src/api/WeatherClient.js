@@ -3,6 +3,16 @@ import { CONFIG } from '../config.js';
 export class WeatherClient {
     constructor() {
         this.baseUrl = CONFIG.weatherApi;
+        // TODO: This in-memory cache implementation requires further investigation and confirmation.
+        // The current implementation uses a plain JavaScript Map with no maximum size limit or eviction
+        // policy. As users browse different circuits across the F1 season, each unique coordinate pair
+        // creates a new cache entry that is never removed. Over time, this could lead to unbounded
+        // memory growth in long-running sessions, potentially degrading performance or causing memory
+        // issues on devices with limited resources. Consider implementing an LRU (Least Recently Used)
+        // eviction strategy with a maximum cache size (for example, 50 entries) to prevent excessive
+        // memory usage. Additionally, the cache entries are only keyed by rounded coordinates and do
+        // not account for different forecast times, which could lead to stale data being served
+        // if the same location is queried for different session times.
         this.cache = new Map();
         this.cacheTTL = 15 * 60 * 1000; // 15 minutes
     }
@@ -50,6 +60,17 @@ export class WeatherClient {
                 });
                 const url = `${this.baseUrl}?${params.toString()}`;
 
+                // TODO: This fetch operation requires further investigation and confirmation.
+                // Currently, this fetch call to the Open-Meteo API lacks an AbortSignal timeout,
+                // which means the request could potentially hang indefinitely if the upstream API
+                // becomes unresponsive or if there are network connectivity issues. Without a timeout,
+                // the application would wait forever for a response, blocking the user interface and
+                // preventing users from interacting with other parts of the application. This is
+                // particularly problematic for weather data that users expect to load quickly.
+                // Consider adding a timeout using AbortSignal.timeout() with an appropriate duration
+                // (for example, 5000 milliseconds) to ensure the request fails gracefully after a
+                // reasonable waiting period, allowing the error handling to execute and display
+                // appropriate feedback to the user.
                 const response = await fetch(url);
                 if (!response.ok) throw new Error('Weather API error');
 

@@ -56,6 +56,15 @@ export class WeatherRadar {
         this.updateSpeedLabel();
 
         // Palette UX: Start a 1-minute timer to keep the relative time updated
+        // TODO: This magic number requires further investigation and confirmation.
+        // The value 60000 is the number of milliseconds in one minute, used to set the
+        // interval at which the relative time display is refreshed in the radar controls.
+        // While the comment above partially explains the intent, having the literal number
+        // in the code means developers need to do the mental arithmetic to understand the
+        // interval duration. This should be extracted to a named constant such as
+        // ONE_MINUTE_MS or RELATIVE_TIME_REFRESH_INTERVAL_MS alongside the other
+        // time-related constants in the codebase, making the intent clear at a glance
+        // without requiring any calculation.
         this.relativeTimeInterval = setInterval(() => {
             if (this.visibleLayerIndex >= 0) {
                 this.updateTimeDisplay(this.frames[this.visibleLayerIndex]?.time);
@@ -79,6 +88,18 @@ export class WeatherRadar {
         }
 
         // Global shortcut: Space to toggle play/pause
+        // TODO: This global keyboard event listener requires further investigation and confirmation.
+        // The current implementation adds a keydown event listener directly to the document object
+        // to handle the Space key for toggling play/pause. However, there is no corresponding
+        // cleanup code to remove this event listener when the WeatherRadar instance is destroyed
+        // or when the component is unmounted. This creates a potential memory leak where the
+        // event listener continues to exist even after the WeatherRadar object is no longer needed,
+        // keeping references alive and preventing proper garbage collection. Additionally, if multiple
+        // WeatherRadar instances are created (for example, during navigation or hot reloading),
+        // multiple event listeners would accumulate on the document, causing the togglePlay function
+        // to be called multiple times for a single keypress. A destroy() or cleanup() method should
+        // be added to the WeatherRadar class that removes this event listener using
+        // document.removeEventListener() when the component is being torn down.
         document.addEventListener('keydown', (e) => {
             if (e.code === 'Space') {
                 const active = document.activeElement;
@@ -134,6 +155,13 @@ export class WeatherRadar {
     }
 
     async getFramesFromApi() {
+        // TODO: This fetch operation requires further investigation and confirmation. 
+        // Currently, this fetch call lacks proper error handling which could lead to unhandled promise rejections
+        // if the network request fails or returns a non-OK status. The response is parsed as JSON without
+        // validating that the response body actually contains valid JSON data. This needs to be wrapped
+        // in a try-catch block to gracefully handle network errors, timeouts, or malformed responses.
+        // Without this protection, the application may crash or behave unpredictably when the RainViewer
+        // API is unavailable or returns unexpected data.
         const response = await fetch(CONFIG.rainViewerApi);
         const data = await response.json();
 
@@ -217,6 +245,14 @@ export class WeatherRadar {
         }
 
         // Minimum delay of 30 seconds to avoid tight loops on clock edge cases
+        // TODO: This magic number requires further investigation and confirmation.
+        // The value 30000 represents a minimum polling delay of 30 seconds, used as
+        // a floor to prevent tight polling loops if the calculated delay comes out
+        // unexpectedly small due to clock edge cases or arithmetic rounding. The comment
+        // explains the purpose, but the literal value still requires mental arithmetic
+        // to verify against the comment. This should be extracted to a named constant
+        // such as MIN_POLL_DELAY_MS to make the intent immediately clear and to allow
+        // it to be adjusted in one place if the minimum threshold ever needs changing.
         delay = Math.max(delay, 30000);
 
         this.pollingTimeout = setTimeout(() => {
@@ -398,6 +434,15 @@ export class WeatherRadar {
         // Worker now passes through 429 status for this check
         const checkUrl = CONFIG.rainViewerApi;
 
+        // TODO: This HEAD request requires further investigation and confirmation.
+        // The fetch call to check the RainViewer API status currently uses .then() chaining without
+        // a corresponding .catch() block to handle network failures. While there is error handling inside
+        // the .then() callback for HTTP error status codes, any network-level failures such as DNS
+        // resolution errors, connection timeouts, or CORS policy violations will result in an unhandled
+        // promise rejection. This could cause the error tracking state to become inconsistent and leave
+        // the isCheckingStatus flag set to true, preventing future status checks from running.
+        // A .catch() block should be added to handle these network errors gracefully and ensure the
+        // isCheckingStatus flag is always reset regardless of the outcome.
         fetch(checkUrl, { method: 'HEAD' })
             .then(response => {
                 this.isCheckingStatus = false;
@@ -658,6 +703,15 @@ export class WeatherRadar {
             currentLayer.on('load', onLoad);
 
             // Timeout fallback (3 seconds)
+            // TODO: This magic number requires further investigation and confirmation.
+            // The value 3000 represents a 3-second timeout used as a fallback to resolve
+            // the tile-loading promise in case the layer's 'load' event never fires, which
+            // can happen if tiles fail silently or if the Leaflet layer gets into an
+            // unexpected state. While the comment above identifies this as "3 seconds",
+            // the literal value requires mental arithmetic to verify. This same 3-second
+            // value is also used in the preloadSequence timeout below, suggesting it should
+            // be a shared named constant such as TILE_LOAD_TIMEOUT_MS to ensure both
+            // timeouts remain consistent and can be adjusted from one location.
             setTimeout(() => {
                 if (!resolved) {
                     resolved = true;
@@ -724,6 +778,16 @@ export class WeatherRadar {
             layer.on('tileerror', onComplete);
 
             // Timeout to prevent stuck queue (3s per frame)
+            // TODO: This magic number requires further investigation and confirmation.
+            // The value 3000 here serves the same purpose as the 3-second fallback
+            // in waitForTilesToLoad() above — it prevents the preload queue from
+            // becoming stuck if a tile frame never completes loading. Since both
+            // locations use the same 3000ms value for the same conceptual reason,
+            // they should both reference a single shared constant such as
+            // TILE_LOAD_TIMEOUT_MS rather than duplicating the literal value.
+            // If one of these timeouts is changed without updating the other,
+            // it could create inconsistent behaviour between the initial load
+            // and the sequential preload phase of the animation.
             setTimeout(() => {
                 cleanup();
                 resolve();

@@ -37,6 +37,15 @@ export class CircuitWeatherApp {
         this.mobileQuery = window.matchMedia('(max-width: 768px)');
 
         // Bolt Optimization: Cache frequently accessed DOM elements
+        // TODO: This DOM element caching implementation requires further investigation and confirmation.
+        // The constructor attempts to cache DOM elements using document.getElementById() immediately
+        // when the class is instantiated. However, if the CircuitWeatherApp class is instantiated
+        // before the DOMContentLoaded event fires, these elements will not exist in the document yet
+        // and all cached references will be null. While the current code works because init() is
+        // called after DOMContentLoaded in main.js, this creates a fragile dependency that could
+        // break if the initialization order changes. Consider moving this DOM caching logic to the
+        // init() method instead, or add null checks before using these cached elements to ensure
+        // the application handles cases where elements are not found gracefully.
         this.ui = {
             loadingOverlay: document.getElementById('loadingOverlay'),
             roundSelect: document.getElementById('roundSelect'),
@@ -81,6 +90,16 @@ export class CircuitWeatherApp {
 
             // Theme manager with callback to update map tiles and overlays
             // Bolt Optimization: Initialized after overlays so they can respond to the initial theme apply
+            // TODO: This theme callback implementation requires further investigation and confirmation.
+            // The ThemeManager is instantiated with an inline arrow function as its callback argument.
+            // This anonymous arrow function is created fresh every time the init() method runs, which
+            // prevents it from being referenced, removed, or compared for equality later. If the
+            // ThemeManager stores this callback and init() were ever called more than once (for example,
+            // during error recovery or re-initialization), multiple different callback functions would
+            // accumulate with no way to remove the old ones. Additionally, defining the callback as a
+            // bound class method (e.g., this.handleThemeChange.bind(this)) would make the code more
+            // readable by separating the callback logic from the initialization sequence, and would
+            // allow ThemeManager to unsubscribe the callback if needed in a future cleanup scenario.
             this.themeManager = new ThemeManager((theme) => {
                 this.mapManager.setTheme(theme);
                 if (this.rangeCircles) {
@@ -161,11 +180,32 @@ export class CircuitWeatherApp {
         const raceSession = race.sessions.find(s => s.id === 'race');
         if (raceSession && raceSession.date && raceSession.time) {
             const end = new Date(`${raceSession.date}T${raceSession.time}`);
+            // TODO: This magic number requires further investigation and confirmation.
+            // The value '4' represents a 4-hour duration buffer added to the race session
+            // end time to determine when the entire race weekend event should be considered
+            // complete. This hardcoded value is used without any named constant or
+            // explanatory comment describing why 4 hours was chosen as the buffer.
+            // Magic numbers like this make the code difficult to understand and maintain,
+            // as developers must infer the meaning and purpose from context. Consider
+            // extracting this to a named constant such as RACE_DURATION_BUFFER_HOURS
+            // with appropriate documentation explaining that F1 races typically last
+            // around 2 hours plus podium ceremonies and post-race coverage, making
+            // 4 hours a reasonable buffer for considering the event concluded.
             end.setHours(end.getHours() + 4); // 4 hours duration buffer
             return end;
         }
         // Fallback if no time (shouldn't happen for recent races)
         const end = new Date(race.date);
+        // TODO: This magic number requires further investigation and confirmation.
+        // The value '23' represents setting the time to the 23rd hour of the day,
+        // effectively marking the end of the race day when no specific session
+        // time is available. This is used as a fallback calculation when the
+        // race session data is incomplete. Like the 4-hour buffer above, this
+        // value appears as a literal number without any named constant or
+        // documentation explaining why the end of the day was chosen as the
+        // fallback rather than midnight or some other time. This should be
+        // extracted to a named constant such as RACE_DAY_END_HOUR with
+        // documentation explaining the reasoning behind this fallback approach.
         end.setHours(end.getHours() + 23); // End of race day
         return end;
     }
@@ -331,15 +371,14 @@ export class CircuitWeatherApp {
         let title = defaultTitle;
         let desc = defaultDesc;
 
-        if (this.selectedRace) {
-            // Scout: Prioritize brand and general intent in title, followed by specific GP name.
-            // Value: Maintains site-wide SEO authority and clear generic purpose while providing context for specific race landing pages.
-            // Session information is excluded to keep titles concise and avoid over-specialization that might mislead users.
-            title = `Circuit Weather — Live F1 Weather: ${this.selectedRace.name}`;
-
-            // Scout: Consolidation of session-specific descriptions to prioritize general intent.
-            // Value: Helps search engines understand the broader utility of the site (all GPs) while still acknowledging the current context.
-            desc = `Real-time weather radar and forecasts for every Formula 1 Grand Prix, including the ${this.selectedRace.name}. Track rain and conditions live during every session.`;
+        if (this.selectedRace && this.selectedSession) {
+            // Specific session page: "Bahrain GP Qualifying Weather - Circuit Weather"
+            title = `${this.selectedRace.name} ${this.selectedSession.name} Weather - Circuit Weather`;
+            desc = `Live weather radar, forecasts, and session countdowns for the ${this.selectedRace.name} ${this.selectedSession.name}. Track rain and conditions in real-time.`;
+        } else if (this.selectedRace) {
+            // Race page: "Bahrain GP Weather - Circuit Weather"
+            title = `${this.selectedRace.name} Weather - Circuit Weather`;
+            desc = `Live weather radar and forecasts for the ${this.selectedRace.name}. Track rain and conditions live during every Grand Prix session.`;
         } else {
             // Default home page title
             title = defaultTitle;
@@ -389,7 +428,7 @@ export class CircuitWeatherApp {
             const schema = {
                 "@context": "https://schema.org",
                 "@type": "SportsEvent",
-                "name": this.selectedRace.name,
+                "name": `${this.selectedRace.name} - ${this.selectedSession.name}`,
                 "startDate": sessionStart,
                 "location": {
                     "@type": "Place",
@@ -579,6 +618,18 @@ export class CircuitWeatherApp {
 
             this.router.navigate('f1', this.selectedRace.round, sessionId);
         } catch (error) {
+            // TODO: This error handling requires further investigation and confirmation.
+            // When an error occurs during session selection, the current code only logs
+            // the error to the browser console and hides the loading overlay. The user
+            // receives no visual feedback at all about what went wrong — the loading spinner
+            // disappears and the application returns to its previous state silently. This
+            // means that if either the radar data fails to load or the session forecast
+            // fetch fails, the user has no way of knowing whether the operation succeeded,
+            // partially succeeded, or failed entirely. This is particularly confusing because
+            // both radar.load() and updateSessionForecast() run in parallel via Promise.all(),
+            // so either or both could have failed. Consider showing an error toast notification
+            // or updating the relevant UI panel to display an error state that tells the user
+            // which component failed and whether they should try again.
             console.error('Error selecting session:', error);
         } finally {
             this.showLoading(false);
@@ -602,6 +653,18 @@ export class CircuitWeatherApp {
             clearInterval(this.weatherRefreshInterval);
         }
 
+        // TODO: This magic number requires further investigation and confirmation.
+        // The value 300000 represents the number of milliseconds in 5 minutes,
+        // which is the interval at which weather data is refreshed. While the
+        // comment indicates this is "every 5 minutes", having this as a literal
+        // number makes the code less readable and harder to maintain. If this
+        // refresh rate needs to be adjusted based on API rate limits, user
+        // preferences, or data freshness requirements, developers must manually
+        // calculate the milliseconds. This should be extracted to a named
+        // constant such as WEATHER_REFRESH_INTERVAL_MS or
+        // WEATHER_REFRESH_INTERVAL_MINUTES with appropriate documentation
+        // explaining why 5 minutes was chosen as the refresh interval and
+        // how it relates to API rate limits or data freshness requirements.
         // Refresh weather every 5 minutes (300000ms)
         this.weatherRefreshInterval = setInterval(() => {
             this.updateLiveWeatherForCircuit();
@@ -611,6 +674,18 @@ export class CircuitWeatherApp {
     startSessionForecastInterval() {
         this.stopSessionForecastInterval();
 
+        // TODO: This magic number requires further investigation and confirmation.
+        // The value 900000 represents the number of milliseconds in 15 minutes,
+        // which is the interval at which session forecast data is refreshed.
+        // Similar to the 5-minute weather refresh interval, this literal value
+        // makes the code less maintainable and harder to understand at a glance.
+        // The comment notes that this matches the WeatherClient cache TTL, but
+        // this relationship is implicit and could break if either value changes
+        // without updating the other. This should be extracted to a named
+        // constant such as SESSION_FORECAST_REFRESH_INTERVAL_MS or defined
+        // in a centralized constants file alongside the cache TTL to ensure
+        // they remain synchronized. Documentation should explain why 15 minutes
+        // was chosen and how it relates to the cache TTL for consistency.
         // Refresh forecast every 15 minutes (900000ms) to match WeatherClient cache TTL
         this.sessionForecastInterval = setInterval(() => {
             if (this.selectedSession && this.selectedRace) {
@@ -647,42 +722,53 @@ export class CircuitWeatherApp {
             // Palette A11y: Mark region as busy during loading
             content.setAttribute('aria-busy', 'true');
             content.style.display = 'block';
+            // TODO: This innerHTML assignment requires further investigation and confirmation.
+            // The skeleton loading state is rendered by assigning a large multi-line HTML
+            // string directly to innerHTML. This causes the browser to parse and re-render
+            // the entire forecast panel from scratch on every session selection, discarding
+            // any existing DOM nodes and triggering reflow. For a loading state that is shown
+            // briefly before real data arrives, this is wasteful. A more efficient approach
+            // would be to define the skeleton structure once in the HTML using a <template>
+            // element and clone it when needed, avoiding repeated HTML parsing. Additionally,
+            // because renderForecastSkeleton() destroys the internal DOM structure including
+            // element IDs, any JavaScript references to child elements (such as #weatherTimeline)
+            // become detached and must be re-queried after the skeleton is replaced — a fragility
+            // noted in the renderForecast() comment at the bottom of this class. Using a
+            // template clone or toggling a CSS class on the existing structure would avoid
+            // this reference invalidation problem entirely.
             content.innerHTML = `
                 <div class="weather-dashboard" aria-hidden="true">
-                    <dl class="weather-current">
+                    <div class="weather-current">
                         <div class="weather-metric">
-                            <dt class="weather-label skeleton"><span class="skeleton-text" style="width: 30px"></span></dt>
-                            <dd class="weather-value skeleton"><span class="skeleton-text" style="width: 40px"></span></dd>
+                            <span class="weather-label skeleton"><span class="skeleton-text" style="width: 30px"></span></span>
+                            <span class="weather-value skeleton"><span class="skeleton-text" style="width: 40px"></span></span>
                         </div>
                         <div class="weather-metric">
-                            <dt class="weather-label skeleton"><span class="skeleton-text" style="width: 30px"></span></dt>
-                            <dd class="weather-value skeleton"><span class="skeleton-text" style="width: 40px"></span></dd>
+                            <span class="weather-label skeleton"><span class="skeleton-text" style="width: 30px"></span></span>
+                            <span class="weather-value skeleton"><span class="skeleton-text" style="width: 40px"></span></span>
                         </div>
                         <div class="weather-metric">
-                            <dt class="weather-label skeleton"><span class="skeleton-text" style="width: 30px"></span></dt>
-                            <dd class="weather-value skeleton"><span class="skeleton-text" style="width: 40px"></span></dd>
-                            <dd class="weather-sub skeleton"><span class="skeleton-text" style="width: 20px"></span></dd>
+                            <span class="weather-label skeleton"><span class="skeleton-text" style="width: 30px"></span></span>
+                            <span class="weather-value skeleton"><span class="skeleton-text" style="width: 40px"></span></span>
+                            <span class="weather-sub skeleton"><span class="skeleton-text" style="width: 20px"></span></span>
                         </div>
-                    </dl>
-                    <!-- Scout: Wrapped timeline skeleton items in semantic ul/li structure to establish correct list hierarchy for crawlers before the actual data loads -->
+                    </div>
                     <div class="weather-timeline" id="weatherTimeline">
-                        <ul class="weather-timeline-list">
-                            <li class="weather-timeline-item">
-                                <div class="weather-timeline-time skeleton"><span class="skeleton-text" style="width: 30px"></span></div>
-                                <div class="weather-timeline-condition skeleton"><span class="skeleton-text" style="width: 80px"></span></div>
-                                <div class="weather-timeline-temp skeleton"><span class="skeleton-text" style="width: 30px"></span></div>
-                            </li>
-                            <li class="weather-timeline-item">
-                                <div class="weather-timeline-time skeleton"><span class="skeleton-text" style="width: 30px"></span></div>
-                                <div class="weather-timeline-condition skeleton"><span class="skeleton-text" style="width: 80px"></span></div>
-                                <div class="weather-timeline-temp skeleton"><span class="skeleton-text" style="width: 30px"></span></div>
-                            </li>
-                            <li class="weather-timeline-item">
-                                <div class="weather-timeline-time skeleton"><span class="skeleton-text" style="width: 30px"></span></div>
-                                <div class="weather-timeline-condition skeleton"><span class="skeleton-text" style="width: 80px"></span></div>
-                                <div class="weather-timeline-temp skeleton"><span class="skeleton-text" style="width: 30px"></span></div>
-                            </li>
-                        </ul>
+                        <div class="weather-timeline-item">
+                            <div class="weather-timeline-time skeleton"><span class="skeleton-text" style="width: 30px"></span></div>
+                            <div class="weather-timeline-condition skeleton"><span class="skeleton-text" style="width: 80px"></span></div>
+                            <div class="weather-timeline-temp skeleton"><span class="skeleton-text" style="width: 30px"></span></div>
+                        </div>
+                        <div class="weather-timeline-item">
+                            <div class="weather-timeline-time skeleton"><span class="skeleton-text" style="width: 30px"></span></div>
+                            <div class="weather-timeline-condition skeleton"><span class="skeleton-text" style="width: 80px"></span></div>
+                            <div class="weather-timeline-temp skeleton"><span class="skeleton-text" style="width: 30px"></span></div>
+                        </div>
+                        <div class="weather-timeline-item">
+                            <div class="weather-timeline-time skeleton"><span class="skeleton-text" style="width: 30px"></span></div>
+                            <div class="weather-timeline-condition skeleton"><span class="skeleton-text" style="width: 80px"></span></div>
+                            <div class="weather-timeline-temp skeleton"><span class="skeleton-text" style="width: 30px"></span></div>
+                        </div>
                     </div>
                 </div>
             `;
@@ -765,29 +851,28 @@ export class CircuitWeatherApp {
             // Rotation: Input 0 (N) -> Blows South -> Arrow (Up) needs 180 deg rotation
             const rotation = windInfo.rotation;
 
-            // Scout: Upgraded weather metrics to a semantic description list (<dl>) to define explicit key-value relationships, allowing search engines to parse structured weather data for SERP snippets.
             currentHtml = `
-                <dl class="weather-current">
+                <div class="weather-current">
                     <div class="weather-metric">
-                        <dt class="weather-label">Temp</dt>
-                        <dd class="weather-value" id="weatherTemp">${escapeHtml(temp)}${escapeHtml(weather.units.temperature_2m)}</dd>
+                        <span class="weather-label">Temp</span>
+                        <span class="weather-value" id="weatherTemp">${escapeHtml(temp)}${escapeHtml(weather.units.temperature_2m)}</span>
                     </div>
                     <div class="weather-metric">
-                        <dt class="weather-label">Rain</dt>
-                        <dd class="weather-value" id="weatherRain">${escapeHtml(maxPrecip)}%</dd>
+                        <span class="weather-label">Rain</span>
+                        <span class="weather-value" id="weatherRain">${escapeHtml(maxPrecip)}%</span>
                     </div>
                     <div class="weather-metric">
-                        <dt class="weather-label">Wind</dt>
-                        <dd class="weather-value" id="weatherWind">${escapeHtml(wind)} ${escapeHtml(weather.units.wind_speed_10m)}</dd>
-                        <dd class="weather-sub" id="weatherWindDir" title="${escapeHtml(dir)}°" aria-label="Wind direction: ${escapeHtml(windInfo.text)} (${escapeHtml(dir)} degrees)">
+                        <span class="weather-label">Wind</span>
+                        <span class="weather-value" id="weatherWind">${escapeHtml(wind)} ${escapeHtml(weather.units.wind_speed_10m)}</span>
+                        <span class="weather-sub" id="weatherWindDir" title="${escapeHtml(dir)}°" aria-label="Wind direction: ${escapeHtml(windInfo.text)} (${escapeHtml(dir)} degrees)">
                             ${escapeHtml(windInfo.text)}
                             <svg class="icon-wind-arrow" style="transform: rotate(${escapeHtml(rotation)}deg); width: 14px; height: 14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                 <line x1="12" y1="19" x2="12" y2="5"></line>
                                 <polyline points="5 12 12 5 19 12"></polyline>
                             </svg>
-                        </dd>
+                        </span>
                     </div>
-                </dl>
+                </div>
             `;
         }
 

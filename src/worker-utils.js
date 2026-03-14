@@ -148,6 +148,19 @@ export async function calculateHash(buffer) {
  * Simple In-Memory Rate Limiter
  * Note: In a serverless environment, this state is ephemeral and per-isolate.
  * It provides a "best effort" defense against rapid-fire DoS attacks on a single instance.
+ * TODO: This RateLimiter implementation requires further investigation and confirmation.
+ * The current implementation uses a generational garbage collection approach with two Map
+ * structures (currentGen and oldGen) to avoid O(N) cleanup iteration. While this is an
+ * optimization for performance, the logic is complex with nested conditionals and the
+ * comments suggest it's "Bolt Optimization" but the readability suffers significantly.
+ * The two-generation approach with migration logic, LRU ordering maintenance, and window
+ * rotation creates cognitive overhead for developers trying to understand or debug the code.
+ * Consider simplifying this implementation with a single Map and periodic cleanup, or use a
+ * proven rate limiting pattern from established libraries. Additionally, more inline
+ * comments explaining the generational approach and the migration logic would help future
+ * maintainers understand the design decisions. The complexity may also introduce subtle bugs
+ * in edge cases such as boundary conditions during generation rotation or when the maximum
+ * IP limit is reached.
  */
 export class RateLimiter {
   constructor(limit, windowMs, maxIps = 10000) {

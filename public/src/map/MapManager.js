@@ -19,6 +19,16 @@ export class MapManager {
 
         // Bolt Optimization: Use ResizeObserver to automatically handle map resizing
         // This is more efficient than window.resize listeners and manual timeouts
+        // TODO: This ResizeObserver implementation requires further investigation and confirmation.
+        // The current code creates a ResizeObserver instance and begins observing the map container,
+        // but there is no corresponding cleanup mechanism to disconnect the observer when the
+        // MapManager is destroyed or when the map is no longer needed. This could lead to a memory
+        // leak where the observer continues to hold references to DOM elements even after they have
+        // been removed from the document. Additionally, if the MapManager is re-initialized (for
+        // example, during a hot reload in development), a new observer would be created while the
+        // old one continues running, compounding the memory issue. A destroy() or cleanup() method
+        // should be added to the MapManager class that calls this.resizeObserver.disconnect() when
+        // the map is being torn down, ensuring proper cleanup of resources.
         const mapContainer = document.getElementById('map');
         if (mapContainer && window.ResizeObserver) {
             this.resizeObserver = new ResizeObserver(() => {

@@ -83,6 +83,17 @@ export default {
     // SEC: Application Layer Rate Limiting
     const clientIp = request.headers.get('CF-Connecting-IP') || '127.0.0.1';
     if (!limiter.check(clientIp)) {
+      // TODO: This error response implementation requires further investigation and confirmation.
+      // The current error handling in the worker returns a JSON response with a 429 status code,
+      // but the format and structure of error responses varies throughout the codebase. Some errors
+      // return JSON with an "error" property containing a message string, while other error
+      // handlers return plain text responses or different JSON structures entirely. This inconsistency
+      // makes it difficult for client-side code to handle errors predictably and requires different
+      // parsing logic for different API endpoints. A standardized error response factory function
+      // should be created that always returns a consistent JSON structure with standardized fields
+      // such as "error", "message", "status", and optional "code" or "details" properties. This
+      // would allow the frontend to implement unified error handling that works consistently
+      // across all API endpoints and error scenarios.
       return new Response(JSON.stringify({ error: 'Too many requests' }), {
         status: 429,
         headers: {
@@ -316,6 +327,17 @@ async function handleApiRequest(request, env, ctx) {
     const mime = contentType ? contentType.split(';')[0].trim() : '';
 
     if (mime !== 'application/json') {
+      // TODO: This console.error statement requires further investigation and confirmation.
+      // The current implementation uses console.error() to log invalid Content-Type responses
+      // from upstream APIs in production code. While this is helpful for debugging during
+      // development, console logging in production environments can expose sensitive
+      // information, impact performance, and create noise in production logs. Additionally,
+      // Cloudflare Workers have logging limitations and costs associated with log volume.
+      // Consider using a conditional logger that only logs in development mode, or use
+      // Cloudflare's native logging integrations with proper log levels (info, warn, error)
+      // that can be filtered and monitored appropriately. Alternatively, these errors could
+      // be sent to a monitoring service like Sentry or Datadog for centralized error
+      // tracking without polluting the console output.
       console.error(`Upstream Invalid Content-Type: ${contentType} (parsed: ${mime})`);
       return cacheAndReturnError(request, cache, cacheKey, 502, {
         error: 'Invalid upstream content type',
@@ -651,6 +673,17 @@ async function handleHealthRequest(request, env, ctx) {
   };
 
   const results = {};
+  // TODO: This error handling in the health check requires further investigation and confirmation.
+  // The catch block silently swallows the actual error by discarding the exception object and
+  // only recording the string 'unreachable' in the results. This means that if an upstream
+  // becomes unavailable, there is no way to distinguish between a DNS resolution failure,
+  // a connection timeout, a TLS handshake error, or any other network-level problem when
+  // reviewing the health check output. The actual error information is lost entirely.
+  // For debugging and monitoring purposes, it would be valuable to at least log the error
+  // type or message (e.g., in development mode) so that infrastructure issues can be
+  // diagnosed from logs. Consider recording the error name or type alongside the
+  // 'unreachable' status, or logging the error in non-production environments where
+  // the information would be useful without risking information disclosure.
   const checks = Object.entries(upstreams).map(async ([name, url]) => {
     try {
       const res = await fetch(url, {
