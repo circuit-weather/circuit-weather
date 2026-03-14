@@ -19,6 +19,7 @@ However, the application relies on third-party services and infrastructure which
 ## Infrastructure & Caching
 
 ### Cloudflare
+
 This website is hosted on **Cloudflare Workers** (using Static Assets) which serves both the website and powers its API. We leverage Cloudflare's global edge network to aggressively cache data close to you.
 
 - **Privacy Proxy:** To enhance your privacy, requests for F1 schedules, Track Layouts, and **all RainViewer Radar Tiles** are proxied through our Cloudflare Worker. This hides your IP address from these third-party services.
@@ -33,11 +34,13 @@ While we proxy some data, your browser connects directly to the following servic
 ### Weather Data
 
 **Open-Meteo**
+
 - **Purpose:** Provides detailed weather forecasts for race sessions.
 - **Data Sent:** Your browser connects directly to Open-Meteo API. Your IP address is visible to Open-Meteo as part of this standard web request. Coordinates of the selected circuit are sent to fetch local weather.
 - **Privacy Policy:** [open-meteo.com/en/features#terms](https://open-meteo.com/en/features#terms)
 
 **RainViewer**
+
 - **Purpose:** Provides precipitation radar layers.
 - **Data Sent:** **None directly.** Both radar metadata and tile images are proxied through our Cloudflare Worker. Your browser does not connect directly to RainViewer servers.
 - **Privacy Policy:** [rainviewer.com/privacy](https://www.rainviewer.com/privacy.html)
@@ -45,18 +48,21 @@ While we proxy some data, your browser connects directly to the following servic
 ### Mapping & Assets
 
 **Carto (OpenStreetMap)**
+
 - **Purpose:** Provides the base map background tiles.
 - **Data Sent:** Your browser fetches map images directly from Carto's CDN.
 - **Privacy Policy:** [carto.com/privacy](https://carto.com/privacy/)
 
 **Content Delivery Networks (CDNs)**
 To improve performance and reliability, we load standard libraries and assets from public CDNs:
+
 - **Google Fonts:** Serves typography files.
 - **FlagCDN:** Serves country flag icons.
 
 ### Community & Support
 
 **Buy Me a Coffee**
+
 - **Purpose:** Allows users to support the project via donations.
 - **Data Sent:** If you interact with the support widget, Buy Me a Coffee may place cookies and collect data necessary to process payments or maintain the session.
 - **Privacy Policy:** [buymeacoffee.com/privacy-policy](https://www.buymeacoffee.com/privacy-policy)
@@ -66,7 +72,7 @@ To improve performance and reliability, we load standard libraries and assets fr
 The following services provide the raw data that we process and cache via Cloudflare. Your device does not connect to them directly for data API calls.
 
 - **Jolpica F1:** Historical and current F1 schedule data.
-- **GitHub:** Stores static track layout files (GeoJSON).
+- **GitHub (bacinger/f1-circuits):** Stores static track layout files (GeoJSON).
 - **RainViewer:** Weather radar tiles (2-hour edge cache) and metadata (1-minute cache).
 - **Leaflet (via Unpkg):** Map interaction library assets (proxied for security).
 
