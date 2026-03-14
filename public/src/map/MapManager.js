@@ -39,7 +39,7 @@ export class MapManager {
         if (this.tileLayer) this.map.removeLayer(this.tileLayer);
 
         this.tileLayer = L.tileLayer(tileUrl, {
-            attribution: '© <a href="https://carto.com/">CARTO</a> © <a href="https://www.openstreetmap.org/copyright">OSM</a>',
+            attribution: '© <a href="https://carto.com/" target="_blank" rel="noopener noreferrer">CARTO</a> © <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener noreferrer">OSM</a>',
             maxZoom: 18,
             subdomains: 'abcd',
         });
