@@ -191,9 +191,12 @@
                                     <dd class="weather-sub" id="weatherWindDir">--</dd>
                                 </div>
                             </dl>
+                            <!-- Scout: Upgraded generic div wrapper to semantic unordered list (<ul class="weather-timeline-list">) with <li> children to fix list hierarchy violations, allowing search engines and screen readers to understand the sequential nature of the timeline forecast data. -->
                             <div class="weather-timeline" id="weatherTimeline" tabindex="0" role="region"
                                 aria-label="Hourly forecast">
-                                <!-- Timeline items injected here -->
+                                <ul class="weather-timeline-list">
+                                    <!-- Timeline items injected here -->
+                                </ul>
                             </div>
                         </div>
                     </div>

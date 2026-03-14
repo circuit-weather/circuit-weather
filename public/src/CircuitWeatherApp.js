@@ -664,22 +664,25 @@ export class CircuitWeatherApp {
                             <dd class="weather-sub skeleton"><span class="skeleton-text" style="width: 20px"></span></dd>
                         </div>
                     </dl>
+                    <!-- Scout: Wrapped timeline skeleton items in semantic ul/li structure to establish correct list hierarchy for crawlers before the actual data loads -->
                     <div class="weather-timeline" id="weatherTimeline">
-                        <div class="weather-timeline-item">
-                            <div class="weather-timeline-time skeleton"><span class="skeleton-text" style="width: 30px"></span></div>
-                            <div class="weather-timeline-condition skeleton"><span class="skeleton-text" style="width: 80px"></span></div>
-                            <div class="weather-timeline-temp skeleton"><span class="skeleton-text" style="width: 30px"></span></div>
-                        </div>
-                        <div class="weather-timeline-item">
-                            <div class="weather-timeline-time skeleton"><span class="skeleton-text" style="width: 30px"></span></div>
-                            <div class="weather-timeline-condition skeleton"><span class="skeleton-text" style="width: 80px"></span></div>
-                            <div class="weather-timeline-temp skeleton"><span class="skeleton-text" style="width: 30px"></span></div>
-                        </div>
-                        <div class="weather-timeline-item">
-                            <div class="weather-timeline-time skeleton"><span class="skeleton-text" style="width: 30px"></span></div>
-                            <div class="weather-timeline-condition skeleton"><span class="skeleton-text" style="width: 80px"></span></div>
-                            <div class="weather-timeline-temp skeleton"><span class="skeleton-text" style="width: 30px"></span></div>
-                        </div>
+                        <ul class="weather-timeline-list">
+                            <li class="weather-timeline-item">
+                                <div class="weather-timeline-time skeleton"><span class="skeleton-text" style="width: 30px"></span></div>
+                                <div class="weather-timeline-condition skeleton"><span class="skeleton-text" style="width: 80px"></span></div>
+                                <div class="weather-timeline-temp skeleton"><span class="skeleton-text" style="width: 30px"></span></div>
+                            </li>
+                            <li class="weather-timeline-item">
+                                <div class="weather-timeline-time skeleton"><span class="skeleton-text" style="width: 30px"></span></div>
+                                <div class="weather-timeline-condition skeleton"><span class="skeleton-text" style="width: 80px"></span></div>
+                                <div class="weather-timeline-temp skeleton"><span class="skeleton-text" style="width: 30px"></span></div>
+                            </li>
+                            <li class="weather-timeline-item">
+                                <div class="weather-timeline-time skeleton"><span class="skeleton-text" style="width: 30px"></span></div>
+                                <div class="weather-timeline-condition skeleton"><span class="skeleton-text" style="width: 80px"></span></div>
+                                <div class="weather-timeline-temp skeleton"><span class="skeleton-text" style="width: 30px"></span></div>
+                            </li>
+                        </ul>
                     </div>
                 </div>
             `;
