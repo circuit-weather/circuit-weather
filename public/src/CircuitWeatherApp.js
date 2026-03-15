@@ -159,33 +159,12 @@ export class CircuitWeatherApp {
         const raceSession = race.sessions.find(s => s.id === 'race');
         if (raceSession && raceSession.date && raceSession.time) {
             const end = new Date(`${raceSession.date}T${raceSession.time}`);
-            // TODO: This magic number requires further investigation and confirmation.
-            // The value '4' represents a 4-hour duration buffer added to the race session
-            // end time to determine when the entire race weekend event should be considered
-            // complete. This hardcoded value is used without any named constant or
-            // explanatory comment describing why 4 hours was chosen as the buffer.
-            // Magic numbers like this make the code difficult to understand and maintain,
-            // as developers must infer the meaning and purpose from context. Consider
-            // extracting this to a named constant such as RACE_DURATION_BUFFER_HOURS
-            // with appropriate documentation explaining that F1 races typically last
-            // around 2 hours plus podium ceremonies and post-race coverage, making
-            // 4 hours a reasonable buffer for considering the event concluded.
-            end.setHours(end.getHours() + 4); // 4 hours duration buffer
+            end.setHours(end.getHours() + CONFIG.RACE_DURATION_BUFFER_HOURS);
             return end;
         }
         // Fallback if no time (shouldn't happen for recent races)
         const end = new Date(race.date);
-        // TODO: This magic number requires further investigation and confirmation.
-        // The value '23' represents setting the time to the 23rd hour of the day,
-        // effectively marking the end of the race day when no specific session
-        // time is available. This is used as a fallback calculation when the
-        // race session data is incomplete. Like the 4-hour buffer above, this
-        // value appears as a literal number without any named constant or
-        // documentation explaining why the end of the day was chosen as the
-        // fallback rather than midnight or some other time. This should be
-        // extracted to a named constant such as RACE_DAY_END_HOUR with
-        // documentation explaining the reasoning behind this fallback approach.
-        end.setHours(end.getHours() + 23); // End of race day
+        end.setHours(end.getHours() + CONFIG.RACE_DAY_END_HOUR);
         return end;
     }
 
