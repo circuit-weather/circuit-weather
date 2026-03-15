@@ -722,56 +722,18 @@ export class CircuitWeatherApp {
             // Palette A11y: Mark region as busy during loading
             content.setAttribute('aria-busy', 'true');
             content.style.display = 'block';
-            // TODO: This innerHTML assignment requires further investigation and confirmation.
-            // The skeleton loading state is rendered by assigning a large multi-line HTML
-            // string directly to innerHTML. This causes the browser to parse and re-render
-            // the entire forecast panel from scratch on every session selection, discarding
-            // any existing DOM nodes and triggering reflow. For a loading state that is shown
-            // briefly before real data arrives, this is wasteful. A more efficient approach
-            // would be to define the skeleton structure once in the HTML using a <template>
-            // element and clone it when needed, avoiding repeated HTML parsing. Additionally,
-            // because renderForecastSkeleton() destroys the internal DOM structure including
-            // element IDs, any JavaScript references to child elements (such as #weatherTimeline)
-            // become detached and must be re-queried after the skeleton is replaced — a fragility
-            // noted in the renderForecast() comment at the bottom of this class. Using a
-            // template clone or toggling a CSS class on the existing structure would avoid
-            // this reference invalidation problem entirely.
-            content.innerHTML = `
-                <div class="weather-dashboard" aria-hidden="true">
-                    <div class="weather-current">
-                        <div class="weather-metric">
-                            <span class="weather-label skeleton"><span class="skeleton-text" style="width: 30px"></span></span>
-                            <span class="weather-value skeleton"><span class="skeleton-text" style="width: 40px"></span></span>
-                        </div>
-                        <div class="weather-metric">
-                            <span class="weather-label skeleton"><span class="skeleton-text" style="width: 30px"></span></span>
-                            <span class="weather-value skeleton"><span class="skeleton-text" style="width: 40px"></span></span>
-                        </div>
-                        <div class="weather-metric">
-                            <span class="weather-label skeleton"><span class="skeleton-text" style="width: 30px"></span></span>
-                            <span class="weather-value skeleton"><span class="skeleton-text" style="width: 40px"></span></span>
-                            <span class="weather-sub skeleton"><span class="skeleton-text" style="width: 20px"></span></span>
-                        </div>
-                    </div>
-                    <div class="weather-timeline" id="weatherTimeline">
-                        <div class="weather-timeline-item">
-                            <div class="weather-timeline-time skeleton"><span class="skeleton-text" style="width: 30px"></span></div>
-                            <div class="weather-timeline-condition skeleton"><span class="skeleton-text" style="width: 80px"></span></div>
-                            <div class="weather-timeline-temp skeleton"><span class="skeleton-text" style="width: 30px"></span></div>
-                        </div>
-                        <div class="weather-timeline-item">
-                            <div class="weather-timeline-time skeleton"><span class="skeleton-text" style="width: 30px"></span></div>
-                            <div class="weather-timeline-condition skeleton"><span class="skeleton-text" style="width: 80px"></span></div>
-                            <div class="weather-timeline-temp skeleton"><span class="skeleton-text" style="width: 30px"></span></div>
-                        </div>
-                        <div class="weather-timeline-item">
-                            <div class="weather-timeline-time skeleton"><span class="skeleton-text" style="width: 30px"></span></div>
-                            <div class="weather-timeline-condition skeleton"><span class="skeleton-text" style="width: 80px"></span></div>
-                            <div class="weather-timeline-temp skeleton"><span class="skeleton-text" style="width: 30px"></span></div>
-                        </div>
-                    </div>
-                </div>
-            `;
+            content.innerHTML = '';
+            const template = document.getElementById('forecast-skeleton-template');
+            if (template && typeof template.cloneNode === 'function') {
+                 if (template.content) {
+                     content.appendChild(template.content.cloneNode(true));
+                 } else {
+                     const clone = template.cloneNode(true);
+                     while(clone.firstChild) {
+                         content.appendChild(clone.firstChild);
+                     }
+                 }
+            }
         }
     }
 

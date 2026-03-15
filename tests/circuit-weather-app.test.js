@@ -378,7 +378,7 @@ describe('CircuitWeatherApp Pure Methods', () => {
 
         it('updates page title to race name', () => {
             app.selectRound('1');
-            expect(document.title).toBe('Circuit Weather — Live F1 Weather: Bahrain Grand Prix');
+            expect(document.title).toBe('Bahrain Grand Prix Weather - Circuit Weather');
         });
 
         it('navigates to round URL', () => {
@@ -465,7 +465,7 @@ describe('CircuitWeatherApp Pure Methods', () => {
 
         it('updates page title with session name', async () => {
             await app.selectSession('race');
-            expect(document.title).toBe('Circuit Weather — Live F1 Weather: Bahrain Grand Prix');
+            expect(document.title).toBe('Bahrain Grand Prix Race Weather - Circuit Weather');
         });
 
         it('navigates to session URL', async () => {
@@ -611,7 +611,7 @@ describe('CircuitWeatherApp Pure Methods', () => {
 
             // The closest point is 14:15 (26 degrees)
             // We check that the primary temperature value is 26
-            expect(app.ui.forecastContent.innerHTML).toContain('id="weatherTemp">26°C</dd>');
+            expect(app.ui.forecastContent.innerHTML).toContain('id="weatherTemp">26°C</span>');
             // 24 should still be in the timeline, but not the primary temp
             expect(app.ui.forecastContent.innerHTML).toContain('<div>24°</div>');
         });

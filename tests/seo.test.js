@@ -197,13 +197,13 @@ describe('SEO Title Updates', () => {
 
     it('should update title when a round is selected', () => {
         app.selectRound('1');
-        expect(document.title).toBe('Circuit Weather — Live F1 Weather: Bahrain Grand Prix');
+        expect(document.title).toBe('Bahrain Grand Prix Weather - Circuit Weather');
     });
 
     it('should update title when a session is selected', async () => {
         app.selectRound('1');
         await app.selectSession('qualifying');
-        expect(document.title).toBe('Circuit Weather — Live F1 Weather: Bahrain Grand Prix');
+        expect(document.title).toBe('Bahrain Grand Prix Qualifying Weather - Circuit Weather');
     });
 
     it('should reset title when selection is cleared', () => {
@@ -224,7 +224,7 @@ describe('SEO Title Updates', () => {
 
         const schema = JSON.parse(script.textContent);
         expect(schema['@type']).toBe('SportsEvent');
-        expect(schema.name).toBe('Bahrain Grand Prix');
+        expect(schema.name).toBe('Bahrain Grand Prix - Qualifying');
         expect(schema.startDate).toBe('2024-03-01T14:00:00.000Z');
         expect(schema.location.address.addressCountry).toBe('Bahrain');
     });
@@ -235,7 +235,7 @@ describe('SEO Title Updates', () => {
 
         const script = document.getElementById('dynamic-json-ld');
         let schema = JSON.parse(script.textContent);
-        expect(schema.name).toBe('Bahrain Grand Prix');
+        expect(schema.name).toBe('Bahrain Grand Prix - Practice 1');
 
         // Ensure appendChild is spied to check it doesn't add multiple scripts
         const appendSpy = vi.spyOn(document.head, 'appendChild');
@@ -243,7 +243,7 @@ describe('SEO Title Updates', () => {
         await app.selectSession('qualifying');
 
         schema = JSON.parse(script.textContent);
-        expect(schema.name).toBe('Bahrain Grand Prix');
+        expect(schema.name).toBe('Bahrain Grand Prix - Qualifying');
         expect(appendSpy).not.toHaveBeenCalled(); // Script already exists, shouldn't append again
     });
 

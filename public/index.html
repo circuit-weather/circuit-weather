@@ -105,20 +105,10 @@
         <aside class="sidebar" id="sidebar">
             <!-- Scout: Upgraded generic div to semantic header for better accessibility and structure -->
             <header class="sidebar-header">
-                <!-- TODO: This aria-keyshortcuts implementation requires further investigation and confirmation.
-                     The button element uses aria-keyshortcuts="Escape" to indicate that pressing the
-                     Escape key will close the sidebar. However, the aria-keyshortcuts attribute has
-                     limited support across browsers and assistive technologies, and its usage is
-                     somewhat controversial in accessibility circles. The value "Escape" may also
-                     conflict with actual keyboard handling, as it suggests a shortcut that may not
-                     be implemented or may behave differently than expected. Consider removing this
-                     attribute or replacing it with visually hidden text that describes the keyboard
-                     shortcut in plain language. Additionally, ensure that the Escape key actually
-                     works as documented to close the sidebar when it is open.
-                -->
-                <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar"
-                    title="Close sidebar (Esc)" aria-keyshortcuts="Escape" aria-expanded="false"
+                                <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar"
+                    title="Close sidebar (Esc)" aria-expanded="false"
                     aria-controls="sidebar">
+                    <span class="sr-only">Close sidebar. Keyboard shortcut: Escape</span>
                     <svg class="icon-menu" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                         stroke-width="2">
                         <line x1="3" y1="6" x2="21" y2="6"></line>
@@ -481,6 +471,45 @@
 
     <!-- App JS -->
     <script type="module" src="/src/main.js"></script>
+
+    <!-- Template for skeleton loading state in forecast panel -->
+    <template id="forecast-skeleton-template">
+        <div class="weather-dashboard" aria-hidden="true">
+            <div class="weather-current">
+                <div class="weather-metric">
+                    <span class="weather-label skeleton"><span class="skeleton-text" style="width: 30px"></span></span>
+                    <span class="weather-value skeleton"><span class="skeleton-text" style="width: 40px"></span></span>
+                </div>
+                <div class="weather-metric">
+                    <span class="weather-label skeleton"><span class="skeleton-text" style="width: 30px"></span></span>
+                    <span class="weather-value skeleton"><span class="skeleton-text" style="width: 40px"></span></span>
+                </div>
+                <div class="weather-metric">
+                    <span class="weather-label skeleton"><span class="skeleton-text" style="width: 30px"></span></span>
+                    <span class="weather-value skeleton"><span class="skeleton-text" style="width: 40px"></span></span>
+                    <span class="weather-sub skeleton"><span class="skeleton-text" style="width: 20px"></span></span>
+                </div>
+            </div>
+            <div class="weather-timeline" id="weatherTimeline">
+                <div class="weather-timeline-item">
+                    <div class="weather-timeline-time skeleton"><span class="skeleton-text" style="width: 30px"></span></div>
+                    <div class="weather-timeline-condition skeleton"><span class="skeleton-text" style="width: 80px"></span></div>
+                    <div class="weather-timeline-temp skeleton"><span class="skeleton-text" style="width: 30px"></span></div>
+                </div>
+                <div class="weather-timeline-item">
+                    <div class="weather-timeline-time skeleton"><span class="skeleton-text" style="width: 30px"></span></div>
+                    <div class="weather-timeline-condition skeleton"><span class="skeleton-text" style="width: 80px"></span></div>
+                    <div class="weather-timeline-temp skeleton"><span class="skeleton-text" style="width: 30px"></span></div>
+                </div>
+                <div class="weather-timeline-item">
+                    <div class="weather-timeline-time skeleton"><span class="skeleton-text" style="width: 30px"></span></div>
+                    <div class="weather-timeline-condition skeleton"><span class="skeleton-text" style="width: 80px"></span></div>
+                    <div class="weather-timeline-temp skeleton"><span class="skeleton-text" style="width: 30px"></span></div>
+                </div>
+            </div>
+        </div>
+    </template>
+
 </body>
 
 </html>
