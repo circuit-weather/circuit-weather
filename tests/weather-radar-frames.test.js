@@ -276,13 +276,18 @@ describe('WeatherRadar Frame & Speed Logic', () => {
 
         it('calls updateErrorUI on network error', async () => {
             const uiSpy = vi.spyOn(radar, 'updateErrorUI').mockImplementation(() => { });
+            const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
             global.fetch.mockRejectedValueOnce(new Error('offline'));
 
             radar.handleTileError({ tile: {} });
 
-            await vi.waitFor(() => {
-                expect(uiSpy).toHaveBeenCalled();
-            });
+            try {
+                await vi.waitFor(() => {
+                    expect(uiSpy).toHaveBeenCalled();
+                });
+            } finally {
+                errorSpy.mockRestore();
+            }
         });
     });
 });
