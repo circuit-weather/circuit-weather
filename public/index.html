@@ -180,19 +180,6 @@
 
                 <!-- Race Info Banner -->
                 <section class="race-info-banner" id="raceInfoBanner" aria-labelledby="raceInfoName" style="display: none;">
-                    <!-- TODO: This image alt attribute requires further investigation and confirmation.
-                         The country flag image currently has an empty alt attribute (alt=""), which
-                         indicates to screen readers that the image is purely decorative. However,
-                         these flag images represent specific countries and provide meaningful context
-                         to users about which race circuit is being displayed. Users with visual
-                         impairments who rely on screen readers would benefit from knowing which
-                         country's flag is being shown. Consider populating the alt attribute
-                         dynamically with the country name when the image loads, such as
-                         alt="[country] flag", or use role="img" with an aria-label attribute to
-                         provide the same information. This would improve accessibility while
-                         maintaining the visual design. The empty alt should only be used if the
-                         flag truly provides no meaningful information beyond decoration.
-                    -->
                     <img id="countryFlag" class="race-info-flag" alt="">
                     <div class="race-info-details">
                         <div class="race-info-country" id="raceInfoCountry"></div>
@@ -367,17 +354,6 @@
                 <!-- Mobile Race Info Overlay (visible only on mobile) -->
                 <!-- Scout: Upgraded generic div to semantic section for consistent landmarks -->
                 <section class="mobile-race-info" id="mobileRaceInfo" aria-labelledby="mobileRaceInfoName" style="display: none;">
-                    <!-- TODO: This image alt attribute requires further investigation and confirmation.
-                         Similar to the desktop country flag image, this mobile flag image has an
-                         empty alt attribute that should be populated with the actual country name
-                         for better accessibility. Since this is a mobile-specific UI element, it
-                         serves the same purpose of identifying the race location to users. Screen
-                         reader users on mobile devices would equally benefit from knowing which
-                         country's flag is being displayed. The alt text should be set dynamically
-                         when the image source is updated, using a format like alt="[country] flag"
-                         to provide meaningful context. Consider implementing this in the JavaScript
-                         that updates the mobileCountryFlag.src property.
-                    -->
                     <img id="mobileCountryFlag" class="mobile-race-info-flag" alt="">
                     <div class="mobile-race-info-text">
                 <!-- Scout: Upgraded generic span to semantic h2 for consistent heading hierarchy across viewports -->

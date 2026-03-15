@@ -87,9 +87,9 @@ describe("Worker Health Check Caching", () => {
     expect(body.status).toBe("ok");
 
     // Check that all 3 upstreams are marked unreachable
-    expect(body.upstreams.jolpica).toBe("unreachable");
-    expect(body.upstreams.rainviewer).toBe("unreachable");
-    expect(body.upstreams.github).toBe("unreachable");
+    expect(body.upstreams.jolpica).toContain("unreachable");
+    expect(body.upstreams.rainviewer).toContain("unreachable");
+    expect(body.upstreams.github).toContain("unreachable");
 
     expect(mockFetch).toHaveBeenCalledTimes(3);
     expect(mockCache.put).toHaveBeenCalled();

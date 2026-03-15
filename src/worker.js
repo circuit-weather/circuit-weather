@@ -673,17 +673,6 @@ async function handleHealthRequest(request, env, ctx) {
   };
 
   const results = {};
-  // TODO: This error handling in the health check requires further investigation and confirmation.
-  // The catch block silently swallows the actual error by discarding the exception object and
-  // only recording the string 'unreachable' in the results. This means that if an upstream
-  // becomes unavailable, there is no way to distinguish between a DNS resolution failure,
-  // a connection timeout, a TLS handshake error, or any other network-level problem when
-  // reviewing the health check output. The actual error information is lost entirely.
-  // For debugging and monitoring purposes, it would be valuable to at least log the error
-  // type or message (e.g., in development mode) so that infrastructure issues can be
-  // diagnosed from logs. Consider recording the error name or type alongside the
-  // 'unreachable' status, or logging the error in non-production environments where
-  // the information would be useful without risking information disclosure.
   const checks = Object.entries(upstreams).map(async ([name, url]) => {
     try {
       const res = await fetch(url, {
@@ -693,7 +682,12 @@ async function handleHealthRequest(request, env, ctx) {
       });
       results[name] = res.status;
     } catch (e) {
-      results[name] = 'unreachable';
+      if (env.ENVIRONMENT !== 'production') { results[name] = `unreachable: ${e.message}`; console.error(`Health check failed for ${name}:`, e); } else { if (env.ENVIRONMENT !== 'production') {
+        results[name] = `unreachable: ${e.message}`;
+        console.error(`Health check failed for ${name}:`, e);
+      } else {
+        results[name] = 'unreachable';
+      } }
     }
   });
 
