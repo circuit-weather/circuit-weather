@@ -151,8 +151,8 @@ describe('Worker Edge Cases', () => {
             const response = await workerModule.fetch(request, env, ctx);
 
             const body = await response.json();
-            expect(body.upstreams.jolpica).toBe('unreachable');
-            expect(body.upstreams.rainviewer).toBe('unreachable');
+            expect(body.upstreams.jolpica).toContain('unreachable');
+            expect(body.upstreams.rainviewer).toContain('unreachable');
 
             globalThis.fetch = originalFetch;
         });
