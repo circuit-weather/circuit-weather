@@ -434,15 +434,6 @@ export class WeatherRadar {
         // Worker now passes through 429 status for this check
         const checkUrl = CONFIG.rainViewerApi;
 
-        // TODO: This HEAD request requires further investigation and confirmation.
-        // The fetch call to check the RainViewer API status currently uses .then() chaining without
-        // a corresponding .catch() block to handle network failures. While there is error handling inside
-        // the .then() callback for HTTP error status codes, any network-level failures such as DNS
-        // resolution errors, connection timeouts, or CORS policy violations will result in an unhandled
-        // promise rejection. This could cause the error tracking state to become inconsistent and leave
-        // the isCheckingStatus flag set to true, preventing future status checks from running.
-        // A .catch() block should be added to handle these network errors gracefully and ensure the
-        // isCheckingStatus flag is always reset regardless of the outcome.
         fetch(checkUrl, { method: 'HEAD' })
             .then(response => {
                 this.isCheckingStatus = false;
@@ -464,8 +455,10 @@ export class WeatherRadar {
                     }
                 }
             })
-            .catch((err) => {
+            .catch(error => {
                 this.isCheckingStatus = false;
+                console.error('Network error during API status check:', error);
+
                 // Network error (likely offline)
                 // Count already updated at top.
                 this.updateErrorUI();
