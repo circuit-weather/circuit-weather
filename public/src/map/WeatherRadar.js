@@ -52,6 +52,7 @@ export class WeatherRadar {
         };
 
         this.boundLoop = this.loop.bind(this);
+        this.handleSpaceKey = this.handleSpaceKey.bind(this);
         this.bindEvents();
         this.updateSpeedLabel();
 
@@ -88,32 +89,26 @@ export class WeatherRadar {
         }
 
         // Global shortcut: Space to toggle play/pause
-        // TODO: This global keyboard event listener requires further investigation and confirmation.
-        // The current implementation adds a keydown event listener directly to the document object
-        // to handle the Space key for toggling play/pause. However, there is no corresponding
-        // cleanup code to remove this event listener when the WeatherRadar instance is destroyed
-        // or when the component is unmounted. This creates a potential memory leak where the
-        // event listener continues to exist even after the WeatherRadar object is no longer needed,
-        // keeping references alive and preventing proper garbage collection. Additionally, if multiple
-        // WeatherRadar instances are created (for example, during navigation or hot reloading),
-        // multiple event listeners would accumulate on the document, causing the togglePlay function
-        // to be called multiple times for a single keypress. A destroy() or cleanup() method should
-        // be added to the WeatherRadar class that removes this event listener using
-        // document.removeEventListener() when the component is being torn down.
-        document.addEventListener('keydown', (e) => {
-            if (e.code === 'Space') {
-                const active = document.activeElement;
-                const tag = active.tagName.toLowerCase();
+        document.addEventListener('keydown', this.handleSpaceKey);
+    }
 
-                // Prevent conflict with inputs or focused buttons (which use Space to click)
-                if (tag === 'input' || tag === 'textarea' || tag === 'select' || tag === 'button') {
-                    return;
-                }
+    handleSpaceKey(e) {
+        if (e.code === 'Space') {
+            const active = document.activeElement;
+            const tag = active.tagName.toLowerCase();
 
-                e.preventDefault();
-                this.togglePlay();
+            // Prevent conflict with inputs or focused buttons (which use Space to click)
+            if (tag === 'input' || tag === 'textarea' || tag === 'select' || tag === 'button') {
+                return;
             }
-        });
+
+            e.preventDefault();
+            this.togglePlay();
+        }
+    }
+
+    destroy() {
+        document.removeEventListener('keydown', this.handleSpaceKey);
     }
 
     cycleSpeed() {
