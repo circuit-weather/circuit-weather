@@ -90,28 +90,7 @@ export class CircuitWeatherApp {
 
             // Theme manager with callback to update map tiles and overlays
             // Bolt Optimization: Initialized after overlays so they can respond to the initial theme apply
-            // TODO: This theme callback implementation requires further investigation and confirmation.
-            // The ThemeManager is instantiated with an inline arrow function as its callback argument.
-            // This anonymous arrow function is created fresh every time the init() method runs, which
-            // prevents it from being referenced, removed, or compared for equality later. If the
-            // ThemeManager stores this callback and init() were ever called more than once (for example,
-            // during error recovery or re-initialization), multiple different callback functions would
-            // accumulate with no way to remove the old ones. Additionally, defining the callback as a
-            // bound class method (e.g., this.handleThemeChange.bind(this)) would make the code more
-            // readable by separating the callback logic from the initialization sequence, and would
-            // allow ThemeManager to unsubscribe the callback if needed in a future cleanup scenario.
-            this.themeManager = new ThemeManager((theme) => {
-                this.mapManager.setTheme(theme);
-                if (this.rangeCircles) {
-                    this.rangeCircles.updateTheme();
-                    if (this.currentCircuitCenter) {
-                        this.rangeCircles.draw(this.currentCircuitCenter);
-                    }
-                }
-                if (this.trackLayer) {
-                    this.trackLayer.updateTheme();
-                }
-            });
+            this.themeManager = new ThemeManager(this.handleThemeChange.bind(this));
 
             // Map weather widget (Leaflet control)
             this.mapWeatherWidget = new MapWeatherWidget({ position: 'topright' });
@@ -276,6 +255,19 @@ export class CircuitWeatherApp {
         }
 
         // Note: Map resizing is handled by ResizeObserver in MapManager
+    }
+
+    handleThemeChange(theme) {
+        this.mapManager.setTheme(theme);
+        if (this.rangeCircles) {
+            this.rangeCircles.updateTheme();
+            if (this.currentCircuitCenter) {
+                this.rangeCircles.draw(this.currentCircuitCenter);
+            }
+        }
+        if (this.trackLayer) {
+            this.trackLayer.updateTheme();
+        }
     }
 
     bindEvents() {
