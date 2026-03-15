@@ -254,13 +254,13 @@ mode = "smart"
 
 ### API Endpoints
 
-| Endpoint        | Purpose                                                                        |
-| --------------- | ------------------------------------------------------------------------------ |
-| `/api/f1/*`     | Proxies to Jolpica F1 API with 1-hour edge caching                             |
-| `/api/radar`    | Proxies to RainViewer Maps API with 1-minute caching (initializes animation)   |
-| `/api/tiles/*`  | Proxies to RainViewer tile API with 2-hour edge caching (512px optimized)      |
-| `/api/track/*`  | Proxies to GitHub for GeoJSON track data with 24-hour caching                  |
-| `/api/assets/*` | Proxies to unpkg for Leaflet assets with 1-year immutable caching (strict CSP) |
+| Endpoint        | Purpose                                                                              |
+| --------------- | ------------------------------------------------------------------------------------ |
+| `/api/f1/*`     | Proxies to Jolpica F1 API with 1-hour edge caching                                   |
+| `/api/radar`    | Proxies to RainViewer Maps API with 1-minute caching (initializes animation)         |
+| `/api/tiles/*`  | Proxies to RainViewer tile API with 2-hour edge caching (512px optimized)            |
+| `/api/track/*`  | Proxies to GitHub for GeoJSON track data with 24-hour caching                        |
+| `/api/assets/*` | Proxies to unpkg for Leaflet assets with 1-year immutable caching (strict CSP)       |
 | `/api/health`   | System status check (connectivity to upstreams, version, env) with 60-second caching |
 
 ---
@@ -328,6 +328,7 @@ This project uses [Cloudflare Workers](https://workers.cloudflare.com/) to proxy
     ```
 4.  **Start the local development server.**
     Run the following command based on your environment:
+
     ```bash
     # Standard: Ensures the exact 'wrangler' version defined in package.json is used (matches CI)
     pnpm run dev
@@ -338,6 +339,7 @@ This project uses [Cloudflare Workers](https://workers.cloudflare.com/) to proxy
     # Alternative 2: If 'pnpm' is unavailable and you need to fetch 'wrangler' dynamically
     npx wrangler dev
     ```
+
 5.  **Open the local address in your browser.**
     Wrangler will typically open the site at `http://localhost:8787`.
 
@@ -348,7 +350,11 @@ This setup faithfully reproduces the production environment, running both the fr
 This project uses `vitest` for unit testing both the Worker logic and frontend components.
 
 ```bash
+# Run the test suite once
 pnpm test
+
+# Run the test suite in watch mode (recommended for development)
+pnpm run test:watch
 ```
 
 #### Test Coverage
