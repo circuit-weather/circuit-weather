@@ -624,47 +624,21 @@ export class CircuitWeatherApp {
             clearInterval(this.weatherRefreshInterval);
         }
 
-        // TODO: This magic number requires further investigation and confirmation.
-        // The value 300000 represents the number of milliseconds in 5 minutes,
-        // which is the interval at which weather data is refreshed. While the
-        // comment indicates this is "every 5 minutes", having this as a literal
-        // number makes the code less readable and harder to maintain. If this
-        // refresh rate needs to be adjusted based on API rate limits, user
-        // preferences, or data freshness requirements, developers must manually
-        // calculate the milliseconds. This should be extracted to a named
-        // constant such as WEATHER_REFRESH_INTERVAL_MS or
-        // WEATHER_REFRESH_INTERVAL_MINUTES with appropriate documentation
-        // explaining why 5 minutes was chosen as the refresh interval and
-        // how it relates to API rate limits or data freshness requirements.
-        // Refresh weather every 5 minutes (300000ms)
         this.weatherRefreshInterval = setInterval(() => {
             this.updateLiveWeatherForCircuit();
-        }, 300000);
+        }, CONFIG.WEATHER_REFRESH_INTERVAL_MS);
     }
 
     startSessionForecastInterval() {
         this.stopSessionForecastInterval();
 
-        // TODO: This magic number requires further investigation and confirmation.
-        // The value 900000 represents the number of milliseconds in 15 minutes,
-        // which is the interval at which session forecast data is refreshed.
-        // Similar to the 5-minute weather refresh interval, this literal value
-        // makes the code less maintainable and harder to understand at a glance.
-        // The comment notes that this matches the WeatherClient cache TTL, but
-        // this relationship is implicit and could break if either value changes
-        // without updating the other. This should be extracted to a named
-        // constant such as SESSION_FORECAST_REFRESH_INTERVAL_MS or defined
-        // in a centralized constants file alongside the cache TTL to ensure
-        // they remain synchronized. Documentation should explain why 15 minutes
-        // was chosen and how it relates to the cache TTL for consistency.
-        // Refresh forecast every 15 minutes (900000ms) to match WeatherClient cache TTL
         this.sessionForecastInterval = setInterval(() => {
             if (this.selectedSession && this.selectedRace) {
                 const sessionTime = new Date(`${this.selectedSession.date}T${this.selectedSession.time}`);
                 // Background refresh, no loading spinner
                 this.updateSessionForecast(sessionTime, this.selectedSession.id);
             }
-        }, 900000);
+        }, CONFIG.SESSION_FORECAST_REFRESH_INTERVAL_MS);
     }
 
     stopSessionForecastInterval() {

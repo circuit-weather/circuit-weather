@@ -3,7 +3,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 // Mock config before importing WeatherClient
 vi.mock('../public/src/config.js', () => ({
     CONFIG: {
-        weatherApi: 'https://api.open-meteo.com/v1/forecast'
+        weatherApi: 'https://api.open-meteo.com/v1/forecast',
+        SESSION_FORECAST_REFRESH_INTERVAL_MS: 900000
     }
 }));
 
