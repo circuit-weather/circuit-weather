@@ -14,7 +14,7 @@ export class WeatherClient {
         // not account for different forecast times, which could lead to stale data being served
         // if the same location is queried for different session times.
         this.cache = new Map();
-        this.cacheTTL = 15 * 60 * 1000; // 15 minutes
+        this.cacheTTL = CONFIG.SESSION_FORECAST_REFRESH_INTERVAL_MS;
     }
 
     async getForecast(lat, lon, sessionTime) {
