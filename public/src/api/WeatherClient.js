@@ -60,18 +60,9 @@ export class WeatherClient {
                 });
                 const url = `${this.baseUrl}?${params.toString()}`;
 
-                // TODO: This fetch operation requires further investigation and confirmation.
-                // Currently, this fetch call to the Open-Meteo API lacks an AbortSignal timeout,
-                // which means the request could potentially hang indefinitely if the upstream API
-                // becomes unresponsive or if there are network connectivity issues. Without a timeout,
-                // the application would wait forever for a response, blocking the user interface and
-                // preventing users from interacting with other parts of the application. This is
-                // particularly problematic for weather data that users expect to load quickly.
-                // Consider adding a timeout using AbortSignal.timeout() with an appropriate duration
-                // (for example, 5000 milliseconds) to ensure the request fails gracefully after a
-                // reasonable waiting period, allowing the error handling to execute and display
-                // appropriate feedback to the user.
-                const response = await fetch(url);
+                const response = await fetch(url, {
+                    signal: AbortSignal.timeout(5000)
+                });
                 if (!response.ok) throw new Error('Weather API error');
 
                 data = await response.json();
