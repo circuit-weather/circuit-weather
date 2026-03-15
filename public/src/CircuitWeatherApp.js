@@ -14,9 +14,6 @@ import { ThemeManager } from './ui/ThemeManager.js';
 import { SidebarManager } from './ui/SidebarManager.js';
 import { getSessionStatus, getRoundStatus, formatStatusLabel } from './utils/status.js';
 
-const RACE_DURATION_BUFFER_HOURS = 4;
-const RACE_DAY_END_HOUR = 23;
-
 /**
  * Main application orchestrator for Circuit Weather.
  */
@@ -162,12 +159,12 @@ export class CircuitWeatherApp {
         const raceSession = race.sessions.find(s => s.id === 'race');
         if (raceSession && raceSession.date && raceSession.time) {
             const end = new Date(`${raceSession.date}T${raceSession.time}`);
-            end.setHours(end.getHours() + RACE_DURATION_BUFFER_HOURS);
+            end.setHours(end.getHours() + CONFIG.RACE_DURATION_BUFFER_HOURS);
             return end;
         }
         // Fallback if no time (shouldn't happen for recent races)
         const end = new Date(race.date);
-        end.setHours(end.getHours() + RACE_DAY_END_HOUR);
+        end.setHours(end.getHours() + CONFIG.RACE_DAY_END_HOUR);
         return end;
     }
 
