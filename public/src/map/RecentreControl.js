@@ -46,6 +46,17 @@ export class RecentreControl {
             }
         });
 
+        // Palette A11y: Ensure keyboard users can activate the anchor functioning as a button
+        this.button.addEventListener('keydown', (e) => {
+            if (e.key === ' ' || e.key === 'Spacebar') {
+                e.preventDefault();
+                e.stopPropagation(); // Prevent radar playback conflict
+                if (this.circuitCenter) {
+                    this.map.setView(this.circuitCenter, this.circuitZoom);
+                }
+            }
+        });
+
         // Global shortcut: C to recentre
         document.addEventListener('keydown', (e) => {
             if ((e.key === 'c' || e.key === 'C') && !e.ctrlKey && !e.metaKey && !e.altKey) {
