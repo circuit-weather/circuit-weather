@@ -50,6 +50,7 @@ export class RecentreControl {
         this.button.addEventListener('keydown', (e) => {
             if (e.key === ' ' || e.key === 'Spacebar') {
                 e.preventDefault();
+                e.stopPropagation(); // Prevent radar playback conflict
                 if (this.circuitCenter) {
                     this.map.setView(this.circuitCenter, this.circuitZoom);
                 }

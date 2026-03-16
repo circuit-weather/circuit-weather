@@ -168,7 +168,7 @@ describe('RecentreControl', () => {
             // Extract the keydown handler on the button
             const keydownHandler = control.button.addEventListener.mock.calls.find(call => call[0] === 'keydown')[1];
 
-            const eventMock = { key: ' ', preventDefault: vi.fn() };
+            const eventMock = { key: ' ', preventDefault: vi.fn(), stopPropagation: vi.fn() };
             keydownHandler(eventMock);
 
             expect(eventMock.preventDefault).toHaveBeenCalled();
