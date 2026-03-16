@@ -50,3 +50,7 @@
 ## 2024-05-24 - Semantic Landmark Headings
 **Learning:** When a `<section>` semantic landmark has an internal heading (like an `<h2>`), applying a static `aria-label` creates redundancy and often less descriptive context for screen reader users than the dynamic heading itself.
 **Action:** Always use `aria-labelledby="[heading-id]"` to tie the structural landmark directly to its internal heading, especially when the heading text updates dynamically (e.g., changing to the name of a newly selected race).
+
+## 2026-03-07 - Anchors with role="button" require explicit Spacebar handling
+**Learning:** When using anchor `<a>` tags functioning as buttons with `role="button"`, native browsers only trigger the `click` event on the Enter key, not the Spacebar key. If a user presses Spacebar while focused on an anchor tag, it will result in the default page scroll down behavior, causing frustration and trapping keyboard users.
+**Action:** Always bind an explicit `keydown` event listener to anchors with `role="button"` that catches `e.key === ' ' || e.key === 'Spacebar'`, prevents default browser scrolling, and manually executes the expected click action.
