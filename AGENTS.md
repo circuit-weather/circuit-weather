@@ -210,7 +210,7 @@ mode = "smart"
 4. **Session Countdown**
    - Countdown timer to selected session start
    - Format: days/hours or HH:MM:SS
-   - Shows "NOW" when session is live
+   - Hidden if target time has passed or session is live
 
 5. **URL Routing**
    - Format: `/f1/{round}/{session}`
