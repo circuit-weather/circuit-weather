@@ -327,18 +327,9 @@ async function handleApiRequest(request, env, ctx) {
     const mime = contentType ? contentType.split(';')[0].trim() : '';
 
     if (mime !== 'application/json') {
-      // TODO: This console.error statement requires further investigation and confirmation.
-      // The current implementation uses console.error() to log invalid Content-Type responses
-      // from upstream APIs in production code. While this is helpful for debugging during
-      // development, console logging in production environments can expose sensitive
-      // information, impact performance, and create noise in production logs. Additionally,
-      // Cloudflare Workers have logging limitations and costs associated with log volume.
-      // Consider using a conditional logger that only logs in development mode, or use
-      // Cloudflare's native logging integrations with proper log levels (info, warn, error)
-      // that can be filtered and monitored appropriately. Alternatively, these errors could
-      // be sent to a monitoring service like Sentry or Datadog for centralized error
-      // tracking without polluting the console output.
-      console.error(`Upstream Invalid Content-Type: ${contentType} (parsed: ${mime})`);
+      if (env.ENVIRONMENT !== 'production') {
+        console.error(`Upstream Invalid Content-Type: ${contentType} (parsed: ${mime})`);
+      }
       return cacheAndReturnError(request, cache, cacheKey, 502, {
         error: 'Invalid upstream content type',
       }, ctx);
@@ -382,7 +373,9 @@ async function handleApiRequest(request, env, ctx) {
     });
 
   } catch (error) {
-    console.error('API Fetch Error:', error); // Log internal details
+    if (env.ENVIRONMENT !== 'production') {
+      console.error('API Fetch Error:', error); // Log internal details
+    }
     return new Response(JSON.stringify({
       error: 'Failed to fetch from upstream',
       // SEC: Do not leak error.message
@@ -506,7 +499,9 @@ async function handleTrackRequest(request, env, ctx) {
     });
 
   } catch (error) {
-    console.error('Track Fetch Error:', error);
+    if (env.ENVIRONMENT !== 'production') {
+      console.error('Track Fetch Error:', error);
+    }
     return new Response(JSON.stringify({
       error: 'Failed to fetch track data',
       // SEC: Do not leak error.message
@@ -563,7 +558,9 @@ async function handleLeafletRequest(request, env, ctx) {
 
     const status = upstreamResponse.status;
     if (!upstreamResponse.ok) {
-      console.error(`Leaflet Fetch Error (${path}): ${status}`);
+      if (env.ENVIRONMENT !== 'production') {
+        console.error(`Leaflet Fetch Error (${path}): ${status}`);
+      }
       const errorHeaders = getErrorHeaders(request);
       errorHeaders['X-Upstream-Status'] = status.toString();
       return new Response('Failed to load Leaflet asset', { status: 502, headers: errorHeaders });
@@ -576,7 +573,9 @@ async function handleLeafletRequest(request, env, ctx) {
     const isValidType = config.contentTypes.includes(mime);
 
     if (!isValidType) {
-      console.error(`Leaflet Invalid Content-Type (${path}): ${contentType} (expected ${config.contentTypes.join(' or ')})`);
+      if (env.ENVIRONMENT !== 'production') {
+        console.error(`Leaflet Invalid Content-Type (${path}): ${contentType} (expected ${config.contentTypes.join(' or ')})`);
+      }
       return new Response('Invalid upstream content type', { status: 502, headers: getErrorHeaders(request) });
     }
 
@@ -587,7 +586,9 @@ async function handleLeafletRequest(request, env, ctx) {
     if (config.integrity) {
       const hash = await calculateHash(buffer);
       if (hash !== config.integrity) {
-        console.error(`SRI Mismatch for ${path}: expected ${config.integrity}, got ${hash}`);
+        if (env.ENVIRONMENT !== 'production') {
+          console.error(`SRI Mismatch for ${path}: expected ${config.integrity}, got ${hash}`);
+        }
         const errorHeaders = getErrorHeaders(request);
         errorHeaders['X-SRI-Status'] = 'mismatch';
         return new Response('SRI Integrity Check Failed', { status: 502, headers: errorHeaders });
@@ -622,7 +623,9 @@ async function handleLeafletRequest(request, env, ctx) {
     });
 
   } catch (error) {
-    console.error('Leaflet Proxy Error:', error);
+    if (env.ENVIRONMENT !== 'production') {
+      console.error('Leaflet Proxy Error:', error);
+    }
     return new Response('Leaflet fetch failed', { status: 502, headers: getErrorHeaders(request) });
   }
 }
@@ -819,7 +822,9 @@ async function handleTileRequest(request, env, ctx) {
       // Prevent XSS via MIME sniffing if upstream returns non-image content (e.g. HTML)
       // Only allow PNG as we enforced .png extension in URL. Blocks image/svg+xml.
       if (upstreamResponse.ok && !isPng) {
-        console.error(`Upstream Tile Invalid Content-Type: ${contentType} (parsed: ${mime})`);
+        if (env.ENVIRONMENT !== 'production') {
+          console.error(`Upstream Tile Invalid Content-Type: ${contentType} (parsed: ${mime})`);
+        }
         return new Response(JSON.stringify({ error: 'Invalid upstream content type' }), {
           status: 502,
           headers: getErrorHeaders(request)
@@ -924,7 +929,9 @@ async function handleTileRequest(request, env, ctx) {
     });
 
   } catch (error) {
-    console.error('Tile Proxy Error:', error);
+    if (env.ENVIRONMENT !== 'production') {
+      console.error('Tile Proxy Error:', error);
+    }
     // Return error to client, frontend will handle retries
     return new Response('Tile proxy failed', {
       status: 502,
@@ -989,7 +996,9 @@ async function handleRadarRequest(request, env, ctx) {
     const status = upstreamResponse.status;
 
     if (!upstreamResponse.ok) {
-      console.error(`Upstream Radar API Error: Status ${status}`);
+      if (env.ENVIRONMENT !== 'production') {
+        console.error(`Upstream Radar API Error: Status ${status}`);
+      }
       if (status === 429) {
         return new Response(JSON.stringify({ error: 'Upstream Rate Limit' }), {
           status: 429,
@@ -1012,7 +1021,9 @@ async function handleRadarRequest(request, env, ctx) {
     const mime = contentType ? contentType.split(';')[0].trim() : '';
 
     if (mime !== 'application/json') {
-      console.error(`Upstream Radar Invalid Content-Type: ${contentType} (parsed: ${mime})`);
+      if (env.ENVIRONMENT !== 'production') {
+        console.error(`Upstream Radar Invalid Content-Type: ${contentType} (parsed: ${mime})`);
+      }
       return getEmptyRadarResponse(request);
     }
 
@@ -1055,7 +1066,9 @@ async function handleRadarRequest(request, env, ctx) {
     });
 
   } catch (error) {
-    console.error('Radar Fetch Error:', error);
+    if (env.ENVIRONMENT !== 'production') {
+      console.error('Radar Fetch Error:', error);
+    }
     return new Response(JSON.stringify({
       error: 'Failed to fetch radar data',
       // SEC: Do not leak error.message
