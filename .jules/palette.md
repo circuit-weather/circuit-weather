@@ -41,12 +41,15 @@
 ## 2024-05-18 - Redundant ARIA Attributes
 **Learning:** Native HTML form controls like `<select>` automatically communicate their `disabled` state semantically to screen readers via the native `disabled` attribute. Adding `aria-disabled="true"` to these elements is redundant, provides no extra accessibility benefit, and violates the "First Rule of ARIA" (which favors using native semantic HTML over ARIA).
 **Action:** Do not implement explicit `aria-disabled` logic for native form controls that already use the `disabled` boolean attribute.
+
 ## 2024-05-25 - Async Modal Loading States
 **Learning:** When modals fetch content asynchronously (like privacy policies or terms) before opening, the UI appears frozen to the user after they click the trigger button.
 **Action:** Always open the modal immediately and display a skeleton loading state inside the modal body while the asynchronous content is being fetched, providing instant interaction feedback.
+
 ## 2024-05-20 - Adding immediate feedback to synchronous page reloads
 **Learning:** When a UI action triggers a synchronous `window.location.reload()`, the browser can appear to freeze for a moment before the navigation occurs. Adding immediate visual feedback (disabling the button, changing text to "Retrying...", updating `aria-label`) right before the reload significantly improves perceived performance and reassures the user that their action was registered, especially on slower network connections.
 **Action:** Always add intermediate loading states to buttons that trigger full page navigations or reloads, rather than relying solely on the browser's native loading indicator.
+
 ## 2024-05-24 - Semantic Landmark Headings
 **Learning:** When a `<section>` semantic landmark has an internal heading (like an `<h2>`), applying a static `aria-label` creates redundancy and often less descriptive context for screen reader users than the dynamic heading itself.
 **Action:** Always use `aria-labelledby="[heading-id]"` to tie the structural landmark directly to its internal heading, especially when the heading text updates dynamically (e.g., changing to the name of a newly selected race).
@@ -54,3 +57,7 @@
 ## 2026-03-07 - Anchors with role="button" require explicit Spacebar handling
 **Learning:** When using anchor `<a>` tags functioning as buttons with `role="button"`, native browsers only trigger the `click` event on the Enter key, not the Spacebar key. If a user presses Spacebar while focused on an anchor tag, it will result in the default page scroll down behavior, causing frustration and trapping keyboard users.
 **Action:** Always bind an explicit `keydown` event listener to anchors with `role="button"` that catches `e.key === ' ' || e.key === 'Spacebar'`, prevents default browser scrolling, and manually executes the expected click action.
+
+## 2026-03-08 - Mocking offsetParent for Focus Trap Tests
+**Learning:** When testing focus traps in Vitest, mock DOM elements (like those created by `createMockElement`) must include an `offsetParent` property to prevent false failures when component logic correctly filters out hidden elements via `el.offsetParent !== null`.
+**Action:** Always ensure that dynamically created mock HTML elements in test utilities include basic layout properties like `offsetParent: {}` to accurately simulate visible DOM nodes during interaction testing.
