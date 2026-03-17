@@ -21,6 +21,7 @@ const createMockElement = (id) => {
             mockActiveElement = this;
         }),
         querySelectorAll: vi.fn(() => []),
+        offsetParent: {},
     };
     return el;
 };
@@ -497,8 +498,8 @@ describe('PrivacyModal', () => {
             await modal.open();
 
             // Setup mock focusable elements
-            firstElement = { id: 'first', focus: vi.fn() };
-            lastElement = { id: 'last', focus: vi.fn() };
+            firstElement = { id: 'first', focus: vi.fn(), offsetParent: {} };
+            lastElement = { id: 'last', focus: vi.fn(), offsetParent: {} };
 
             // Mock querySelectorAll to return our elements
             modal.backdrop.querySelectorAll.mockReturnValue([firstElement, lastElement]);
