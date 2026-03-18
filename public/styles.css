@@ -1754,17 +1754,6 @@ body {
    Skeleton Loading
    =================================== */
 
-/* TODO: This skeleton loading animation requires further investigation and confirmation.
-   The current implementation uses a continuous CSS animation without checking for the
-   user's motion preferences. Users who have enabled 'prefers-reduced-motion' in their
-   operating system or browser settings may experience discomfort, dizziness, or other
-   adverse effects from continuous animations. According to WCAG guidelines and best
-   practices for web accessibility, animations should respect user preferences by
-   checking the prefers-reduced-motion media query and either disabling the animation
-   or replacing it with a static placeholder. A media query should be added that sets
-   'animation: none' when prefers-reduced-motion: reduce is active, ensuring the
-   application is accessible to users with motion sensitivity or vestibular disorders.
-*/
 .skeleton {
     background: linear-gradient(90deg,
             var(--color-bg) 25%,
@@ -1791,6 +1780,13 @@ body {
 
     100% {
         background-position: -200% 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .skeleton {
+        animation: none;
+        background-position: 0 0;
     }
 }
 
