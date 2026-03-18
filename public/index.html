@@ -194,7 +194,8 @@
                          maintaining the visual design. The empty alt should only be used if the
                          flag truly provides no meaningful information beyond decoration.
                     -->
-                    <img id="countryFlag" class="race-info-flag" alt="">
+                    <!-- Scout: Added a generic fallback alt text for SEO and accessibility before JS populates the country name -->
+                    <img id="countryFlag" class="race-info-flag" alt="Country flag">
                     <div class="race-info-details">
                         <div class="race-info-country" id="raceInfoCountry"></div>
                 <!-- Scout: Upgraded generic div to semantic h2 for better heading hierarchy and discoverability -->
@@ -379,7 +380,8 @@
                          to provide meaningful context. Consider implementing this in the JavaScript
                          that updates the mobileCountryFlag.src property.
                     -->
-                    <img id="mobileCountryFlag" class="mobile-race-info-flag" alt="">
+                    <!-- Scout: Added a generic fallback alt text for SEO and accessibility before JS populates the country name -->
+                    <img id="mobileCountryFlag" class="mobile-race-info-flag" alt="Country flag">
                     <div class="mobile-race-info-text">
                 <!-- Scout: Upgraded generic span to semantic h2 for consistent heading hierarchy across viewports -->
                 <h2 id="mobileRaceInfoName"></h2>
