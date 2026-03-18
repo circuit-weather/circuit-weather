@@ -61,3 +61,6 @@
 ## 2026-03-08 - Mocking offsetParent for Focus Trap Tests
 **Learning:** When testing focus traps in Vitest, mock DOM elements (like those created by `createMockElement`) must include an `offsetParent` property to prevent false failures when component logic correctly filters out hidden elements via `el.offsetParent !== null`.
 **Action:** Always ensure that dynamically created mock HTML elements in test utilities include basic layout properties like `offsetParent: {}` to accurately simulate visible DOM nodes during interaction testing.
+## 2026-03-09 - Continuous Animations in Skeleton Loaders
+**Learning:** Continuous CSS animations (like infinite gradients on skeleton loaders) can cause discomfort, dizziness, or adverse effects for users with vestibular disorders or motion sensitivity who have enabled `prefers-reduced-motion` in their OS or browser.
+**Action:** Always wrap continuous animations in a `@media (prefers-reduced-motion: reduce)` query to disable the animation (`animation: none`) and provide a static placeholder, ensuring the UI remains accessible and comfortable for all users.
