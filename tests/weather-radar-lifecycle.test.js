@@ -95,7 +95,7 @@ describe('WeatherRadar Lifecycle & Playback', () => {
     // ---------------------------------------------------------------
     describe('getFramesFromApi', () => {
         it('returns combined past and nowcast frames with tile URLs', async () => {
-            global.fetch.mockResolvedValueOnce({
+            global.fetch.mockResolvedValueOnce({ ok: true,
                 json: () => Promise.resolve({
                     radar: {
                         past: [{ time: 100, path: '/v2/radar/100' }],
@@ -116,7 +116,7 @@ describe('WeatherRadar Lifecycle & Playback', () => {
         });
 
         it('handles missing radar data gracefully', async () => {
-            global.fetch.mockResolvedValueOnce({
+            global.fetch.mockResolvedValueOnce({ ok: true,
                 json: () => Promise.resolve({})
             });
 
@@ -268,7 +268,7 @@ describe('WeatherRadar Lifecycle & Playback', () => {
     // ---------------------------------------------------------------
     describe('load', () => {
         it('fetches frames, creates layers, and starts playback', async () => {
-            global.fetch.mockResolvedValueOnce({
+            global.fetch.mockResolvedValueOnce({ ok: true,
                 json: () => Promise.resolve({
                     radar: {
                         past: [{ time: 100, path: '/p1' }],
@@ -288,7 +288,7 @@ describe('WeatherRadar Lifecycle & Playback', () => {
         });
 
         it('handles empty API response gracefully', async () => {
-            global.fetch.mockResolvedValueOnce({
+            global.fetch.mockResolvedValueOnce({ ok: true,
                 json: () => Promise.resolve({ radar: { past: [], nowcast: [] } })
             });
 
