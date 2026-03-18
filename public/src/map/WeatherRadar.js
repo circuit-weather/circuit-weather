@@ -150,27 +150,29 @@ export class WeatherRadar {
     }
 
     async getFramesFromApi() {
-        // TODO: This fetch operation requires further investigation and confirmation. 
-        // Currently, this fetch call lacks proper error handling which could lead to unhandled promise rejections
-        // if the network request fails or returns a non-OK status. The response is parsed as JSON without
-        // validating that the response body actually contains valid JSON data. This needs to be wrapped
-        // in a try-catch block to gracefully handle network errors, timeouts, or malformed responses.
-        // Without this protection, the application may crash or behave unpredictably when the RainViewer
-        // API is unavailable or returns unexpected data.
-        const response = await fetch(CONFIG.rainViewerApi);
-        const data = await response.json();
+        try {
+            const response = await fetch(CONFIG.rainViewerApi);
+            if (!response.ok) {
+                console.error(`RainViewer API error: ${response.status}`);
+                return [];
+            }
+            const data = await response.json();
 
-        const past = data.radar?.past || [];
-        const nowcast = data.radar?.nowcast || [];
+            const past = data.radar?.past || [];
+            const nowcast = data.radar?.nowcast || [];
 
-        // Store the count of past frames to identify the forecast start
-        this.pastFrameCount = past.length;
+            // Store the count of past frames to identify the forecast start
+            this.pastFrameCount = past.length;
 
-        return [...past, ...nowcast].map(frame => ({
-            time: frame.time,
-            path: frame.path,
-            url: `/api/tiles${frame.path}/512/{z}/{x}/{y}/2/1_1.png`,
-        }));
+            return [...past, ...nowcast].map(frame => ({
+                time: frame.time,
+                path: frame.path,
+                url: `/api/tiles${frame.path}/512/{z}/{x}/{y}/2/1_1.png`,
+            }));
+        } catch (error) {
+            console.error('Failed to fetch radar frames:', error);
+            return [];
+        }
     }
 
     async load() {

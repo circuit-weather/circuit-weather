@@ -123,7 +123,7 @@ describe('WeatherRadar Polling Logic', () => {
 
     describe('checkForUpdates', () => {
         it('should not update if API returns empty', async () => {
-            global.fetch.mockResolvedValueOnce({
+            global.fetch.mockResolvedValueOnce({ ok: true,
                 json: () => Promise.resolve({ radar: { past: [], nowcast: [] } })
             });
 
@@ -142,7 +142,7 @@ describe('WeatherRadar Polling Logic', () => {
             ];
 
             // Mock API returning same frames
-            global.fetch.mockResolvedValueOnce({
+            global.fetch.mockResolvedValueOnce({ ok: true,
                 json: () => Promise.resolve({
                     radar: {
                         past: [{ time: 100, path: '/path1' }],
@@ -166,7 +166,7 @@ describe('WeatherRadar Polling Logic', () => {
             radar.isPlaying = true;
 
             // Mock API returning new frames
-            global.fetch.mockResolvedValueOnce({
+            global.fetch.mockResolvedValueOnce({ ok: true,
                 json: () => Promise.resolve({
                     radar: {
                         past: [{ time: 100, path: '/path1' }],
@@ -186,7 +186,7 @@ describe('WeatherRadar Polling Logic', () => {
             radar.frames = [{ time: 100, path: '/path1' }];
             radar.isPlaying = false;
 
-            global.fetch.mockResolvedValueOnce({
+            global.fetch.mockResolvedValueOnce({ ok: true,
                 json: () => Promise.resolve({
                     radar: {
                         past: [{ time: 100, path: '/path1' }, { time: 200, path: '/path2' }],
