@@ -159,33 +159,12 @@ export class CircuitWeatherApp {
         const raceSession = race.sessions.find(s => s.id === 'race');
         if (raceSession && raceSession.date && raceSession.time) {
             const end = new Date(`${raceSession.date}T${raceSession.time}`);
-            // TODO: This magic number requires further investigation and confirmation.
-            // The value '4' represents a 4-hour duration buffer added to the race session
-            // end time to determine when the entire race weekend event should be considered
-            // complete. This hardcoded value is used without any named constant or
-            // explanatory comment describing why 4 hours was chosen as the buffer.
-            // Magic numbers like this make the code difficult to understand and maintain,
-            // as developers must infer the meaning and purpose from context. Consider
-            // extracting this to a named constant such as RACE_DURATION_BUFFER_HOURS
-            // with appropriate documentation explaining that F1 races typically last
-            // around 2 hours plus podium ceremonies and post-race coverage, making
-            // 4 hours a reasonable buffer for considering the event concluded.
-            end.setHours(end.getHours() + 4); // 4 hours duration buffer
+            end.setHours(end.getHours() + CONFIG.RACE_DURATION_BUFFER_HOURS);
             return end;
         }
         // Fallback if no time (shouldn't happen for recent races)
         const end = new Date(race.date);
-        // TODO: This magic number requires further investigation and confirmation.
-        // The value '23' represents setting the time to the 23rd hour of the day,
-        // effectively marking the end of the race day when no specific session
-        // time is available. This is used as a fallback calculation when the
-        // race session data is incomplete. Like the 4-hour buffer above, this
-        // value appears as a literal number without any named constant or
-        // documentation explaining why the end of the day was chosen as the
-        // fallback rather than midnight or some other time. This should be
-        // extracted to a named constant such as RACE_DAY_END_HOUR with
-        // documentation explaining the reasoning behind this fallback approach.
-        end.setHours(end.getHours() + 23); // End of race day
+        end.setHours(end.getHours() + CONFIG.RACE_DAY_END_HOUR);
         return end;
     }
 
@@ -645,47 +624,21 @@ export class CircuitWeatherApp {
             clearInterval(this.weatherRefreshInterval);
         }
 
-        // TODO: This magic number requires further investigation and confirmation.
-        // The value 300000 represents the number of milliseconds in 5 minutes,
-        // which is the interval at which weather data is refreshed. While the
-        // comment indicates this is "every 5 minutes", having this as a literal
-        // number makes the code less readable and harder to maintain. If this
-        // refresh rate needs to be adjusted based on API rate limits, user
-        // preferences, or data freshness requirements, developers must manually
-        // calculate the milliseconds. This should be extracted to a named
-        // constant such as WEATHER_REFRESH_INTERVAL_MS or
-        // WEATHER_REFRESH_INTERVAL_MINUTES with appropriate documentation
-        // explaining why 5 minutes was chosen as the refresh interval and
-        // how it relates to API rate limits or data freshness requirements.
-        // Refresh weather every 5 minutes (300000ms)
         this.weatherRefreshInterval = setInterval(() => {
             this.updateLiveWeatherForCircuit();
-        }, 300000);
+        }, CONFIG.WEATHER_REFRESH_INTERVAL_MS);
     }
 
     startSessionForecastInterval() {
         this.stopSessionForecastInterval();
 
-        // TODO: This magic number requires further investigation and confirmation.
-        // The value 900000 represents the number of milliseconds in 15 minutes,
-        // which is the interval at which session forecast data is refreshed.
-        // Similar to the 5-minute weather refresh interval, this literal value
-        // makes the code less maintainable and harder to understand at a glance.
-        // The comment notes that this matches the WeatherClient cache TTL, but
-        // this relationship is implicit and could break if either value changes
-        // without updating the other. This should be extracted to a named
-        // constant such as SESSION_FORECAST_REFRESH_INTERVAL_MS or defined
-        // in a centralized constants file alongside the cache TTL to ensure
-        // they remain synchronized. Documentation should explain why 15 minutes
-        // was chosen and how it relates to the cache TTL for consistency.
-        // Refresh forecast every 15 minutes (900000ms) to match WeatherClient cache TTL
         this.sessionForecastInterval = setInterval(() => {
             if (this.selectedSession && this.selectedRace) {
                 const sessionTime = new Date(`${this.selectedSession.date}T${this.selectedSession.time}`);
                 // Background refresh, no loading spinner
                 this.updateSessionForecast(sessionTime, this.selectedSession.id);
             }
-        }, 900000);
+        }, CONFIG.SESSION_FORECAST_REFRESH_INTERVAL_MS);
     }
 
     stopSessionForecastInterval() {

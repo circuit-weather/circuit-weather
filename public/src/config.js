@@ -21,6 +21,12 @@ export const CONFIG = {
         { label: '2x', speed: 500 }
     ],
     defaultSpeedIndex: 1, // Start at 1x
+
+    // Time Constants
+    RACE_DURATION_BUFFER_HOURS: 4, // Assume race + podium + post-race takes ~4 hours
+    RACE_DAY_END_HOUR: 23, // Fallback to end of day if session time is missing
+    WEATHER_REFRESH_INTERVAL_MS: 300000, // 5 minutes
+    SESSION_FORECAST_REFRESH_INTERVAL_MS: 900000, // 15 minutes
 };
 // SEC: Prevent runtime tampering with configuration
 Object.freeze(CONFIG);

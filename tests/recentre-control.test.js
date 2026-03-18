@@ -164,6 +164,17 @@ describe('RecentreControl', () => {
             expect(mapMock.setView).toHaveBeenCalledWith([10, 10], 10); // 10 is default circuit zoom
         });
 
+        it('should recentre map on Spacebar keydown for accessibility', () => {
+            // Extract the keydown handler on the button
+            const keydownHandler = control.button.addEventListener.mock.calls.find(call => call[0] === 'keydown')[1];
+
+            const eventMock = { key: ' ', preventDefault: vi.fn(), stopPropagation: vi.fn() };
+            keydownHandler(eventMock);
+
+            expect(eventMock.preventDefault).toHaveBeenCalled();
+            expect(mapMock.setView).toHaveBeenCalledWith([10, 10], 10);
+        });
+
         it('should recentre map on "C" key press', () => {
             // Extract keydown handler
             const keyHandler = mockDocument.addEventListener.mock.calls.find(call => call[0] === 'keydown')[1];
