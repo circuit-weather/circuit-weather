@@ -1,3 +1,5 @@
+import { CONFIG } from '../config.js';
+
 export class CountdownTimer {
     constructor() {
         this.timer = null;
@@ -40,8 +42,8 @@ export class CountdownTimer {
         }
 
         const hours = Math.floor(diff / 3600000);
-        const mins = Math.floor((diff % 3600000) / 60000);
-        const secs = Math.floor((diff % 60000) / 1000);
+        const mins = Math.floor((diff % 3600000) / CONFIG.ONE_MINUTE_MS);
+        const secs = Math.floor((diff % CONFIG.ONE_MINUTE_MS) / 1000);
 
         let timeText;
         if (hours > 24) {
@@ -62,8 +64,8 @@ export class CountdownTimer {
 
     getAccessibleDuration(diff) {
         const hours = Math.floor(diff / 3600000);
-        const mins = Math.floor((diff % 3600000) / 60000);
-        const secs = Math.floor((diff % 60000) / 1000);
+        const mins = Math.floor((diff % 3600000) / CONFIG.ONE_MINUTE_MS);
+        const secs = Math.floor((diff % CONFIG.ONE_MINUTE_MS) / 1000);
 
         if (hours > 24) {
             const days = Math.floor(hours / 24);
