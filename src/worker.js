@@ -25,7 +25,8 @@ import {
   API_SECURITY_HEADERS_ENTRIES,
   getErrorHeaders,
   getAllowedOrigin,
-  getEmptyRadarResponse
+  getEmptyRadarResponse,
+  createErrorResponse
 } from './worker-utils.js';
 
 // Per-upstream timeouts to prevent resource exhaustion while allowing for slow upstreams
@@ -83,23 +84,8 @@ export default {
     // SEC: Application Layer Rate Limiting
     const clientIp = request.headers.get('CF-Connecting-IP') || '127.0.0.1';
     if (!limiter.check(clientIp)) {
-      // TODO: This error response implementation requires further investigation and confirmation.
-      // The current error handling in the worker returns a JSON response with a 429 status code,
-      // but the format and structure of error responses varies throughout the codebase. Some errors
-      // return JSON with an "error" property containing a message string, while other error
-      // handlers return plain text responses or different JSON structures entirely. This inconsistency
-      // makes it difficult for client-side code to handle errors predictably and requires different
-      // parsing logic for different API endpoints. A standardized error response factory function
-      // should be created that always returns a consistent JSON structure with standardized fields
-      // such as "error", "message", "status", and optional "code" or "details" properties. This
-      // would allow the frontend to implement unified error handling that works consistently
-      // across all API endpoints and error scenarios.
-      return new Response(JSON.stringify({ error: 'Too many requests' }), {
-        status: 429,
-        headers: {
-          ...getErrorHeaders(request),
-          'Retry-After': '60',
-        }
+      return createErrorResponse(request, 429, 'Too many requests', {
+        'Retry-After': '60',
       });
     }
 
@@ -113,21 +99,14 @@ export default {
 
     // Enforce Method Whitelist
     if (request.method !== 'GET' && request.method !== 'HEAD') {
-      return new Response(JSON.stringify({ error: 'Method not allowed' }), {
-        status: 405,
-        headers: {
-          ...getErrorHeaders(request),
-          'Allow': 'GET, HEAD, OPTIONS',
-        }
+      return createErrorResponse(request, 405, 'Method not allowed', {
+        'Allow': 'GET, HEAD, OPTIONS',
       });
     }
 
     // SEC: Strict Origin/Referer Check (Hotlink Protection)
     if (!checkRequestSource(request, url)) {
-      return new Response(JSON.stringify({ error: 'Forbidden' }), {
-        status: 403,
-        headers: getErrorHeaders(request)
-      });
+      return createErrorResponse(request, 403, 'Forbidden');
     }
 
     // Only /api/f1/* routes reach this worker (configured via run_worker_first)
@@ -161,10 +140,7 @@ export default {
     }
 
     // For any other /api/* routes, return 404
-    return new Response(JSON.stringify({ error: 'API endpoint not found' }), {
-      status: 404,
-      headers: getErrorHeaders(request)
-    });
+    return createErrorResponse(request, 404, 'API endpoint not found');
   }
 };
 
@@ -192,11 +168,17 @@ function handleOptions(request) {
 /**
  * Helper to cache and return an error response
  */
-function cacheAndReturnError(request, cache, cacheKey, status, errorData, ctx) {
+function cacheAndReturnError(request, cache, cacheKey, status, message, extraDetails, ctx) {
   // Cache error response to prevent hammering upstream
   const errorCacheTTL = status === 429 ? 300 : 60;
 
-  const errorBody = JSON.stringify(errorData);
+  const errorBody = JSON.stringify({
+    error: {
+      message: message,
+      status: status,
+      ...extraDetails
+    }
+  });
 
   const errorHeaders = new Headers({
     'Content-Type': 'application/json',
@@ -237,10 +219,7 @@ function cacheAndReturnError(request, cache, cacheKey, status, errorData, ctx) {
 async function handleApiRequest(request, env, ctx) {
   // SEC: Ensure request is not from a script tag (XSSI protection)
   if (!checkFetchDest(request)) {
-    return new Response(JSON.stringify({ error: 'Invalid fetch destination' }), {
-      status: 403,
-      headers: getErrorHeaders(request)
-    });
+    return createErrorResponse(request, 403, 'Invalid fetch destination');
   }
 
   const url = new URL(request.url);
@@ -254,10 +233,7 @@ async function handleApiRequest(request, env, ctx) {
 
   // SEC: Input length limit to prevent DoS/resource exhaustion
   if (apiPath.length > 255) {
-    return new Response(JSON.stringify({ error: 'Path too long' }), {
-      status: 400,
-      headers: getErrorHeaders(request)
-    });
+    return createErrorResponse(request, 400, 'Path too long');
   }
 
   // SEC: Prevent access to hidden files/directories (dotfiles)
@@ -265,10 +241,7 @@ async function handleApiRequest(request, env, ctx) {
   const hasDotfiles = DOTFILE_REGEX.test(apiPath);
 
   if (!VALID_API_PATH_REGEX.test(apiPath) || apiPath.includes('..') || apiPath.includes('//') || apiPath.startsWith('/') || hasDotfiles) {
-    return new Response(JSON.stringify({ error: 'Invalid API path' }), {
-      status: 400,
-      headers: getErrorHeaders(request)
-    });
+    return createErrorResponse(request, 400, 'Invalid API path');
   }
 
   // Build upstream URL
@@ -314,10 +287,7 @@ async function handleApiRequest(request, env, ctx) {
     const status = upstreamResponse.status;
 
     if (!upstreamResponse.ok) {
-      return cacheAndReturnError(request, cache, cacheKey, status, {
-        error: 'Upstream API error',
-        status: status,
-      }, ctx);
+      return cacheAndReturnError(request, cache, cacheKey, status, 'Upstream API error', {}, ctx);
     }
 
     // SEC: Strict Content-Type Validation
@@ -330,9 +300,7 @@ async function handleApiRequest(request, env, ctx) {
       if (env.ENVIRONMENT !== 'production') {
         console.error(`Upstream Invalid Content-Type: ${contentType} (parsed: ${mime})`);
       }
-      return cacheAndReturnError(request, cache, cacheKey, 502, {
-        error: 'Invalid upstream content type',
-      }, ctx);
+      return cacheAndReturnError(request, cache, cacheKey, 502, 'Invalid upstream content type', {}, ctx);
     }
 
     // Bolt Optimization: Stream response instead of buffering text
@@ -376,13 +344,7 @@ async function handleApiRequest(request, env, ctx) {
     if (env.ENVIRONMENT !== 'production') {
       console.error('API Fetch Error:', error); // Log internal details
     }
-    return new Response(JSON.stringify({
-      error: 'Failed to fetch from upstream',
-      // SEC: Do not leak error.message
-    }), {
-      status: 502,
-      headers: getErrorHeaders(request)
-    });
+    return createErrorResponse(request, 502, 'Failed to fetch from upstream');
   }
 }
 
@@ -392,10 +354,7 @@ async function handleApiRequest(request, env, ctx) {
 async function handleTrackRequest(request, env, ctx) {
   // SEC: Ensure request is not from a script tag (XSSI protection)
   if (!checkFetchDest(request)) {
-    return new Response(JSON.stringify({ error: 'Invalid fetch destination' }), {
-      status: 403,
-      headers: getErrorHeaders(request)
-    });
+    return createErrorResponse(request, 403, 'Invalid fetch destination');
   }
 
   const url = new URL(request.url);
@@ -406,10 +365,7 @@ async function handleTrackRequest(request, env, ctx) {
   // SEC: Check length (50 chars max) and format
   // Bolt Optimization: Remove redundant string scans (includes) covered by regex
   if (!trackId || trackId.length > 50 || !VALID_TRACK_ID_REGEX.test(trackId)) {
-    return new Response(JSON.stringify({ error: 'Invalid track ID' }), {
-      status: 400,
-      headers: getErrorHeaders(request)
-    });
+    return createErrorResponse(request, 400, 'Invalid track ID');
   }
 
   const upstreamUrl = `https://raw.githubusercontent.com/bacinger/f1-circuits/master/circuits/${trackId}.geojson`;
@@ -456,10 +412,7 @@ async function handleTrackRequest(request, env, ctx) {
 
     if (!upstreamResponse.ok) {
       const status = upstreamStatus === 404 ? 404 : 502;
-      return cacheAndReturnError(request, cache, cacheKey, status, {
-        error: 'Track not found',
-        status: upstreamStatus,
-      }, ctx);
+      return cacheAndReturnError(request, cache, cacheKey, status, 'Track not found', {}, ctx);
     }
 
     // Bolt Optimization: Stream response instead of buffering text
@@ -502,13 +455,7 @@ async function handleTrackRequest(request, env, ctx) {
     if (env.ENVIRONMENT !== 'production') {
       console.error('Track Fetch Error:', error);
     }
-    return new Response(JSON.stringify({
-      error: 'Failed to fetch track data',
-      // SEC: Do not leak error.message
-    }), {
-      status: 502,
-      headers: getErrorHeaders(request)
-    });
+    return createErrorResponse(request, 502, 'Failed to fetch track data');
   }
 }
 
@@ -522,7 +469,7 @@ async function handleLeafletRequest(request, env, ctx) {
 
   const config = LEAFLET_ASSETS.get(path);
   if (!config) {
-    return new Response('File not found', { status: 404, headers: getErrorHeaders(request) });
+    return createErrorResponse(request, 404, 'File not found');
   }
 
   const upstreamUrl = config.upstream;
@@ -561,9 +508,9 @@ async function handleLeafletRequest(request, env, ctx) {
       if (env.ENVIRONMENT !== 'production') {
         console.error(`Leaflet Fetch Error (${path}): ${status}`);
       }
-      const errorHeaders = getErrorHeaders(request);
-      errorHeaders['X-Upstream-Status'] = status.toString();
-      return new Response('Failed to load Leaflet asset', { status: 502, headers: errorHeaders });
+      return createErrorResponse(request, 502, 'Failed to load Leaflet asset', {
+        'X-Upstream-Status': status.toString()
+      });
     }
 
     // SEC: Validate Content-Type
@@ -576,7 +523,7 @@ async function handleLeafletRequest(request, env, ctx) {
       if (env.ENVIRONMENT !== 'production') {
         console.error(`Leaflet Invalid Content-Type (${path}): ${contentType} (expected ${config.contentTypes.join(' or ')})`);
       }
-      return new Response('Invalid upstream content type', { status: 502, headers: getErrorHeaders(request) });
+      return createErrorResponse(request, 502, 'Invalid upstream content type');
     }
 
     // SEC: Buffer response for SRI Verification
@@ -589,9 +536,9 @@ async function handleLeafletRequest(request, env, ctx) {
         if (env.ENVIRONMENT !== 'production') {
           console.error(`SRI Mismatch for ${path}: expected ${config.integrity}, got ${hash}`);
         }
-        const errorHeaders = getErrorHeaders(request);
-        errorHeaders['X-SRI-Status'] = 'mismatch';
-        return new Response('SRI Integrity Check Failed', { status: 502, headers: errorHeaders });
+        return createErrorResponse(request, 502, 'SRI Integrity Check Failed', {
+          'X-SRI-Status': 'mismatch'
+        });
       }
     }
 
@@ -626,7 +573,7 @@ async function handleLeafletRequest(request, env, ctx) {
     if (env.ENVIRONMENT !== 'production') {
       console.error('Leaflet Proxy Error:', error);
     }
-    return new Response('Leaflet fetch failed', { status: 502, headers: getErrorHeaders(request) });
+    return createErrorResponse(request, 502, 'Leaflet fetch failed');
   }
 }
 
@@ -637,10 +584,7 @@ async function handleLeafletRequest(request, env, ctx) {
 async function handleHealthRequest(request, env, ctx) {
   // SEC: Ensure request is not from a script tag (XSSI protection)
   if (!checkFetchDest(request)) {
-    return new Response(JSON.stringify({ error: 'Invalid fetch destination' }), {
-      status: 403,
-      headers: getErrorHeaders(request)
-    });
+    return createErrorResponse(request, 403, 'Invalid fetch destination');
   }
 
   // Caching Strategy: Cache the health check for 60 seconds
@@ -744,19 +688,13 @@ async function handleTileRequest(request, env, ctx) {
   const hasDotfiles = DOTFILE_REGEX.test(tilePath);
 
   if (tilePath.length > 255 || !VALID_API_PATH_REGEX.test(tilePath) || tilePath.includes('..') || tilePath.includes('//') || hasDotfiles) {
-    return new Response(JSON.stringify({ error: 'Invalid tile path' }), {
-      status: 400,
-      headers: getErrorHeaders(request)
-    });
+    return createErrorResponse(request, 400, 'Invalid tile path');
   }
 
   // SEC: Strict Extension Validation
   // Ensure we only proxy PNG images as expected by the frontend
   if (!tilePath.endsWith('.png')) {
-    return new Response(JSON.stringify({ error: 'Invalid tile format' }), {
-      status: 400,
-      headers: getErrorHeaders(request)
-    });
+    return createErrorResponse(request, 400, 'Invalid tile format');
   }
 
   const upstreamUrl = `https://tilecache.rainviewer.com${tilePath}`;
@@ -825,17 +763,19 @@ async function handleTileRequest(request, env, ctx) {
         if (env.ENVIRONMENT !== 'production') {
           console.error(`Upstream Tile Invalid Content-Type: ${contentType} (parsed: ${mime})`);
         }
-        return new Response(JSON.stringify({ error: 'Invalid upstream content type' }), {
-          status: 502,
-          headers: getErrorHeaders(request)
-        });
+        return createErrorResponse(request, 502, 'Invalid upstream content type');
       }
 
       // SEC: Safe 404 Handling
       // If upstream 404 is not an image (e.g. HTML error page), generate a safe response
       // to prevent XSS via proxy. We cache this safe 404 to prevent upstream hammering.
       if (status === 404 && !isPng) {
-        const safeBody = JSON.stringify({ error: 'Tile not found' });
+        const safeBody = JSON.stringify({
+          error: {
+            message: 'Tile not found',
+            status: 404
+          }
+        });
         const safeHeaders = new Headers({
           'Content-Type': 'application/json',
           'Cache-Control': `public, max-age=${ttl}`,
@@ -909,34 +849,26 @@ async function handleTileRequest(request, env, ctx) {
 
     // 6. Non-cacheable Error Handling (429, 5xx, etc)
     // SEC: Consume body to prevent leaking upstream details (HTML, stack traces)
-    const errorHeaders = getErrorHeaders(request);
-    errorHeaders['X-Upstream-Status'] = status.toString();
+    const errorDetails = {
+      'X-Upstream-Status': status.toString()
+    };
 
     // Preserve Retry-After for rate limits
     if (status === 429) {
       const retryAfter = upstreamResponse.headers.get('Retry-After');
       if (retryAfter) {
-        errorHeaders['Retry-After'] = retryAfter;
+        errorDetails['Retry-After'] = retryAfter;
       }
     }
 
-    return new Response(JSON.stringify({
-      error: 'Upstream tile error',
-      status: status
-    }), {
-      status: status,
-      headers: errorHeaders
-    });
+    return createErrorResponse(request, status, 'Upstream tile error', errorDetails);
 
   } catch (error) {
     if (env.ENVIRONMENT !== 'production') {
       console.error('Tile Proxy Error:', error);
     }
     // Return error to client, frontend will handle retries
-    return new Response('Tile proxy failed', {
-      status: 502,
-      headers: getErrorHeaders(request)
-    });
+    return createErrorResponse(request, 502, 'Tile proxy failed');
   }
 }
 
@@ -947,10 +879,7 @@ async function handleTileRequest(request, env, ctx) {
 async function handleRadarRequest(request, env, ctx) {
   // SEC: Ensure request is not from a script tag (XSSI protection)
   if (!checkFetchDest(request)) {
-    return new Response(JSON.stringify({ error: 'Invalid fetch destination' }), {
-      status: 403,
-      headers: getErrorHeaders(request)
-    });
+    return createErrorResponse(request, 403, 'Invalid fetch destination');
   }
 
   const upstreamUrl = 'https://api.rainviewer.com/public/weather-maps.json';
@@ -1000,13 +929,9 @@ async function handleRadarRequest(request, env, ctx) {
         console.error(`Upstream Radar API Error: Status ${status}`);
       }
       if (status === 429) {
-        return new Response(JSON.stringify({ error: 'Upstream Rate Limit' }), {
-          status: 429,
-          headers: {
-            ...getErrorHeaders(request),
-            'X-Upstream-Status': '429',
-            'Retry-After': '60'
-          }
+        return createErrorResponse(request, 429, 'Upstream Rate Limit', {
+          'X-Upstream-Status': '429',
+          'Retry-After': '60'
         });
       }
       const emptyResponse = getEmptyRadarResponse(request);
@@ -1069,12 +994,6 @@ async function handleRadarRequest(request, env, ctx) {
     if (env.ENVIRONMENT !== 'production') {
       console.error('Radar Fetch Error:', error);
     }
-    return new Response(JSON.stringify({
-      error: 'Failed to fetch radar data',
-      // SEC: Do not leak error.message
-    }), {
-      status: 502,
-      headers: getErrorHeaders(request)
-    });
+    return createErrorResponse(request, 502, 'Failed to fetch radar data');
   }
 }

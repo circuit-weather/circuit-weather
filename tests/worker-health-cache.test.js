@@ -71,7 +71,7 @@ describe("Worker Health Check Caching", () => {
     expect(res.status).toBe(403);
 
     const body = await res.json();
-    expect(body.error).toBe("Invalid fetch destination");
+    expect(body.error.message).toBe("Invalid fetch destination");
     expect(mockFetch).not.toHaveBeenCalled();
   });
 

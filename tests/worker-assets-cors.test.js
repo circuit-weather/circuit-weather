@@ -103,7 +103,8 @@ describe("Worker Assets Proxy Initial Fetch CORS", () => {
     const res = await worker.fetch(req, global.env, global.ctx);
 
     expect(res.status).toBe(502);
-    expect(await res.text()).toBe("Leaflet fetch failed");
+    const data = await res.json();
+    expect(data.error.message).toBe("Leaflet fetch failed");
     expect(errorSpy).toHaveBeenCalled();
     errorSpy.mockRestore();
   });

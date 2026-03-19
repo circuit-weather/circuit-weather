@@ -225,7 +225,7 @@ describe("Worker Logic", () => {
 
       expect(res.status).toBe(502);
       const data = await res.json();
-      expect(data.error).toBe("Failed to fetch radar data");
+      expect(data.error.message).toBe("Failed to fetch radar data");
       expect(errorSpy).toHaveBeenCalled();
       errorSpy.mockRestore();
     });
@@ -284,7 +284,7 @@ describe("Worker Logic", () => {
 
       expect(res.status).toBe(429);
       const data = await res.json();
-      expect(data.error).toBe("Upstream Rate Limit");
+      expect(data.error.message).toBe("Upstream Rate Limit");
       expect(res.headers.get("Retry-After")).toBe("60");
       expect(errorSpy).toHaveBeenCalled();
       errorSpy.mockRestore();
@@ -551,7 +551,7 @@ describe("Worker Logic", () => {
       expect(res.status).toBe(404);
       expect(res.headers.get("Content-Type")).toBe("application/json");
       const body = await res.json();
-      expect(body.error).toBe("Tile not found");
+      expect(body.error.message).toBe("Tile not found");
 
       // Verify caching behavior
       expect(mockCache.put).toHaveBeenCalled();

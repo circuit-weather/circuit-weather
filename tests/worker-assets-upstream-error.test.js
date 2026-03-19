@@ -55,7 +55,8 @@ describe("Worker Assets Proxy Upstream Error", () => {
 
     expect(res.status).toBe(502);
     expect(res.headers.get("X-Upstream-Status")).toBe("404");
-    expect(await res.text()).toBe("Failed to load Leaflet asset");
+    const data = await res.json();
+    expect(data.error.message).toBe("Failed to load Leaflet asset");
     expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining("Leaflet Fetch Error"));
     errorSpy.mockRestore();
   });
