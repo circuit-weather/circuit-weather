@@ -23,6 +23,7 @@ export const CONFIG = {
     defaultSpeedIndex: 1, // Start at 1x
 
     // Time Constants
+    ONE_MINUTE_MS: 60000,
     RACE_DURATION_BUFFER_HOURS: 4, // Assume race + podium + post-race takes ~4 hours
     RACE_DAY_END_HOUR: 23, // Fallback to end of day if session time is missing
     WEATHER_REFRESH_INTERVAL_MS: 300000, // 5 minutes

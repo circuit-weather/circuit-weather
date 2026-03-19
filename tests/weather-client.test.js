@@ -4,7 +4,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 vi.mock('../public/src/config.js', () => ({
     CONFIG: {
         weatherApi: 'https://api.open-meteo.com/v1/forecast',
-        SESSION_FORECAST_REFRESH_INTERVAL_MS: 900000
+        SESSION_FORECAST_REFRESH_INTERVAL_MS: 900000,
+        ONE_MINUTE_MS: 60000
     }
 }));
 

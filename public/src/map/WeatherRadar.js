@@ -57,20 +57,11 @@ export class WeatherRadar {
         this.updateSpeedLabel();
 
         // Palette UX: Start a 1-minute timer to keep the relative time updated
-        // TODO: This magic number requires further investigation and confirmation.
-        // The value 60000 is the number of milliseconds in one minute, used to set the
-        // interval at which the relative time display is refreshed in the radar controls.
-        // While the comment above partially explains the intent, having the literal number
-        // in the code means developers need to do the mental arithmetic to understand the
-        // interval duration. This should be extracted to a named constant such as
-        // ONE_MINUTE_MS or RELATIVE_TIME_REFRESH_INTERVAL_MS alongside the other
-        // time-related constants in the codebase, making the intent clear at a glance
-        // without requiring any calculation.
         this.relativeTimeInterval = setInterval(() => {
             if (this.visibleLayerIndex >= 0) {
                 this.updateTimeDisplay(this.frames[this.visibleLayerIndex]?.time);
             }
-        }, 60000);
+        }, CONFIG.ONE_MINUTE_MS);
     }
 
     bindEvents() {
@@ -226,9 +217,8 @@ export class WeatherRadar {
      */
     scheduleNextPoll() {
         const now = Date.now();
-        const msPerMin = 60000;
-        const updateIntervalMs = 10 * msPerMin; // RainViewer updates every 10 minutes
-        const offsetMs = 1 * msPerMin; // Poll 1 minute after update to ensure data is ready
+        const updateIntervalMs = 10 * CONFIG.ONE_MINUTE_MS; // RainViewer updates every 10 minutes
+        const offsetMs = 1 * CONFIG.ONE_MINUTE_MS; // Poll 1 minute after update to ensure data is ready
 
         // Calculate ms since last :X0 mark (e.g., :00, :10, :20, etc.)
         const msSinceLastUpdate = now % updateIntervalMs;
@@ -867,7 +857,7 @@ export class WeatherRadar {
 
         // Show relative to session if available
         if (this.ui.relative && this.sessionTime) {
-            const diff = (effectiveTimeMs - this.sessionTime.getTime()) / 60000; // minutes
+            const diff = (effectiveTimeMs - this.sessionTime.getTime()) / CONFIG.ONE_MINUTE_MS; // minutes
             const absDiff = Math.abs(Math.round(diff));
             const durationText = this.formatDuration(absDiff);
 
@@ -890,7 +880,7 @@ export class WeatherRadar {
                 accessibleText = 'Forecast';
             } else {
                 // Palette UX: For past frames when no session is selected, show "X mins ago"
-                const diffMin = Math.round((Date.now() - effectiveTimeMs) / 60000);
+                const diffMin = Math.round((Date.now() - effectiveTimeMs) / CONFIG.ONE_MINUTE_MS);
 
                 if (diffMin < 1) {
                     relativeText = 'Live';

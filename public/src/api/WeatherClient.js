@@ -172,7 +172,7 @@ export class WeatherClient {
     }
 
     getAccessibleRelativeTime(timestamp, sessionTime) {
-        const diffMins = (timestamp * 1000 - sessionTime.getTime()) / 60000;
+        const diffMins = (timestamp * 1000 - sessionTime.getTime()) / CONFIG.ONE_MINUTE_MS;
 
         if (Math.abs(diffMins) < 30) return 'Session start';
         const hours = Math.round(diffMins / 60);
