@@ -7,7 +7,8 @@ vi.mock('../public/src/config.js', () => ({
         SESSION_FORECAST_REFRESH_INTERVAL_MS: 900000,
         ONE_MINUTE_MS: 60000,
         TILE_LOAD_TIMEOUT_MS: 3000,
-        MIN_POLL_DELAY_MS: 30000
+        MIN_POLL_DELAY_MS: 30000,
+        WEATHER_CACHE_MAX_ENTRIES: 50
     }
 }));
 

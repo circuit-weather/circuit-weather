@@ -30,6 +30,7 @@ export const CONFIG = {
     SESSION_FORECAST_REFRESH_INTERVAL_MS: 900000, // 15 minutes
     TILE_LOAD_TIMEOUT_MS: 3000, // 3 seconds
     MIN_POLL_DELAY_MS: 30000, // 30 seconds
+    WEATHER_CACHE_MAX_ENTRIES: 50,
 };
 // SEC: Prevent runtime tampering with configuration
 Object.freeze(CONFIG);
