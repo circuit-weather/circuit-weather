@@ -682,16 +682,7 @@ export class WeatherRadar {
 
             currentLayer.on('load', onLoad);
 
-            // Timeout fallback (3 seconds)
-            // TODO: This magic number requires further investigation and confirmation.
-            // The value 3000 represents a 3-second timeout used as a fallback to resolve
-            // the tile-loading promise in case the layer's 'load' event never fires, which
-            // can happen if tiles fail silently or if the Leaflet layer gets into an
-            // unexpected state. While the comment above identifies this as "3 seconds",
-            // the literal value requires mental arithmetic to verify. This same 3-second
-            // value is also used in the preloadSequence timeout below, suggesting it should
-            // be a shared named constant such as TILE_LOAD_TIMEOUT_MS to ensure both
-            // timeouts remain consistent and can be adjusted from one location.
+            // Timeout fallback
             setTimeout(() => {
                 if (!resolved) {
                     resolved = true;
@@ -699,7 +690,7 @@ export class WeatherRadar {
                     this.showFrame(this.currentFrame);
                     resolve();
                 }
-            }, 3000);
+            }, CONFIG.TILE_LOAD_TIMEOUT_MS);
         });
     }
 
@@ -757,21 +748,11 @@ export class WeatherRadar {
             layer.on('load', onComplete);
             layer.on('tileerror', onComplete);
 
-            // Timeout to prevent stuck queue (3s per frame)
-            // TODO: This magic number requires further investigation and confirmation.
-            // The value 3000 here serves the same purpose as the 3-second fallback
-            // in waitForTilesToLoad() above — it prevents the preload queue from
-            // becoming stuck if a tile frame never completes loading. Since both
-            // locations use the same 3000ms value for the same conceptual reason,
-            // they should both reference a single shared constant such as
-            // TILE_LOAD_TIMEOUT_MS rather than duplicating the literal value.
-            // If one of these timeouts is changed without updating the other,
-            // it could create inconsistent behaviour between the initial load
-            // and the sequential preload phase of the animation.
+            // Timeout to prevent stuck queue
             setTimeout(() => {
                 cleanup();
                 resolve();
-            }, 3000);
+            }, CONFIG.TILE_LOAD_TIMEOUT_MS);
         });
     }
 
