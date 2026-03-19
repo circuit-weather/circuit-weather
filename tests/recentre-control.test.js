@@ -4,7 +4,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 vi.mock('../public/src/config.js', () => ({
     CONFIG: {
         circuitZoom: 10,
-        TILE_LOAD_TIMEOUT_MS: 3000
+        TILE_LOAD_TIMEOUT_MS: 3000,
+        MIN_POLL_DELAY_MS: 30000
     }
 }));
 
