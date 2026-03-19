@@ -36,16 +36,11 @@ export class CircuitWeatherApp {
         this.router = new Router(params => this.handleRoute(params));
         this.mobileQuery = window.matchMedia('(max-width: 768px)');
 
+        this.ui = {};
+    }
+
+    async init() {
         // Bolt Optimization: Cache frequently accessed DOM elements
-        // TODO: This DOM element caching implementation requires further investigation and confirmation.
-        // The constructor attempts to cache DOM elements using document.getElementById() immediately
-        // when the class is instantiated. However, if the CircuitWeatherApp class is instantiated
-        // before the DOMContentLoaded event fires, these elements will not exist in the document yet
-        // and all cached references will be null. While the current code works because init() is
-        // called after DOMContentLoaded in main.js, this creates a fragile dependency that could
-        // break if the initialization order changes. Consider moving this DOM caching logic to the
-        // init() method instead, or add null checks before using these cached elements to ensure
-        // the application handles cases where elements are not found gracefully.
         this.ui = {
             loadingOverlay: document.getElementById('loadingOverlay'),
             roundSelect: document.getElementById('roundSelect'),
@@ -67,9 +62,7 @@ export class CircuitWeatherApp {
             mobileRaceInfoName: document.getElementById('mobileRaceInfoName'),
             mobileRaceInfoCircuit: document.getElementById('mobileRaceInfoCircuit'),
         };
-    }
 
-    async init() {
         this.showLoading(true, 'Loading race schedule...');
 
         try {
