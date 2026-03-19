@@ -291,3 +291,25 @@ export function getEmptyRadarResponse(request) {
     headers: getErrorHeaders(request)
   });
 }
+
+/**
+ * Standardized error response factory function
+ * Returns a consistent JSON structure for all API endpoint errors.
+ */
+export function createErrorResponse(request, status, message, additionalHeaders = {}, extraDetails = {}) {
+  const body = JSON.stringify({
+    error: {
+      message: message,
+      status: status,
+      ...extraDetails
+    }
+  });
+
+  return new Response(body, {
+    status: status,
+    headers: {
+      ...getErrorHeaders(request),
+      ...additionalHeaders
+    }
+  });
+}

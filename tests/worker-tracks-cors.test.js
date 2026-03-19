@@ -98,7 +98,7 @@ describe("Worker Tracks Proxy CORS and Error Cases", () => {
 
     expect(res.status).toBe(404);
     const data = await res.json();
-    expect(data.error).toBe("Track not found");
-    expect(data.status).toBe(404);
+    expect(data.error.message).toBe("Track not found");
+    expect(data.error.status).toBe(404);
   });
 });

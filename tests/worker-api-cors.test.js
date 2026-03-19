@@ -96,7 +96,7 @@ describe("Worker API Proxy CORS and Error Cases", () => {
 
     expect(res.status).toBe(502);
     const data = await res.json();
-    expect(data.error).toBe("Failed to fetch from upstream");
+    expect(data.error.message).toBe("Failed to fetch from upstream");
     expect(errorSpy).toHaveBeenCalledWith("API Fetch Error:", expect.any(Error));
     errorSpy.mockRestore();
   });

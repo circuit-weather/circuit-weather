@@ -93,8 +93,8 @@ describe('Worker Logic - Tile Errors', () => {
     expect(mockCache.put).not.toHaveBeenCalled();
 
     const data = await res.json();
-    expect(data.error).toBe('Upstream tile error');
-    expect(data.status).toBe(500);
+    expect(data.error.message).toBe('Upstream tile error');
+    expect(data.error.status).toBe(500);
   });
 
   it('handles network exception for tiles', async () => {
@@ -105,7 +105,8 @@ describe('Worker Logic - Tile Errors', () => {
     const res = await worker.fetch(req, global.env, global.ctx);
 
     expect(res.status).toBe(502);
-    expect(await res.text()).toBe('Tile proxy failed');
+    const data = await res.json();
+    expect(data.error.message).toBe('Tile proxy failed');
     expect(errorSpy).toHaveBeenCalled();
     errorSpy.mockRestore();
   });

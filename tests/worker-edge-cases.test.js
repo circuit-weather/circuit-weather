@@ -232,7 +232,7 @@ describe('Worker Edge Cases', () => {
 
             expect(response.status).toBe(404);
             const body = await response.json();
-            expect(body.error).toBe('API endpoint not found');
+            expect(body.error.message).toBe('API endpoint not found');
         });
     });
 
@@ -246,7 +246,7 @@ describe('Worker Edge Cases', () => {
 
             expect(response.status).toBe(400);
             const body = await response.json();
-            expect(body.error).toBe('Invalid tile format');
+            expect(body.error.message).toBe('Invalid tile format');
         });
 
         it('rejects tile paths with dotfile segments', async () => {
