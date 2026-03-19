@@ -12,7 +12,7 @@ Circuit Weather is a real-time F1 race circuit weather radar application. It dis
 | -------- | --------------------------------------------------- |
 | Frontend | Vanilla HTML/CSS/JS                                 |
 | Mapping  | Leaflet.js with Carto basemaps                      |
-| Backend  | Cloudflare Workers with Assets                      |
+| Backend  | Cloudflare Workers with Static Assets               |
 | APIs     | Jolpica F1, RainViewer, Open-Meteo, GitHub (Tracks) |
 
 ---
@@ -114,7 +114,7 @@ circuit-weather/
 pnpm run dev # or 'npx wrangler dev' / 'wrangler dev' based on environment availability
 
 # Deploy to Cloudflare
-# Deployment is automatic via Cloudflare Git Integration (Workers with Assets)
+# Deployment is automatic via Cloudflare Git Integration (Workers with Static Assets)
 # when changes are merged to the 'main' branch.
 # See "Git Workflow for Changes" below.
 ```
@@ -161,7 +161,7 @@ main = "src/worker.js"
 compatibility_date = "2024-09-23"
 preview_urls = true
 
-# Cloudflare Workers with Assets configuration
+# Cloudflare Workers with Static Assets configuration
 # https://developers.cloudflare.com/workers/static-assets/routing/single-page-application/
 [assets]
 directory = "./public"
