@@ -28,6 +28,7 @@ export const CONFIG = {
     RACE_DAY_END_HOUR: 23, // Fallback to end of day if session time is missing
     WEATHER_REFRESH_INTERVAL_MS: 300000, // 5 minutes
     SESSION_FORECAST_REFRESH_INTERVAL_MS: 900000, // 15 minutes
+    TILE_LOAD_TIMEOUT_MS: 3000, // 3 seconds
 };
 // SEC: Prevent runtime tampering with configuration
 Object.freeze(CONFIG);

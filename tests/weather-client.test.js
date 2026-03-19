@@ -5,7 +5,8 @@ vi.mock('../public/src/config.js', () => ({
     CONFIG: {
         weatherApi: 'https://api.open-meteo.com/v1/forecast',
         SESSION_FORECAST_REFRESH_INTERVAL_MS: 900000,
-        ONE_MINUTE_MS: 60000
+        ONE_MINUTE_MS: 60000,
+        TILE_LOAD_TIMEOUT_MS: 3000
     }
 }));
 
