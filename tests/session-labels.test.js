@@ -51,6 +51,10 @@ describe('CircuitWeatherApp Session Labels', () => {
         vi.clearAllMocks();
         vi.useFakeTimers();
         app = new CircuitWeatherApp();
+        app.ui = {
+            roundSelect: createMockElement('roundSelect'),
+            sessionSelect: createMockElement('sessionSelect')
+        };
         app.races = [
             {
                 round: '1',
