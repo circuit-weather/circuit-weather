@@ -3,17 +3,8 @@ import { CONFIG } from '../config.js';
 export class WeatherClient {
     constructor() {
         this.baseUrl = CONFIG.weatherApi;
-        // TODO: This in-memory cache implementation requires further investigation and confirmation.
-        // The current implementation uses a plain JavaScript Map with no maximum size limit or eviction
-        // policy. As users browse different circuits across the F1 season, each unique coordinate pair
-        // creates a new cache entry that is never removed. Over time, this could lead to unbounded
-        // memory growth in long-running sessions, potentially degrading performance or causing memory
-        // issues on devices with limited resources. Consider implementing an LRU (Least Recently Used)
-        // eviction strategy with a maximum cache size (for example, 50 entries) to prevent excessive
-        // memory usage. Additionally, the cache entries are only keyed by rounded coordinates and do
-        // not account for different forecast times, which could lead to stale data being served
-        // if the same location is queried for different session times.
         this.cache = new Map();
+        this.maxCacheSize = CONFIG.WEATHER_CACHE_MAX_ENTRIES;
         this.cacheTTL = CONFIG.SESSION_FORECAST_REFRESH_INTERVAL_MS;
     }
 
@@ -36,13 +27,18 @@ export class WeatherClient {
             // 2 decimal places is approx 1.1km, sufficient for general weather accuracy
             const rLat = Number(lat).toFixed(2);
             const rLon = Number(lon).toFixed(2);
-            const cacheKey = `${rLat},${rLon}`;
+            const cacheKey = `${rLat},${rLon},${sessionTime.getTime()}`;
             let data;
 
             if (this.cache.has(cacheKey)) {
                 const entry = this.cache.get(cacheKey);
                 if (Date.now() - entry.timestamp < this.cacheTTL) {
                     data = entry.data;
+                    // Move to most recently used
+                    this.cache.delete(cacheKey);
+                    this.cache.set(cacheKey, entry);
+                } else {
+                    this.cache.delete(cacheKey);
                 }
             }
 
@@ -67,6 +63,10 @@ export class WeatherClient {
 
                 data = await response.json();
                 this.cache.set(cacheKey, { timestamp: Date.now(), data });
+
+                if (this.cache.size > this.maxCacheSize) {
+                    this.cache.delete(this.cache.keys().next().value);
+                }
             }
 
             const hourlyFiltered = this.filterHourly(data.hourly, sessionTime);
