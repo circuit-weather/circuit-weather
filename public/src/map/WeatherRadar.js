@@ -232,15 +232,7 @@ export class WeatherRadar {
         }
 
         // Minimum delay of 30 seconds to avoid tight loops on clock edge cases
-        // TODO: This magic number requires further investigation and confirmation.
-        // The value 30000 represents a minimum polling delay of 30 seconds, used as
-        // a floor to prevent tight polling loops if the calculated delay comes out
-        // unexpectedly small due to clock edge cases or arithmetic rounding. The comment
-        // explains the purpose, but the literal value still requires mental arithmetic
-        // to verify against the comment. This should be extracted to a named constant
-        // such as MIN_POLL_DELAY_MS to make the intent immediately clear and to allow
-        // it to be adjusted in one place if the minimum threshold ever needs changing.
-        delay = Math.max(delay, 30000);
+        delay = Math.max(delay, CONFIG.MIN_POLL_DELAY_MS);
 
         this.pollingTimeout = setTimeout(() => {
             this.checkForUpdates();

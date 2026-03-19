@@ -45,7 +45,10 @@ vi.mock('../public/src/config.js', async (importOriginal) => {
     const actual = await importOriginal();
     return {
         ...actual,
-        CONFIG: { ...actual.CONFIG }
+        CONFIG: {
+            ...actual.CONFIG,
+            MIN_POLL_DELAY_MS: 30000
+        }
     };
 });
 
