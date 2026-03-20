@@ -145,22 +145,9 @@ export async function calculateHash(buffer) {
 }
 
 /**
- * Simple In-Memory Rate Limiter
+ * Simple In-Memory Rate Limiter using Token Bucket and LRU eviction.
  * Note: In a serverless environment, this state is ephemeral and per-isolate.
  * It provides a "best effort" defense against rapid-fire DoS attacks on a single instance.
- * TODO: This RateLimiter implementation requires further investigation and confirmation.
- * The current implementation uses a generational garbage collection approach with two Map
- * structures (currentGen and oldGen) to avoid O(N) cleanup iteration. While this is an
- * optimization for performance, the logic is complex with nested conditionals and the
- * comments suggest it's "Bolt Optimization" but the readability suffers significantly.
- * The two-generation approach with migration logic, LRU ordering maintenance, and window
- * rotation creates cognitive overhead for developers trying to understand or debug the code.
- * Consider simplifying this implementation with a single Map and periodic cleanup, or use a
- * proven rate limiting pattern from established libraries. Additionally, more inline
- * comments explaining the generational approach and the migration logic would help future
- * maintainers understand the design decisions. The complexity may also introduce subtle bugs
- * in edge cases such as boundary conditions during generation rotation or when the maximum
- * IP limit is reached.
  */
 export class RateLimiter {
   constructor(limit, windowMs, maxIps = 10000) {
@@ -168,95 +155,41 @@ export class RateLimiter {
     this.windowMs = windowMs;
     this.rate = limit / windowMs; // Tokens per ms
     this.maxIps = maxIps;
-    // Bolt Optimization: Generational Garbage Collection
-    // Use two maps to avoid O(N) cleanup iteration
-    this.currentGen = new Map();
-    this.oldGen = new Map();
-    this.lastCleanup = Date.now();
+    this.store = new Map();
   }
 
   check(ip) {
     const now = Date.now();
-
-    // Bolt Optimization: Rotate generations every windowMs
-    // This provides O(1) cleanup instead of O(N) iteration
-    if (now - this.lastCleanup > this.windowMs) {
-      this.cleanup(now);
-    }
-
-    let record = this.currentGen.get(ip);
+    let record = this.store.get(ip);
 
     if (record) {
-      // Found in current generation
       const elapsed = now - record.lastCheck;
       const refill = elapsed * this.rate;
       record.tokens = Math.min(this.limit, record.tokens + refill);
       record.lastCheck = now;
 
-      // Bolt Optimization: Move to end (LRU)
-      // Delete and re-set to update insertion order
-      this.currentGen.delete(ip);
-      this.currentGen.set(ip, record);
-
-      if (record.tokens >= 1) {
-        record.tokens -= 1;
-        return true;
+      // Move to end (LRU update)
+      this.store.delete(ip);
+      this.store.set(ip, record);
+    } else {
+      // SEC: Prevent memory exhaustion DoS
+      if (this.store.size >= this.maxIps) {
+        // If full, evict oldest entry (LRU) to make room
+        // Map.keys().next() is O(1) in V8
+        const oldestIp = this.store.keys().next().value;
+        this.store.delete(oldestIp);
       }
-      return false;
+
+      // Start with full tokens
+      record = { tokens: this.limit, lastCheck: now };
+      this.store.set(ip, record);
     }
 
-    // Check old generation
-    record = this.oldGen.get(ip);
-
-    if (record) {
-      // Found in old generation - migrate to current if still valid
-      // Note: records in oldGen are at most 2 * windowMs old, so they might be valid
-      if (now - record.lastCheck <= this.windowMs) {
-        const elapsed = now - record.lastCheck;
-        const refill = elapsed * this.rate;
-        record.tokens = Math.min(this.limit, record.tokens + refill);
-        record.lastCheck = now;
-
-        // Move to current
-        // SEC: Prevent memory exhaustion DoS during migration
-        if (this.currentGen.size >= this.maxIps) {
-          const oldestIp = this.currentGen.keys().next().value;
-          this.currentGen.delete(oldestIp);
-        }
-
-        this.currentGen.set(ip, record);
-        this.oldGen.delete(ip); // Optional: keep memory lean
-
-        if (record.tokens >= 1) {
-          record.tokens -= 1;
-          return true;
-        }
-        return false;
-      }
+    if (record.tokens >= 1) {
+      record.tokens -= 1;
+      return true;
     }
-
-    // New or expired: Create new record
-    // SEC: Prevent memory exhaustion DoS
-    if (this.currentGen.size >= this.maxIps) {
-      // If full, evict oldest entry (LRU) to make room
-      // Map.keys().next() is O(1) in V8
-      const oldestIp = this.currentGen.keys().next().value;
-      this.currentGen.delete(oldestIp);
-    }
-
-    // Start with full tokens minus the 1 we are about to consume
-    record = { tokens: this.limit - 1, lastCheck: now };
-    this.currentGen.set(ip, record);
-    return true;
-  }
-
-  cleanup(now) {
-    // Bolt Optimization: O(1) Generational Cleanup
-    // Simply rotate the maps. Old current becomes old (to be checked for migration),
-    // and very old data (previous oldGen) is discarded by GC.
-    this.oldGen = this.currentGen;
-    this.currentGen = new Map();
-    this.lastCleanup = now;
+    return false;
   }
 }
 

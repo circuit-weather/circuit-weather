@@ -11,55 +11,28 @@ describe('RateLimiter Memory Leak', () => {
     vi.useRealTimers();
   });
 
-  it('prevents currentGen from growing beyond limit when migrating oldGen records', () => {
+  it('prevents store from growing beyond MAX_IPS limit under load', () => {
     const MAX_IPS = 2;
     const WINDOW_MS = 1000;
     const limiter = new RateLimiter(10, WINDOW_MS, MAX_IPS);
 
-    // 1. Fill currentGen with Batch A (IP1, IP2)
+    // 1. Fill store with Batch A (IP1, IP2)
     limiter.check('1.1.1.1');
     limiter.check('2.2.2.2');
 
-    // Update lastCheck for IP1, IP2 so they survive migration logic
-    // (must be within windowMs when checked later)
-    vi.setSystemTime(900);
-    limiter.check('1.1.1.1');
-    limiter.check('2.2.2.2');
+    expect(limiter.store.size).toBe(2);
 
-    expect(limiter.currentGen.size).toBe(2);
-
-    // 2. Advance time to T=1001 to trigger cleanup
-    // 1001 - 0 > 1000, so cleanup runs.
-    vi.setSystemTime(1001);
-
-    // Trigger cleanup by calling check() with a new IP
+    // 2. Add more IPs, forcing eviction
     limiter.check('trigger');
-    // Now: oldGen has {IP1, IP2} (lastCheck=900), currentGen has {trigger}
 
-    // 3. Fill currentGen with Batch B (IP3) so it reaches MAX_IPS
-    // currentGen already has 'trigger' (size 1)
+    // Size should still be at most MAX_IPS
+    expect(limiter.store.size).toBeLessThanOrEqual(MAX_IPS);
+
+    // 3. Keep adding more IPs to test eviction
     limiter.check('3.3.3.3');
-    expect(limiter.currentGen.size).toBe(2); // {trigger, IP3}
+    limiter.check('4.4.4.4');
+    limiter.check('5.5.5.5');
 
-    // 4. Access oldGen records (IP1, IP2).
-    // They are valid because 1001 - 900 = 101 <= 1000.
-    // They should migrate to currentGen.
-
-    // IP1 migrates. currentGen should evict oldest ('trigger') to make room.
-    limiter.check('1.1.1.1');
-    expect(limiter.currentGen.size).toBe(2);
-    expect(limiter.currentGen.has('trigger')).toBe(false); // 'trigger' was oldest
-    expect(limiter.currentGen.has('3.3.3.3')).toBe(true);
-    expect(limiter.currentGen.has('1.1.1.1')).toBe(true);
-
-    // IP2 migrates. currentGen should evict oldest ('3.3.3.3') to make room.
-    limiter.check('2.2.2.2');
-    expect(limiter.currentGen.size).toBe(2);
-    expect(limiter.currentGen.has('3.3.3.3')).toBe(false);
-    expect(limiter.currentGen.has('1.1.1.1')).toBe(true);
-    expect(limiter.currentGen.has('2.2.2.2')).toBe(true);
-
-    // 5. Final check
-    expect(limiter.currentGen.size).toBeLessThanOrEqual(MAX_IPS);
+    expect(limiter.store.size).toBeLessThanOrEqual(MAX_IPS);
   });
 });

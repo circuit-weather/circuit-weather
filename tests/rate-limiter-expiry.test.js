@@ -16,69 +16,42 @@ describe('RateLimiter Expiry Logic', () => {
     vi.useRealTimers();
   });
 
-  it('migrates valid records from oldGen to currentGen (within window)', () => {
-    // 1. Arrange: Create a record and update its lastCheck so it survives cleanup
-    // T=0
+  it('replenishes tokens correctly based on elapsed time within window', () => {
+    // 1. Check IP, should consume 1 token (tokens left: LIMIT - 1 = 9)
     limiter.check('valid-ip');
+    expect(limiter.store.get('valid-ip').tokens).toBe(LIMIT - 1);
 
-    // Advance to T=500. Update lastCheck.
+    // 2. Advance time by half the window
     vi.setSystemTime(500);
+
+    // Check IP again, should replenish half the tokens (5) then consume 1
+    // Math.min(10, 9 + 5) = 10 -> consume 1 = 9
     limiter.check('valid-ip');
+    expect(limiter.store.get('valid-ip').tokens).toBe(LIMIT - 1);
 
-    // 2. Act: Trigger cleanup (move to oldGen)
-    // Advance to T=1100 (diff > 1000 since lastCleanup=0)
-    vi.setSystemTime(1100);
-    limiter.check('trigger-cleanup');
-
-    // Verify state: 'valid-ip' is in oldGen
-    expect(limiter.oldGen.has('valid-ip')).toBe(true);
-    expect(limiter.currentGen.has('valid-ip')).toBe(false);
-
-    // 3. Act: Access 'valid-ip' again
-    // T=1100. lastCheck=500. Diff=600 <= 1000. Valid!
+    // 3. Advance time just a little bit
+    vi.setSystemTime(600);
+    // Should replenish 1 token (1/1000 * 10 * 100 = 1) then consume 1
     limiter.check('valid-ip');
-
-    // 4. Assert: Migration happened
-    // 'valid-ip' should be moved to currentGen
-    expect(limiter.currentGen.has('valid-ip')).toBe(true);
-    // 'valid-ip' should be REMOVED from oldGen
-    expect(limiter.oldGen.has('valid-ip')).toBe(false);
+    expect(limiter.store.get('valid-ip').tokens).toBe(LIMIT - 1);
   });
 
-  it('expires stale oldGen records without migration (beyond window)', () => {
-    // 1. Arrange: Create a record that will become stale
-    // T=0. lastCheck=0.
-    limiter.check('stale-ip');
+  it('replenishes tokens up to the limit after a full window has passed', () => {
+    // 1. Consume all tokens
+    for (let i = 0; i < LIMIT; i++) {
+      limiter.check('stale-ip');
+    }
+    // Should be completely exhausted
+    expect(limiter.check('stale-ip')).toBe(false);
 
-    // 2. Act: Trigger cleanup (move to oldGen)
-    // Advance to T=1100 (diff > 1000 since lastCleanup=0)
-    vi.setSystemTime(1100);
-    limiter.check('trigger-cleanup');
+    // 2. Advance time beyond window
+    vi.setSystemTime(1500);
 
-    // Verify state: 'stale-ip' is in oldGen
-    expect(limiter.oldGen.has('stale-ip')).toBe(true);
-    expect(limiter.currentGen.has('stale-ip')).toBe(false);
+    // 3. Check again, should be fully replenished
+    expect(limiter.check('stale-ip')).toBe(true);
 
-    // 3. Act: Access 'stale-ip' again
-    // T=1100. lastCheck=0. Diff=1100 > 1000. Expired!
-    limiter.check('stale-ip');
-
-    // 4. Assert: Expiration happened (New Record Created)
-    // 'stale-ip' should be in currentGen (as a new record)
-    expect(limiter.currentGen.has('stale-ip')).toBe(true);
-
-    // CRITICAL: 'stale-ip' should REMAIN in oldGen because migration logic was skipped
-    // The code path `if (now - record.lastCheck <= this.windowMs)` is false,
-    // so `this.oldGen.delete(ip)` inside that block is never called.
-    expect(limiter.oldGen.has('stale-ip')).toBe(true);
-
-    // Verify that the objects are different instances (new vs old)
-    const newRecord = limiter.currentGen.get('stale-ip');
-    const oldRecord = limiter.oldGen.get('stale-ip');
-    expect(newRecord).not.toBe(oldRecord);
-
-    // Verify tokens are reset for new record
-    // New record starts with limit - 1
-    expect(newRecord.tokens).toBe(LIMIT - 1);
+    // Since it was fully replenished to LIMIT (10) and we just consumed 1,
+    // it should have LIMIT - 1 (9) tokens left
+    expect(limiter.store.get('stale-ip').tokens).toBe(LIMIT - 1);
   });
 });
