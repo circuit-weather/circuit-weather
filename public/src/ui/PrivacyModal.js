@@ -2,13 +2,12 @@ import { escapeHtml } from "../utils/escapeHtml.js";
 
 export class PrivacyModal {
   constructor() {
-    this.backdrop = document.getElementById("privacyModalBackdrop");
+    this.modal = document.getElementById("privacyModal");
     this.content = document.getElementById("privacyModalContent");
     this.closeBtn = document.getElementById("privacyModalClose");
     this.privacyLink = document.getElementById("privacyLink");
     this.loaded = false;
     this.triggerElement = null;
-    this._handleFocusTrap = this.handleFocusTrap.bind(this);
     this.bindEvents();
   }
 
@@ -31,31 +30,28 @@ export class PrivacyModal {
       this.closeBtn.addEventListener("click", () => this.close());
     }
 
-    if (this.backdrop) {
-      this.backdrop.addEventListener("click", (e) => {
-        if (e.target === this.backdrop) this.close();
+    if (this.modal) {
+      this.modal.addEventListener("click", (e) => {
+        if (e.target === this.modal) this.close();
+      });
+
+      this.modal.addEventListener("close", () => {
+        document.body.style.overflow = "";
+        if (this.triggerElement) {
+          this.triggerElement.focus();
+          this.triggerElement = null;
+        }
       });
     }
-
-    // Close on Escape key
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Escape" && this.backdrop?.classList.contains("visible")) {
-        this.close();
-      }
-    });
   }
 
   async open() {
     this.triggerElement = document.activeElement;
 
     // Palette UX: Show modal immediately to prevent perceived lag
-    if (this.backdrop) {
-      this.backdrop.classList.add("visible");
+    if (this.modal) {
+      this.modal.showModal();
       document.body.style.overflow = "hidden";
-      // Move focus to close button for accessibility
-      if (this.closeBtn) this.closeBtn.focus();
-      // Enable focus trap
-      this.backdrop.addEventListener("keydown", this._handleFocusTrap);
     }
 
     if (!this.loaded) {
@@ -77,44 +73,8 @@ export class PrivacyModal {
   }
 
   close() {
-    if (this.backdrop) {
-      this.backdrop.classList.remove("visible");
-      document.body.style.overflow = "";
-      // Remove focus trap
-      this.backdrop.removeEventListener("keydown", this._handleFocusTrap);
-      // Restore focus to trigger element
-      if (this.triggerElement) {
-        this.triggerElement.focus();
-        this.triggerElement = null;
-      }
-    }
-  }
-
-  handleFocusTrap(e) {
-    if (e.key !== "Tab") return;
-
-    const focusableSelectors =
-      'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])';
-    // Palette A11y: Filter out hidden elements to prevent focus trap from getting stuck
-    const focusableElements = Array.from(
-      this.backdrop.querySelectorAll(focusableSelectors),
-    ).filter((el) => el.offsetParent !== null);
-
-    if (focusableElements.length === 0) return;
-
-    const firstElement = focusableElements[0];
-    const lastElement = focusableElements[focusableElements.length - 1];
-
-    if (e.shiftKey) {
-      if (document.activeElement === firstElement) {
-        e.preventDefault();
-        lastElement.focus();
-      }
-    } else {
-      if (document.activeElement === lastElement) {
-        e.preventDefault();
-        firstElement.focus();
-      }
+    if (this.modal) {
+      this.modal.close();
     }
   }
 

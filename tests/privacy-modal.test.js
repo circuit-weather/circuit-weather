@@ -22,6 +22,8 @@ const createMockElement = (id) => {
     }),
     querySelectorAll: vi.fn(() => []),
     offsetParent: {},
+    showModal: vi.fn(),
+    close: vi.fn(),
   };
   return el;
 };
@@ -354,12 +356,12 @@ describe("PrivacyModal", () => {
         "click",
         expect.any(Function),
       );
-      expect(modal.backdrop.addEventListener).toHaveBeenCalledWith(
+      expect(modal.modal.addEventListener).toHaveBeenCalledWith(
         "click",
         expect.any(Function),
       );
-      expect(document.addEventListener).toHaveBeenCalledWith(
-        "keydown",
+      expect(modal.modal.addEventListener).toHaveBeenCalledWith(
+        "close",
         expect.any(Function),
       );
     });
@@ -412,18 +414,18 @@ describe("PrivacyModal", () => {
       expect(openSpy).not.toHaveBeenCalled();
     });
 
-    it("closes when backdrop is clicked directly", () => {
+    it("closes when modal is clicked directly (backdrop click)", () => {
       const closeSpy = vi.spyOn(modal, "close").mockImplementation(() => {});
-      const clickHandler = modal.backdrop.addEventListener.mock.calls.find(
+      const clickHandler = modal.modal.addEventListener.mock.calls.find(
         (call) => call[0] === "click",
       )[1];
-      clickHandler({ target: modal.backdrop });
+      clickHandler({ target: modal.modal });
       expect(closeSpy).toHaveBeenCalled();
     });
 
-    it("does not close when inner content of backdrop is clicked", () => {
+    it("does not close when inner content of modal is clicked", () => {
       const closeSpy = vi.spyOn(modal, "close").mockImplementation(() => {});
-      const clickHandler = modal.backdrop.addEventListener.mock.calls.find(
+      const clickHandler = modal.modal.addEventListener.mock.calls.find(
         (call) => call[0] === "click",
       )[1];
       clickHandler({ target: {} });
@@ -442,11 +444,10 @@ describe("PrivacyModal", () => {
       expect(modal.loaded).toBe(true);
 
       // Verify visibility
-      expect(modal.backdrop.classList.add).toHaveBeenCalledWith("visible");
+      expect(modal.modal.showModal).toHaveBeenCalled();
       expect(document.body.style.overflow).toBe("hidden");
 
       // Verify focus management
-      expect(modal.closeBtn.focus).toHaveBeenCalled();
       expect(modal.triggerElement).toBe(trigger); // Should store the trigger
     });
 
@@ -456,46 +457,29 @@ describe("PrivacyModal", () => {
       expect(global.fetch).not.toHaveBeenCalled();
     });
 
-    it("closes, restores focus, and unlocks body", async () => {
+    it("closes the native modal", async () => {
       // Setup open state
       const trigger = { tagName: "BUTTON", focus: vi.fn(), id: "trigger-btn" };
       modal.triggerElement = trigger;
-      modal.backdrop.classList.contains.mockReturnValue(true);
 
       modal.close();
 
-      expect(modal.backdrop.classList.remove).toHaveBeenCalledWith("visible");
+      expect(modal.modal.close).toHaveBeenCalled();
+    });
+
+    it("restores focus and unlocks body on native close event", () => {
+      const trigger = { tagName: "BUTTON", focus: vi.fn(), id: "trigger-btn" };
+      modal.triggerElement = trigger;
+
+      const closeHandler = modal.modal.addEventListener.mock.calls.find(
+        (call) => call[0] === "close",
+      )[1];
+
+      closeHandler();
+
       expect(document.body.style.overflow).toBe("");
       expect(trigger.focus).toHaveBeenCalled();
       expect(modal.triggerElement).toBeNull();
-    });
-
-    it("closes on Escape key press when visible", () => {
-      // Spy on close
-      const closeSpy = vi.spyOn(modal, "close");
-      // Setup visible state
-      modal.backdrop.classList.contains.mockReturnValue(true);
-
-      // Simulate Escape key
-      // Note: We need to find the listener bound in constructor
-      const calls = document.addEventListener.mock.calls;
-      const keydownHandler = calls.find((call) => call[0] === "keydown")[1];
-
-      keydownHandler({ key: "Escape" });
-
-      expect(closeSpy).toHaveBeenCalled();
-    });
-
-    it("ignores Escape key press when not visible", () => {
-      const closeSpy = vi.spyOn(modal, "close");
-      modal.backdrop.classList.contains.mockReturnValue(false);
-
-      const calls = document.addEventListener.mock.calls;
-      const keydownHandler = calls.find((call) => call[0] === "keydown")[1];
-
-      keydownHandler({ key: "Escape" });
-
-      expect(closeSpy).not.toHaveBeenCalled();
     });
 
     it("handles fetch errors gracefully", async () => {
@@ -517,88 +501,9 @@ describe("PrivacyModal", () => {
   });
 
   describe("Focus Trap", () => {
-    let firstElement, lastElement;
-
-    beforeEach(async () => {
-      // Open modal to attach focus trap listener
-      await modal.open();
-
-      // Setup mock focusable elements
-      firstElement = { id: "first", focus: vi.fn(), offsetParent: {} };
-      lastElement = { id: "last", focus: vi.fn(), offsetParent: {} };
-
-      // Mock querySelectorAll to return our elements
-      modal.backdrop.querySelectorAll.mockReturnValue([
-        firstElement,
-        lastElement,
-      ]);
-    });
-
-    it("loops focus to first element when tabbing from last element", () => {
-      document.activeElement = lastElement;
-
-      // Trigger handler directly (it's bound to backdrop keydown)
-      // Find the listener added to backdrop in open()
-      const calls = modal.backdrop.addEventListener.mock.calls;
-      const trapHandler = calls.find((call) => call[0] === "keydown")[1];
-
-      const event = {
-        key: "Tab",
-        shiftKey: false,
-        preventDefault: vi.fn(),
-      };
-
-      trapHandler(event);
-
-      expect(event.preventDefault).toHaveBeenCalled();
-      expect(firstElement.focus).toHaveBeenCalled();
-    });
-
-    it("loops focus to last element when shift-tabbing from first element", () => {
-      document.activeElement = firstElement;
-
-      const calls = modal.backdrop.addEventListener.mock.calls;
-      const trapHandler = calls.find((call) => call[0] === "keydown")[1];
-
-      const event = {
-        key: "Tab",
-        shiftKey: true,
-        preventDefault: vi.fn(),
-      };
-
-      trapHandler(event);
-
-      expect(event.preventDefault).toHaveBeenCalled();
-      expect(lastElement.focus).toHaveBeenCalled();
-    });
-
-    it("does nothing for non-Tab keys", () => {
-      const calls = modal.backdrop.addEventListener.mock.calls;
-      const trapHandler = calls.find((call) => call[0] === "keydown")[1];
-
-      const event = {
-        key: "Enter",
-        preventDefault: vi.fn(),
-      };
-
-      trapHandler(event);
-
-      expect(event.preventDefault).not.toHaveBeenCalled();
-    });
-
-    it("does nothing if no focusable elements found", () => {
-      modal.backdrop.querySelectorAll.mockReturnValue([]);
-
-      const calls = modal.backdrop.addEventListener.mock.calls;
-      const trapHandler = calls.find((call) => call[0] === "keydown")[1];
-
-      const event = {
-        key: "Tab",
-        preventDefault: vi.fn(),
-      };
-
-      trapHandler(event);
-      expect(event.preventDefault).not.toHaveBeenCalled();
+    it("is skipped natively by the dialog element, removing manual logic", () => {
+      // Focus trap is handled natively by HTML dialog, testing it manually is obsolete
+      expect(modal.handleFocusTrap).toBeUndefined();
     });
   });
 });

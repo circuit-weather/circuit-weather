@@ -1545,30 +1545,10 @@ body {
    Privacy Modal
    =================================== */
 
-.privacy-modal-backdrop {
-    display: none;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
-    z-index: 3000;
-    align-items: center;
-    justify-content: center;
-    padding: var(--spacing-md);
-    opacity: 0;
-    transition: opacity var(--transition-normal);
-}
-
-.privacy-modal-backdrop.visible {
-    display: flex;
-    opacity: 1;
-}
-
 .privacy-modal {
+    display: none;
+    padding: 0;
+    margin: auto;
     background: var(--color-surface);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-lg);
@@ -1576,9 +1556,19 @@ body {
     max-width: 600px;
     width: 100%;
     max-height: 80vh;
+    animation: modalSlideIn 0.3s ease;
+    color: inherit;
+}
+
+.privacy-modal[open] {
     display: flex;
     flex-direction: column;
-    animation: modalSlideIn 0.3s ease;
+}
+
+.privacy-modal::backdrop {
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
 }
 
 @keyframes modalSlideIn {
