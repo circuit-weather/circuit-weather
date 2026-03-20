@@ -582,19 +582,24 @@ export class CircuitWeatherApp {
 
             this.router.navigate('f1', this.selectedRace.round, sessionId);
         } catch (error) {
-            // TODO: This error handling requires further investigation and confirmation.
-            // When an error occurs during session selection, the current code only logs
-            // the error to the browser console and hides the loading overlay. The user
-            // receives no visual feedback at all about what went wrong — the loading spinner
-            // disappears and the application returns to its previous state silently. This
-            // means that if either the radar data fails to load or the session forecast
-            // fetch fails, the user has no way of knowing whether the operation succeeded,
-            // partially succeeded, or failed entirely. This is particularly confusing because
-            // both radar.load() and updateSessionForecast() run in parallel via Promise.all(),
-            // so either or both could have failed. Consider showing an error toast notification
-            // or updating the relevant UI panel to display an error state that tells the user
-            // which component failed and whether they should try again.
             console.error('Error selecting session:', error);
+
+            // Palette UX: Provide visual feedback when session data fails to load
+            if (this.radar && typeof this.radar.showErrorToast === 'function') {
+                this.radar.showErrorToast('Session Error', 'Failed to load session forecast or radar data.', 5);
+            }
+
+            // Clear skeleton and show error state in the forecast panel
+            if (this.ui.forecastContent) {
+                this.ui.forecastContent.innerHTML = '';
+                this.ui.forecastContent.removeAttribute('aria-busy');
+                this.ui.forecastContent.style.display = 'none';
+            }
+            if (this.ui.forecastUnavailable) {
+                this.ui.forecastUnavailable.style.display = 'block';
+                const p = this.ui.forecastUnavailable.querySelector('p');
+                if (p) p.textContent = 'Failed to load forecast data. Please try again.';
+            }
         } finally {
             this.showLoading(false);
         }
