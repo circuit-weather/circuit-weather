@@ -64,3 +64,7 @@
 ## 2026-03-09 - Continuous Animations in Skeleton Loaders
 **Learning:** Continuous CSS animations (like infinite gradients on skeleton loaders) can cause discomfort, dizziness, or adverse effects for users with vestibular disorders or motion sensitivity who have enabled `prefers-reduced-motion` in their OS or browser.
 **Action:** Always wrap continuous animations in a `@media (prefers-reduced-motion: reduce)` query to disable the animation (`animation: none`) and provide a static placeholder, ensuring the UI remains accessible and comfortable for all users.
+
+## 2025-05-15 - Async Operation Silent Failures
+**Learning:** When async operations tied to user interactions fail silently inside catch blocks, users are left staring at infinite loading skeletons or unchanged screens, which is confusing and feels broken.
+**Action:** Always provide explicit visual feedback (like an error toast) and properly tear down loading states (e.g., removing `aria-busy` and hiding skeletons) in the catch block of user-initiated async functions.
