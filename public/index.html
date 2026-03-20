@@ -436,37 +436,21 @@
     </div>
 
     <!-- Privacy Policy Modal -->
-    <!-- TODO: This modal implementation requires further investigation and confirmation.
-         The current implementation uses a generic div element with role="dialog" and
-         aria-modal="true" attributes instead of the native HTML5 dialog element. While
-         this approach works, it requires manual implementation of focus management,
-         keyboard handling for the Escape key, and click-outside-to-close behavior that
-         the native dialog element provides automatically. The dialog element has built-in
-         focus trapping, proper modal behavior, and accessibility features that are
-         difficult to replicate correctly with ARIA attributes alone. Using the native
-         dialog element would simplify the code, improve accessibility, and reduce
-         the risk of bugs in focus management. However, this change would require
-         updating the JavaScript that controls the modal to use the dialog's showModal()
-         and close() methods instead of toggling CSS classes or display properties.
-    -->
-    <div class="privacy-modal-backdrop" id="privacyModalBackdrop" role="dialog" aria-modal="true"
-        aria-labelledby="privacyTitle">
-        <div class="privacy-modal">
-            <div class="privacy-modal-header">
-                <h2 id="privacyTitle">Privacy Policy</h2>
-                <button class="privacy-modal-close" id="privacyModalClose" aria-label="Close privacy policy"
-                    title="Close privacy policy (Esc)" aria-keyshortcuts="Escape">
-                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <line x1="18" y1="6" x2="6" y2="18"></line>
-                        <line x1="6" y1="6" x2="18" y2="18"></line>
-                    </svg>
-                </button>
-            </div>
-            <div class="privacy-modal-content" id="privacyModalContent" tabindex="0" role="region" aria-label="Privacy Policy content">
-                <!-- Privacy content loaded here -->
-            </div>
+    <dialog id="privacyModal" class="privacy-modal" aria-labelledby="privacyTitle">
+        <div class="privacy-modal-header">
+            <h2 id="privacyTitle">Privacy Policy</h2>
+            <button class="privacy-modal-close" id="privacyModalClose" aria-label="Close privacy policy"
+                title="Close privacy policy (Esc)" aria-keyshortcuts="Escape">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
         </div>
-    </div>
+        <div class="privacy-modal-content" id="privacyModalContent" tabindex="0" role="region" aria-label="Privacy Policy content">
+            <!-- Privacy content loaded here -->
+        </div>
+    </dialog>
 
     <!-- Leaflet JS (Proxied for strict CSP) -->
     <script src="/api/assets/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
