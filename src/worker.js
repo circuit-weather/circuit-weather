@@ -23,7 +23,6 @@ import {
   RateLimiter,
   API_SECURITY_HEADERS,
   API_SECURITY_HEADERS_ENTRIES,
-  getErrorHeaders,
   getAllowedOrigin,
   getEmptyRadarResponse,
   createErrorResponse
