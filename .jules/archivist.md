@@ -162,3 +162,8 @@ Prevention: Avoid duplicating configuration values in documentation; reference t
 
 **Learning:** `AGENTS.md` local development instructions incorrectly suggested using `npx wrangler dev` alongside a commented-out `# pnpm run dev` fallback. While standardizing on `pnpm run dev` ensures exact version matching with CI, developers may not have `pnpm` available, or may have `wrangler` installed globally. Documenting a single standard path without explaining *why* or providing fallbacks for varying environments creates friction for contributors.
 **Action:** Updated `AGENTS.md` to explicitly state `pnpm run dev` as the standard (for CI parity), while actively documenting `wrangler dev` (for global installs) and `npx wrangler dev` (for dynamic fetching) as explicitly reasoned fallbacks.
+
+## 2026-03-14 - Privacy Proxy Drift for Proxied Assets
+
+**Learning:** `PRIVACY.md` documented the "Privacy Proxy" strategy for F1 schedules, Track Layouts, and RainViewer tiles, but failed to mention that Leaflet library assets fetched from Unpkg are also proxied. Documentation of privacy architectures must be kept strictly in sync with actual implementation details (like those found in `src/worker.js`) to ensure users have accurate information about what data is obscured.
+**Action:** Updated `PRIVACY.md` to explicitly include Leaflet library assets in the list of resources protected by the Cloudflare Worker proxy.
