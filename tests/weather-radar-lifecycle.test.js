@@ -541,4 +541,132 @@ describe('WeatherRadar Lifecycle & Playback', () => {
               expect(layer).toBe(existingLayer);
          });
     });
+
+    describe('Relative Time Interval & Loop method', () => {
+        it('calls updateTimeDisplay every ONE_MINUTE_MS if visibleLayerIndex is valid', () => {
+            const ONE_MINUTE_MS = 60000;
+            radar.visibleLayerIndex = 0;
+            radar.frames = [{ time: 1000 }];
+
+            vi.spyOn(radar, 'updateTimeDisplay').mockImplementation(() => {});
+
+            vi.advanceTimersByTime(ONE_MINUTE_MS);
+
+            expect(radar.updateTimeDisplay).toHaveBeenCalledWith(1000);
+        });
+
+        it('does not call updateTimeDisplay if visibleLayerIndex is invalid', () => {
+            const ONE_MINUTE_MS = 60000;
+            radar.visibleLayerIndex = -1;
+
+            vi.spyOn(radar, 'updateTimeDisplay').mockImplementation(() => {});
+
+            vi.advanceTimersByTime(ONE_MINUTE_MS);
+
+            expect(radar.updateTimeDisplay).not.toHaveBeenCalled();
+        });
+
+        it('loop does nothing if not playing', () => {
+            radar.isPlaying = false;
+            radar.loop();
+            expect(radar.animationFrameId).toBeNull();
+        });
+
+        it('loop advances frame when enough time elapsed', () => {
+            radar.isPlaying = true;
+            radar.frames = [{ time: 1000 }, { time: 2000 }];
+            radar.currentFrame = 0;
+            radar.lastFrameTime = 0;
+
+            vi.spyOn(radar, 'getCurrentSpeed').mockReturnValue(100);
+            vi.spyOn(performance, 'now').mockReturnValue(150); // > 100
+            vi.spyOn(radar, 'showFrame').mockImplementation(() => {});
+
+            radar.loop();
+
+            expect(radar.currentFrame).toBe(1);
+            expect(radar.showFrame).toHaveBeenCalledWith(1);
+            // 150 - (150 % 100) = 150 - 50 = 100
+            expect(radar.lastFrameTime).toBe(100);
+        });
+    });
+
+    describe('Additional Coverage', () => {
+        it('formatDuration calculates correctly for >1 days, >1 hours, >1 minutes', () => {
+            const minutesInDay = 24 * 60;
+            const minutesInHour = 60;
+            const total = (2 * minutesInDay) + (2 * minutesInHour) + 2;
+            const result = radar.formatDuration(total);
+            expect(result).toBe('2 days 2 hours 2 minutes');
+        });
+
+        it('togglePlay pauses if playing, plays if not playing', () => {
+            const playSpy = vi.spyOn(radar, 'play').mockImplementation(() => {});
+            const pauseSpy = vi.spyOn(radar, 'pause').mockImplementation(() => {});
+
+            radar.isPlaying = true;
+            radar.togglePlay();
+            expect(pauseSpy).toHaveBeenCalled();
+
+            radar.isPlaying = false;
+            radar.togglePlay();
+            expect(playSpy).toHaveBeenCalled();
+        });
+
+        it('showControls sets display flex if visible, none if not', () => {
+            radar.ui.controls = { style: { display: '' } };
+
+            radar.showControls(true);
+            expect(radar.ui.controls.style.display).toBe('flex');
+
+            radar.showControls(false);
+            expect(radar.ui.controls.style.display).toBe('none');
+        });
+
+        it('preloadSequence resolves correctly', async () => {
+            radar.frames = [{time: 1}, {time: 2}];
+            radar.currentFrame = 0;
+            vi.spyOn(radar, 'preloadFrame').mockResolvedValue();
+
+            await radar.preloadSequence();
+            expect(radar.preloadFrame).toHaveBeenCalledWith(1);
+        });
+
+        it('preloadFrame resolves immediately if layer is null', async () => {
+            vi.spyOn(radar, 'getLayer').mockReturnValue(null);
+
+            let resolved = false;
+            await radar.preloadFrame(0).then(() => { resolved = true; });
+            expect(resolved).toBe(true);
+        });
+
+        it('preloadFrame resolves immediately if layer is already on map', async () => {
+            const mockLayer = { setOpacity: vi.fn(), addTo: vi.fn(), on: vi.fn(), off: vi.fn() };
+            vi.spyOn(radar, 'getLayer').mockReturnValue(mockLayer);
+            radar.map.hasLayer.mockReturnValue(true);
+
+            let resolved = false;
+            const promise = radar.preloadFrame(0).then(() => { resolved = true; });
+            vi.advanceTimersByTime(500);
+            await promise;
+
+            expect(resolved).toBe(true);
+            expect(mockLayer.addTo).not.toHaveBeenCalled();
+        });
+
+        it('preloadFrame resolves after timeout if neither load nor tileerror emit', async () => {
+            const mockLayer = { setOpacity: vi.fn(), addTo: vi.fn(), on: vi.fn(), off: vi.fn() };
+            vi.spyOn(radar, 'getLayer').mockReturnValue(mockLayer);
+            radar.map.hasLayer.mockReturnValue(false);
+
+            let resolved = false;
+            radar.preloadFrame(0).then(() => { resolved = true; });
+
+            vi.advanceTimersByTime(30000); // CONFIG.TILE_LOAD_TIMEOUT_MS is typically 30s
+            await Promise.resolve();
+
+            expect(resolved).toBe(true);
+            expect(mockLayer.off).toHaveBeenCalledWith('load', expect.any(Function));
+        });
+    });
 });

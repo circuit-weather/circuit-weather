@@ -265,4 +265,24 @@ describe('WeatherRadar Live Countdown', () => {
 
         expect(radar.showFrame).toHaveBeenCalledWith(1);
     });
+
+    it('shows "1 min ago" and "2 mins ago" correctly for singular/plural', () => {
+        radar.sessionTime = null;
+
+        // System time is T=1000
+        vi.setSystemTime(new Date(1000 * 1000));
+
+        // Latest at T=1000
+        radar.frames = [{ time: 1000 }];
+        radar.pastFrameCount = 1;
+        radar.visibleLayerIndex = 0;
+
+        // Check 1 min ago
+        radar.updateTimeDisplay(1000 - 60);
+        expect(radar.ui.relative.textContent).toBe('1 min ago');
+
+        // Check 2 mins ago
+        radar.updateTimeDisplay(1000 - 120);
+        expect(radar.ui.relative.textContent).toBe('2 mins ago');
+    });
 });
