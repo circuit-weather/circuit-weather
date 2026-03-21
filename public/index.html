@@ -33,17 +33,6 @@
 
     <link rel="canonical" href="https://circuit-weather.racing">
     <meta name="referrer" content="strict-origin-when-cross-origin">
-    <!-- TODO: This Content Security Policy requires further investigation and confirmation.
-         The current policy includes 'unsafe-inline' in the style-src directive, which significantly
-         weakens the XSS protection that CSP is designed to provide. The 'unsafe-inline' keyword
-         allows inline styles to execute, which could be exploited by attackers to inject malicious
-         CSS or JavaScript through style attributes. Since all styles in this application appear to
-         be defined in the external styles.css file, it should be possible to remove 'unsafe-inline'
-         and rely solely on 'self' for style sources. However, this change needs to be tested carefully
-         to ensure that no legitimate inline styles are being used by third-party libraries or dynamic
-         components. Additionally, consider using nonce-based or hash-based CSP policies if inline
-         styles are found to be necessary for specific components.
-    -->
     <meta http-equiv="Content-Security-Policy"
         content="upgrade-insecure-requests; default-src 'self'; script-src 'self' https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; img-src 'self' data: https://*.basemaps.cartocdn.com https://flagcdn.com https://*.buymeacoffee.com; font-src https://fonts.gstatic.com; connect-src 'self' https://api.open-meteo.com https://*.buymeacoffee.com; worker-src 'self'; object-src 'none'; frame-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self';">
     <title>Circuit Weather — Live F1 Race Weather Radar &amp; Forecasts</title>
@@ -83,15 +72,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- Leaflet CSS -->
-    <!-- TODO: The integrity hash implementation requires further investigation and confirmation.
-         The current implementation includes an integrity attribute for Subresource Integrity (SRI)
-         verification, but it is missing the required crossorigin="anonymous" attribute. According to
-         the W3C specification and browser implementation requirements, browsers will only validate
-         the integrity hash for resources that are fetched with CORS enabled. Without the crossorigin
-         attribute, the browser may not validate the integrity hash at all, which defeats the purpose
-         of including SRI protection. This needs to be tested across different browsers to confirm
-         the current behavior and ensure the integrity validation is actually being enforced.
-    -->
     <link rel="stylesheet" href="/api/assets/leaflet.css"
         integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous">
 
@@ -181,19 +161,6 @@
 
                 <!-- Race Info Banner -->
                 <section class="race-info-banner" id="raceInfoBanner" aria-labelledby="raceInfoName" style="display: none;">
-                    <!-- TODO: This image alt attribute requires further investigation and confirmation.
-                         The country flag image currently has an empty alt attribute (alt=""), which
-                         indicates to screen readers that the image is purely decorative. However,
-                         these flag images represent specific countries and provide meaningful context
-                         to users about which race circuit is being displayed. Users with visual
-                         impairments who rely on screen readers would benefit from knowing which
-                         country's flag is being shown. Consider populating the alt attribute
-                         dynamically with the country name when the image loads, such as
-                         alt="[country] flag", or use role="img" with an aria-label attribute to
-                         provide the same information. This would improve accessibility while
-                         maintaining the visual design. The empty alt should only be used if the
-                         flag truly provides no meaningful information beyond decoration.
-                    -->
                     <!-- Scout: Added a generic fallback alt text for SEO and accessibility before JS populates the country name -->
                     <img id="countryFlag" class="race-info-flag" alt="Country flag">
                     <div class="race-info-details">
@@ -369,17 +336,6 @@
                 <!-- Mobile Race Info Overlay (visible only on mobile) -->
                 <!-- Scout: Upgraded generic div to semantic section for consistent landmarks -->
                 <section class="mobile-race-info" id="mobileRaceInfo" aria-labelledby="mobileRaceInfoName" style="display: none;">
-                    <!-- TODO: This image alt attribute requires further investigation and confirmation.
-                         Similar to the desktop country flag image, this mobile flag image has an
-                         empty alt attribute that should be populated with the actual country name
-                         for better accessibility. Since this is a mobile-specific UI element, it
-                         serves the same purpose of identifying the race location to users. Screen
-                         reader users on mobile devices would equally benefit from knowing which
-                         country's flag is being displayed. The alt text should be set dynamically
-                         when the image source is updated, using a format like alt="[country] flag"
-                         to provide meaningful context. Consider implementing this in the JavaScript
-                         that updates the mobileCountryFlag.src property.
-                    -->
                     <!-- Scout: Added a generic fallback alt text for SEO and accessibility before JS populates the country name -->
                     <img id="mobileCountryFlag" class="mobile-race-info-flag" alt="Country flag">
                     <div class="mobile-race-info-text">
