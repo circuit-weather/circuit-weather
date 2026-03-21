@@ -68,3 +68,7 @@
 ## 2025-05-15 - Async Operation Silent Failures
 **Learning:** When async operations tied to user interactions fail silently inside catch blocks, users are left staring at infinite loading skeletons or unchanged screens, which is confusing and feels broken.
 **Action:** Always provide explicit visual feedback (like an error toast) and properly tear down loading states (e.g., removing `aria-busy` and hiding skeletons) in the catch block of user-initiated async functions.
+
+## 2026-03-20 - Tactile Active States on Icon Buttons
+**Learning:** While focus and hover states provide visual feedback for mouse and keyboard users, pure icon buttons can feel "dead" during the physical click event itself. Adding a subtle, fast scale-down effect (`transform: scale(0.95); transition: transform 0.1s ease;`) on the `:active` pseudo-class provides immediate, tactile visual feedback that makes the UI feel significantly more responsive and polished.
+**Action:** Always consider adding subtle `:active` scale states to primary interactive elements, especially icon-only buttons, to enhance the perceived performance and physical feel of the application.

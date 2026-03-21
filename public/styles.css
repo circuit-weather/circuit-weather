@@ -1849,3 +1849,18 @@ body {
     outline: 2px solid var(--color-primary);
     outline-offset: 2px;
 }
+/* ===================================
+   Active States (Tactile Feedback)
+   =================================== */
+.theme-toggle:active,
+.mobile-menu-btn:active,
+.radar-play-btn:active,
+.radar-speed-btn:active,
+.sidebar-toggle:active,
+.privacy-modal-close:active,
+.retry-btn:active,
+.leaflet-control-zoom a:active,
+.leaflet-control-zoom-recentre:active {
+    transform: scale(0.95);
+    transition: transform 0.1s ease;
+}
