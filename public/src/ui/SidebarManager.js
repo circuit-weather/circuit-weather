@@ -73,8 +73,14 @@ export class SidebarManager {
             this.sidebar.addEventListener('keydown', this._handleFocusTrap);
 
             // Update ARIA states
-            if (this.mobileMenuBtn) this.mobileMenuBtn.setAttribute('aria-expanded', 'true');
-            if (this.toggleBtn) this.toggleBtn.setAttribute('aria-expanded', 'true');
+            if (this.mobileMenuBtn) {
+                this.mobileMenuBtn.setAttribute('aria-expanded', 'true');
+                this.mobileMenuBtn.setAttribute('aria-label', 'Close menu');
+            }
+            if (this.toggleBtn) {
+                this.toggleBtn.setAttribute('aria-expanded', 'true');
+                this.toggleBtn.setAttribute('aria-label', 'Close menu');
+            }
 
             // Move focus to close button inside sidebar for accessibility
             if (this.toggleBtn) {
@@ -94,8 +100,14 @@ export class SidebarManager {
             this.sidebar.removeEventListener('keydown', this._handleFocusTrap);
 
             // Update ARIA states
-            if (this.mobileMenuBtn) this.mobileMenuBtn.setAttribute('aria-expanded', 'false');
-            if (this.toggleBtn) this.toggleBtn.setAttribute('aria-expanded', 'false');
+            if (this.mobileMenuBtn) {
+                this.mobileMenuBtn.setAttribute('aria-expanded', 'false');
+                this.mobileMenuBtn.setAttribute('aria-label', 'Open menu');
+            }
+            if (this.toggleBtn) {
+                this.toggleBtn.setAttribute('aria-expanded', 'false');
+                this.toggleBtn.setAttribute('aria-label', 'Open menu');
+            }
 
             // Return focus to menu button if it's visible (mobile)
             // This restores context to the user after closing the menu
