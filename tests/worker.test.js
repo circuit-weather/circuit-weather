@@ -109,6 +109,27 @@ describe("Worker Logic", () => {
   });
 
   describe("F1 API Proxy (/api/f1/*)", () => {
+    it("sets CORS headers for cache miss when valid Origin is provided", async () => {
+      const upstreamData = { MRData: { raceTable: {} } };
+      mockFetch.mockResolvedValueOnce(
+        new Response(JSON.stringify(upstreamData), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      );
+
+      const req = createRequest("/api/f1/current", {
+        headers: { Origin: "https://circuit-weather.racing" },
+      });
+      const res = await worker.fetch(req, global.env, global.ctx);
+
+      expect(res.status).toBe(200);
+      expect(res.headers.get("Access-Control-Allow-Origin")).toBe(
+        "https://circuit-weather.racing",
+      );
+      expect(res.headers.get("Vary")).toBe("Origin");
+    });
+
     it("proxies request to Jolpica and caches result", async () => {
       const upstreamData = { MRData: { raceTable: {} } };
       mockFetch.mockResolvedValueOnce(
@@ -362,6 +383,17 @@ describe("Worker Logic", () => {
   });
 
   describe("Track Proxy (/api/track/*)", () => {
+    it("blocks track request with invalid fetch destination", async () => {
+      const req = new Request("https://circuit-weather.racing/api/track/monaco", {
+        headers: {
+          "Sec-Fetch-Dest": "script",
+          "Sec-Fetch-Site": "same-origin",
+        },
+      });
+      const res = await worker.fetch(req, global.env, global.ctx);
+      expect(res.status).toBe(403);
+    });
+
     it("fetches geojson from github", async () => {
       const mockGeoJson = { type: "FeatureCollection", features: [] };
       mockFetch.mockResolvedValueOnce(
