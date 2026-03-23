@@ -108,7 +108,7 @@ export default {
       return createErrorResponse(request, 403, 'Forbidden');
     }
 
-    // Only /api/f1/* routes reach this worker (configured via run_worker_first)
+    // Only /api/* routes reach this worker (configured via run_worker_first)
     if (path.startsWith('/api/f1/')) {
       return handleApiRequest(request, env, ctx);
     }
