@@ -109,6 +109,45 @@ describe("Worker Logic", () => {
   });
 
   describe("F1 API Proxy (/api/f1/*)", () => {
+    it("rejects path that is too long (length > 255)", async () => {
+      const longPath = "a".repeat(256);
+      const req = createRequest(`/api/f1/${longPath}`);
+      const res = await worker.fetch(req, global.env, global.ctx);
+
+      expect(res.status).toBe(400);
+      const data = await res.json();
+      expect(data.error.message).toBe("Path too long");
+    });
+
+    it("rejects invalid path with directory traversal", async () => {
+      // Create request manually to prevent URL resolution from collapsing the path
+      const req = new Request("https://circuit-weather.racing/api/f1/..%2F..%2Fetc%2Fpasswd", {
+        headers: { "Sec-Fetch-Site": "same-origin" },
+      });
+      const res = await worker.fetch(req, global.env, global.ctx);
+
+      expect(res.status).toBe(400);
+      const data = await res.json();
+      expect(data.error.message).toBe("Invalid API path");
+    });
+
+    it("returns upstream error when upstream response is not ok", async () => {
+      mockFetch.mockResolvedValueOnce(
+        new Response(JSON.stringify({ error: "Not Found" }), {
+          status: 404,
+          headers: { "Content-Type": "application/json" },
+        }),
+      );
+
+      const req = createRequest("/api/f1/nonexistent");
+      const res = await worker.fetch(req, global.env, global.ctx);
+
+      expect(res.status).toBe(404);
+      const data = await res.json();
+      expect(data.error.message).toBe("Upstream API error");
+      expect(data.error.status).toBe(404);
+    });
+
     it("sets CORS headers for cache miss when valid Origin is provided", async () => {
       const upstreamData = { MRData: { raceTable: {} } };
       mockFetch.mockResolvedValueOnce(
