@@ -791,9 +791,15 @@ export class CircuitWeatherApp {
                 const temp = Math.round(hour.temp);
                 const ariaLabel = `${a11yTime}. ${desc}. Temperature ${temp} degrees. Rain chance ${hour.precipProb}%. Wind ${hour.windSpeed} km/h.`;
 
+                // Create a valid ISO string for the datetime attribute
+                const isoDateTime = new Date(hour.time * 1000).toISOString();
+
+                // Scout: Upgraded the timeline time element from a generic div to a semantic <time> tag
+                // and added a datetime attribute. This helps search engines and crawlers understand
+                // that this specific string represents a time duration/point in the forecast.
                 return `
                     <li class="weather-timeline-item" aria-label="${escapeHtml(ariaLabel)}">
-                        <div class="weather-timeline-time" aria-hidden="true">${escapeHtml(relTime)}</div>
+                        <time datetime="${escapeHtml(isoDateTime)}" class="weather-timeline-time" aria-hidden="true">${escapeHtml(relTime)}</time>
                         <div class="weather-timeline-condition" aria-hidden="true">
                             ${escapeHtml(desc)}
                             <div class="weather-timeline-wind">${escapeHtml(hour.windSpeed)} km/h</div>
