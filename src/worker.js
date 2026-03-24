@@ -741,7 +741,9 @@ async function handleTileRequest(request, env, ctx) {
     // Bolt Optimization: Use fast bucket calculation
     const bucket = Math.floor(status / 100);
     if (bucket >= 4 || Math.random() < 0.05) {
-      console.log(`Tile Proxy Bucket: ${bucket}xx (Status: ${status}) Path: ${tilePath}`);
+      if (env.ENVIRONMENT !== 'production') {
+        console.log(`Tile Proxy Bucket: ${bucket}xx (Status: ${status}) Path: ${tilePath}`);
+      }
     }
 
     // 3. Cache Determination
