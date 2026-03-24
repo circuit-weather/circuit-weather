@@ -618,6 +618,38 @@ describe('CircuitWeatherApp Pure Methods', () => {
     });
 
     // ---------------------------------------------------------------
+    // renderForecastSkeleton — outcome: renders skeleton loader
+    // ---------------------------------------------------------------
+    describe('renderForecastSkeleton', () => {
+        beforeEach(() => {
+            app.ui.forecastContent = createMockElement('forecastContent');
+            app.ui.forecastContent.setAttribute = vi.fn();
+            app.ui.forecastContent.getAttribute = vi.fn((attr) => attr === 'aria-busy' ? 'true' : null);
+            app.ui.forecastUnavailable = createMockElement('forecastUnavailable');
+        });
+
+        it('renders the skeleton loader correctly', () => {
+            const mockTemplate = createMockElement('forecast-skeleton-template');
+            mockTemplate.cloneNode = vi.fn();
+            mockTemplate.content = { cloneNode: vi.fn(() => createMockElement('clonedContent')) };
+
+            // Temporarily replace document.getElementById to return our mock template
+            const originalGetElementById = document.getElementById;
+            document.getElementById = vi.fn((id) => id === 'forecast-skeleton-template' ? mockTemplate : originalGetElementById(id));
+
+            app.renderForecastSkeleton();
+
+            expect(app.ui.forecastUnavailable.style.display).toBe('none');
+            expect(app.ui.forecastContent.setAttribute).toHaveBeenCalledWith('aria-busy', 'true');
+            expect(app.ui.forecastContent.style.display).toBe('block');
+            expect(app.ui.forecastContent.innerHTML).toBe('');
+            expect(app.ui.forecastContent.appendChild).toHaveBeenCalled();
+
+            document.getElementById = originalGetElementById;
+        });
+    });
+
+    // ---------------------------------------------------------------
     // handleRoute — outcome: correct round and session selected
     // ---------------------------------------------------------------
     describe('handleRoute', () => {
