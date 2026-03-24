@@ -167,3 +167,8 @@ Prevention: Avoid duplicating configuration values in documentation; reference t
 
 **Learning:** `PRIVACY.md` documented the "Privacy Proxy" strategy for F1 schedules, Track Layouts, and RainViewer tiles, but failed to mention that Leaflet library assets fetched from Unpkg are also proxied. Documentation of privacy architectures must be kept strictly in sync with actual implementation details (like those found in `src/worker.js`) to ensure users have accurate information about what data is obscured.
 **Action:** Updated `PRIVACY.md` to explicitly include Leaflet library assets in the list of resources protected by the Cloudflare Worker proxy.
+
+## 2026-03-24 - Legacy Cloudflare Pages Reference in .gitignore
+
+**Learning:** Despite the project migrating to Cloudflare Workers with Static Assets, an outdated comment referencing Cloudflare Pages remained in `.gitignore`.
+**Action:** Updated `.gitignore` comment to correctly describe `wrangler.toml`'s role in Cloudflare Workers deployment to maintain accuracy.
