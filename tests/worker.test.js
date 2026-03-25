@@ -109,6 +109,17 @@ describe("Worker Logic", () => {
   });
 
   describe("F1 API Proxy (/api/f1/*)", () => {
+    it("blocks request with invalid fetch destination", async () => {
+      const req = new Request("https://circuit-weather.racing/api/f1/current", {
+        headers: {
+          "Sec-Fetch-Dest": "script",
+          "Sec-Fetch-Site": "same-origin",
+        },
+      });
+      const res = await worker.fetch(req, global.env, global.ctx);
+      expect(res.status).toBe(403);
+    });
+
     it("rejects path that is too long (length > 255)", async () => {
       const longPath = "a".repeat(256);
       const req = createRequest(`/api/f1/${longPath}`);
