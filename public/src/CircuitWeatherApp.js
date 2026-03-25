@@ -140,7 +140,8 @@ export class CircuitWeatherApp {
             if (btn) {
                 btn.addEventListener('click', () => {
                     btn.disabled = true;
-                    btn.textContent = 'Retrying...';
+                    // Palette UX: Add loading spinner to async submit button
+                    btn.innerHTML = `<svg style="width: 1rem; height: 1rem; margin-right: 0.5rem; animation: spin 1s linear infinite;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"></path></svg>Retrying...`;
                     btn.setAttribute('aria-label', 'Retrying connection');
                     window.location.reload();
                 });
