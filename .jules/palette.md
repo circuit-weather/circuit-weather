@@ -72,3 +72,7 @@
 ## 2026-03-20 - Tactile Active States on Icon Buttons
 **Learning:** While focus and hover states provide visual feedback for mouse and keyboard users, pure icon buttons can feel "dead" during the physical click event itself. Adding a subtle, fast scale-down effect (`transform: scale(0.95); transition: transform 0.1s ease;`) on the `:active` pseudo-class provides immediate, tactile visual feedback that makes the UI feel significantly more responsive and polished.
 **Action:** Always consider adding subtle `:active` scale states to primary interactive elements, especially icon-only buttons, to enhance the perceived performance and physical feel of the application.
+
+## 2026-03-24 - Async Loading States Before Synchronous Page Reloads
+**Learning:** Even when a UI action triggers a seemingly immediate synchronous `window.location.reload()`, the browser can appear to freeze or stall before the actual navigation or repaint occurs, especially on slower network connections. Adding immediate visual feedback (such as disabling the button and injecting a loading spinner) right before the reload significantly improves perceived performance and reassures the user that their action was registered.
+**Action:** Always add intermediate visual loading states (spinners, disabled attributes, and updated `aria-label`s) to action buttons that trigger full page navigations or reloads, rather than relying solely on the browser's native tab loading indicator.
