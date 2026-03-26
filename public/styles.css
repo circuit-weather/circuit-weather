@@ -1859,6 +1859,7 @@ body {
 .sidebar-toggle:active,
 .privacy-modal-close:active,
 .retry-btn:active,
+.unit-option:active,
 .leaflet-control-zoom a:active,
 .leaflet-control-zoom-recentre:active {
     transform: scale(0.95);
