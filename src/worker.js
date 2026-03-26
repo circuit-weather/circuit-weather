@@ -414,6 +414,20 @@ async function handleTrackRequest(request, env, ctx) {
       return cacheAndReturnError(request, cache, cacheKey, status, 'Track not found', {}, ctx);
     }
 
+    // SEC: Strict Content-Type Validation
+    // Prevent MIME sniffing vulnerabilities if upstream serves non-JSON content
+    const contentType = upstreamResponse.headers.get('Content-Type');
+    const mime = contentType ? contentType.split(';')[0].trim() : '';
+
+    // GitHub raw content for geojson might be text/plain or application/json
+    // We should strictly allow text/plain or application/json since github raw serves text/plain
+    if (mime !== 'application/json' && mime !== 'text/plain') {
+      if (env.ENVIRONMENT !== 'production') {
+        console.error(`Upstream Track Invalid Content-Type: ${contentType} (parsed: ${mime})`);
+      }
+      return cacheAndReturnError(request, cache, cacheKey, 502, 'Invalid upstream content type', {}, ctx);
+    }
+
     // Bolt Optimization: Stream response instead of buffering text
     const [cacheBody, clientBody] = upstreamResponse.body.tee();
 
