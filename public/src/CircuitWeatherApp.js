@@ -377,6 +377,10 @@ export class CircuitWeatherApp {
         const twitterDesc = document.querySelector('meta[name="twitter:description"]');
         if (twitterDesc) twitterDesc.setAttribute('content', desc);
 
+        // Scout: Update Twitter Card URL to ensure accurate link attribution when shared
+        const twitterUrl = document.querySelector('meta[name="twitter:url"]');
+        if (twitterUrl) twitterUrl.setAttribute('content', window.location.href);
+
         // Scout: Inject dynamic JSON-LD structured data for the selected session
         // Value: Improves rich snippets in SERP by providing explicit event details (SportsEvent) to search engines.
         if (this.selectedRace && this.selectedSession && this.selectedSession.date && this.selectedSession.time) {
