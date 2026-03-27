@@ -398,6 +398,51 @@ describe('CircuitWeatherApp Pure Methods', () => {
         });
     });
 
+
+    describe('updateRaceInfo', () => {
+        beforeEach(() => {
+            app.ui.raceInfoBanner = createMockElement('raceInfoBanner');
+            app.ui.countryFlag = createMockElement('countryFlag');
+            app.ui.raceInfoCountry = createMockElement('raceInfoCountry');
+            app.ui.raceInfoName = createMockElement('raceInfoName');
+            app.ui.raceInfoCircuit = createMockElement('raceInfoCircuit');
+            app.ui.mobileRaceInfo = createMockElement('mobileRaceInfo');
+            app.ui.mobileCountryFlag = createMockElement('mobileCountryFlag');
+            app.ui.mobileRaceInfoName = createMockElement('mobileRaceInfoName');
+            app.ui.mobileRaceInfoCircuit = createMockElement('mobileRaceInfoCircuit');
+            app.mobileQuery = { matches: true };
+        });
+
+        it('updates UI with race info', () => {
+            const race = {
+                location: { country: 'UK' },
+                circuit: {
+                    circuitName: 'Silverstone'
+                },
+                name: 'British Grand Prix'
+            };
+            app.updateRaceInfo(race);
+
+            expect(app.ui.raceInfoBanner.style.display).toBe('flex');
+            expect(app.ui.countryFlag.src).toBe('https://flagcdn.com/w80/gb.png');
+            expect(app.ui.countryFlag.alt).toBe('UK flag');
+            expect(app.ui.raceInfoCountry.textContent).toBe('UK');
+            expect(app.ui.raceInfoName.textContent).toBe('British Grand Prix');
+            expect(app.ui.raceInfoCircuit.textContent).toBe('Silverstone');
+
+            expect(app.ui.mobileRaceInfo.style.display).toBe('flex');
+            expect(app.ui.mobileCountryFlag.src).toBe('https://flagcdn.com/w80/gb.png');
+            expect(app.ui.mobileCountryFlag.alt).toBe('UK flag');
+            expect(app.ui.mobileRaceInfoName.textContent).toBe('British Grand Prix');
+            expect(app.ui.mobileRaceInfoCircuit.textContent).toBe('Silverstone');
+        });
+
+        it('throws an error when race is null', () => {
+            expect(() => app.updateRaceInfo(null)).toThrow(TypeError);
+        });
+    });
+
+    // ---------------------------------------------------------------
     // ---------------------------------------------------------------
     // selectSession — outcome: session set, radar loaded, countdown started
     // ---------------------------------------------------------------
@@ -432,10 +477,15 @@ describe('CircuitWeatherApp Pure Methods', () => {
         it('catches and logs errors during session selection', async () => {
             const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
             app.radar.load = vi.fn().mockRejectedValue(new Error('Radar Error'));
+            app.radar.showErrorToast = vi.fn();
 
             await app.selectSession('race');
 
             expect(consoleSpy).toHaveBeenCalledWith('Error selecting session:', expect.any(Error));
+            expect(app.radar.showErrorToast).toHaveBeenCalledWith('Session Error', 'Failed to load session forecast or radar data.', 5);
+            expect(app.ui.forecastContent.innerHTML).toBe('');
+            expect(app.ui.forecastContent.removeAttribute).toHaveBeenCalledWith('aria-busy');
+            expect(app.ui.forecastContent.style.display).toBe('none');
             consoleSpy.mockRestore();
         });
 
