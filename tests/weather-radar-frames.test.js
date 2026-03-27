@@ -169,7 +169,6 @@ describe('WeatherRadar Frame & Speed Logic', () => {
             // Set to last index
             // CONFIG.radarSpeeds is imported inside WeatherRadar, we need to figure out its length
             // We can infer from speeedIndex wrapping
-            let prevIndex = radar.speedIndex;
             let cycleCount = 0;
 
             // Cycle until we wrap back to 0
