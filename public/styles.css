@@ -888,6 +888,14 @@ body {
     }
 }
 
+@media (prefers-reduced-motion: reduce) {
+    .loading-spinner {
+        animation: none;
+        border-color: var(--color-primary);
+        opacity: 0.6;
+    }
+}
+
 .loading-overlay p {
     font-size: 0.8rem;
     color: var(--color-text-secondary);

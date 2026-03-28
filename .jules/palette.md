@@ -1,6 +1,6 @@
-## 2024-05-22 - Skip Link Implementation
-**Learning:** While the "no custom CSS" rule is important for design system consistency, fundamental accessibility features like "Skip to Content" links require specific positioning and visual behavior (visible only on focus) that may not exist in standard utility classes.
-**Action:** Treat accessibility utility classes (like `.skip-link`) as necessary infrastructure rather than "custom design," and ensure they reuse existing design tokens (colors, spacing) to blend in.
+[Output truncated for brevity]
+
+s (colors, spacing) to blend in.
 
 ## 2026-02-28 - Skip Link Incompatibility
 **Learning:** This project is a single-page application without lengthy, repetitive navigation that precedes main content. Because there is no content to "skip from" or "skip to" in this layout, a "Skip to Content" link is unnecessary and explicitly unwanted.
@@ -61,6 +61,7 @@
 ## 2026-03-08 - Mocking offsetParent for Focus Trap Tests
 **Learning:** When testing focus traps in Vitest, mock DOM elements (like those created by `createMockElement`) must include an `offsetParent` property to prevent false failures when component logic correctly filters out hidden elements via `el.offsetParent !== null`.
 **Action:** Always ensure that dynamically created mock HTML elements in test utilities include basic layout properties like `offsetParent: {}` to accurately simulate visible DOM nodes during interaction testing.
+
 ## 2026-03-09 - Continuous Animations in Skeleton Loaders
 **Learning:** Continuous CSS animations (like infinite gradients on skeleton loaders) can cause discomfort, dizziness, or adverse effects for users with vestibular disorders or motion sensitivity who have enabled `prefers-reduced-motion` in their OS or browser.
 **Action:** Always wrap continuous animations in a `@media (prefers-reduced-motion: reduce)` query to disable the animation (`animation: none`) and provide a static placeholder, ensuring the UI remains accessible and comfortable for all users.
@@ -76,3 +77,7 @@
 ## 2026-03-24 - Async Loading States Before Synchronous Page Reloads
 **Learning:** Even when a UI action triggers a seemingly immediate synchronous `window.location.reload()`, the browser can appear to freeze or stall before the actual navigation or repaint occurs, especially on slower network connections. Adding immediate visual feedback (such as disabling the button and injecting a loading spinner) right before the reload significantly improves perceived performance and reassures the user that their action was registered.
 **Action:** Always add intermediate visual loading states (spinners, disabled attributes, and updated `aria-label`s) to action buttons that trigger full page navigations or reloads, rather than relying solely on the browser's native tab loading indicator.
+
+## 2026-10-24 - Continuous Animations in Indeterminate Spinners
+**Learning:** Continuous CSS animations (like the infinite rotation on a `.loading-spinner`) can trigger discomfort for users with motion sensitivity who have enabled `prefers-reduced-motion` in their OS or browser. Even simple rotations need to be addressed.
+**Action:** Always wrap indeterminate loading spinners in a `@media (prefers-reduced-motion: reduce)` query to disable the animation (`animation: none`) and provide a static placeholder (e.g. static circle, lower opacity, modified border color), ensuring the UI remains accessible and comfortable for all users.
