@@ -309,10 +309,11 @@
                 <div class="radar-timeline">
                     <input type="range" id="radarSlider" class="radar-slider" min="0" max="100" value="100"
                         aria-label="Radar playback position">
+                    <!-- Scout: Upgraded generic span elements to semantic time tags to help search engines and assistive technologies better understand and parse temporal data within the radar timeline. -->
                     <div class="radar-time-info">
-                        <span class="radar-time-start" id="radarTimeStart">--:--</span>
-                        <span class="radar-time" id="radarTime">--:--</span>
-                        <span class="radar-time-end" id="radarTimeEnd">--:--</span>
+                        <time class="radar-time-start" id="radarTimeStart">--:--</time>
+                        <time class="radar-time" id="radarTime">--:--</time>
+                        <time class="radar-time-end" id="radarTimeEnd">--:--</time>
                     </div>
                     <div class="radar-relative" id="radarRelative"></div>
                 </div>
