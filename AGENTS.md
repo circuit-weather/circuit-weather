@@ -161,7 +161,7 @@ main = "src/worker.js"
 compatibility_date = "2024-09-23"
 preview_urls = true
 
-# Cloudflare Workers with Static Assets configuration
+# Cloudflare Workers with Assets configuration
 # https://developers.cloudflare.com/workers/static-assets/routing/single-page-application/
 [assets]
 directory = "./public"
