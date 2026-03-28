@@ -134,3 +134,76 @@ describe('WeatherRadar Timer Logic', () => {
         vi.useRealTimers();
     });
 });
+
+describe('waitForTilesToLoad', () => {
+    let radar;
+    let mockMap;
+
+    beforeEach(() => {
+        vi.clearAllMocks();
+        mockMap = {
+            hasLayer: vi.fn(),
+            addLayer: vi.fn(),
+        };
+        radar = new WeatherRadar(mockMap);
+        radar.currentFrame = 0;
+        vi.spyOn(radar, 'showFrame').mockImplementation(() => {});
+    });
+
+    it('resolves immediately if no current layer exists', async () => {
+        vi.spyOn(radar, 'getLayer').mockReturnValue(null);
+
+        const result = await radar.waitForTilesToLoad();
+        expect(result).toBeUndefined();
+    });
+
+    it('adds layer to map and resolves on load event', async () => {
+        const mockLayer = {
+            addTo: vi.fn(),
+            on: vi.fn((event, callback) => {
+                if (event === 'load') {
+                    // Simulate async load event
+                    setTimeout(callback, 10);
+                }
+            }),
+            off: vi.fn()
+        };
+        vi.spyOn(radar, 'getLayer').mockReturnValue(mockLayer);
+        mockMap.hasLayer.mockReturnValue(false);
+
+        vi.useFakeTimers();
+        const promise = radar.waitForTilesToLoad();
+        vi.advanceTimersByTime(10);
+        await promise;
+
+        expect(mockMap.hasLayer).toHaveBeenCalledWith(mockLayer);
+        expect(mockLayer.addTo).toHaveBeenCalledWith(mockMap);
+        expect(mockLayer.off).toHaveBeenCalledWith('load', expect.any(Function));
+        expect(radar.showFrame).toHaveBeenCalledWith(0);
+
+        vi.useRealTimers();
+    });
+
+    it('resolves via setTimeout fallback if load event is not triggered', async () => {
+        const mockLayer = {
+            addTo: vi.fn(),
+            on: vi.fn(), // load event never triggered
+            off: vi.fn()
+        };
+        vi.spyOn(radar, 'getLayer').mockReturnValue(mockLayer);
+        mockMap.hasLayer.mockReturnValue(true);
+
+        vi.useFakeTimers();
+        const promise = radar.waitForTilesToLoad();
+
+        // CONFIG.TILE_LOAD_TIMEOUT_MS is typically 30000
+        vi.advanceTimersByTime(30000);
+        await promise;
+
+        expect(mockLayer.addTo).not.toHaveBeenCalled(); // Because hasLayer returned true
+        expect(mockLayer.off).toHaveBeenCalledWith('load', expect.any(Function));
+        expect(radar.showFrame).toHaveBeenCalledWith(0);
+
+        vi.useRealTimers();
+    });
+});
