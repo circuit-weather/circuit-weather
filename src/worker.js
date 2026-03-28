@@ -653,8 +653,7 @@ async function handleHealthRequest(request, env, ctx) {
     status: 'ok',
     version: '1.1.1',
     upstreams: results,
-    timestamp: new Date().toISOString(),
-    environment: env.ENVIRONMENT || 'production'
+    timestamp: new Date().toISOString()
   });
 
   const headers = new Headers({
