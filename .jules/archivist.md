@@ -172,3 +172,8 @@ Prevention: Avoid duplicating configuration values in documentation; reference t
 
 **Learning:** Despite the project migrating to Cloudflare Workers with Static Assets, an outdated comment referencing Cloudflare Pages remained in `.gitignore`.
 **Action:** Updated `.gitignore` comment to correctly describe `wrangler.toml`'s role in Cloudflare Workers deployment to maintain accuracy.
+
+## 2026-03-29 - Rate Limiter Scope Clarification
+
+**Learning:** `AGENTS.md` documented the Rate Limiter as "1000 req/min", which was ambiguously worded and failed to specify that the limit applies *per IP* and *per isolate*. The implementation in `src/worker.js` instantiates the `RateLimiter` per isolate and keys by `CF-Connecting-IP`.
+**Action:** Updated `AGENTS.md` to explicitly state the limit is "1000 req/min per IP per isolate" to avoid confusion about global vs individual limits.
