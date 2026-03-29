@@ -602,7 +602,8 @@ async function handleHealthRequest(request, env, ctx) {
 
   // Caching Strategy: Cache the health check for 60 seconds
   // Prevents abuse of the health endpoint as a DDOS vector against upstreams
-  const cacheKey = new Request(request.url);
+  const healthUrl = new URL(request.url);
+  const cacheKey = new Request(healthUrl.origin + healthUrl.pathname);
   const cache = caches.default;
 
   let response = await cache.match(cacheKey);
