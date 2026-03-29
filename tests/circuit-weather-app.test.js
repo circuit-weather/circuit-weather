@@ -678,6 +678,7 @@ describe('CircuitWeatherApp Pure Methods', () => {
             app.ui.forecastUnavailable = createMockElement('forecastUnavailable');
         });
 
+
         it('renders the skeleton loader correctly', () => {
             const mockTemplate = createMockElement('forecast-skeleton-template');
             mockTemplate.cloneNode = vi.fn();
@@ -694,6 +695,43 @@ describe('CircuitWeatherApp Pure Methods', () => {
             expect(app.ui.forecastContent.style.display).toBe('block');
             expect(app.ui.forecastContent.innerHTML).toBe('');
             expect(app.ui.forecastContent.appendChild).toHaveBeenCalled();
+
+            document.getElementById = originalGetElementById;
+        });
+
+        it('renders the skeleton loader correctly when template.content is not available', () => {
+            const mockTemplate = createMockElement('forecast-skeleton-template');
+            const mockChild = createMockElement('child');
+            const mockClone = createMockElement('clonedNode');
+            mockClone.firstChild = mockChild;
+
+            // Provide a way to consume firstChild so the while loop terminates
+            let hasChild = true;
+            Object.defineProperty(mockClone, 'firstChild', {
+                get: () => {
+                    return hasChild ? mockChild : null;
+                }
+            });
+
+            // Need to mock the appendChild on the forecastContent container to clear the child
+            const originalAppend = app.ui.forecastContent.appendChild;
+            app.ui.forecastContent.appendChild = vi.fn((node) => {
+                if (node === mockChild) {
+                    hasChild = false; // "Consume" the child when it's appended
+                }
+                originalAppend(node);
+            });
+
+            mockTemplate.cloneNode = vi.fn(() => mockClone);
+            mockTemplate.content = null;
+
+            // Temporarily replace document.getElementById to return our mock template
+            const originalGetElementById = document.getElementById;
+            document.getElementById = vi.fn((id) => id === 'forecast-skeleton-template' ? mockTemplate : originalGetElementById(id));
+
+            app.renderForecastSkeleton();
+
+            expect(app.ui.forecastContent.appendChild).toHaveBeenCalledWith(mockChild);
 
             document.getElementById = originalGetElementById;
         });
