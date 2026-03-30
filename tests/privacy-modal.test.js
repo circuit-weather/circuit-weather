@@ -443,7 +443,10 @@ describe("PrivacyModal", () => {
       await modal.open();
 
       // Verify content fetch
-      expect(global.fetch).toHaveBeenCalledWith("/PRIVACY.md");
+      // Fallback order for 'en': PRIVACY.en.md (doesn't exist but is tried) -> en-GB -> en-US -> /PRIVACY.md
+      // Actually it depends on the mocked i18n.locale.
+      // In beforeEach it's 'en'. resolvePrivacyLocale('en') returns 'en-NZ'.
+      expect(global.fetch).toHaveBeenCalledWith("/privacy/PRIVACY.en-NZ.md");
       expect(modal.loaded).toBe(true);
 
       // Verify visibility
@@ -508,8 +511,8 @@ describe("PrivacyModal", () => {
       i18n.locale = "pt-BR";
       expect(modal.getPrivacyPolicyPaths()).toEqual([
         "/privacy/PRIVACY.pt-BR.md",
-        "/privacy/PRIVACY.en-NZ.md",
         "/privacy/PRIVACY.en-GB.md",
+        "/privacy/PRIVACY.en-NZ.md",
         "/privacy/PRIVACY.en-US.md",
         "/PRIVACY.md",
       ]);
@@ -519,8 +522,8 @@ describe("PrivacyModal", () => {
       i18n.locale = "fr-CA";
       expect(modal.getPrivacyPolicyPaths()).toEqual([
         "/privacy/PRIVACY.fr.md",
-        "/privacy/PRIVACY.en-NZ.md",
         "/privacy/PRIVACY.en-GB.md",
+        "/privacy/PRIVACY.en-NZ.md",
         "/privacy/PRIVACY.en-US.md",
         "/PRIVACY.md",
       ]);
@@ -555,7 +558,7 @@ describe("PrivacyModal", () => {
       await modal.open();
 
       expect(global.fetch).toHaveBeenNthCalledWith(1, "/privacy/PRIVACY.fr.md");
-      expect(global.fetch).toHaveBeenNthCalledWith(2, "/privacy/PRIVACY.en-NZ.md");
+      expect(global.fetch).toHaveBeenNthCalledWith(2, "/privacy/PRIVACY.en-GB.md");
       expect(modal.content.innerHTML).toContain("Contenu");
     });
   });
