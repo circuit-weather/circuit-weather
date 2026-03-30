@@ -1,0 +1,89 @@
+# Politica de privacidade
+
+**Ultima atualizacao:** Janeiro 2026
+
+## Visao geral
+
+O Circuit Weather e uma aplicacao web open source que mostra radar meteorologico em tempo real para circuitos de Formula 1.
+
+## Recolha de dados
+
+**O Circuit Weather nao recolhe, armazena ou processa dados pessoais.**
+
+- Sem contas de utilizador ou registo.
+- Sem rastreamento interno ou analytics proprietarios.
+- Sem base de dados de utilizadores.
+
+A aplicacao depende de servicos de terceiros que podem processar dados web padrao (IP e User Agent).
+
+## Infraestrutura e cache
+
+### Cloudflare
+
+O website esta alojado em **Cloudflare Workers**.
+
+- **Proxy de privacidade:** Calendario F1, tracados, assets Leaflet e tiles RainViewer passam pelo nosso Worker.
+- **Cache edge:** Respostas API sao guardadas em cache para melhor desempenho.
+- **Dados processados:** A Cloudflare processa IP e metadados de pedido para entrega e seguranca.
+- **Politica:** [cloudflare.com/privacypolicy](https://www.cloudflare.com/privacypolicy/)
+
+## Servicos de terceiros
+
+O navegador pode ligar-se diretamente a servicos terceiros para mapas, tiles e widgets.
+
+### Dados meteorologicos
+
+**Open-Meteo**
+
+- **Objetivo:** Previsoes de sessao.
+- **Dados enviados:** IP e coordenadas do circuito selecionado.
+- **Politica:** [open-meteo.com/en/features#terms](https://open-meteo.com/en/features#terms)
+
+**RainViewer**
+
+- **Objetivo:** Camadas de radar.
+- **Dados enviados:** Nenhum diretamente; os dados passam por proxy.
+- **Politica:** [rainviewer.com/privacy](https://www.rainviewer.com/privacy.html)
+
+### Mapas e recursos
+
+**Carto (OpenStreetMap)**
+
+- **Objetivo:** Tiles de mapa base.
+- **Dados enviados:** O navegador pede imagens diretamente ao Carto.
+- **Politica:** [carto.com/privacy](https://carto.com/privacy/)
+
+**CDNs publicas**
+
+- **Google Fonts**
+- **FlagCDN**
+
+### Comunidade e apoio
+
+**Buy Me a Coffee**
+
+- **Objetivo:** Donativos opcionais.
+- **Dados enviados:** Se usado, podem ser processados cookies e dados de pagamento/sessao.
+- **Politica:** [buymeacoffee.com/privacy-policy](https://www.buymeacoffee.com/privacy-policy)
+
+## Fontes de dados (proxy)
+
+- **Jolpica F1**
+- **GitHub (bacinger/f1-circuits)**
+- **RainViewer**
+- **Leaflet (via Unpkg)**
+
+## Armazenamento local
+
+Preferencias guardadas localmente no navegador:
+
+- **theme:** `light` ou `dark`
+- **unit:** `metric` ou `imperial`
+
+## Open source
+
+[github.com/circuit-weather/circuit-weather](https://github.com/circuit-weather/circuit-weather)
+
+## Contacto
+
+Para questoes de privacidade, abra um issue no GitHub.

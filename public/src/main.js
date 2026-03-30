@@ -1,10 +1,14 @@
 import { CircuitWeatherApp } from './CircuitWeatherApp.js';
 import { PrivacyModal } from './ui/PrivacyModal.js';
+import { i18n } from './i18n/index.js';
 
 /**
  * Application Entry Point
  */
 document.addEventListener('DOMContentLoaded', () => {
+    i18n.init();
+    i18n.apply();
+
     // Initialize the main application
     const app = new CircuitWeatherApp();
     app.init();

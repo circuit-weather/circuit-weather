@@ -1,0 +1,56 @@
+export const it = {
+    common: { loading: 'Caricamento...', retry: 'Riprova', retrying: 'Nuovo tentativo...', openMenu: 'Apri menu', closeMenu: 'Chiudi menu' },
+    theme: { toggle: 'Attiva tema chiaro/scuro', switchToLight: 'Passa al tema chiaro', switchToDark: 'Passa al tema scuro' },
+    loading: { schedule: 'Caricamento calendario gare...', session: 'Caricamento dati sessione...' },
+    controls: {
+        series: 'Serie', round: 'Round', session: 'Sessione', units: 'Unita',
+        selectRound: 'Seleziona round...', selectRoundFirst: 'Seleziona prima un round', selectSession: 'Seleziona sessione...',
+        metricLabel: 'Chilometri', imperialLabel: 'Miglia',
+    },
+    forecast: {
+        heading: 'Previsioni sessione', hourlyForecast: 'Previsioni orarie', availableFrom: 'Previsioni disponibili da {{date}}',
+        availableSoon: 'Previsioni disponibili a breve', availableCloser: 'Previsioni disponibili piu vicino alla sessione',
+        unavailable: 'Impossibile caricare le previsioni', failedTryAgain: 'Impossibile caricare le previsioni. Riprova.',
+        selectSessionPrompt: 'Seleziona una sessione per vedere le previsioni',
+    },
+    weather: {
+        temp: 'Temp', rain: 'Pioggia', wind: 'Vento', windDirection: 'Direzione vento: {{direction}} ({{degrees}} gradi)',
+        timelineAria: '{{time}}. {{description}}. Temperatura {{temp}} gradi. Probabilita pioggia {{rain}}%. Vento {{wind}} {{windUnit}}.',
+        currentCircuitWeather: 'Meteo attuale del circuito', temperature: 'Temperatura', rainChance: 'Prob. pioggia', humidity: 'Umidita', windSpeed: 'Velocita vento',
+    },
+    radar: {
+        play: 'Avvia radar', pause: 'Pausa radar', playTitle: 'Avvia (Spazio)', pauseTitle: 'Pausa (Spazio)',
+        playbackSpeed: 'Velocita riproduzione: {{speed}}', sessionStart: 'Inizio sessione', beforeSession: '{{duration}} prima della sessione',
+        afterSession: '{{duration}} dopo la sessione', forecast: 'Previsioni', live: 'Live', liveAria: 'Radar live',
+        minutesAgo: '{{count}} min fa', minutesAgoPlural: '{{count}} min fa', connectionInstability: 'Connessione instabile',
+        serviceError: 'Errore servizio', highTraffic: 'Traffico elevato', rateLimitExceeded: 'Limite richieste superato. Pausa momentanea.',
+        retryingFailedTiles: 'Nuovo tentativo per {{count}} tile non riuscita{{suffix}}...', radarStatus: 'Stato radar: {{status}}',
+    },
+    countdown: { startsIn: 'Inizia tra', day: 'giorno', dayPlural: 'giorni', hour: 'ora', hourPlural: 'ore', minute: 'minuto', minutePlural: 'minuti', second: 'secondo', secondPlural: 'secondi' },
+    map: { recenterOnCircuit: 'Ricentra sul circuito' },
+    privacy: {
+        link: 'Privacy',
+        title: 'Informativa sulla privacy',
+        closePolicy: 'Chiudi informativa sulla privacy',
+        contentAria: 'Contenuto informativa sulla privacy',
+        opensInNewTab: 'si apre in una nuova scheda',
+        loadFailed: 'Impossibile caricare la privacy policy. Riprova piu tardi.',
+    },
+    errors: {
+        connectionFailed: 'Connessione non riuscita', retryConnection: 'Riprova connessione', retryingConnection: 'Nuovo tentativo di connessione',
+        initFailed: 'Inizializzazione applicazione non riuscita.', sessionError: 'Errore sessione', sessionLoadFailed: 'Impossibile caricare previsioni o radar della sessione.',
+    },
+    status: { live: 'LIVE', current: 'Corrente', next: 'Prossimo' },
+    meta: {
+        defaultTitle: 'Circuit Weather — Radar meteo F1 e previsioni live',
+        defaultDesc: 'Resta davanti alla pioggia con Circuit Weather. Radar meteo in tempo reale, previsioni live e countdown sessioni per ogni circuito di Formula 1 nel mondo.',
+        sessionTitle: '{{raceName}} {{sessionName}} Meteo - Circuit Weather',
+        raceTitle: '{{raceName}} Meteo - Circuit Weather',
+        sessionDesc: 'Radar meteo live, previsioni e countdown per {{raceName}} {{sessionName}}. Segui pioggia e condizioni in tempo reale.',
+        raceDesc: 'Radar meteo live e previsioni per {{raceName}}. Segui pioggia e condizioni durante ogni sessione del Gran Premio.',
+    },
+    weatherCodes: {
+        clearSky: 'Cielo sereno', partlyCloudy: 'Parzialmente nuvoloso', fog: 'Nebbia', drizzle: 'Pioviggine', rain: 'Pioggia',
+        snowGrains: 'Neve granulare', rainShowers: 'Rovesci di pioggia', snowShowers: 'Rovesci di neve', thunderstorm: 'Temporale', unknown: 'Sconosciuto',
+    },
+};

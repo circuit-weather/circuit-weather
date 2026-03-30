@@ -1,4 +1,5 @@
 import { CONFIG } from '../config.js';
+import { i18n } from '../i18n/index.js';
 
 export class WeatherClient {
     constructor() {
@@ -141,16 +142,16 @@ export class WeatherClient {
     getWeatherDescription(code) {
         // WMO Weather interpretation codes (WW)
         // https://open-meteo.com/en/docs
-        if (code === 0) return 'Clear sky';
-        if (code <= 3) return 'Partly cloudy';
-        if (code <= 48) return 'Fog';
-        if (code <= 55) return 'Drizzle';
-        if (code <= 67) return 'Rain';
-        if (code <= 77) return 'Snow grains';
-        if (code <= 82) return 'Rain showers';
-        if (code <= 86) return 'Snow showers';
-        if (code <= 99) return 'Thunderstorm';
-        return 'Unknown';
+        if (code === 0) return i18n.t('weatherCodes.clearSky');
+        if (code <= 3) return i18n.t('weatherCodes.partlyCloudy');
+        if (code <= 48) return i18n.t('weatherCodes.fog');
+        if (code <= 55) return i18n.t('weatherCodes.drizzle');
+        if (code <= 67) return i18n.t('weatherCodes.rain');
+        if (code <= 77) return i18n.t('weatherCodes.snowGrains');
+        if (code <= 82) return i18n.t('weatherCodes.rainShowers');
+        if (code <= 86) return i18n.t('weatherCodes.snowShowers');
+        if (code <= 99) return i18n.t('weatherCodes.thunderstorm');
+        return i18n.t('weatherCodes.unknown');
     }
 
     getRelativeTime(timestamp, sessionTime) {
@@ -166,7 +167,7 @@ export class WeatherClient {
         // 3. Round to nearest integer to handle any slight drifts (though usually exact)
         const roundedDiff = Math.round(diffHours);
 
-        if (roundedDiff === 0) return 'Start';
+        if (roundedDiff === 0) return i18n.t('radar.sessionStart');
         if (roundedDiff < 0) return `${roundedDiff}h`;
         return `+${roundedDiff}h`;
     }
@@ -174,10 +175,15 @@ export class WeatherClient {
     getAccessibleRelativeTime(timestamp, sessionTime) {
         const diffMins = (timestamp * 1000 - sessionTime.getTime()) / CONFIG.ONE_MINUTE_MS;
 
-        if (Math.abs(diffMins) < 30) return 'Session start';
+        if (Math.abs(diffMins) < 30) return i18n.t('radar.sessionStart');
         const hours = Math.round(diffMins / 60);
-        if (hours < 0) return `${Math.abs(hours)} hour${Math.abs(hours) !== 1 ? 's' : ''} before session`;
-        return `${hours} hour${hours !== 1 ? 's' : ''} after session`;
+        if (hours < 0) {
+            const value = Math.abs(hours);
+            const unit = value === 1 ? i18n.t('countdown.hour') : i18n.t('countdown.hourPlural');
+            return i18n.t('radar.beforeSession', { duration: `${value} ${unit}` });
+        }
+        const unit = hours === 1 ? i18n.t('countdown.hour') : i18n.t('countdown.hourPlural');
+        return i18n.t('radar.afterSession', { duration: `${hours} ${unit}` });
     }
 
     getWindDirection(degrees) {

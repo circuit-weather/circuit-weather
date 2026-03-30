@@ -1,4 +1,5 @@
 import { SafeStorage } from '../utils/storage.js';
+import { i18n } from '../i18n/index.js';
 
 export class ThemeManager {
     constructor(onThemeChange) {
@@ -26,8 +27,9 @@ export class ThemeManager {
 
         // Palette UX: Update toggle button labels for better accessibility
         // Dynamic labels clarify the action (e.g., "Switch to light mode") rather than just describing the current state
-        const nextTheme = this.theme === 'dark' ? 'light' : 'dark';
-        const label = `Switch to ${nextTheme} mode`;
+        const label = this.theme === 'dark'
+            ? i18n.t('theme.switchToLight')
+            : i18n.t('theme.switchToDark');
 
         const updateBtn = (id) => {
             const btn = document.getElementById(id);

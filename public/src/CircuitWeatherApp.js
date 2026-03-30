@@ -13,6 +13,7 @@ import { MapManager } from './map/MapManager.js';
 import { ThemeManager } from './ui/ThemeManager.js';
 import { SidebarManager } from './ui/SidebarManager.js';
 import { getSessionStatus, getRoundStatus, formatStatusLabel } from './utils/status.js';
+import { i18n } from './i18n/index.js';
 
 /**
  * Main application orchestrator for Circuit Weather.
@@ -63,7 +64,7 @@ export class CircuitWeatherApp {
             mobileRaceInfoCircuit: document.getElementById('mobileRaceInfoCircuit'),
         };
 
-        this.showLoading(true, 'Loading race schedule...');
+        this.showLoading(true, i18n.t('loading.schedule'));
 
         try {
             const map = this.mapManager.init();
@@ -113,7 +114,7 @@ export class CircuitWeatherApp {
 
         } catch (error) {
             console.error('Initialization failed:', error);
-            this.renderError('Failed to initialize application.');
+            this.renderError(i18n.t('errors.initFailed'));
         } finally {
             this.showLoading(false);
         }
@@ -131,9 +132,9 @@ export class CircuitWeatherApp {
                             <line x1="12" y1="16" x2="12.01" y2="16"></line>
                         </svg>
                     </div>
-                    <h3>Connection Failed</h3>
+                    <h3>${escapeHtml(i18n.t('errors.connectionFailed'))}</h3>
                     <p>${escapeHtml(message)}</p>
-                    <button class="retry-btn" type="button" aria-label="Retry connection">Retry</button>
+                    <button class="retry-btn" type="button" aria-label="${escapeHtml(i18n.t('errors.retryConnection'))}">${escapeHtml(i18n.t('common.retry'))}</button>
                 </div>
             `;
             const btn = sidebarContent.querySelector('.retry-btn');
@@ -141,8 +142,8 @@ export class CircuitWeatherApp {
                 btn.addEventListener('click', () => {
                     btn.disabled = true;
                     // Palette UX: Add loading spinner to async submit button
-                    btn.innerHTML = `<svg style="width: 1rem; height: 1rem; margin-right: 0.5rem; animation: spin 1s linear infinite;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"></path></svg>Retrying...`;
-                    btn.setAttribute('aria-label', 'Retrying connection');
+                    btn.innerHTML = `<svg style="width: 1rem; height: 1rem; margin-right: 0.5rem; animation: spin 1s linear infinite;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"></path></svg>${escapeHtml(i18n.t('common.retrying'))}`;
+                    btn.setAttribute('aria-label', i18n.t('errors.retryingConnection'));
                     window.location.reload();
                 });
             }
@@ -252,8 +253,8 @@ export class CircuitWeatherApp {
                     // Palette UX: Reset session select when round is cleared
                     if (this.ui.sessionSelect) {
                         this.ui.sessionSelect.disabled = true;
-                        this.ui.sessionSelect.title = 'Select a round first';
-                        this.ui.sessionSelect.innerHTML = '<option value="">Select a round first</option>';
+                        this.ui.sessionSelect.title = i18n.t('controls.selectRoundFirst');
+                        this.ui.sessionSelect.innerHTML = `<option value="">${escapeHtml(i18n.t('controls.selectRoundFirst'))}</option>`;
                     }
                     this.selectedSession = null;
                     this.selectedRace = null;
@@ -287,7 +288,7 @@ export class CircuitWeatherApp {
         const select = this.ui.roundSelect;
         if (!select) return;
 
-        select.innerHTML = '<option value="">Select round...</option>';
+        select.innerHTML = `<option value="">${escapeHtml(i18n.t('controls.selectRound'))}</option>`;
 
         // Bolt Optimization: Use DocumentFragment to batch DOM insertions
         // Reduces reflows when populating the race list (~24 items)
@@ -330,20 +331,26 @@ export class CircuitWeatherApp {
      * Dynamic titles and meta tags improve SERP visibility and rich social sharing.
      */
     updatePageMetadata() {
-        const defaultTitle = 'Circuit Weather — Live F1 Race Weather Radar & Forecasts';
-        const defaultDesc = 'Stay ahead of the rain with Circuit Weather. Real-time weather radar, live forecasts, and session countdowns for every Formula 1 Grand Prix circuit worldwide.';
+        const defaultTitle = i18n.t('meta.defaultTitle');
+        const defaultDesc = i18n.t('meta.defaultDesc');
 
         let title = defaultTitle;
         let desc = defaultDesc;
 
         if (this.selectedRace && this.selectedSession) {
             // Specific session page: "Bahrain GP Qualifying Weather - Circuit Weather"
-            title = `${this.selectedRace.name} ${this.selectedSession.name} Weather - Circuit Weather`;
-            desc = `Live weather radar, forecasts, and session countdowns for the ${this.selectedRace.name} ${this.selectedSession.name}. Track rain and conditions in real-time.`;
+            title = i18n.t('meta.sessionTitle', {
+                raceName: this.selectedRace.name,
+                sessionName: this.selectedSession.name,
+            });
+            desc = i18n.t('meta.sessionDesc', {
+                raceName: this.selectedRace.name,
+                sessionName: this.selectedSession.name,
+            });
         } else if (this.selectedRace) {
             // Race page: "Bahrain GP Weather - Circuit Weather"
-            title = `${this.selectedRace.name} Weather - Circuit Weather`;
-            desc = `Live weather radar and forecasts for the ${this.selectedRace.name}. Track rain and conditions live during every Grand Prix session.`;
+            title = i18n.t('meta.raceTitle', { raceName: this.selectedRace.name });
+            desc = i18n.t('meta.raceDesc', { raceName: this.selectedRace.name });
         } else {
             // Default home page title
             title = defaultTitle;
@@ -512,7 +519,7 @@ export class CircuitWeatherApp {
 
         select.disabled = false;
         select.removeAttribute('title');
-        select.innerHTML = '<option value="">Select session...</option>';
+        select.innerHTML = `<option value="">${escapeHtml(i18n.t('controls.selectSession'))}</option>`;
 
         // Bolt Optimization: Use DocumentFragment to batch DOM insertions
         const fragment = document.createDocumentFragment();
@@ -553,7 +560,7 @@ export class CircuitWeatherApp {
         const session = this.selectedRace?.sessions.find(s => s.id === sessionId);
         if (!session) return;
 
-        this.showLoading(true, 'Loading session data...');
+        this.showLoading(true, i18n.t('loading.session'));
         // Palette UX: Show skeleton immediately to prevent layout shift
         this.renderForecastSkeleton();
 
@@ -591,7 +598,7 @@ export class CircuitWeatherApp {
 
             // Palette UX: Provide visual feedback when session data fails to load
             if (this.radar && typeof this.radar.showErrorToast === 'function') {
-                this.radar.showErrorToast('Session Error', 'Failed to load session forecast or radar data.', 5);
+                this.radar.showErrorToast(i18n.t('errors.sessionError'), i18n.t('errors.sessionLoadFailed'), 5);
             }
 
             // Clear skeleton and show error state in the forecast panel
@@ -603,7 +610,7 @@ export class CircuitWeatherApp {
             if (this.ui.forecastUnavailable) {
                 this.ui.forecastUnavailable.style.display = 'block';
                 const p = this.ui.forecastUnavailable.querySelector('p');
-                if (p) p.textContent = 'Failed to load forecast data. Please try again.';
+                if (p) p.textContent = i18n.t('forecast.failedTryAgain');
             }
         } finally {
             this.showLoading(false);
@@ -718,15 +725,15 @@ export class CircuitWeatherApp {
                                 hour: '2-digit',
                                 minute: '2-digit'
                             });
-                            p.textContent = `Forecast available from ${dateStr}`;
+                            p.textContent = i18n.t('forecast.availableFrom', { date: dateStr });
                         } else {
-                            p.textContent = 'Forecast available shortly';
+                            p.textContent = i18n.t('forecast.availableSoon');
                         }
                     } else if (weather.reason === 'error') {
-                        p.textContent = 'Unable to load forecast data';
+                        p.textContent = i18n.t('forecast.unavailable');
                     } else {
                         // Default fallback
-                        p.textContent = 'Forecast available closer to session';
+                        p.textContent = i18n.t('forecast.availableCloser');
                     }
                 }
             }
@@ -764,17 +771,17 @@ export class CircuitWeatherApp {
             currentHtml = `
                 <div class="weather-current">
                     <div class="weather-metric">
-                        <span class="weather-label">Temp</span>
+                        <span class="weather-label">${escapeHtml(i18n.t('weather.temp'))}</span>
                         <span class="weather-value" id="weatherTemp">${escapeHtml(temp)}${escapeHtml(weather.units.temperature_2m)}</span>
                     </div>
                     <div class="weather-metric">
-                        <span class="weather-label">Rain</span>
+                        <span class="weather-label">${escapeHtml(i18n.t('weather.rain'))}</span>
                         <span class="weather-value" id="weatherRain">${escapeHtml(maxPrecip)}%</span>
                     </div>
                     <div class="weather-metric">
-                        <span class="weather-label">Wind</span>
+                        <span class="weather-label">${escapeHtml(i18n.t('weather.wind'))}</span>
                         <span class="weather-value" id="weatherWind">${escapeHtml(wind)} ${escapeHtml(weather.units.wind_speed_10m)}</span>
-                        <span class="weather-sub" id="weatherWindDir" title="${escapeHtml(dir)}°" aria-label="Wind direction: ${escapeHtml(windInfo.text)} (${escapeHtml(dir)} degrees)">
+                        <span class="weather-sub" id="weatherWindDir" title="${escapeHtml(dir)}°" aria-label="${escapeHtml(i18n.t('weather.windDirection', { direction: windInfo.text, degrees: dir }))}">
                             ${escapeHtml(windInfo.text)}
                             <svg class="icon-wind-arrow" style="transform: rotate(${escapeHtml(rotation)}deg); width: 14px; height: 14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                 <line x1="12" y1="19" x2="12" y2="5"></line>
@@ -794,7 +801,14 @@ export class CircuitWeatherApp {
                 const desc = this.weatherClient.getWeatherDescription(hour.code);
                 const a11yTime = this.weatherClient.getAccessibleRelativeTime(hour.time, sessionTime);
                 const temp = Math.round(hour.temp);
-                const ariaLabel = `${a11yTime}. ${desc}. Temperature ${temp} degrees. Rain chance ${hour.precipProb}%. Wind ${hour.windSpeed} km/h.`;
+                const ariaLabel = i18n.t('weather.timelineAria', {
+                    time: a11yTime,
+                    description: desc,
+                    temp,
+                    rain: hour.precipProb,
+                    wind: hour.windSpeed,
+                    windUnit: weather.units.wind_speed_10m,
+                });
 
                 // Create a valid ISO string for the datetime attribute
                 const isoDateTime = new Date(hour.time * 1000).toISOString();
@@ -807,7 +821,7 @@ export class CircuitWeatherApp {
                         <time datetime="${escapeHtml(isoDateTime)}" class="weather-timeline-time" aria-hidden="true">${escapeHtml(relTime)}</time>
                         <div class="weather-timeline-condition" aria-hidden="true">
                             ${escapeHtml(desc)}
-                            <div class="weather-timeline-wind">${escapeHtml(hour.windSpeed)} km/h</div>
+                            <div class="weather-timeline-wind">${escapeHtml(hour.windSpeed)} ${escapeHtml(weather.units.wind_speed_10m)}</div>
                         </div>
                         <div class="weather-timeline-temp" aria-hidden="true">
                             <div>${escapeHtml(temp)}°</div>
@@ -818,7 +832,7 @@ export class CircuitWeatherApp {
             }).join('');
 
             timelineHtml = `
-                <div class="weather-timeline" id="weatherTimeline" tabindex="0" role="region" aria-label="Hourly forecast">
+                <div class="weather-timeline" id="weatherTimeline" tabindex="0" role="region" aria-label="${escapeHtml(i18n.t('forecast.hourlyForecast'))}">
                     <ul class="weather-timeline-list">
                         ${items}
                     </ul>
@@ -851,7 +865,7 @@ export class CircuitWeatherApp {
         }
     }
 
-    showLoading(visible, text = 'Loading...') {
+    showLoading(visible, text = i18n.t('common.loading')) {
         if (this.ui.loadingOverlay) {
             this.ui.loadingOverlay.classList.toggle('visible', visible);
             const p = this.ui.loadingOverlay.querySelector('p');

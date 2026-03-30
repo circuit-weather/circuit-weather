@@ -55,6 +55,7 @@ Circuit Weather is a real-time F1 race circuit weather radar application. It dis
 
 - **New Zealand English** - All documentation and user-facing text (e.g., UI labels, error messages) must use New Zealand English spelling conventions (e.g., 'colour', 'centre', 'programme', 'visualise').
 - **Dates** - Use DD/MM/YYYY or ISO 8601 (YYYY-MM-DD).
+- **Localisation Roadmap** - Continue improving translations/localisation over time. Prioritise the most widely used languages first, while maintaining quality and consistency across existing locale files.
 
 ---
 
@@ -121,37 +122,6 @@ pnpm run dev # or 'npx wrangler dev' / 'wrangler dev' based on environment avail
 
 **Note**: The project is connected to Cloudflare via GitHub integration. Pushing to `main` triggers automatic deployment - no manual `wrangler deploy` needed.
 
-### Git Workflow for Changes
-
-All code changes must follow this workflow:
-
-1. **Create a new branch** from `main`:
-
-   ```bash
-   git checkout main
-   git pull origin main
-   git checkout -b feature/your-feature-name
-   ```
-
-2. **Make your changes** on the new branch
-
-3. **Commit and push** to the repository:
-
-   ```bash
-   git add .
-   git commit -m "Brief description of changes"
-   git push origin feature/your-feature-name
-   ```
-
-4. **Open a Pull Request** on GitHub with:
-   - A clear, descriptive title
-   - A well-constructed description that includes:
-     - What changes were made and why
-     - Any relevant context or background
-     - Testing performed
-     - Screenshots (if UI changes)
-
-> **Important**: Direct pushes to `main` should be avoided. All changes should go through the PR review process.
 
 ### Cloudflare Configuration (wrangler.toml)
 
@@ -232,25 +202,6 @@ mode = "smart"
    - Fetched directly from Open-Meteo API
    - Hourly forecast timeline
 
-### UI Layout
-
-```
-┌─────────────────────────────────────────┐
-│ Header: Logo + Theme Toggle             │
-├──────────┬──────────────────────────────┤
-│ Sidebar  │                              │
-│ - Series │           MAP                │
-│ - Round  │    (with radar overlay)      │
-│ - Session│                              │
-│ - Units  │                              │
-│          │                              │
-│ Countdown├──────────────────────────────│
-│          │  Radar Controls (play/seek)  │
-│ Forecast │                              │
-├──────────┴──────────────────────────────│
-│ Footer: Privacy | GitHub                │
-└─────────────────────────────────────────┘
-```
 
 ### API Endpoints
 
@@ -277,21 +228,6 @@ mode = "smart"
 2. **Radar Opacity** - Tiles must be added with small opacity (0.01) initially to trigger loading.
 3. **F1 API Rate Limits** - Edge caching via Worker mitigates this.
 4. **Current Weather Rate Limits** - The live current weather widget triggers an Open-Meteo API call per circuit change, which may hit 429 rate limits during high traffic.
-
----
-
-## Testing Checklist
-
-- [ ] Map tiles load on initial page load
-- [ ] Radar tiles visible at circuit zoom level
-- [ ] Radar animation plays/pauses correctly
-- [ ] Countdown displays correct time to session
-- [ ] Session forecast data loads and displays correctly
-- [ ] Theme toggle updates map tiles
-- [ ] Unit toggle updates range circles
-- [ ] URL routing works (/f1/1/race)
-- [ ] Browser back/forward navigation works
-- [ ] Mobile responsive layout
 
 ---
 

@@ -1,3 +1,5 @@
+import { i18n } from '../i18n/index.js';
+
 export class SidebarManager {
     constructor() {
         this.sidebar = document.getElementById('sidebar');
@@ -75,11 +77,11 @@ export class SidebarManager {
             // Update ARIA states
             if (this.mobileMenuBtn) {
                 this.mobileMenuBtn.setAttribute('aria-expanded', 'true');
-                this.mobileMenuBtn.setAttribute('aria-label', 'Close menu');
+                this.mobileMenuBtn.setAttribute('aria-label', i18n.t('common.closeMenu'));
             }
             if (this.toggleBtn) {
                 this.toggleBtn.setAttribute('aria-expanded', 'true');
-                this.toggleBtn.setAttribute('aria-label', 'Close menu');
+                this.toggleBtn.setAttribute('aria-label', i18n.t('common.closeMenu'));
             }
 
             // Move focus to close button inside sidebar for accessibility
@@ -102,11 +104,11 @@ export class SidebarManager {
             // Update ARIA states
             if (this.mobileMenuBtn) {
                 this.mobileMenuBtn.setAttribute('aria-expanded', 'false');
-                this.mobileMenuBtn.setAttribute('aria-label', 'Open menu');
+                this.mobileMenuBtn.setAttribute('aria-label', i18n.t('common.openMenu'));
             }
             if (this.toggleBtn) {
                 this.toggleBtn.setAttribute('aria-expanded', 'false');
-                this.toggleBtn.setAttribute('aria-label', 'Open menu');
+                this.toggleBtn.setAttribute('aria-label', i18n.t('common.openMenu'));
             }
 
             // Return focus to menu button if it's visible (mobile)

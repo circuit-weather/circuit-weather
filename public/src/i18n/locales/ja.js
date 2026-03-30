@@ -1,0 +1,54 @@
+export const ja = {
+    common: { loading: '読み込み中...', retry: '再試行', retrying: '再試行中...', openMenu: 'メニューを開く', closeMenu: 'メニューを閉じる' },
+    theme: { toggle: 'ライト/ダークモードを切り替え', switchToLight: 'ライトモードに切り替え', switchToDark: 'ダークモードに切り替え' },
+    loading: { schedule: 'レーススケジュールを読み込み中...', session: 'セッションデータを読み込み中...' },
+    controls: {
+        series: 'シリーズ', round: 'ラウンド', session: 'セッション', units: '単位',
+        selectRound: 'ラウンドを選択...', selectRoundFirst: '先にラウンドを選択してください', selectSession: 'セッションを選択...',
+        metricLabel: 'キロメートル', imperialLabel: 'マイル',
+    },
+    forecast: {
+        heading: 'セッション予報', hourlyForecast: '時間別予報', availableFrom: '{{date}} から予報を表示できます', availableSoon: 'まもなく予報を表示できます',
+        availableCloser: 'セッション開始が近づくと予報を表示できます', unavailable: '予報を読み込めませんでした',
+        failedTryAgain: '予報の読み込みに失敗しました。もう一度お試しください。', selectSessionPrompt: '予報を見るにはセッションを選択してください',
+    },
+    weather: {
+        temp: '気温', rain: '雨', wind: '風', windDirection: '風向: {{direction}} ({{degrees}} 度)',
+        timelineAria: '{{time}}。{{description}}。気温 {{temp}} 度。降水確率 {{rain}}%。風速 {{wind}} {{windUnit}}。',
+        currentCircuitWeather: 'サーキット現在天気', temperature: '気温', rainChance: '降水確率', humidity: '湿度', windSpeed: '風速',
+    },
+    radar: {
+        play: 'レーダー再生', pause: 'レーダー一時停止', playTitle: '再生 (Space)', pauseTitle: '一時停止 (Space)',
+        playbackSpeed: '再生速度: {{speed}}', sessionStart: 'セッション開始', beforeSession: 'セッション {{duration}} 前', afterSession: 'セッション {{duration}} 後',
+        forecast: '予報', live: 'ライブ', liveAria: 'ライブレーダー', minutesAgo: '{{count}} 分前', minutesAgoPlural: '{{count}} 分前',
+        connectionInstability: '接続が不安定です', serviceError: 'サービスエラー', highTraffic: 'アクセス集中',
+        rateLimitExceeded: 'リクエスト上限を超えました。しばらく待機します。', retryingFailedTiles: '失敗したタイル {{count}} 件を再試行中...', radarStatus: 'レーダー状態: {{status}}',
+    },
+    countdown: { startsIn: '開始まで', day: '日', dayPlural: '日', hour: '時間', hourPlural: '時間', minute: '分', minutePlural: '分', second: '秒', secondPlural: '秒' },
+    map: { recenterOnCircuit: 'サーキットに再センタリング' },
+    privacy: {
+        link: 'プライバシー',
+        title: 'プライバシーポリシー',
+        closePolicy: 'プライバシーポリシーを閉じる',
+        contentAria: 'プライバシーポリシーの内容',
+        opensInNewTab: '新しいタブで開きます',
+        loadFailed: 'プライバシーポリシーを読み込めませんでした。後でもう一度お試しください。',
+    },
+    errors: {
+        connectionFailed: '接続に失敗しました', retryConnection: '接続を再試行', retryingConnection: '接続を再試行中',
+        initFailed: 'アプリの初期化に失敗しました。', sessionError: 'セッションエラー', sessionLoadFailed: 'セッションの予報またはレーダーの読み込みに失敗しました。',
+    },
+    status: { live: 'LIVE', current: '現在', next: '次' },
+    meta: {
+        defaultTitle: 'Circuit Weather — F1 ライブ天気レーダーと予報',
+        defaultDesc: 'Circuit Weather で雨を先読み。F1 全サーキットのリアルタイム天気レーダー、ライブ予報、セッション開始カウントダウン。',
+        sessionTitle: '{{raceName}} {{sessionName}} 天気 - Circuit Weather',
+        raceTitle: '{{raceName}} 天気 - Circuit Weather',
+        sessionDesc: '{{raceName}} {{sessionName}} のライブ天気レーダー、予報、セッション開始カウントダウン。雨と路面状況をリアルタイムで確認。',
+        raceDesc: '{{raceName}} のライブ天気レーダーと予報。各グランプリセッション中の雨と状況をリアルタイムで確認。',
+    },
+    weatherCodes: {
+        clearSky: '快晴', partlyCloudy: '晴れ時々くもり', fog: '霧', drizzle: '霧雨', rain: '雨',
+        snowGrains: '雪粒', rainShowers: 'にわか雨', snowShowers: 'にわか雪', thunderstorm: '雷雨', unknown: '不明',
+    },
+};

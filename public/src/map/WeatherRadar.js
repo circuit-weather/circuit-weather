@@ -1,4 +1,5 @@
 import { CONFIG } from '../config.js';
+import { i18n } from '../i18n/index.js';
 
 export class WeatherRadar {
     constructor(map) {
@@ -121,8 +122,9 @@ export class WeatherRadar {
 
             // Palette Accessibility: Update ARIA label with current state
             if (this.ui.speedBtn) {
-                this.ui.speedBtn.setAttribute('aria-label', `Playback speed: ${label}`);
-                this.ui.speedBtn.setAttribute('title', `Playback speed: ${label}`);
+                const speedLabel = i18n.t('radar.playbackSpeed', { speed: label });
+                this.ui.speedBtn.setAttribute('aria-label', speedLabel);
+                this.ui.speedBtn.setAttribute('title', speedLabel);
             }
         }
     }
@@ -424,13 +426,13 @@ export class WeatherRadar {
                     // Ambiguous Case: API is fine (200), but tile failed.
                     // We treat this as a transient failure that needs retry.
                     // Count is already updated at top of method.
-                    this.triggerRateLimitCooldown(15000, 'Connection Instability', `Retrying ${this.failedTiles.size} failed tiles...`);
+                    this.triggerRateLimitCooldown(15000, i18n.t('radar.connectionInstability'), this.retryingTilesMessage(this.failedTiles.size));
                 } else {
                     // Service Error
                     const now = Date.now();
                     if (now - this.lastTileErrorTime > 2000) {
                         this.lastTileErrorTime = now;
-                        this.showErrorToast('Service Error', `Radar status: ${response.status}`, 5);
+                        this.showErrorToast(i18n.t('radar.serviceError'), i18n.t('radar.radarStatus', { status: response.status }), 5);
                     }
                 }
             })
@@ -454,7 +456,7 @@ export class WeatherRadar {
             }
 
             // Persistent toast while errors exist
-            const message = `Retrying ${count} failed tile${count > 1 ? 's' : ''}...`;
+            const message = this.retryingTilesMessage(count);
 
             // Fix Timer Sync: Use actual remaining time if a retry cooldown is active
             let duration = 60;
@@ -464,7 +466,7 @@ export class WeatherRadar {
             }
 
             this.showErrorToast(
-                this.activeErrorTitle || 'Connection Instability',
+                this.activeErrorTitle || i18n.t('radar.connectionInstability'),
                 message,
                 duration
             );
@@ -480,7 +482,7 @@ export class WeatherRadar {
         }
     }
 
-    triggerRateLimitCooldown(waitTimeMs = 61000, title = 'High Traffic', message = 'Rate limit exceeded. Pausing momentarily.') {
+    triggerRateLimitCooldown(waitTimeMs = 61000, title = i18n.t('radar.highTraffic'), message = i18n.t('radar.rateLimitExceeded')) {
         if (this.rateLimitResetTime > Date.now()) return; // Already triggered
 
         // Playback continues (removed pause) so valid tiles can load
@@ -554,6 +556,13 @@ export class WeatherRadar {
         };
         // Start the loop
         this.toastAnimationFrame = requestAnimationFrame(updateTimer);
+    }
+
+    retryingTilesMessage(count) {
+        return i18n.t('radar.retryingFailedTiles', {
+            count,
+            suffix: count > 1 ? 's' : '',
+        });
     }
 
     hideErrorToast() {
@@ -835,31 +844,33 @@ export class WeatherRadar {
             const durationText = this.formatDuration(absDiff);
 
             if (Math.abs(diff) < 1) {
-                relativeText = 'Session start';
-                accessibleText = 'Session start';
+                relativeText = i18n.t('radar.sessionStart');
+                accessibleText = i18n.t('radar.sessionStart');
             } else if (diff < 0) {
-                relativeText = `${durationText} before session`;
-                accessibleText = `${durationText} before session`;
+                relativeText = i18n.t('radar.beforeSession', { duration: durationText });
+                accessibleText = i18n.t('radar.beforeSession', { duration: durationText });
             } else {
-                relativeText = `${durationText} after session`;
-                accessibleText = `${durationText} after session`;
+                relativeText = i18n.t('radar.afterSession', { duration: durationText });
+                accessibleText = i18n.t('radar.afterSession', { duration: durationText });
             }
             this.ui.relative.textContent = relativeText;
         } else if (this.ui.relative) {
             const diffSec = timestamp - (Date.now() / 1000);
 
             if (diffSec > 60) {
-                relativeText = 'Forecast';
-                accessibleText = 'Forecast';
+                relativeText = i18n.t('radar.forecast');
+                accessibleText = i18n.t('radar.forecast');
             } else {
                 // Palette UX: For past frames when no session is selected, show "X mins ago"
                 const diffMin = Math.round((Date.now() - effectiveTimeMs) / CONFIG.ONE_MINUTE_MS);
 
                 if (diffMin < 1) {
-                    relativeText = 'Live';
-                    accessibleText = 'Live radar';
+                    relativeText = i18n.t('radar.live');
+                    accessibleText = i18n.t('radar.liveAria');
                 } else if (diffMin >= 1) {
-                    relativeText = `${diffMin} min${diffMin !== 1 ? 's' : ''} ago`;
+                    relativeText = diffMin === 1
+                        ? i18n.t('radar.minutesAgo', { count: diffMin })
+                        : i18n.t('radar.minutesAgoPlural', { count: diffMin });
                     accessibleText = relativeText;
                 }
             }
@@ -918,8 +929,8 @@ export class WeatherRadar {
         this.isPlaying = true;
         if (this.ui.playBtn) {
             this.ui.playBtn.classList.add('playing');
-            this.ui.playBtn.setAttribute('aria-label', 'Pause radar animation');
-            this.ui.playBtn.setAttribute('title', 'Pause (Space)');
+            this.ui.playBtn.setAttribute('aria-label', i18n.t('radar.pause'));
+            this.ui.playBtn.setAttribute('title', i18n.t('radar.pauseTitle'));
         }
 
         // Bolt Optimization: Use requestAnimationFrame instead of setInterval
@@ -949,8 +960,8 @@ export class WeatherRadar {
         this.isPlaying = false;
         if (this.ui.playBtn) {
             this.ui.playBtn.classList.remove('playing');
-            this.ui.playBtn.setAttribute('aria-label', 'Play radar animation');
-            this.ui.playBtn.setAttribute('title', 'Play (Space)');
+            this.ui.playBtn.setAttribute('aria-label', i18n.t('radar.play'));
+            this.ui.playBtn.setAttribute('title', i18n.t('radar.playTitle'));
         }
 
         if (this.animationFrameId) {
@@ -980,11 +991,18 @@ export class WeatherRadar {
         const minutes = totalMinutes % 60;
 
         const parts = [];
-        if (days > 0) parts.push(`${days} day${days !== 1 ? 's' : ''}`);
-        if (hours > 0) parts.push(`${hours} hour${hours !== 1 ? 's' : ''}`);
+        if (days > 0) {
+            const dayLabel = days === 1 ? i18n.t('countdown.day') : i18n.t('countdown.dayPlural');
+            parts.push(`${days} ${dayLabel}`);
+        }
+        if (hours > 0) {
+            const hourLabel = hours === 1 ? i18n.t('countdown.hour') : i18n.t('countdown.hourPlural');
+            parts.push(`${hours} ${hourLabel}`);
+        }
 
         // Always show minutes to prevent justification jumps in the UI
-        parts.push(`${minutes} minute${minutes !== 1 ? 's' : ''}`);
+        const minuteLabel = minutes === 1 ? i18n.t('countdown.minute') : i18n.t('countdown.minutePlural');
+        parts.push(`${minutes} ${minuteLabel}`);
 
         return parts.join(' ');
     }

@@ -87,10 +87,10 @@
         <aside class="sidebar" id="sidebar">
             <!-- Scout: Upgraded generic div to semantic header for better accessibility and structure -->
             <header class="sidebar-header">
-                                <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar"
-                    title="Close sidebar (Esc)" aria-expanded="false"
+                <button class="sidebar-toggle" id="sidebarToggle" aria-label="Open menu"
+                    title="Open menu" aria-expanded="false" data-i18n-attr="aria-label:common.openMenu,title:common.openMenu"
                     aria-controls="sidebar">
-                    <span class="sr-only">Close sidebar. Keyboard shortcut: Escape</span>
+                    <span class="sr-only" data-i18n="common.openMenu">Open menu</span>
                     <svg class="icon-menu" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                         stroke-width="2">
                         <line x1="3" y1="6" x2="21" y2="6"></line>
@@ -111,7 +111,7 @@
                     </svg>
                 </span>
                 <button class="theme-toggle" id="themeToggle" aria-label="Toggle dark/light mode"
-                    title="Toggle dark/light mode">
+                    title="Toggle dark/light mode" data-i18n-attr="aria-label:theme.toggle,title:theme.toggle">
                     <svg class="icon-sun" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                         stroke-width="2">
                         <circle cx="12" cy="12" r="5"></circle>
@@ -131,31 +131,31 @@
                 <!-- Selection Controls -->
                 <section class="control-section" aria-label="Race Selection">
                     <div class="control-group">
-                        <label for="seriesSelect">Series</label>
+                        <label for="seriesSelect" data-i18n="controls.series">Series</label>
                         <select id="seriesSelect" class="select" disabled
                             title="Only Formula 1 is currently supported">
                             <option value="f1">Formula 1</option>
                         </select>
                     </div>
                     <div class="control-group">
-                        <label for="roundSelect">Round</label>
+                        <label for="roundSelect" data-i18n="controls.round">Round</label>
                         <select id="roundSelect" class="select">
-                            <option value="">Select a round...</option>
+                            <option value="" data-i18n="controls.selectRound">Select a round...</option>
                         </select>
                     </div>
                     <div class="control-group">
-                        <label for="sessionSelect">Session</label>
-                        <select id="sessionSelect" class="select" disabled title="Select a round first">
-                            <option value="">Select a round first</option>
+                        <label for="sessionSelect" data-i18n="controls.session">Session</label>
+                        <select id="sessionSelect" class="select" disabled title="Select a round first" data-i18n-attr="title:controls.selectRoundFirst">
+                            <option value="" data-i18n="controls.selectRoundFirst">Select a round first</option>
                         </select>
                     </div>
                     <div class="control-group control-group--units">
-                        <span id="unitsLabel" class="control-label">Units</span>
+                        <span id="unitsLabel" class="control-label" data-i18n="controls.units">Units</span>
                         <div class="unit-toggle" id="unitToggle" role="group" aria-labelledby="unitsLabel">
                             <button class="unit-option" data-unit="metric" type="button" aria-label="Kilometres"
-                                title="Kilometres" aria-pressed="false">km</button>
+                                title="Kilometres" aria-pressed="false" data-i18n-attr="aria-label:controls.metricLabel,title:controls.metricLabel">km</button>
                             <button class="unit-option active" data-unit="imperial" type="button" aria-label="Miles"
-                                title="Miles" aria-pressed="true">mi</button>
+                                title="Miles" aria-pressed="true" data-i18n-attr="aria-label:controls.imperialLabel,title:controls.imperialLabel">mi</button>
                         </div>
                     </div>
                 </section>
@@ -175,7 +175,7 @@
 
                 <!-- Weather Forecast -->
                 <section class="forecast-section" id="forecastSection" aria-labelledby="forecastHeading" style="display: none;">
-                    <h2 id="forecastHeading">Session Forecast</h2>
+                    <h2 id="forecastHeading" data-i18n="forecast.heading">Session Forecast</h2>
                     <div class="forecast-content" id="forecastContent">
                         <!-- Content injected by JS -->
                         <div class="weather-dashboard">
@@ -201,7 +201,7 @@
                         </div>
                     </div>
                     <div id="forecastUnavailable" style="display: none;" aria-live="polite">
-                        <p class="forecast-unavailable">Forecast available closer to session</p>
+                        <p class="forecast-unavailable" data-i18n="forecast.availableCloser">Forecast available closer to session</p>
                     </div>
                 </section>
 
@@ -215,7 +215,7 @@
                         <line x1="3" y1="10" x2="21" y2="10"></line>
                         <circle cx="12" cy="16" r="2"></circle>
                     </svg>
-                    <p>Select a session to view forecast</p>
+                    <p data-i18n="forecast.selectSessionPrompt">Select a session to view forecast</p>
                 </div>
             </nav>
 
@@ -231,7 +231,7 @@
             <!-- Scout: Upgraded generic div to semantic footer for better structure -->
             <footer class="sidebar-footer">
                 <!-- Scout: Converted privacy button to an anchor tag with href for crawler discoverability -->
-                <a href="/PRIVACY.md" id="privacyLink" class="link-button" role="button">Privacy</a>
+                <a href="/PRIVACY.md" id="privacyLink" class="link-button" role="button" data-i18n="privacy.link">Privacy</a>
                 <span>•</span>
                 <!-- Scout: Added title attribute to external link to provide search engines with more context about the destination -->
                 <a href="https://github.com/circuit-weather/circuit-weather" target="_blank" rel="noopener noreferrer"
@@ -255,7 +255,7 @@
         <main class="main-content">
             <!-- Mobile Header (visible only on tablet/mobile) -->
             <header class="mobile-header" id="mobileHeader">
-                <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open menu" title="Open menu"
+                <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Open menu" title="Open menu" data-i18n-attr="aria-label:common.openMenu,title:common.openMenu"
                     aria-expanded="false" aria-controls="sidebar">
                     <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="3" y1="6" x2="21" y2="6"></line>
@@ -274,7 +274,7 @@
                     </span>
                 </div>
                 <button class="theme-toggle mobile-theme-toggle" id="mobileThemeToggle"
-                    aria-label="Toggle dark/light mode" title="Toggle dark/light mode">
+                    aria-label="Toggle dark/light mode" title="Toggle dark/light mode" data-i18n-attr="aria-label:theme.toggle,title:theme.toggle">
                     <svg class="icon-sun" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                         stroke-width="2">
                         <circle cx="12" cy="12" r="5"></circle>
@@ -296,7 +296,7 @@
             <!-- Radar Timeline -->
             <!-- Scout: Upgraded generic div to semantic section for better structure and screen reader landmarks -->
             <section class="radar-controls" id="radarControls" aria-label="Radar Playback Controls" style="display: none;">
-                <button class="radar-play-btn" id="radarPlayBtn" aria-label="Play radar animation" title="Play (Space)"
+                <button class="radar-play-btn" id="radarPlayBtn" aria-label="Play radar animation" title="Play (Space)" data-i18n-attr="aria-label:radar.play,title:radar.playTitle"
                     aria-keyshortcuts="Space">
                     <svg class="icon-play" aria-hidden="true" viewBox="0 0 24 24" fill="currentColor">
                         <polygon points="5,3 19,12 5,21"></polygon>
@@ -328,7 +328,7 @@
             <!-- Scout: Upgraded generic div to semantic section for consistent landmarks -->
             <section class="map-countdown" id="mapCountdown" aria-labelledby="mapCountdownLabel" style="display: none;">
                 <!-- Scout: Upgraded generic div to semantic h2 to provide a proper heading for the section landmark, improving document outline and discoverability. -->
-                <h2 class="map-countdown-label" id="mapCountdownLabel">Starts in</h2>
+                <h2 class="map-countdown-label" id="mapCountdownLabel" data-i18n="countdown.startsIn">Starts in</h2>
                 <div class="map-countdown-timer" id="mapCountdownTimer" role="timer">--:--:--</div>
                 <div class="map-countdown-session" id="mapCountdownSession"></div>
             </section>
@@ -351,7 +351,7 @@
             <!-- Loading Overlay -->
             <div class="loading-overlay" id="loadingOverlay" aria-live="polite" aria-atomic="true">
                 <div class="loading-spinner"></div>
-                <p>Loading...</p>
+                <p data-i18n="common.loading">Loading...</p>
             </div>
             <!-- Error Toast -->
             <div id="errorToast" class="error-toast" role="alert" aria-live="assertive">
@@ -363,8 +363,8 @@
                     </svg>
                 </div>
                 <div class="error-content">
-                    <div class="error-title" id="errorTitle">Tile Error</div>
-                    <div class="error-message" id="errorMessage">Retrying...</div>
+                    <div class="error-title" id="errorTitle" data-i18n="radar.connectionInstability">Connection Instability</div>
+                    <div class="error-message" id="errorMessage" data-i18n="common.retrying">Retrying...</div>
                 </div>
                 <div class="error-timer" id="errorTimer" aria-hidden="true"></div>
             </div>
@@ -397,16 +397,16 @@
     <!-- Privacy Policy Modal -->
     <dialog id="privacyModal" class="privacy-modal" aria-labelledby="privacyTitle">
         <div class="privacy-modal-header">
-            <h2 id="privacyTitle">Privacy Policy</h2>
+            <h2 id="privacyTitle" data-i18n="privacy.title">Privacy Policy</h2>
             <button class="privacy-modal-close" id="privacyModalClose" aria-label="Close privacy policy"
-                title="Close privacy policy (Esc)" aria-keyshortcuts="Escape">
+                title="Close privacy policy (Esc)" aria-keyshortcuts="Escape" data-i18n-attr="aria-label:privacy.closePolicy,title:privacy.closePolicy">
                 <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <line x1="18" y1="6" x2="6" y2="18"></line>
                     <line x1="6" y1="6" x2="18" y2="18"></line>
                 </svg>
             </button>
         </div>
-        <div class="privacy-modal-content" id="privacyModalContent" tabindex="0" role="region" aria-label="Privacy Policy content">
+        <div class="privacy-modal-content" id="privacyModalContent" tabindex="0" role="region" aria-label="Privacy Policy content" data-i18n-attr="aria-label:privacy.contentAria">
             <!-- Privacy content loaded here -->
         </div>
     </dialog>
