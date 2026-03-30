@@ -241,4 +241,59 @@ describe('TrackLayer', () => {
         // @ts-ignore
         CONFIG.trackApi = originalApi;
     });
+
+    it('should not add to map if already has layer when using cache', async () => {
+        const circuitId = 'monaco';
+        trackLayer.cache.set(circuitId, layerMock);
+        mapMock.hasLayer.mockReturnValue(true);
+
+        await trackLayer.loadTrack(circuitId);
+
+        expect(layerMock.addTo).not.toHaveBeenCalled();
+        expect(layerMock.bringToBack).toHaveBeenCalled();
+    });
+
+    it('should return early when updateStyle is called but layer is null', () => {
+        trackLayer.layer = null;
+        trackLayer.updateStyle();
+        // Nothing should throw
+        expect(true).toBe(true);
+    });
+
+    it('should handle fetch success but changed circuit ID before json parsing', async () => {
+         const circuitId = 'monaco';
+         let resolveFetch;
+         const fetchPromise = new Promise(r => { resolveFetch = r; });
+
+         fetchMock.mockReturnValue(fetchPromise);
+
+         const loadPromise = trackLayer.loadTrack(circuitId);
+
+         resolveFetch({
+             ok: true,
+             json: async () => {
+                 trackLayer.currentCircuitId = 'other';
+                 return {};
+             }
+         });
+
+         await loadPromise;
+
+         expect(L.geoJSON).not.toHaveBeenCalled();
+    });
+
+    it('should abort cached load if circuit ID changes during cache check', async () => {
+        const circuitId = 'monaco';
+        trackLayer.cache.set(circuitId, layerMock);
+
+        const originalGet = trackLayer.cache.get.bind(trackLayer.cache);
+        trackLayer.cache.get = vi.fn().mockImplementation((id) => {
+            trackLayer.currentCircuitId = 'changed';
+            return originalGet(id);
+        });
+
+        await trackLayer.loadTrack(circuitId);
+
+        expect(layerMock.addTo).not.toHaveBeenCalled();
+    });
 });
