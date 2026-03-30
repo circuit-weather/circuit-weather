@@ -13,6 +13,7 @@ export const ja = {
         failedTryAgain: '予報の読み込みに失敗しました。もう一度お試しください。', selectSessionPrompt: '予報を見るにはセッションを選択してください',
     },
     weather: {
+        currentConditions: '現在の状況',
         temp: '気温', rain: '雨', wind: '風', windDirection: '風向: {{direction}} ({{degrees}} 度)',
         timelineAria: '{{time}}。{{description}}。気温 {{temp}} 度。降水確率 {{rain}}%。風速 {{wind}} {{windUnit}}。',
         currentCircuitWeather: 'サーキット現在天気', temperature: '気温', rainChance: '降水確率', humidity: '湿度', windSpeed: '風速',

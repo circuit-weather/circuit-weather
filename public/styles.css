@@ -233,6 +233,15 @@ body {
     gap: var(--spacing-sm);
 }
 
+.weather-widget-heading {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-text-secondary);
+    margin-bottom: var(--spacing-sm);
+    margin-top: 0;
+}
+
 .control-group {
     display: flex;
     flex-direction: column;
@@ -1184,7 +1193,8 @@ body {
         padding: var(--spacing-sm) var(--spacing-md);
     }
 
-    .forecast-section h2 {
+    .forecast-section h2,
+    .weather-widget-heading {
         font-size: 0.6rem;
         margin-bottom: var(--spacing-xs);
     }
