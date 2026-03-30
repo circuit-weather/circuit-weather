@@ -81,3 +81,7 @@ s (colors, spacing) to blend in.
 ## 2026-10-24 - Continuous Animations in Indeterminate Spinners
 **Learning:** Continuous CSS animations (like the infinite rotation on a `.loading-spinner`) can trigger discomfort for users with motion sensitivity who have enabled `prefers-reduced-motion` in their OS or browser. Even simple rotations need to be addressed.
 **Action:** Always wrap indeterminate loading spinners in a `@media (prefers-reduced-motion: reduce)` query to disable the animation (`animation: none`) and provide a static placeholder (e.g. static circle, lower opacity, modified border color), ensuring the UI remains accessible and comfortable for all users.
+
+## 2026-10-25 - Explicit Visual Styling for Dynamically Disabled Buttons
+**Learning:** When JavaScript dynamically disables a button (e.g., `btn.disabled = true` during a network retry or loading state), relying solely on the browser's default disabled styling is often insufficient. Without explicit CSS for the `:disabled` state (like reduced opacity and a `not-allowed` cursor), users may not visually register that the button is temporarily inactive, leading to confusion or repeated clicks.
+**Action:** Always pair dynamic `disabled = true` logic with explicit `.btn:disabled` CSS rules (e.g., `opacity: 0.5; cursor: not-allowed;`) to ensure clear, immediate visual feedback that aligns with the semantic state of the element.
