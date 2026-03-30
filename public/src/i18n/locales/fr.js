@@ -1,0 +1,49 @@
+export const fr = {
+    common: { loading: 'Chargement...', retry: 'Reessayer', retrying: 'Nouvelle tentative...', openMenu: 'Ouvrir le menu', closeMenu: 'Fermer le menu' },
+    theme: { toggle: 'Basculer mode clair/sombre', switchToLight: 'Passer en mode clair', switchToDark: 'Passer en mode sombre' },
+    loading: { schedule: 'Chargement du calendrier des courses...', session: 'Chargement des donnees de session...' },
+    controls: {
+        series: 'Serie', round: 'Manche', session: 'Session', units: 'Unites',
+        selectRound: 'Selectionner une manche...', selectRoundFirst: 'Selectionnez d\'abord une manche', selectSession: 'Selectionner une session...',
+        metricLabel: 'Kilometres', imperialLabel: 'Miles',
+    },
+    forecast: {
+        heading: 'Previsions de session', hourlyForecast: 'Previsions horaires', availableFrom: 'Previsions disponibles a partir de {{date}}',
+        availableSoon: 'Previsions disponibles bientot', availableCloser: 'Previsions disponibles plus pres de la session',
+        unavailable: 'Impossible de charger les previsions', failedTryAgain: 'Echec du chargement des previsions. Veuillez reessayer.',
+        selectSessionPrompt: 'Selectionnez une session pour voir les previsions',
+    },
+    weather: {
+        temp: 'Temp', rain: 'Pluie', wind: 'Vent', windDirection: 'Direction du vent : {{direction}} ({{degrees}} degres)',
+        timelineAria: '{{time}}. {{description}}. Temperature {{temp}} degres. Risque de pluie {{rain}}%. Vent {{wind}} {{windUnit}}.',
+        currentCircuitWeather: 'Meteo actuelle du circuit', temperature: 'Temperature', rainChance: 'Risque de pluie', humidity: 'Humidite', windSpeed: 'Vitesse du vent',
+    },
+    radar: {
+        play: 'Lire le radar', pause: 'Mettre le radar en pause', playTitle: 'Lire (Espace)', pauseTitle: 'Pause (Espace)',
+        playbackSpeed: 'Vitesse de lecture : {{speed}}', sessionStart: 'Debut de session', beforeSession: '{{duration}} avant la session',
+        afterSession: '{{duration}} apres la session', forecast: 'Previsions', live: 'En direct', liveAria: 'Radar en direct',
+        minutesAgo: 'Il y a {{count}} min', minutesAgoPlural: 'Il y a {{count}} mins', connectionInstability: 'Connexion instable',
+        serviceError: 'Erreur du service', highTraffic: 'Trafic eleve', rateLimitExceeded: 'Limite de requetes depassee. Pause momentanee.',
+        retryingFailedTiles: 'Nouvelle tentative pour {{count}} tuile{{suffix}} en echec...', radarStatus: 'Statut radar : {{status}}',
+    },
+    countdown: { startsIn: 'Debute dans', day: 'jour', dayPlural: 'jours', hour: 'heure', hourPlural: 'heures', minute: 'minute', minutePlural: 'minutes', second: 'seconde', secondPlural: 'secondes' },
+    map: { recenterOnCircuit: 'Recentrer sur le circuit' },
+    privacy: { loadFailed: 'Impossible de charger la politique de confidentialite. Veuillez reessayer plus tard.' },
+    errors: {
+        connectionFailed: 'Connexion echouee', retryConnection: 'Reessayer la connexion', retryingConnection: 'Nouvelle tentative de connexion',
+        initFailed: 'Echec de l\'initialisation de l\'application.', sessionError: 'Erreur de session', sessionLoadFailed: 'Echec du chargement des previsions ou du radar de session.',
+    },
+    status: { live: 'EN DIRECT', current: 'Actuel', next: 'Suivant' },
+    meta: {
+        defaultTitle: 'Circuit Weather — Radar meteo F1 en direct',
+        defaultDesc: 'Anticipez la pluie avec Circuit Weather. Radar meteo en temps reel, previsions et compte a rebours des sessions pour chaque circuit de Formule 1.',
+        sessionTitle: '{{raceName}} {{sessionName}} Meteo - Circuit Weather',
+        raceTitle: '{{raceName}} Meteo - Circuit Weather',
+        sessionDesc: 'Radar en direct, previsions et compte a rebours pour {{raceName}} {{sessionName}}. Suivez la pluie et les conditions en temps reel.',
+        raceDesc: 'Radar et previsions en direct pour {{raceName}}. Suivez la pluie et les conditions pendant chaque session de Grand Prix.',
+    },
+    weatherCodes: {
+        clearSky: 'Ciel degage', partlyCloudy: 'Partiellement nuageux', fog: 'Brouillard', drizzle: 'Bruine', rain: 'Pluie',
+        snowGrains: 'Neige en grains', rainShowers: 'Averses de pluie', snowShowers: 'Averses de neige', thunderstorm: 'Orage', unknown: 'Inconnu',
+    },
+};

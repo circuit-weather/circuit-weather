@@ -1,4 +1,5 @@
 import { CONFIG } from '../config.js';
+import { i18n } from '../i18n/index.js';
 
 export class CountdownTimer {
     constructor() {
@@ -70,13 +71,22 @@ export class CountdownTimer {
         if (hours > 24) {
             const days = Math.floor(hours / 24);
             const remHours = hours % 24;
-            return `${days} day${days !== 1 ? 's' : ''}, ${remHours} hour${remHours !== 1 ? 's' : ''}`;
+            const dayLabel = days === 1 ? i18n.t('countdown.day') : i18n.t('countdown.dayPlural');
+            const hourLabel = remHours === 1 ? i18n.t('countdown.hour') : i18n.t('countdown.hourPlural');
+            return `${days} ${dayLabel}, ${remHours} ${hourLabel}`;
         }
 
         const parts = [];
-        if (hours > 0) parts.push(`${hours} hour${hours !== 1 ? 's' : ''}`);
-        if (mins > 0) parts.push(`${mins} minute${mins !== 1 ? 's' : ''}`);
-        parts.push(`${secs} second${secs !== 1 ? 's' : ''}`);
+        if (hours > 0) {
+            const hourLabel = hours === 1 ? i18n.t('countdown.hour') : i18n.t('countdown.hourPlural');
+            parts.push(`${hours} ${hourLabel}`);
+        }
+        if (mins > 0) {
+            const minuteLabel = mins === 1 ? i18n.t('countdown.minute') : i18n.t('countdown.minutePlural');
+            parts.push(`${mins} ${minuteLabel}`);
+        }
+        const secondLabel = secs === 1 ? i18n.t('countdown.second') : i18n.t('countdown.secondPlural');
+        parts.push(`${secs} ${secondLabel}`);
 
         return parts.join(', ');
     }

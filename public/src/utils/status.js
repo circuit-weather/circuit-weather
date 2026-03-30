@@ -78,13 +78,14 @@ export function getRoundStatus(race, now) {
  */
 export function formatStatusLabel(label, status, isNext) {
     if (status === 'LIVE') {
-        return `🔴 LIVE ${label}`;
+        return `🔴 ${i18n.t('status.live')} ${label}`;
     }
     if (status === 'CURRENT') {
-        return `(Current) ${label}`;
+        return `(${i18n.t('status.current')}) ${label}`;
     }
     if (isNext) {
-        return `(Next) ${label}`;
+        return `(${i18n.t('status.next')}) ${label}`;
     }
     return label;
 }
+import { i18n } from '../i18n/index.js';

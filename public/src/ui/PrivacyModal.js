@@ -1,4 +1,5 @@
 import { escapeHtml } from "../utils/escapeHtml.js";
+import { i18n } from '../i18n/index.js';
 
 export class PrivacyModal {
   constructor() {
@@ -89,8 +90,7 @@ export class PrivacyModal {
     } catch (error) {
       console.error("Failed to load privacy policy:", error);
       if (this.content) {
-        this.content.innerHTML =
-          "<p>Failed to load privacy policy. Please try again later.</p>";
+        this.content.innerHTML = `<p>${escapeHtml(i18n.t('privacy.loadFailed'))}</p>`;
       }
     }
   }

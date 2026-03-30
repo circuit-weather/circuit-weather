@@ -45,6 +45,7 @@ export class RangeCircles {
 
     updateToggleUI() {
         const metricLabel = t('unitMetricLabel');
+        const imperialLabel = t('controls.imperialLabel');
 
         document.querySelectorAll('.unit-option').forEach(opt => {
             const isActive = opt.dataset.unit === this.unit;
@@ -54,6 +55,9 @@ export class RangeCircles {
             if (opt.dataset.unit === 'metric') {
                 opt.setAttribute('aria-label', metricLabel);
                 opt.setAttribute('title', metricLabel);
+            } else if (opt.dataset.unit === 'imperial') {
+                opt.setAttribute('aria-label', imperialLabel);
+                opt.setAttribute('title', imperialLabel);
             }
         });
     }

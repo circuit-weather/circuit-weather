@@ -1,6 +1,9 @@
+/* @vitest-environment jsdom */
+
 import { beforeEach, describe, expect, it } from 'vitest';
 import { getEnglishVariant, getLocaleMeta, getUserLocale, usesImperialUnits } from '../public/src/utils/locale.js';
 import { t } from '../public/src/utils/localeText.js';
+import { i18n } from '../public/src/i18n/index.js';
 
 describe('Locale helpers', () => {
     beforeEach(() => {
@@ -12,6 +15,7 @@ describe('Locale helpers', () => {
             value: ['en-NZ'],
             configurable: true,
         });
+        i18n.init('en-NZ');
     });
 
     it('parses language and region from locale strings', () => {
@@ -48,6 +52,7 @@ describe('Locale helpers', () => {
             value: ['en-US'],
             configurable: true,
         });
+        i18n.init();
         expect(t('unitMetricLabel')).toBe('Kilometers');
         expect(t('recenterOnCircuit')).toBe('Recenter on circuit');
 
@@ -55,6 +60,7 @@ describe('Locale helpers', () => {
             value: ['en-NZ'],
             configurable: true,
         });
+        i18n.init();
         expect(t('unitMetricLabel')).toBe('Kilometres');
         expect(t('recenterOnCircuit')).toBe('Recentre on circuit');
     });

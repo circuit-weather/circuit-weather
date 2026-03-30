@@ -1,0 +1,47 @@
+export const zhCN = {
+    common: { loading: '加载中...', retry: '重试', retrying: '正在重试...', openMenu: '打开菜单', closeMenu: '关闭菜单' },
+    theme: { toggle: '切换明亮/深色模式', switchToLight: '切换到明亮模式', switchToDark: '切换到深色模式' },
+    loading: { schedule: '正在加载比赛赛历...', session: '正在加载赛段数据...' },
+    controls: {
+        series: '系列赛', round: '分站', session: '赛段', units: '单位',
+        selectRound: '选择分站...', selectRoundFirst: '请先选择分站', selectSession: '选择赛段...',
+        metricLabel: '公里', imperialLabel: '英里',
+    },
+    forecast: {
+        heading: '赛段天气预报', hourlyForecast: '逐小时预报', availableFrom: '{{date}} 起可查看预报', availableSoon: '预报即将可用',
+        availableCloser: '临近赛段开始时可查看预报', unavailable: '无法加载预报',
+        failedTryAgain: '加载预报失败。请重试。', selectSessionPrompt: '请选择赛段以查看预报',
+    },
+    weather: {
+        temp: '气温', rain: '降雨', wind: '风', windDirection: '风向: {{direction}} ({{degrees}} 度)',
+        timelineAria: '{{time}}。{{description}}。气温 {{temp}} 度。降雨概率 {{rain}}%。风速 {{wind}} {{windUnit}}。',
+        currentCircuitWeather: '赛道当前天气', temperature: '气温', rainChance: '降雨概率', humidity: '湿度', windSpeed: '风速',
+    },
+    radar: {
+        play: '播放雷达动画', pause: '暂停雷达动画', playTitle: '播放 (Space)', pauseTitle: '暂停 (Space)',
+        playbackSpeed: '播放速度: {{speed}}', sessionStart: '赛段开始', beforeSession: '距赛段开始前 {{duration}}', afterSession: '赛段开始后 {{duration}}',
+        forecast: '预报', live: '实时', liveAria: '实时雷达', minutesAgo: '{{count}} 分钟前', minutesAgoPlural: '{{count}} 分钟前',
+        connectionInstability: '连接不稳定', serviceError: '服务错误', highTraffic: '访问量高',
+        rateLimitExceeded: '请求过于频繁，已暂时暂停。', retryingFailedTiles: '正在重试 {{count}} 个失败瓦片...', radarStatus: '雷达状态: {{status}}',
+    },
+    countdown: { startsIn: '开始倒计时', day: '天', dayPlural: '天', hour: '小时', hourPlural: '小时', minute: '分钟', minutePlural: '分钟', second: '秒', secondPlural: '秒' },
+    map: { recenterOnCircuit: '回到赛道中心' },
+    privacy: { loadFailed: '无法加载隐私政策。请稍后重试。' },
+    errors: {
+        connectionFailed: '连接失败', retryConnection: '重试连接', retryingConnection: '正在重试连接',
+        initFailed: '应用初始化失败。', sessionError: '赛段错误', sessionLoadFailed: '加载赛段预报或雷达失败。',
+    },
+    status: { live: '直播中', current: '当前', next: '下一场' },
+    meta: {
+        defaultTitle: 'Circuit Weather — F1 实时天气雷达与预报',
+        defaultDesc: '使用 Circuit Weather 提前掌握降雨动态。提供全球每条 F1 赛道的实时天气雷达、实时预报和赛段倒计时。',
+        sessionTitle: '{{raceName}} {{sessionName}} 天气 - Circuit Weather',
+        raceTitle: '{{raceName}} 天气 - Circuit Weather',
+        sessionDesc: '{{raceName}} {{sessionName}} 的实时天气雷达、预报与赛段倒计时。实时追踪降雨与天气变化。',
+        raceDesc: '{{raceName}} 的实时天气雷达与预报。实时追踪每个大奖赛赛段中的降雨与天气变化。',
+    },
+    weatherCodes: {
+        clearSky: '晴朗', partlyCloudy: '局部多云', fog: '有雾', drizzle: '毛毛雨', rain: '降雨',
+        snowGrains: '米雪', rainShowers: '阵雨', snowShowers: '阵雪', thunderstorm: '雷暴', unknown: '未知',
+    },
+};

@@ -1,0 +1,49 @@
+export const ptBR = {
+    common: { loading: 'A carregar...', retry: 'Tentar novamente', retrying: 'A tentar novamente...', openMenu: 'Abrir menu', closeMenu: 'Fechar menu' },
+    theme: { toggle: 'Alternar modo claro/escuro', switchToLight: 'Mudar para modo claro', switchToDark: 'Mudar para modo escuro' },
+    loading: { schedule: 'A carregar calendario de corridas...', session: 'A carregar dados da sessao...' },
+    controls: {
+        series: 'Serie', round: 'Ronda', session: 'Sessao', units: 'Unidades',
+        selectRound: 'Selecionar ronda...', selectRoundFirst: 'Selecione primeiro uma ronda', selectSession: 'Selecionar sessao...',
+        metricLabel: 'Quilometros', imperialLabel: 'Milhas',
+    },
+    forecast: {
+        heading: 'Previsao da sessao', hourlyForecast: 'Previsao horaria', availableFrom: 'Previsao disponivel a partir de {{date}}',
+        availableSoon: 'Previsao disponivel em breve', availableCloser: 'Previsao disponivel mais perto da sessao',
+        unavailable: 'Nao foi possivel carregar a previsao', failedTryAgain: 'Falha ao carregar a previsao. Tente novamente.',
+        selectSessionPrompt: 'Selecione uma sessao para ver a previsao',
+    },
+    weather: {
+        temp: 'Temp', rain: 'Chuva', wind: 'Vento', windDirection: 'Direcao do vento: {{direction}} ({{degrees}} graus)',
+        timelineAria: '{{time}}. {{description}}. Temperatura {{temp}} graus. Probabilidade de chuva {{rain}}%. Vento {{wind}} {{windUnit}}.',
+        currentCircuitWeather: 'Tempo atual do circuito', temperature: 'Temperatura', rainChance: 'Chance de chuva', humidity: 'Humidade', windSpeed: 'Velocidade do vento',
+    },
+    radar: {
+        play: 'Reproduzir radar', pause: 'Pausar radar', playTitle: 'Reproduzir (Espaco)', pauseTitle: 'Pausar (Espaco)',
+        playbackSpeed: 'Velocidade de reproducao: {{speed}}', sessionStart: 'Inicio da sessao', beforeSession: '{{duration}} antes da sessao',
+        afterSession: '{{duration}} depois da sessao', forecast: 'Previsao', live: 'Ao vivo', liveAria: 'Radar ao vivo',
+        minutesAgo: '{{count}} min atras', minutesAgoPlural: '{{count}} mins atras', connectionInstability: 'Instabilidade de ligacao',
+        serviceError: 'Erro de servico', highTraffic: 'Trafego elevado', rateLimitExceeded: 'Limite de pedidos excedido. Pausa momentanea.',
+        retryingFailedTiles: 'A tentar novamente {{count}} bloco{{suffix}} com falha...', radarStatus: 'Estado do radar: {{status}}',
+    },
+    countdown: { startsIn: 'Comeca em', day: 'dia', dayPlural: 'dias', hour: 'hora', hourPlural: 'horas', minute: 'minuto', minutePlural: 'minutos', second: 'segundo', secondPlural: 'segundos' },
+    map: { recenterOnCircuit: 'Recentrar no circuito' },
+    privacy: { loadFailed: 'Falha ao carregar a politica de privacidade. Tente novamente mais tarde.' },
+    errors: {
+        connectionFailed: 'Falha de ligacao', retryConnection: 'Tentar novamente ligacao', retryingConnection: 'A tentar novamente ligacao',
+        initFailed: 'Falha ao iniciar a aplicacao.', sessionError: 'Erro de sessao', sessionLoadFailed: 'Falha ao carregar previsao ou radar da sessao.',
+    },
+    status: { live: 'AO VIVO', current: 'Atual', next: 'Seguinte' },
+    meta: {
+        defaultTitle: 'Circuit Weather — Radar meteorologico de F1 ao vivo',
+        defaultDesc: 'Fique a frente da chuva com o Circuit Weather. Radar em tempo real, previsoes ao vivo e contagem decrescente para cada circuito de Formula 1 no mundo.',
+        sessionTitle: '{{raceName}} {{sessionName}} Meteo - Circuit Weather',
+        raceTitle: '{{raceName}} Meteo - Circuit Weather',
+        sessionDesc: 'Radar ao vivo, previsoes e contagem decrescente para {{raceName}} {{sessionName}}. Acompanhe chuva e condicoes em tempo real.',
+        raceDesc: 'Radar ao vivo e previsoes para {{raceName}}. Acompanhe chuva e condicoes durante cada sessao do Grande Premio.',
+    },
+    weatherCodes: {
+        clearSky: 'Ceu limpo', partlyCloudy: 'Parcialmente nublado', fog: 'Nevoeiro', drizzle: 'Chuvisco', rain: 'Chuva',
+        snowGrains: 'Graos de neve', rainShowers: 'Aguaceiros', snowShowers: 'Aguaceiros de neve', thunderstorm: 'Trovoada', unknown: 'Desconhecido',
+    },
+};
