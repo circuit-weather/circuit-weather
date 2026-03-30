@@ -1,6 +1,8 @@
 import { getUserLocale } from '../utils/locale.js';
 import { de } from './locales/de.js';
 import { en } from './locales/en.js';
+import { enGB } from './locales/en-GB.js';
+import { enNZ } from './locales/en-NZ.js';
 import { enUS } from './locales/en-US.js';
 import { es } from './locales/es.js';
 import { fr } from './locales/fr.js';
@@ -11,6 +13,8 @@ import { zhCN } from './locales/zh-CN.js';
 
 const TRANSLATIONS = {
     en,
+    'en-GB': enGB,
+    'en-NZ': enNZ,
     'en-US': enUS,
     es,
     fr,
@@ -35,7 +39,7 @@ function interpolate(template, params = {}) {
 }
 
 function normalise(locale) {
-    if (!locale) return 'en';
+    if (!locale) return 'en-NZ';
 
     const rawLocale = String(locale).replace('_', '-');
     let localeString = rawLocale;
@@ -48,9 +52,13 @@ function normalise(locale) {
     if (TRANSLATIONS[localeString]) return localeString;
 
     const base = localeString.split('-')[0];
+    if (base === 'en') {
+        if (localeString.startsWith('en-GB')) return 'en-GB';
+        return localeString.startsWith('en-US') ? 'en-US' : 'en-NZ';
+    }
     if (TRANSLATIONS[base]) return base;
     if (LOCALE_ALIASES[base]) return LOCALE_ALIASES[base];
-    return 'en';
+    return 'en-NZ';
 }
 
 class I18n {
@@ -76,7 +84,7 @@ class I18n {
 
     t(key, params = {}) {
         const current = getByPath(TRANSLATIONS[this.locale], key);
-        const fallback = getByPath(TRANSLATIONS.en, key);
+        const fallback = getByPath(TRANSLATIONS['en-NZ'], key) ?? getByPath(TRANSLATIONS.en, key);
         const value = current !== undefined ? current : fallback;
         if (value === undefined) return key;
         return interpolate(value, params);

@@ -26,7 +26,14 @@ export const zhCN = {
     },
     countdown: { startsIn: '开始倒计时', day: '天', dayPlural: '天', hour: '小时', hourPlural: '小时', minute: '分钟', minutePlural: '分钟', second: '秒', secondPlural: '秒' },
     map: { recenterOnCircuit: '回到赛道中心' },
-    privacy: { loadFailed: '无法加载隐私政策。请稍后重试。' },
+    privacy: {
+        link: '隐私',
+        title: '隐私政策',
+        closePolicy: '关闭隐私政策',
+        contentAria: '隐私政策内容',
+        opensInNewTab: '将在新标签页打开',
+        loadFailed: '无法加载隐私政策。请稍后重试。',
+    },
     errors: {
         connectionFailed: '连接失败', retryConnection: '重试连接', retryingConnection: '正在重试连接',
         initFailed: '应用初始化失败。', sessionError: '赛段错误', sessionLoadFailed: '加载赛段预报或雷达失败。',

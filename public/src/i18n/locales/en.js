@@ -84,6 +84,11 @@ export const en = {
         recenterOnCircuit: 'Recentre on circuit',
     },
     privacy: {
+        link: 'Privacy',
+        title: 'Privacy Policy',
+        closePolicy: 'Close privacy policy',
+        contentAria: 'Privacy Policy content',
+        opensInNewTab: 'opens in a new tab',
         loadFailed: 'Failed to load privacy policy. Please try again later.',
     },
     errors: {

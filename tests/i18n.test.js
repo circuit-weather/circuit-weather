@@ -35,7 +35,7 @@ describe('i18n', () => {
 
     it('falls back to english for unsupported locales', () => {
         i18n.init('sv-SE');
-        expect(i18n.locale).toBe('en');
+        expect(i18n.locale).toBe('en-NZ');
         expect(i18n.t('controls.round')).toBe('Round');
     });
 
@@ -44,6 +44,13 @@ describe('i18n', () => {
         expect(i18n.locale).toBe('en-US');
         expect(i18n.t('controls.metricLabel')).toBe('Kilometers');
         expect(i18n.t('map.recenterOnCircuit')).toBe('Recenter on circuit');
+    });
+
+    it('resolves en-GB as its own locale variant', () => {
+        i18n.init('en-GB');
+        expect(i18n.locale).toBe('en-GB');
+        expect(i18n.t('controls.metricLabel')).toBe('Kilometres');
+        expect(i18n.t('map.recenterOnCircuit')).toBe('Recentre on circuit');
     });
 
     it('renders translated text and attributes with data-i18n bindings', () => {

@@ -30,7 +30,14 @@ export const es = {
         startsIn: 'Empieza en', day: 'dia', dayPlural: 'dias', hour: 'hora', hourPlural: 'horas', minute: 'minuto', minutePlural: 'minutos', second: 'segundo', secondPlural: 'segundos',
     },
     map: { recenterOnCircuit: 'Recentrar en circuito' },
-    privacy: { loadFailed: 'No se pudo cargar la politica de privacidad. Intentalo de nuevo mas tarde.' },
+    privacy: {
+        link: 'Privacidad',
+        title: 'Politica de privacidad',
+        closePolicy: 'Cerrar politica de privacidad',
+        contentAria: 'Contenido de la politica de privacidad',
+        opensInNewTab: 'se abre en una pestana nueva',
+        loadFailed: 'No se pudo cargar la politica de privacidad. Intentalo de nuevo mas tarde.',
+    },
     errors: {
         connectionFailed: 'Conexion fallida', retryConnection: 'Reintentar conexion', retryingConnection: 'Reintentando conexion',
         initFailed: 'No se pudo iniciar la aplicacion.', sessionError: 'Error de sesion', sessionLoadFailed: 'No se pudo cargar el pronostico o radar de la sesion.',

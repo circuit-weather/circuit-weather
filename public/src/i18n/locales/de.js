@@ -27,7 +27,14 @@ export const de = {
     },
     countdown: { startsIn: 'Startet in', day: 'Tag', dayPlural: 'Tage', hour: 'Stunde', hourPlural: 'Stunden', minute: 'Minute', minutePlural: 'Minuten', second: 'Sekunde', secondPlural: 'Sekunden' },
     map: { recenterOnCircuit: 'Auf Strecke zentrieren' },
-    privacy: { loadFailed: 'Datenschutzerklarung konnte nicht geladen werden. Bitte spater erneut versuchen.' },
+    privacy: {
+        link: 'Datenschutz',
+        title: 'Datenschutzerklarung',
+        closePolicy: 'Datenschutzerklarung schliessen',
+        contentAria: 'Inhalt der Datenschutzerklarung',
+        opensInNewTab: 'wird in einem neuen Tab geoffnet',
+        loadFailed: 'Datenschutzerklarung konnte nicht geladen werden. Bitte spater erneut versuchen.',
+    },
     errors: {
         connectionFailed: 'Verbindung fehlgeschlagen', retryConnection: 'Verbindung erneut versuchen', retryingConnection: 'Verbindung wird erneut versucht',
         initFailed: 'Initialisierung der Anwendung fehlgeschlagen.', sessionError: 'Session-Fehler', sessionLoadFailed: 'Session-Prognose oder Radar konnte nicht geladen werden.',

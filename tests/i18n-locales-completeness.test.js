@@ -5,12 +5,16 @@ import { es } from '../public/src/i18n/locales/es.js';
 import { fr } from '../public/src/i18n/locales/fr.js';
 import { it } from '../public/src/i18n/locales/it.js';
 import { ja } from '../public/src/i18n/locales/ja.js';
+import { enNZ } from '../public/src/i18n/locales/en-NZ.js';
+import { enGB } from '../public/src/i18n/locales/en-GB.js';
 import { enUS } from '../public/src/i18n/locales/en-US.js';
 import { ptBR } from '../public/src/i18n/locales/pt-BR.js';
 import { zhCN } from '../public/src/i18n/locales/zh-CN.js';
 
 const locales = {
     de,
+    'en-GB': enGB,
+    'en-NZ': enNZ,
     'en-US': enUS,
     es,
     fr,

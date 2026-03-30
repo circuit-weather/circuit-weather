@@ -26,7 +26,14 @@ export const ja = {
     },
     countdown: { startsIn: '開始まで', day: '日', dayPlural: '日', hour: '時間', hourPlural: '時間', minute: '分', minutePlural: '分', second: '秒', secondPlural: '秒' },
     map: { recenterOnCircuit: 'サーキットに再センタリング' },
-    privacy: { loadFailed: 'プライバシーポリシーを読み込めませんでした。後でもう一度お試しください。' },
+    privacy: {
+        link: 'プライバシー',
+        title: 'プライバシーポリシー',
+        closePolicy: 'プライバシーポリシーを閉じる',
+        contentAria: 'プライバシーポリシーの内容',
+        opensInNewTab: '新しいタブで開きます',
+        loadFailed: 'プライバシーポリシーを読み込めませんでした。後でもう一度お試しください。',
+    },
     errors: {
         connectionFailed: '接続に失敗しました', retryConnection: '接続を再試行', retryingConnection: '接続を再試行中',
         initFailed: 'アプリの初期化に失敗しました。', sessionError: 'セッションエラー', sessionLoadFailed: 'セッションの予報またはレーダーの読み込みに失敗しました。',

@@ -28,7 +28,14 @@ export const it = {
     },
     countdown: { startsIn: 'Inizia tra', day: 'giorno', dayPlural: 'giorni', hour: 'ora', hourPlural: 'ore', minute: 'minuto', minutePlural: 'minuti', second: 'secondo', secondPlural: 'secondi' },
     map: { recenterOnCircuit: 'Ricentra sul circuito' },
-    privacy: { loadFailed: 'Impossibile caricare la privacy policy. Riprova piu tardi.' },
+    privacy: {
+        link: 'Privacy',
+        title: 'Informativa sulla privacy',
+        closePolicy: 'Chiudi informativa sulla privacy',
+        contentAria: 'Contenuto informativa sulla privacy',
+        opensInNewTab: 'si apre in una nuova scheda',
+        loadFailed: 'Impossibile caricare la privacy policy. Riprova piu tardi.',
+    },
     errors: {
         connectionFailed: 'Connessione non riuscita', retryConnection: 'Riprova connessione', retryingConnection: 'Nuovo tentativo di connessione',
         initFailed: 'Inizializzazione applicazione non riuscita.', sessionError: 'Errore sessione', sessionLoadFailed: 'Impossibile caricare previsioni o radar della sessione.',

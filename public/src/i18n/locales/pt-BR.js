@@ -28,7 +28,14 @@ export const ptBR = {
     },
     countdown: { startsIn: 'Comeca em', day: 'dia', dayPlural: 'dias', hour: 'hora', hourPlural: 'horas', minute: 'minuto', minutePlural: 'minutos', second: 'segundo', secondPlural: 'segundos' },
     map: { recenterOnCircuit: 'Recentrar no circuito' },
-    privacy: { loadFailed: 'Falha ao carregar a politica de privacidade. Tente novamente mais tarde.' },
+    privacy: {
+        link: 'Privacidade',
+        title: 'Politica de privacidade',
+        closePolicy: 'Fechar politica de privacidade',
+        contentAria: 'Conteudo da politica de privacidade',
+        opensInNewTab: 'abre em novo separador',
+        loadFailed: 'Falha ao carregar a politica de privacidade. Tente novamente mais tarde.',
+    },
     errors: {
         connectionFailed: 'Falha de ligacao', retryConnection: 'Tentar novamente ligacao', retryingConnection: 'A tentar novamente ligacao',
         initFailed: 'Falha ao iniciar a aplicacao.', sessionError: 'Erro de sessao', sessionLoadFailed: 'Falha ao carregar previsao ou radar da sessao.',

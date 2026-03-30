@@ -80,9 +80,22 @@ export class PrivacyModal {
   }
 
   async loadContent() {
+    const paths = this.getPrivacyPolicyPaths();
+
     try {
-      const response = await fetch("/PRIVACY.md");
-      const markdown = await response.text();
+      let markdown = null;
+
+      for (const path of paths) {
+        const response = await fetch(path);
+        if (!response.ok) continue;
+        markdown = await response.text();
+        break;
+      }
+
+      if (!markdown) {
+        throw new Error('No privacy policy translation available');
+      }
+
       if (this.content) {
         this.content.innerHTML = this.parseMarkdown(markdown);
       }
@@ -139,8 +152,8 @@ export class PrivacyModal {
 
     return (
       escapeHtml(md)
-        // Remove the main title (we have it in the header)
-        .replace(/^# Privacy Policy\s*\n*/m, "")
+        // Remove the top-level title (we have it in the header)
+        .replace(/^#\s+.+\s*\n*/m, "")
         // Headers (Escaped chars mean we look for escaped # if they were escaped, but # is safe)
         // Note: Since we escaped first, we must match safe content.
         // Standard markdown # is safe from escapeHtml unless it was &#... but # is not escaped.
@@ -152,7 +165,7 @@ export class PrivacyModal {
         .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, text, url) => {
           // Palette A11y: Add external link indicator and SR text
           const icon = `<svg class="icon-external" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>`;
-          return `<a href="${sanitizeUrl(url)}" target="_blank" rel="noopener noreferrer" class="external-link">${text} ${icon}<span class="sr-only">(opens in a new tab)</span></a>`;
+          return `<a href="${sanitizeUrl(url)}" target="_blank" rel="noopener noreferrer" class="external-link">${text} ${icon}<span class="sr-only">(${escapeHtml(i18n.t('privacy.opensInNewTab'))})</span></a>`;
         })
         // List items
         .replace(/^- (.+)$/gm, "<li>$1</li>")
@@ -182,5 +195,35 @@ export class PrivacyModal {
         })
         .join("\n")
     );
+  }
+
+  getPrivacyPolicyPaths() {
+    const locale = i18n.locale || 'en-NZ';
+    const base = locale.split('-')[0];
+    const paths = [];
+
+    paths.push(`/privacy/PRIVACY.${locale}.md`);
+    if (base !== locale && base !== 'en') {
+      paths.push(`/privacy/PRIVACY.${base}.md`);
+    }
+    if (base === 'en') {
+      if (locale === 'en-US') {
+        paths.push('/privacy/PRIVACY.en-GB.md');
+        paths.push('/privacy/PRIVACY.en-NZ.md');
+      } else if (locale === 'en-GB') {
+        paths.push('/privacy/PRIVACY.en-NZ.md');
+        paths.push('/privacy/PRIVACY.en-US.md');
+      } else {
+        paths.push('/privacy/PRIVACY.en-GB.md');
+        paths.push('/privacy/PRIVACY.en-US.md');
+      }
+    } else {
+      paths.push('/privacy/PRIVACY.en-GB.md');
+      paths.push('/privacy/PRIVACY.en-NZ.md');
+      paths.push('/privacy/PRIVACY.en-US.md');
+    }
+    paths.push('/PRIVACY.md');
+
+    return [...new Set(paths)];
   }
 }

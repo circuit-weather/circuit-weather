@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { i18n } from "../public/src/i18n/index.js";
 
 // --- Global Mocks ---
 const createMockElement = (id) => {
@@ -35,6 +36,7 @@ vi.stubGlobal("document", {
   getElementById: vi.fn((id) => createMockElement(id)),
   addEventListener: vi.fn(),
   removeEventListener: vi.fn(),
+  documentElement: { lang: "en" },
   get activeElement() {
     return mockActiveElement;
   },
@@ -83,6 +85,7 @@ describe("PrivacyModal", () => {
       ok: true,
       text: async () => "Privacy Policy Content",
     });
+    i18n.locale = "en";
     modal = new PrivacyModal();
   });
 
@@ -275,10 +278,10 @@ describe("PrivacyModal", () => {
   // parseMarkdown rendering tests
   // ---------------------------------------------------------------
   describe("parseMarkdown", () => {
-    it('removes the main "# Privacy Policy" heading', () => {
-      const md = "# Privacy Policy\n\nSome content.";
+    it("removes the main h1 heading", () => {
+      const md = "# Politica de privacidad\n\nSome content.";
       const html = modal.parseMarkdown(md);
-      expect(html).not.toContain("Privacy Policy");
+      expect(html).not.toContain("Politica de privacidad");
       expect(html).toContain("Some content.");
     });
 
@@ -497,6 +500,52 @@ describe("PrivacyModal", () => {
       expect(modal.loaded).toBe(false);
       expect(errorSpy).toHaveBeenCalled();
       errorSpy.mockRestore();
+    });
+  });
+
+  describe("localized privacy policy loading", () => {
+    it("builds locale-specific fallback paths", () => {
+      i18n.locale = "pt-BR";
+      expect(modal.getPrivacyPolicyPaths()).toEqual([
+        "/privacy/PRIVACY.pt-BR.md",
+        "/privacy/PRIVACY.pt.md",
+        "/privacy/PRIVACY.en-NZ.md",
+        "/privacy/PRIVACY.en-US.md",
+        "/PRIVACY.md",
+      ]);
+    });
+
+    it("separates english locale fallbacks for en-US", () => {
+      i18n.locale = "en-US";
+      expect(modal.getPrivacyPolicyPaths()).toEqual([
+        "/privacy/PRIVACY.en-US.md",
+        "/privacy/PRIVACY.en-GB.md",
+        "/privacy/PRIVACY.en-NZ.md",
+        "/PRIVACY.md",
+      ]);
+    });
+
+    it("separates english locale fallbacks for en-GB", () => {
+      i18n.locale = "en-GB";
+      expect(modal.getPrivacyPolicyPaths()).toEqual([
+        "/privacy/PRIVACY.en-GB.md",
+        "/privacy/PRIVACY.en-NZ.md",
+        "/privacy/PRIVACY.en-US.md",
+        "/PRIVACY.md",
+      ]);
+    });
+
+    it("falls back to next translation when first path is unavailable", async () => {
+      i18n.locale = "fr-CA";
+      global.fetch
+        .mockResolvedValueOnce({ ok: false, text: async () => "" })
+        .mockResolvedValueOnce({ ok: true, text: async () => "# Politique\n\nContenu" });
+
+      await modal.open();
+
+      expect(global.fetch).toHaveBeenNthCalledWith(1, "/privacy/PRIVACY.fr-CA.md");
+      expect(global.fetch).toHaveBeenNthCalledWith(2, "/privacy/PRIVACY.fr.md");
+      expect(modal.content.innerHTML).toContain("Contenu");
     });
   });
 

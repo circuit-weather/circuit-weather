@@ -28,7 +28,14 @@ export const fr = {
     },
     countdown: { startsIn: 'Debute dans', day: 'jour', dayPlural: 'jours', hour: 'heure', hourPlural: 'heures', minute: 'minute', minutePlural: 'minutes', second: 'seconde', secondPlural: 'secondes' },
     map: { recenterOnCircuit: 'Recentrer sur le circuit' },
-    privacy: { loadFailed: 'Impossible de charger la politique de confidentialite. Veuillez reessayer plus tard.' },
+    privacy: {
+        link: 'Confidentialite',
+        title: 'Politique de confidentialite',
+        closePolicy: 'Fermer la politique de confidentialite',
+        contentAria: 'Contenu de la politique de confidentialite',
+        opensInNewTab: 'ouvre dans un nouvel onglet',
+        loadFailed: 'Impossible de charger la politique de confidentialite. Veuillez reessayer plus tard.',
+    },
     errors: {
         connectionFailed: 'Connexion echouee', retryConnection: 'Reessayer la connexion', retryingConnection: 'Nouvelle tentative de connexion',
         initFailed: 'Echec de l\'initialisation de l\'application.', sessionError: 'Erreur de session', sessionLoadFailed: 'Echec du chargement des previsions ou du radar de session.',
