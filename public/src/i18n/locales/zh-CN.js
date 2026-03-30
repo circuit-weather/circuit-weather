@@ -13,6 +13,7 @@ export const zhCN = {
         failedTryAgain: '加载预报失败。请重试。', selectSessionPrompt: '请选择赛段以查看预报',
     },
     weather: {
+        currentConditions: '当前状况',
         temp: '气温', rain: '降雨', wind: '风', windDirection: '风向: {{direction}} ({{degrees}} 度)',
         timelineAria: '{{time}}。{{description}}。气温 {{temp}} 度。降雨概率 {{rain}}%。风速 {{wind}} {{windUnit}}。',
         currentCircuitWeather: '赛道当前天气', temperature: '气温', rainChance: '降雨概率', humidity: '湿度', windSpeed: '风速',

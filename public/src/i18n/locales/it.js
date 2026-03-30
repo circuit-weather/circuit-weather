@@ -14,6 +14,7 @@ export const it = {
         selectSessionPrompt: 'Seleziona una sessione per vedere le previsioni',
     },
     weather: {
+        currentConditions: 'Condizioni attuali',
         temp: 'Temp', rain: 'Pioggia', wind: 'Vento', windDirection: 'Direzione vento: {{direction}} ({{degrees}} gradi)',
         timelineAria: '{{time}}. {{description}}. Temperatura {{temp}} gradi. Probabilita pioggia {{rain}}%. Vento {{wind}} {{windUnit}}.',
         currentCircuitWeather: 'Meteo attuale del circuito', temperature: 'Temperatura', rainChance: 'Prob. pioggia', humidity: 'Umidita', windSpeed: 'Velocita vento',

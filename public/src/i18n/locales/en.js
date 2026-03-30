@@ -37,6 +37,7 @@ export const en = {
         selectSessionPrompt: 'Select a session to view forecast',
     },
     weather: {
+        currentConditions: 'Current Conditions',
         temp: 'Temp',
         rain: 'Rain',
         wind: 'Wind',

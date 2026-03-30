@@ -13,6 +13,7 @@ export const de = {
         failedTryAgain: 'Prognose konnte nicht geladen werden. Bitte erneut versuchen.', selectSessionPrompt: 'Wahlen Sie eine Session, um die Prognose zu sehen',
     },
     weather: {
+        currentConditions: 'Aktuelle Bedingungen',
         temp: 'Temp', rain: 'Regen', wind: 'Wind', windDirection: 'Windrichtung: {{direction}} ({{degrees}} Grad)',
         timelineAria: '{{time}}. {{description}}. Temperatur {{temp}} Grad. Regenwahrscheinlichkeit {{rain}}%. Wind {{wind}} {{windUnit}}.',
         currentCircuitWeather: 'Aktuelles Streckenwetter', temperature: 'Temperatur', rainChance: 'Regenchance', humidity: 'Luftfeuchtigkeit', windSpeed: 'Windgeschwindigkeit',

@@ -14,6 +14,7 @@ export const es = {
         failedTryAgain: 'No se pudo cargar el pronostico. Intentalo de nuevo.', selectSessionPrompt: 'Selecciona una sesion para ver el pronostico',
     },
     weather: {
+        currentConditions: 'Condiciones actuales',
         temp: 'Temp', rain: 'Lluvia', wind: 'Viento', windDirection: 'Direccion del viento: {{direction}} ({{degrees}} grados)',
         timelineAria: '{{time}}. {{description}}. Temperatura {{temp}} grados. Probabilidad de lluvia {{rain}}%. Viento {{wind}} {{windUnit}}.',
         currentCircuitWeather: 'Tiempo actual del circuito', temperature: 'Temperatura', rainChance: 'Prob. lluvia', humidity: 'Humedad', windSpeed: 'Velocidad del viento',
