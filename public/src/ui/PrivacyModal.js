@@ -198,14 +198,12 @@ export class PrivacyModal {
   }
 
   getPrivacyPolicyPaths() {
-    const locale = i18n.locale || 'en-NZ';
+    const locale = this.resolvePrivacyLocale(i18n.locale || 'en-NZ');
     const base = locale.split('-')[0];
     const paths = [];
 
     paths.push(`/privacy/PRIVACY.${locale}.md`);
-    if (base !== locale && base !== 'en') {
-      paths.push(`/privacy/PRIVACY.${base}.md`);
-    }
+
     if (base === 'en') {
       if (locale === 'en-US') {
         paths.push('/privacy/PRIVACY.en-GB.md');
@@ -225,5 +223,30 @@ export class PrivacyModal {
     paths.push('/PRIVACY.md');
 
     return [...new Set(paths)];
+  }
+
+  resolvePrivacyLocale(locale) {
+    const supported = new Set([
+      'en-NZ',
+      'en-GB',
+      'en-US',
+      'es',
+      'fr',
+      'de',
+      'it',
+      'ja',
+      'pt-BR',
+      'zh-CN',
+    ]);
+
+    const value = String(locale || 'en-NZ').replace('_', '-');
+    if (supported.has(value)) return value;
+
+    const base = value.split('-')[0];
+    if (base === 'en') return 'en-NZ';
+    if (base === 'pt') return 'pt-BR';
+    if (base === 'zh') return 'zh-CN';
+    if (supported.has(base)) return base;
+    return 'en-NZ';
   }
 }

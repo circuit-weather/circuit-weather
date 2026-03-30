@@ -508,8 +508,19 @@ describe("PrivacyModal", () => {
       i18n.locale = "pt-BR";
       expect(modal.getPrivacyPolicyPaths()).toEqual([
         "/privacy/PRIVACY.pt-BR.md",
-        "/privacy/PRIVACY.pt.md",
         "/privacy/PRIVACY.en-NZ.md",
+        "/privacy/PRIVACY.en-GB.md",
+        "/privacy/PRIVACY.en-US.md",
+        "/PRIVACY.md",
+      ]);
+    });
+
+    it("normalises regional locales to supported translation files", () => {
+      i18n.locale = "fr-CA";
+      expect(modal.getPrivacyPolicyPaths()).toEqual([
+        "/privacy/PRIVACY.fr.md",
+        "/privacy/PRIVACY.en-NZ.md",
+        "/privacy/PRIVACY.en-GB.md",
         "/privacy/PRIVACY.en-US.md",
         "/PRIVACY.md",
       ]);
@@ -543,8 +554,8 @@ describe("PrivacyModal", () => {
 
       await modal.open();
 
-      expect(global.fetch).toHaveBeenNthCalledWith(1, "/privacy/PRIVACY.fr-CA.md");
-      expect(global.fetch).toHaveBeenNthCalledWith(2, "/privacy/PRIVACY.fr.md");
+      expect(global.fetch).toHaveBeenNthCalledWith(1, "/privacy/PRIVACY.fr.md");
+      expect(global.fetch).toHaveBeenNthCalledWith(2, "/privacy/PRIVACY.en-NZ.md");
       expect(modal.content.innerHTML).toContain("Contenu");
     });
   });
