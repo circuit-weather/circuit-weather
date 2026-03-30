@@ -1688,6 +1688,11 @@ body {
     outline-offset: 2px;
 }
 
+.retry-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
 /* ===================================
    Utilities
    =================================== */
