@@ -1,4 +1,5 @@
 import { CONFIG } from '../config.js';
+import { t } from '../utils/localeText.js';
 
 /**
  * Control to recentre the map on the current circuit.
@@ -17,13 +18,15 @@ export class RecentreControl {
         const zoomControl = document.querySelector('.leaflet-control-zoom');
         if (!zoomControl) return;
 
+        const recenterLabel = t('recenterOnCircuit');
+
         // Create the recentre button as an anchor like zoom buttons
         this.button = document.createElement('a');
         this.button.className = 'leaflet-control-zoom-recentre';
         this.button.href = '#';
-        this.button.title = 'Recentre on circuit (C)';
+        this.button.title = `${recenterLabel} (C)`;
         this.button.setAttribute('role', 'button');
-        this.button.setAttribute('aria-label', 'Recentre on circuit');
+        this.button.setAttribute('aria-label', recenterLabel);
         this.button.setAttribute('aria-keyshortcuts', 'c');
         this.button.innerHTML = `
             <svg class="recentre-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">

@@ -1,4 +1,6 @@
 import { SafeStorage } from '../utils/storage.js';
+import { usesImperialUnits } from '../utils/locale.js';
+import { t } from '../utils/localeText.js';
 
 export class RangeCircles {
     constructor(map) {
@@ -18,12 +20,7 @@ export class RangeCircles {
     getInitialUnit() {
         const stored = SafeStorage.getItem('unit');
         if (stored) return stored;
-        // Detect from locale (imperial countries: US, Liberia, Myanmar)
-        const lang = navigator.language || 'en-US';
-        const imperialLocales = ['en-US', 'en-LR', 'my-MM'];
-        return imperialLocales.some(l => lang.startsWith(l.split('-')[0]) && lang.includes(l.split('-')[1]))
-            ? 'imperial'
-            : 'metric';
+        return usesImperialUnits() ? 'imperial' : 'metric';
     }
 
     bindEvents() {
@@ -47,10 +44,17 @@ export class RangeCircles {
     }
 
     updateToggleUI() {
+        const metricLabel = t('unitMetricLabel');
+
         document.querySelectorAll('.unit-option').forEach(opt => {
             const isActive = opt.dataset.unit === this.unit;
             opt.classList.toggle('active', isActive);
             opt.setAttribute('aria-pressed', isActive);
+
+            if (opt.dataset.unit === 'metric') {
+                opt.setAttribute('aria-label', metricLabel);
+                opt.setAttribute('title', metricLabel);
+            }
         });
     }
 
