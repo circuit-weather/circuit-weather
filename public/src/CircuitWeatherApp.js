@@ -769,27 +769,28 @@ export class CircuitWeatherApp {
             const rotation = windInfo.rotation;
 
             currentHtml = `
-                <div class="weather-current">
+                <!-- Scout: Upgraded generic div/span wrappers to semantic description list (dl/dt/dd) to explicitly associate weather labels with their values for crawlers and assistive tech. -->
+                <dl class="weather-current">
                     <div class="weather-metric">
-                        <span class="weather-label">${escapeHtml(i18n.t('weather.temp'))}</span>
-                        <span class="weather-value" id="weatherTemp">${escapeHtml(temp)}${escapeHtml(weather.units.temperature_2m)}</span>
+                        <dt class="weather-label">${escapeHtml(i18n.t('weather.temp'))}</dt>
+                        <dd class="weather-value" id="weatherTemp">${escapeHtml(temp)}${escapeHtml(weather.units.temperature_2m)}</dd>
                     </div>
                     <div class="weather-metric">
-                        <span class="weather-label">${escapeHtml(i18n.t('weather.rain'))}</span>
-                        <span class="weather-value" id="weatherRain">${escapeHtml(maxPrecip)}%</span>
+                        <dt class="weather-label">${escapeHtml(i18n.t('weather.rain'))}</dt>
+                        <dd class="weather-value" id="weatherRain">${escapeHtml(maxPrecip)}%</dd>
                     </div>
                     <div class="weather-metric">
-                        <span class="weather-label">${escapeHtml(i18n.t('weather.wind'))}</span>
-                        <span class="weather-value" id="weatherWind">${escapeHtml(wind)} ${escapeHtml(weather.units.wind_speed_10m)}</span>
-                        <span class="weather-sub" id="weatherWindDir" title="${escapeHtml(dir)}°" aria-label="${escapeHtml(i18n.t('weather.windDirection', { direction: windInfo.text, degrees: dir }))}">
+                        <dt class="weather-label">${escapeHtml(i18n.t('weather.wind'))}</dt>
+                        <dd class="weather-value" id="weatherWind">${escapeHtml(wind)} ${escapeHtml(weather.units.wind_speed_10m)}</dd>
+                        <dd class="weather-sub" id="weatherWindDir" title="${escapeHtml(dir)}°" aria-label="${escapeHtml(i18n.t('weather.windDirection', { direction: windInfo.text, degrees: dir }))}">
                             ${escapeHtml(windInfo.text)}
                             <svg class="icon-wind-arrow" style="transform: rotate(${escapeHtml(rotation)}deg); width: 14px; height: 14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                 <line x1="12" y1="19" x2="12" y2="5"></line>
                                 <polyline points="5 12 12 5 19 12"></polyline>
                             </svg>
-                        </span>
+                        </dd>
                     </div>
-                </div>
+                </dl>
             `;
         }
 
