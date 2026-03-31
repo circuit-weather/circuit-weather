@@ -643,7 +643,10 @@ async function handleHealthRequest(request, env, ctx) {
       });
       results[name] = res.status;
     } catch (e) {
-      results[name] = env.ENVIRONMENT !== 'production' ? `unreachable: ${e.name || e.message || 'Error'}` : 'unreachable';
+      if (env.ENVIRONMENT !== 'production') {
+        console.error(`Health check failed for ${name}:`, e);
+      }
+      results[name] = 'unreachable';
     }
   });
 

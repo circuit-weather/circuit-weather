@@ -11,3 +11,8 @@
 **Vulnerability:** The `/api/health` endpoint used `request.url` directly as the cache key, allowing attackers to bypass the 60-second cache TTL by appending random query parameters (e.g., `?q=1`, `?q=2`). This could be used to mount a Denial of Service (DoS) attack against the upstream APIs.
 **Learning:** Even when caching is implemented to protect upstream resources, using the raw request URL as the cache key can completely negate the protection if the endpoint doesn't strictly validate or ignore query parameters. Attackers can trivially generate unique cache keys for every request.
 **Prevention:** Always normalize cache keys for API endpoints that don't depend on query parameters. Construct the cache key using only the origin and pathname (e.g., `new Request(new URL(request.url).origin + new URL(request.url).pathname)`) to ensure all variations of the URL map to the same cached response.
+
+## 2025-05-25 - [Health Check Information Disclosure]
+**Vulnerability:** The `/api/health` endpoint leaked internal environment configurations and error details to unauthenticated users based on the `env.ENVIRONMENT` variable.
+**Learning:** Unauthenticated public endpoints should provide generic, opaque error statuses (e.g., simply 'unreachable') instead of conditionally exposing internal error messages or environment states, which can reveal infrastructure details or configuration environments to attackers.
+**Prevention:** Always hardcode safe, generic failure states for public unauthenticated endpoints and restrict detailed error strings strictly to server-side logging mechanisms wrapped in environment checks.
