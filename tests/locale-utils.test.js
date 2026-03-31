@@ -64,4 +64,21 @@ describe('Locale helpers', () => {
         expect(t('unitMetricLabel')).toBe('Kilometres');
         expect(t('recenterOnCircuit')).toBe('Recentre on circuit');
     });
+
+
+    it('handles invalid locale types in parseLocale', () => {
+        expect(getLocaleMeta(null)).toEqual({ language: 'en', region: 'NZ' });
+        expect(getLocaleMeta(123)).toEqual({ language: 'en', region: 'NZ' });
+    });
+
+    it('returns default locale when navigator is undefined', () => {
+        const originalNavigator = globalThis.navigator;
+        Object.defineProperty(globalThis, 'navigator', { value: undefined, configurable: true });
+
+
+        expect(getUserLocale()).toBe('en-NZ');
+
+        Object.defineProperty(globalThis, 'navigator', { value: originalNavigator, configurable: true });
+    });
+
 });
