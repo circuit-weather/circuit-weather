@@ -117,7 +117,6 @@ pnpm run dev # or 'npx wrangler dev' / 'wrangler dev' based on environment avail
 # Deploy to Cloudflare
 # Deployment is automatic via Cloudflare Git Integration (Workers with Static Assets)
 # when changes are merged to the 'main' branch.
-# See "Git Workflow for Changes" below.
 ```
 
 **Note**: The project is connected to Cloudflare via GitHub integration. Pushing to `main` triggers automatic deployment - no manual `wrangler deploy` needed.
