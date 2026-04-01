@@ -1,7 +1,7 @@
 /* @vitest-environment jsdom */
 
 import { beforeEach, describe, expect, it } from 'vitest';
-import { getEnglishVariant, getLocaleMeta, getUserLocale, usesImperialUnits } from '../public/src/utils/locale.js';
+import { getLocaleMeta, getUserLocale, usesImperialUnits } from '../public/src/utils/locale.js';
 import { t } from '../public/src/utils/localeText.js';
 import { i18n } from '../public/src/i18n/index.js';
 
@@ -26,12 +26,6 @@ describe('Locale helpers', () => {
     it('detects imperial unit regions correctly', () => {
         expect(usesImperialUnits('en-US')).toBe(true);
         expect(usesImperialUnits('en-GB')).toBe(false);
-    });
-
-    it('selects english spelling variant by region', () => {
-        expect(getEnglishVariant('en-US')).toBe('us');
-        expect(getEnglishVariant('en-NZ')).toBe('intl');
-        expect(getEnglishVariant('fr-FR')).toBe('intl');
     });
 
     it('prefers navigator.languages over navigator.language', () => {

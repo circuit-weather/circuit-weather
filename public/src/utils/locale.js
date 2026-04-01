@@ -40,9 +40,3 @@ export function usesImperialUnits(locale = getUserLocale()) {
     const { region } = getLocaleMeta(locale);
     return IMPERIAL_REGIONS.has(region);
 }
-
-export function getEnglishVariant(locale = getUserLocale()) {
-    const { language, region } = getLocaleMeta(locale);
-    if (language === 'en' && region === 'US') return 'us';
-    return 'intl';
-}
