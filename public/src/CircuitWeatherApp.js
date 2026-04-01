@@ -832,11 +832,12 @@ export class CircuitWeatherApp {
                 `;
             }).join('');
 
+            // Scout: Upgraded generic unordered list (ul) to an ordered list (ol) to semantically indicate to search engines and screen readers that the hourly forecast is a chronological, time-ordered sequence of events.
             timelineHtml = `
                 <div class="weather-timeline" id="weatherTimeline" tabindex="0" role="region" aria-label="${escapeHtml(i18n.t('forecast.hourlyForecast'))}">
-                    <ul class="weather-timeline-list">
+                    <ol class="weather-timeline-list">
                         ${items}
-                    </ul>
+                    </ol>
                 </div>
             `;
         }
