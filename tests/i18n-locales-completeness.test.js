@@ -3,7 +3,7 @@ import { en } from '../public/src/i18n/locales/en.js';
 import { de } from '../public/src/i18n/locales/de.js';
 import { es } from '../public/src/i18n/locales/es.js';
 import { fr } from '../public/src/i18n/locales/fr.js';
-import { it } from '../public/src/i18n/locales/it.js';
+import { it as itLocale } from '../public/src/i18n/locales/it.js';
 import { ja } from '../public/src/i18n/locales/ja.js';
 import { enNZ } from '../public/src/i18n/locales/en-NZ.js';
 import { enGB } from '../public/src/i18n/locales/en-GB.js';
@@ -18,7 +18,7 @@ const locales = {
     'en-US': enUS,
     es,
     fr,
-    it,
+    it: itLocale,
     ja,
     'pt-BR': ptBR,
     'zh-CN': zhCN,
@@ -27,7 +27,7 @@ const locales = {
 function collectLeafKeys(object, prefix = '') {
     const entries = [];
     Object.entries(object).forEach(([key, value]) => {
-        const path = prefix ? `${prefix}.${key}` : key;
+        const path = prefix ? \`\${prefix}.\${key}\` : key;
         if (value && typeof value === 'object' && !Array.isArray(value)) {
             entries.push(...collectLeafKeys(value, path));
         } else {
@@ -48,7 +48,7 @@ describe('i18n locale completeness', () => {
         Object.entries(locales).forEach(([locale, dictionary]) => {
             englishKeys.forEach((key) => {
                 const value = getValueByPath(dictionary, key);
-                expect(value, `Missing key "${key}" in locale "${locale}"`).toBeDefined();
+                expect(value, \`Missing key "\${key}" in locale "\${locale}"\`).toBeDefined();
             });
         });
     });
