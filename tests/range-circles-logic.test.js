@@ -111,7 +111,7 @@ describe('RangeCircles Logic', () => {
             expect(rangeCircles.unit).toBe('metric');
         });
 
-        it('defaults to metric if navigator.language is undefined', () => {
+        it('defaults to metric (en-NZ) if navigator.language is undefined', () => {
             Object.defineProperty(navigator, 'language', { value: undefined });
             rangeCircles = new RangeCircles(mockMap);
             expect(rangeCircles.unit).toBe('metric');
