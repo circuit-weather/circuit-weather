@@ -76,6 +76,7 @@ describe("Worker Health Check Caching", () => {
   });
 
   it("marks upstream as unreachable on fetch error", async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     // Mock upstream to throw error
     mockFetch.mockRejectedValue(new Error("Network failure"));
 
@@ -93,6 +94,7 @@ describe("Worker Health Check Caching", () => {
 
     expect(mockFetch).toHaveBeenCalledTimes(3);
     expect(mockCache.put).toHaveBeenCalled();
+    errorSpy.mockRestore();
   });
 
   it("serves subsequent requests from cache (cache hit)", async () => {

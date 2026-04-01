@@ -144,6 +144,7 @@ describe('Worker Edge Cases', () => {
         });
 
         it('reports unreachable upstreams', async () => {
+            const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
             const originalFetch = globalThis.fetch;
             globalThis.fetch = vi.fn().mockRejectedValue(new Error('Timeout'));
 
@@ -155,6 +156,7 @@ describe('Worker Edge Cases', () => {
             expect(body.upstreams.rainviewer).toContain('unreachable');
 
             globalThis.fetch = originalFetch;
+            errorSpy.mockRestore();
         });
     });
 
