@@ -27,7 +27,7 @@ const locales = {
 function collectLeafKeys(object, prefix = '') {
     const entries = [];
     Object.entries(object).forEach(([key, value]) => {
-        const path = prefix ? \`\${prefix}.\${key}\` : key;
+        const path = prefix ? `${prefix}.${key}` : key;
         if (value && typeof value === 'object' && !Array.isArray(value)) {
             entries.push(...collectLeafKeys(value, path));
         } else {
@@ -48,7 +48,7 @@ describe('i18n locale completeness', () => {
         Object.entries(locales).forEach(([locale, dictionary]) => {
             englishKeys.forEach((key) => {
                 const value = getValueByPath(dictionary, key);
-                expect(value, \`Missing key "\${key}" in locale "\${locale}"\`).toBeDefined();
+                expect(value, `Missing key "${key}" in locale "${locale}"`).toBeDefined();
             });
         });
     });
