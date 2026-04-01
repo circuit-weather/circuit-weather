@@ -9,7 +9,7 @@
 
 Circuit Weather is a real-time weather radar designed specifically for Formula 1 fans. It lets you track live precipitation and weather conditions at every circuit on the F1 calendar, helping you stay ahead of the strategy during race weekends.
 
-This web app is completely and unashamedly vibe coded primarily with the use of Google antigravity and Google Jules, using anthropic opus 4.5 and 4.6 and Google Gemini 3. It serves as an exploration into the capabilities of these technologies, as well as a test of open-source coding tools for performance and efficiency.
+This web app is completely and unashamedly vibe coded primarily using Google antigravity, Google Jules, and OpenCode. I have switched models between the latest versions of Google Gemini, Anthropic Opus and Sonnet, and OpenAI's GPT, and tested some minor models like Kimi K2 and K2.5, and Mistral. The site serves as an exploration into the capabilities of these technologies entirely for fun.
 
 ## What it does
 

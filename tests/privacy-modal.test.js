@@ -443,6 +443,9 @@ describe("PrivacyModal", () => {
       await modal.open();
 
       // Verify content fetch
+      // Fallback order for 'en': PRIVACY.en.md (doesn't exist but is tried) -> en-GB -> en-US -> /PRIVACY.md
+      // Actually it depends on the mocked i18n.locale.
+      // In beforeEach it's 'en'. resolvePrivacyLocale('en') returns 'en-NZ'.
       expect(global.fetch).toHaveBeenCalledWith("/privacy/PRIVACY.en-NZ.md");
       expect(modal.loaded).toBe(true);
 

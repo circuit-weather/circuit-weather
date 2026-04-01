@@ -75,4 +75,45 @@ describe('i18n', () => {
         const text = i18n.t('forecast.availableFrom', { date: '1 Jan, 10:00' });
         expect(text).toContain('1 Jan, 10:00');
     });
+
+
+
+
+    it('handles invalid locale gracefully', () => {
+        i18n.init('invalid!');
+        expect(i18n.locale).toBe('en-NZ');
+    });
+
+    it('falls back to appropriate English variants for unrecognised English regions', () => {
+        i18n.init('en-CA');
+        expect(i18n.locale).toBe('en-NZ');
+
+        i18n.init('en-GB-oxendict');
+        expect(i18n.locale).toBe('en-GB');
+
+        i18n.init('en-US-posix');
+        expect(i18n.locale).toBe('en-US');
+    });
+
+    it('can dynamically set a new locale and apply it', () => {
+        document.body.innerHTML = `<label id="sessionLabel" data-i18n="controls.session">Session</label>`;
+        let eventFired = false;
+
+        const handler = (e) => {
+            eventFired = true;
+            expect(e.detail.locale).toBe('fr');
+        };
+        document.addEventListener('i18n:change', handler);
+
+        i18n.setLocale('fr');
+
+        expect(document.documentElement.lang).toBe('fr');
+        expect(i18n.locale).toBe('fr');
+        const sessionLabel = document.getElementById('sessionLabel');
+        expect(sessionLabel.textContent).toBe('Session');
+        expect(eventFired).toBe(true);
+
+        document.removeEventListener('i18n:change', handler);
+    });
+
 });

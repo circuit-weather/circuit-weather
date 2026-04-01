@@ -13,6 +13,7 @@ export const MapWeatherWidget = L.Control.extend({
         // Bolt Optimization: Create DOM structure once and reuse
         // This avoids frequent innerHTML parsing/GC during map interactions
         this._div.innerHTML = `
+            <h2 class="weather-widget-heading">${i18n.t('weather.currentConditions')}</h2>
             <div class="weather-widget-metric" role="group" aria-label="${i18n.t('weather.temperature')}" title="${i18n.t('weather.temperature')}">
                 <svg class="icon-weather icon-temp" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z" /></svg>
                 <span class="temp-value">--</span>
