@@ -3,6 +3,7 @@ export const en = {
         loading: 'Loading...',
         retry: 'Retry',
         retrying: 'Retrying...',
+        selectLanguage: 'Language',
         openMenu: 'Open menu',
         closeMenu: 'Close menu',
     },

@@ -1,5 +1,5 @@
 export const ptBR = {
-    common: { loading: 'A carregar...', retry: 'Tentar novamente', retrying: 'A tentar novamente...', openMenu: 'Abrir menu', closeMenu: 'Fechar menu' },
+    common: { loading: 'A carregar...', retry: 'Tentar novamente', retrying: 'A tentar novamente...', selectLanguage: 'Idioma', openMenu: 'Abrir menu', closeMenu: 'Fechar menu' },
     theme: { toggle: 'Alternar modo claro/escuro', switchToLight: 'Mudar para modo claro', switchToDark: 'Mudar para modo escuro' },
     loading: { schedule: 'A carregar calendario de corridas...', session: 'A carregar dados da sessao...' },
     controls: {
