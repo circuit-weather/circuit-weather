@@ -73,8 +73,12 @@ describe('MapWeatherWidget', () => {
     it('should initialize with correct DOM structure', () => {
         expect(L.DomUtil.create).toHaveBeenCalledWith('div', 'leaflet-control-weather');
         expect(widget._div).toBeDefined();
-        // Check if innerHTML was set (contains SVG icons, etc.)
+        expect(widget._div.setAttribute).toHaveBeenCalledWith('data-i18n-attr', 'aria-label:weather.currentCircuitWeather');
+
+        // Check if innerHTML was set and contains i18n bindings
         expect(widget._div.innerHTML).toContain('weather-widget-metric');
+        expect(widget._div.innerHTML).toContain('data-i18n="weather.currentConditions"');
+        expect(widget._div.innerHTML).toContain('data-i18n-attr="aria-label:weather.temperature,title:weather.temperature"');
 
         // Verify UI cache was created
         expect(widget._ui).toBeDefined();

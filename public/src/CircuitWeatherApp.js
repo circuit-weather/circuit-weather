@@ -132,9 +132,9 @@ export class CircuitWeatherApp {
                             <line x1="12" y1="16" x2="12.01" y2="16"></line>
                         </svg>
                     </div>
-                    <h3>${escapeHtml(i18n.t('errors.connectionFailed'))}</h3>
+                    <h3 data-i18n="errors.connectionFailed">${escapeHtml(i18n.t('errors.connectionFailed'))}</h3>
                     <p>${escapeHtml(message)}</p>
-                    <button class="retry-btn" type="button" aria-label="${escapeHtml(i18n.t('errors.retryConnection'))}">${escapeHtml(i18n.t('common.retry'))}</button>
+                    <button class="retry-btn" type="button" data-i18n="common.retry" data-i18n-attr="aria-label:errors.retryConnection" aria-label="${escapeHtml(i18n.t('errors.retryConnection'))}">${escapeHtml(i18n.t('common.retry'))}</button>
                 </div>
             `;
             const btn = sidebarContent.querySelector('.retry-btn');
@@ -772,15 +772,15 @@ export class CircuitWeatherApp {
                 <!-- Scout: Upgraded generic div/span wrappers to semantic description list (dl/dt/dd) to explicitly associate weather labels with their values for crawlers and assistive tech. -->
                 <dl class="weather-current">
                     <div class="weather-metric">
-                        <dt class="weather-label">${escapeHtml(i18n.t('weather.temp'))}</dt>
+                        <dt class="weather-label" data-i18n="weather.temp">${escapeHtml(i18n.t('weather.temp'))}</dt>
                         <dd class="weather-value" id="weatherTemp">${escapeHtml(temp)}${escapeHtml(weather.units.temperature_2m)}</dd>
                     </div>
                     <div class="weather-metric">
-                        <dt class="weather-label">${escapeHtml(i18n.t('weather.rain'))}</dt>
+                        <dt class="weather-label" data-i18n="weather.rain">${escapeHtml(i18n.t('weather.rain'))}</dt>
                         <dd class="weather-value" id="weatherRain">${escapeHtml(maxPrecip)}%</dd>
                     </div>
                     <div class="weather-metric">
-                        <dt class="weather-label">${escapeHtml(i18n.t('weather.wind'))}</dt>
+                        <dt class="weather-label" data-i18n="weather.wind">${escapeHtml(i18n.t('weather.wind'))}</dt>
                         <dd class="weather-value" id="weatherWind">${escapeHtml(wind)} ${escapeHtml(weather.units.wind_speed_10m)}</dd>
                         <dd class="weather-sub" id="weatherWindDir" title="${escapeHtml(dir)}°" aria-label="${escapeHtml(i18n.t('weather.windDirection', { direction: windInfo.text, degrees: dir }))}">
                             ${escapeHtml(windInfo.text)}
@@ -834,7 +834,7 @@ export class CircuitWeatherApp {
 
             // Scout: Upgraded generic unordered list (ul) to an ordered list (ol) to semantically indicate to search engines and screen readers that the hourly forecast is a chronological, time-ordered sequence of events.
             timelineHtml = `
-                <div class="weather-timeline" id="weatherTimeline" tabindex="0" role="region" aria-label="${escapeHtml(i18n.t('forecast.hourlyForecast'))}">
+                <div class="weather-timeline" id="weatherTimeline" tabindex="0" role="region" data-i18n-attr="aria-label:forecast.hourlyForecast" aria-label="${escapeHtml(i18n.t('forecast.hourlyForecast'))}">
                     <ol class="weather-timeline-list">
                         ${items}
                     </ol>
