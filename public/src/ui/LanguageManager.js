@@ -59,6 +59,19 @@ export class LanguageManager {
                 this.close();
             }
         });
+
+        // Palette A11y: Close when focus moves outside the menu (e.g., tabbing away)
+        this.menu.addEventListener('focusout', (e) => {
+            if (!this.isOpen) return;
+
+            // Wait a tick to let the browser update document.activeElement
+            requestAnimationFrame(() => {
+                if (!this.menu.contains(document.activeElement) &&
+                    document.activeElement !== this.toggleBtn) {
+                    this.close();
+                }
+            });
+        });
     }
 
     toggle() {
