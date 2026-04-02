@@ -1194,6 +1194,8 @@ describe('CircuitWeatherApp Pure Methods', () => {
         });
 
         it('initializes ThemeManager and sets theme callback', async () => {
+            app.mapManager.init = vi.fn().mockResolvedValue({ hasLayer: false, addControl: vi.fn() });
+
             // Act
             await app.init();
 
@@ -1249,6 +1251,7 @@ describe('CircuitWeatherApp Pure Methods', () => {
         });
 
         it('ThemeManager callback handles missing currentCircuitCenter', async () => {
+            app.mapManager.init = vi.fn().mockResolvedValue({ hasLayer: false, addControl: vi.fn() });
             await app.init();
             const callback = ThemeManager.mock.calls[0][0];
 
@@ -1266,6 +1269,7 @@ describe('CircuitWeatherApp Pure Methods', () => {
         });
 
         it('ThemeManager callback draws circles if currentCircuitCenter is set', async () => {
+            app.mapManager.init = vi.fn().mockResolvedValue({ hasLayer: false, addControl: vi.fn() });
             await app.init();
             const callback = ThemeManager.mock.calls[0][0];
 
@@ -1278,6 +1282,7 @@ describe('CircuitWeatherApp Pure Methods', () => {
         });
 
         it('ThemeManager callback handles missing rangeCircles', async () => {
+            app.mapManager.init = vi.fn().mockResolvedValue({ hasLayer: false, addControl: vi.fn() });
             await app.init();
             const callback = ThemeManager.mock.calls[0][0];
 

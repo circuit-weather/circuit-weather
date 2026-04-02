@@ -93,7 +93,13 @@ export class CircuitWeatherApp {
             if (isMapbox) {
                 map.addControl(this.mapWeatherWidget, 'top-right');
             } else {
-                this.mapWeatherWidget.addTo(map);
+                // Safely wrap the widget in a native Leaflet control to avoid recursive addTo calls
+                const WeatherControl = L.Control.extend({
+                    options: { position: 'topright' },
+                    onAdd: () => this.mapWeatherWidget.onAdd(map),
+                    onRemove: () => this.mapWeatherWidget.onRemove(map)
+                });
+                map.addControl(new WeatherControl());
             }
 
             this.bindEvents();

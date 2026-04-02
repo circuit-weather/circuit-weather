@@ -53,15 +53,6 @@ class MapWeatherWidgetClass {
         }
     }
 
-    addTo(map) {
-        // Fallback for Leaflet if directly called
-        if (map.addControl) {
-            map.addControl(this);
-            return this;
-        }
-        return this;
-    }
-
     // Mapbox GL JS interface
     getDefaultPosition() {
         return 'top-right';
