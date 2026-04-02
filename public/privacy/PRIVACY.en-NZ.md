@@ -79,6 +79,7 @@ Preference settings are stored locally in your browser:
 
 - **theme:** `light` or `dark`
 - **unit:** `metric` or `imperial`
+- **language:** your selected locale (e.g., `en-NZ`, `fr`)
 
 This data remains on your device and is not sent to our servers.
 
