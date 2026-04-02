@@ -333,8 +333,6 @@ export class RangeCircles {
             const north = bounds.getNorth();
             // Haversine formula roughly equivalent
             const R = 6371e3; // metres
-            const lat1 = center[0] * Math.PI/180;
-            const lat2 = north * Math.PI/180;
             const deltaLat = (north - center[0]) * Math.PI/180;
             visibleRadiusMeters = R * deltaLat;
         } else {
@@ -343,11 +341,6 @@ export class RangeCircles {
             const topLatLng = L.latLng(north, center[1]);
             visibleRadiusMeters = this.map.distance(center, topLatLng);
         }
-
-        // Approximate visible radius in meters (center to top edge)
-        // This is a rough heuristic to ensure rings fit on screen
-        const topLatLng = L.latLng(north, center[1]);
-        const visibleRadiusMeters = this.map.distance(center, topLatLng);
 
         // Convert to current unit
         const multiplier = this.unit === 'metric' ? 1000 : 1609.34;
