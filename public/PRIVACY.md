@@ -82,6 +82,7 @@ The application stores preference settings locally in your browser to remember y
 
 - **theme:** `light` or `dark`
 - **unit:** `metric` or `imperial`
+- **language:** your selected locale (e.g., `en-NZ`, `fr`)
 
 This data resides solely on your device and is never transmitted to our servers.
 

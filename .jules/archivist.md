@@ -177,3 +177,7 @@ Prevention: Avoid duplicating configuration values in documentation; reference t
 
 **Learning:** `AGENTS.md` documented the Rate Limiter as "1000 req/min", which was ambiguously worded and failed to specify that the limit applies *per IP* and *per isolate*. The implementation in `src/worker.js` instantiates the `RateLimiter` per isolate and keys by `CF-Connecting-IP`.
 **Action:** Updated `AGENTS.md` to explicitly state the limit is "1000 req/min per IP per isolate" to avoid confusion about global vs individual limits.
+
+## 2026-03-30 - Privacy Policy Drift for Local Storage Keys
+**Learning:** When adding new features like Internationalization (i18n) that persist user preferences (e.g., the `language` key via `SafeStorage`), the `PRIVACY.md` documentation detailing local storage usage often drifts from the actual implementation.
+**Action:** Always verify `PRIVACY.md` when introducing new client-side storage keys to ensure transparency about data residing on the user's device.
