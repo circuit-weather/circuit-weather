@@ -7,6 +7,7 @@ import { enNZ } from './locales/en-NZ.js';
 import { enUS } from './locales/en-US.js';
 import { es } from './locales/es.js';
 import { fr } from './locales/fr.js';
+import { hu } from './locales/hu.js';
 import { it } from './locales/it.js';
 import { ja } from './locales/ja.js';
 import { ptBR } from './locales/pt-BR.js';
@@ -20,6 +21,7 @@ const TRANSLATIONS = {
     es,
     fr,
     de,
+    hu,
     it,
     ja,
     'pt-BR': ptBR,
@@ -33,6 +35,7 @@ export const LANGUAGE_NAMES = {
     'de': 'Deutsch',
     'es': 'Español',
     'fr': 'Français',
+    'hu': 'Magyar',
     'it': 'Italiano',
     'pt-BR': 'Português (BR)',
     'zh-CN': '简体中文',
