@@ -378,7 +378,8 @@
 
             <!-- Fallback content for crawlers/bots that don't execute JavaScript. -->
             <noscript>
-                <div
+                <!-- Scout: Upgraded generic div to semantic article to explicitly declare the fallback content as an independent, self-contained composition for crawlers without JavaScript. -->
+                <article
                     style="padding: 2rem; max-width: 800px; margin: 0 auto; font-family: Inter, sans-serif; line-height: 1.6;">
                     <!-- Scout: Upgraded fallback heading hierarchy to start with H1 and cascade to H2, ensuring proper document outline for crawlers that do not execute JavaScript. -->
                     <h1>Circuit Weather — Live F1 Race Weather Radar &amp; Forecasts</h1>
@@ -396,7 +397,7 @@
                     </ul>
                     <p>This application requires JavaScript to display the interactive weather radar map. Please enable
                         JavaScript to use Circuit Weather.</p>
-                </div>
+                </article>
             </noscript>
         </main>
     </div>
