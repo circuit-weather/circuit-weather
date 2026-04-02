@@ -65,6 +65,28 @@ describe('Locale helpers', () => {
         expect(getLocaleMeta(123)).toEqual({ language: 'en', region: 'NZ' });
     });
 
+    it('handles cases where Intl.Locale fails or returns missing data', () => {
+        // Fallback catch block handles non-standard but string formats
+        expect(getLocaleMeta('english')).toEqual({ language: 'english', region: '' });
+        expect(getLocaleMeta('-')).toEqual({ language: 'en', region: '' });
+        expect(getLocaleMeta('en-')).toEqual({ language: 'en', region: '' });
+        expect(getLocaleMeta('-US')).toEqual({ language: 'en', region: 'US' });
+
+        // Mock Intl.Locale returning empty language to hit branch 11
+        const originalIntlLocale = globalThis.Intl.Locale;
+        try {
+            globalThis.Intl.Locale = class {
+                constructor() {
+                    this.language = '';
+                    this.region = 'NZ';
+                }
+            };
+            expect(getLocaleMeta('mock')).toEqual({ language: 'en', region: 'NZ' });
+        } finally {
+            globalThis.Intl.Locale = originalIntlLocale;
+        }
+    });
+
     it('returns default locale when navigator is undefined', () => {
         const originalNavigator = globalThis.navigator;
         Object.defineProperty(globalThis, 'navigator', { value: undefined, configurable: true });
