@@ -89,3 +89,7 @@ s (colors, spacing) to blend in.
 ## 2024-05-15 - Language Selection UI in Sidebar Footer
 **Learning:** Implementing a language selector in a constrained space like a sidebar footer requires a "pop-out" (upward-opening) menu to avoid obscuring other elements and to ensure accessibility across various screen sizes. Manual selection should always override automatic locale detection and persist across sessions via local storage.
 **Action:** Added a `LanguageManager` component that handles an upward-expanding menu (`bottom: 100%`) in the sidebar footer. Integrated with the i18n system to ensure real-time UI updates via `data-i18n` attributes and persistent storage using `SafeStorage`.
+
+## 2026-10-26 - Keyboard Focus bounds on Pop-Out Menus
+**Learning:** For pop-out menus (like the Language selector), clicking outside will reliably close the menu via standard document click handlers. However, if a keyboard user tabs out of the menu container, the menu often remains open while focus moves to unrelated elements, creating a confusing and inaccessible experience.
+**Action:** Always bind a `focusout` event listener to pop-out menus that uses `requestAnimationFrame` (or a brief `setTimeout`) to verify if `document.activeElement` has moved outside the widget's bounds, and close it automatically if so.
