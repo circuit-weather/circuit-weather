@@ -27,9 +27,18 @@ const createMockElement = (tag, className) => {
         }),
         setAttribute: vi.fn(),
         getAttribute: vi.fn(),
+        classList: {
+            add: vi.fn(),
+            remove: vi.fn()
+        }
     };
     return el;
 };
+
+// Mock Document
+vi.stubGlobal('document', {
+    createElement: vi.fn((tag) => createMockElement(tag, '')),
+});
 
 // Setup global mocks
 vi.stubGlobal('L', {
@@ -71,7 +80,7 @@ describe('MapWeatherWidget', () => {
     });
 
     it('should initialize with correct DOM structure', () => {
-        expect(L.DomUtil.create).toHaveBeenCalledWith('div', 'leaflet-control-weather');
+        expect(document.createElement).toHaveBeenCalledWith('div');
         expect(widget._div).toBeDefined();
         // Check if innerHTML was set (contains SVG icons, etc.)
         expect(widget._div.innerHTML).toContain('weather-widget-metric');
@@ -148,8 +157,12 @@ describe('MapWeatherWidget', () => {
     });
 
     it('should clean up references on remove', () => {
+        // Mock a parent node
+        widget._div.parentNode = {
+            removeChild: vi.fn()
+        };
         widget.onRemove(mapMock);
-        expect(widget._ui).toBeNull();
+        expect(widget._div.parentNode.removeChild).toHaveBeenCalledWith(widget._div);
     });
 
     it('should not throw if update called before onAdd (no UI)', () => {

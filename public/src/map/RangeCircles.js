@@ -33,7 +33,9 @@ export class RangeCircles {
         }
 
         // Adjust visible circles based on zoom
-        this.map.on('zoomend', () => this.updateVisibility());
+        if (this.map.on) {
+            this.map.on(this.map.getContainer ? 'zoomend' : 'zoomend', () => this.updateVisibility());
+        }
     }
 
     setUnit(unit) {
@@ -97,8 +99,16 @@ export class RangeCircles {
         this.currentUnit = this.unit;
         this.currentColor = rangeColor;
 
-        // Bolt Optimization: Reuse existing layers (Object Pooling)
-        // prevents DOM thrashing during frequent zoom events.
+        const isMapbox = !this.map.hasLayer; // Basic check to see if it's Leaflet or Mapbox
+
+        if (isMapbox) {
+            this.drawMapbox(center, steps, rangeColor);
+        } else {
+            this.drawLeaflet(center, steps, rangeColor);
+        }
+    }
+
+    drawLeaflet(center, steps, rangeColor) {
         const multiplier = this.unit === 'metric' ? 1000 : 1609.34;
 
         steps.forEach((distance, index) => {
@@ -191,10 +201,148 @@ export class RangeCircles {
         }
     }
 
+    drawMapbox(center, steps, rangeColor) {
+        const multiplier = this.unit === 'metric' ? 1000 : 1609.34;
+        const features = [];
+
+        // 1. Center Marker
+        features.push({
+            type: 'Feature',
+            geometry: {
+                type: 'Point',
+                coordinates: [center[1], center[0]]
+            },
+            properties: {
+                isCenter: true
+            }
+        });
+
+        // 2. Rings & Labels
+        steps.forEach((distance, index) => {
+            const radius = distance * multiplier;
+            // Generate circle polygon
+            const circleCoords = this.generateCirclePolygon(center, radius, 64);
+
+            features.push({
+                type: 'Feature',
+                geometry: {
+                    type: 'LineString',
+                    coordinates: circleCoords
+                },
+                properties: {
+                    isRing: true,
+                    index: index
+                }
+            });
+
+            // Label position (due East)
+            const labelLatLng = this.getPointAtDistance(center, radius, 90);
+            features.push({
+                type: 'Feature',
+                geometry: {
+                    type: 'Point',
+                    coordinates: [labelLatLng[1], labelLatLng[0]]
+                },
+                properties: {
+                    isLabel: true,
+                    text: distance.toString()
+                }
+            });
+        });
+
+        const geojson = {
+            type: 'FeatureCollection',
+            features: features
+        };
+
+        if (this.map.getSource('range-circles')) {
+            this.map.getSource('range-circles').setData(geojson);
+        } else {
+            this.map.addSource('range-circles', {
+                type: 'geojson',
+                data: geojson
+            });
+
+            // Rings
+            this.map.addLayer({
+                id: 'range-circles-line',
+                type: 'line',
+                source: 'range-circles',
+                filter: ['==', 'isRing', true],
+                paint: {
+                    'line-color': rangeColor,
+                    'line-width': ['match', ['get', 'index'], 0, 2, 1],
+                    'line-opacity': 0.7,
+                    'line-dasharray': ['match', ['get', 'index'], 0, [1], [4, 4]]
+                }
+            });
+
+            // Center Marker
+            this.map.addLayer({
+                id: 'range-center-point',
+                type: 'circle',
+                source: 'range-circles',
+                filter: ['==', 'isCenter', true],
+                paint: {
+                    'circle-radius': 6,
+                    'circle-color': '#ffffff',
+                    'circle-stroke-color': rangeColor,
+                    'circle-stroke-width': 2
+                }
+            });
+
+            // Labels
+            this.map.addLayer({
+                id: 'range-labels',
+                type: 'symbol',
+                source: 'range-circles',
+                filter: ['==', 'isLabel', true],
+                layout: {
+                    'text-field': ['get', 'text'],
+                    'text-font': ['Open Sans Semibold', 'Arial Unicode MS Bold'],
+                    'text-size': 12,
+                    'text-anchor': 'left',
+                    'text-offset': [0.5, 0]
+                },
+                paint: {
+                    'text-color': '#ffffff',
+                    'text-halo-color': 'rgba(0,0,0,0.8)',
+                    'text-halo-width': 2
+                }
+            });
+        }
+    }
+
+    generateCirclePolygon(center, radius, points) {
+        const coords = [];
+        for (let i = 0; i <= points; i++) {
+            const angle = (i * 360) / points;
+            const point = this.getPointAtDistance(center, radius, angle);
+            coords.push([point[1], point[0]]);
+        }
+        return coords;
+    }
+
     calculateSteps(center) {
-        // Calculate dynamic steps based on current view bounds
-        const bounds = this.map.getBounds();
-        const north = bounds.getNorth();
+        const isMapbox = !this.map.hasLayer;
+        let visibleRadiusMeters;
+
+        if (isMapbox) {
+            const bounds = this.map.getBounds();
+            // Mapbox bounds: ne, sw
+            const north = bounds.getNorth();
+            // Haversine formula roughly equivalent
+            const R = 6371e3; // metres
+            const lat1 = center[0] * Math.PI/180;
+            const lat2 = north * Math.PI/180;
+            const deltaLat = (north - center[0]) * Math.PI/180;
+            visibleRadiusMeters = R * deltaLat;
+        } else {
+            const bounds = this.map.getBounds();
+            const north = bounds.getNorth();
+            const topLatLng = L.latLng(north, center[1]);
+            visibleRadiusMeters = this.map.distance(center, topLatLng);
+        }
 
         // Approximate visible radius in meters (center to top edge)
         // This is a rough heuristic to ensure rings fit on screen
@@ -253,9 +401,18 @@ export class RangeCircles {
     }
 
     clear() {
-        this.circles.forEach(c => this.map.removeLayer(c));
-        this.labels.forEach(l => this.map.removeLayer(l));
-        if (this.centerMarker) this.map.removeLayer(this.centerMarker);
+        const isMapbox = !this.map.hasLayer;
+
+        if (isMapbox) {
+            if (this.map.getLayer('range-circles-line')) this.map.removeLayer('range-circles-line');
+            if (this.map.getLayer('range-center-point')) this.map.removeLayer('range-center-point');
+            if (this.map.getLayer('range-labels')) this.map.removeLayer('range-labels');
+            if (this.map.getSource('range-circles')) this.map.removeSource('range-circles');
+        } else {
+            this.circles.forEach(c => this.map.removeLayer(c));
+            this.labels.forEach(l => this.map.removeLayer(l));
+            if (this.centerMarker) this.map.removeLayer(this.centerMarker);
+        }
 
         this.circles = [];
         this.labels = [];

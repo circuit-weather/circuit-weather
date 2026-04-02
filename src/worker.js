@@ -138,6 +138,11 @@ export default {
       return handleLeafletRequest(request, env, ctx);
     }
 
+    // Handle map config request (Securely injects Mapbox token)
+    if (path === '/api/config') {
+      return handleConfigRequest(request, env, ctx);
+    }
+
     // For any other /api/* routes, return 404
     return createErrorResponse(request, 404, 'API endpoint not found');
   }
@@ -209,6 +214,38 @@ function cacheAndReturnError(request, cache, cacheKey, status, message, extraDet
   return new Response(errorBody, {
     status: status,
     headers: clientErrorHeaders
+  });
+}
+
+/**
+ * Handle Config Request
+ * Securely returns public tokens (like Mapbox) to the frontend without exposing them in source code.
+ */
+function handleConfigRequest(request, env, ctx) {
+  // SEC: Ensure request is not from a script tag (XSSI protection)
+  if (!checkFetchDest(request)) {
+    return createErrorResponse(request, 403, 'Invalid fetch destination');
+  }
+
+  const configBody = JSON.stringify({
+    mapboxToken: env.MAPBOX_ACCESS_TOKEN || ''
+  });
+
+  const headers = new Headers({
+    'Content-Type': 'application/json',
+    'Cache-Control': 'public, max-age=86400', // Cache config for 24h
+    ...API_SECURITY_HEADERS
+  });
+
+  const allowedOrigin = getAllowedOrigin(request);
+  if (allowedOrigin) {
+    headers.set('Access-Control-Allow-Origin', allowedOrigin);
+    headers.set('Vary', 'Origin');
+  }
+
+  return new Response(configBody, {
+    status: 200,
+    headers
   });
 }
 
