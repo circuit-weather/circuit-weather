@@ -75,8 +75,9 @@ describe('RecentreControl', () => {
         zoomControlMock = createMockElement('div', 'leaflet-control-zoom');
         mockDocument.querySelector.mockReturnValue(zoomControlMock);
 
-        // Mock Map
+        // Mock Map (Leaflet mode by default)
         mapMock = {
+            hasLayer: vi.fn(), // indicates Leaflet
             setView: vi.fn(),
             getCenter: vi.fn().mockReturnValue([0, 0]),
             distance: vi.fn().mockReturnValue(0),
@@ -84,7 +85,7 @@ describe('RecentreControl', () => {
         };
     });
 
-    it('should initialize correctly when zoom control exists', () => {
+    it('should initialize correctly when zoom control exists (Leaflet mode)', () => {
         control = new RecentreControl(mapMock);
 
         // Verify button creation
@@ -122,7 +123,7 @@ describe('RecentreControl', () => {
             control.setCircuit([10, 10]); // Set a circuit center
         });
 
-        it('should show button if distance > 5km', () => {
+        it('should show button if distance > 5km (Leaflet mode)', () => {
             // Mock map center far away
             mapMock.distance.mockReturnValue(5001);
 
@@ -166,7 +167,7 @@ describe('RecentreControl', () => {
             expect(mapMock.setView).toHaveBeenCalledWith([10, 10], 10); // 10 is default circuit zoom
         });
 
-        it('should recentre map on Spacebar keydown for accessibility', () => {
+        it('should recentre map on Spacebar keydown for accessibility (Leaflet mode)', () => {
             // Extract the keydown handler on the button
             const keydownHandler = control.button.addEventListener.mock.calls.find(call => call[0] === 'keydown')[1];
 
@@ -177,7 +178,7 @@ describe('RecentreControl', () => {
             expect(mapMock.setView).toHaveBeenCalledWith([10, 10], 10);
         });
 
-        it('should recentre map on "C" key press', () => {
+        it('should recentre map on "C" key press (Leaflet mode)', () => {
             // Extract keydown handler
             const keyHandler = mockDocument.addEventListener.mock.calls.find(call => call[0] === 'keydown')[1];
 
@@ -187,7 +188,7 @@ describe('RecentreControl', () => {
             expect(mapMock.setView).toHaveBeenCalledWith([10, 10], 10);
         });
 
-        it('should recentre map on "Shift+C" (capital C)', () => {
+        it('should recentre map on "Shift+C" (capital C) (Leaflet mode)', () => {
              const keyHandler = mockDocument.addEventListener.mock.calls.find(call => call[0] === 'keydown')[1];
 
             const eventMock = { key: 'C', ctrlKey: false, metaKey: false, altKey: false };
@@ -235,6 +236,58 @@ describe('RecentreControl', () => {
             expect(control.circuitCenter).toEqual([20, 20]);
             expect(control.circuitZoom).toBe(12);
             expect(spy).toHaveBeenCalled();
+        });
+    });
+
+    describe('Mapbox GL JS Mode', () => {
+        let mapboxMock;
+
+        beforeEach(() => {
+            mapboxMock = {
+                // missing hasLayer indicates Mapbox mode
+                flyTo: vi.fn(),
+                getCenter: vi.fn().mockReturnValue({ lng: 0, lat: 0 }),
+                on: vi.fn()
+            };
+        });
+
+        it('should initialize correctly when zoom control exists (Mapbox mode)', () => {
+            control = new RecentreControl(mapboxMock);
+
+            expect(mockDocument.createElement).toHaveBeenCalledWith('button');
+            expect(control.button.className).toBe('mapboxgl-ctrl-icon');
+        });
+
+        it('should recentre map on click using flyTo (Mapbox mode)', () => {
+            control = new RecentreControl(mapboxMock);
+            control.setCircuit([10, 15], 12);
+
+            const clickHandler = control.button.addEventListener.mock.calls.find(call => call[0] === 'click')[1];
+
+            const eventMock = { preventDefault: vi.fn() };
+            clickHandler(eventMock);
+
+            expect(eventMock.preventDefault).toHaveBeenCalled();
+            expect(mapboxMock.flyTo).toHaveBeenCalledWith({
+                center: [15, 10], // Mapbox uses [lng, lat]
+                zoom: 11 // circuitZoom - 1
+            });
+        });
+
+        it('should hide button if distance <= 5km (Mapbox mode)', () => {
+            control = new RecentreControl(mapboxMock);
+            control.setCircuit([0.01, 0.01]); // close to center 0,0
+
+            control.updateVisibility();
+            expect(control.button.style.display).toBe('none');
+        });
+
+        it('should show button if distance > 5km (Mapbox mode)', () => {
+            control = new RecentreControl(mapboxMock);
+            control.setCircuit([10, 10]); // Far from 0,0
+
+            control.updateVisibility();
+            expect(control.button.style.display).toBe('flex');
         });
     });
 });

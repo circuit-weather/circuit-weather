@@ -160,7 +160,7 @@ vi.mock('../public/src/routing/Router.js', () => ({
 vi.mock('../public/src/map/MapManager.js', () => ({
     MapManager: vi.fn().mockImplementation(function () {
         return {
-            init: vi.fn(() => ({})), // init returns map instance
+            init: vi.fn().mockResolvedValue({}), // init returns a promise resolving to map instance
             setView: vi.fn(),
             setTheme: vi.fn()
         }
@@ -1144,6 +1144,8 @@ describe('CircuitWeatherApp Pure Methods', () => {
         });
 
         it('successfully initializes components and fetches schedule', async () => {
+            app.mapManager.init = vi.fn().mockResolvedValue({ hasLayer: false, addControl: vi.fn() });
+
             // Act
             await app.init();
 
@@ -1158,6 +1160,8 @@ describe('CircuitWeatherApp Pure Methods', () => {
         });
 
         it('initializes with route params instead of auto-select', async () => {
+            app.mapManager.init = vi.fn().mockResolvedValue({ hasLayer: false, addControl: vi.fn() });
+
             // Mock route params
             app.router.getParams = vi.fn().mockReturnValue({ round: '1' });
             app.handleRoute = vi.fn().mockResolvedValue();

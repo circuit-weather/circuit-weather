@@ -86,9 +86,15 @@ export class CircuitWeatherApp {
             // Bolt Optimization: Initialized after overlays so they can respond to the initial theme apply
             this.themeManager = new ThemeManager(this.handleThemeChange.bind(this));
 
-            // Map weather widget (Leaflet control)
-            this.mapWeatherWidget = new MapWeatherWidget({ position: 'topright' });
-            this.mapWeatherWidget.addTo(map);
+            // Map weather widget (Leaflet/Mapbox control)
+            this.mapWeatherWidget = new MapWeatherWidget();
+
+            const isMapbox = !map.hasLayer;
+            if (isMapbox) {
+                map.addControl(this.mapWeatherWidget, 'top-right');
+            } else {
+                this.mapWeatherWidget.addTo(map);
+            }
 
             this.bindEvents();
 
