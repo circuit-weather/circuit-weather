@@ -1,5 +1,5 @@
 export const it = {
-    common: { loading: 'Caricamento...', retry: 'Riprova', retrying: 'Nuovo tentativo...', openMenu: 'Apri menu', closeMenu: 'Chiudi menu' },
+    common: { loading: 'Caricamento...', retry: 'Riprova', retrying: 'Nuovo tentativo...', selectLanguage: 'Lingua', openMenu: 'Apri menu', closeMenu: 'Chiudi menu' },
     theme: { toggle: 'Attiva tema chiaro/scuro', switchToLight: 'Passa al tema chiaro', switchToDark: 'Passa al tema scuro' },
     loading: { schedule: 'Caricamento calendario gare...', session: 'Caricamento dati sessione...' },
     controls: {

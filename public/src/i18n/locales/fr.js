@@ -1,5 +1,5 @@
 export const fr = {
-    common: { loading: 'Chargement...', retry: 'Reessayer', retrying: 'Nouvelle tentative...', openMenu: 'Ouvrir le menu', closeMenu: 'Fermer le menu' },
+    common: { loading: 'Chargement...', retry: 'Reessayer', retrying: 'Nouvelle tentative...', selectLanguage: 'Langue', openMenu: 'Ouvrir le menu', closeMenu: 'Fermer le menu' },
     theme: { toggle: 'Basculer mode clair/sombre', switchToLight: 'Passer en mode clair', switchToDark: 'Passer en mode sombre' },
     loading: { schedule: 'Chargement du calendrier des courses...', session: 'Chargement des donnees de session...' },
     controls: {

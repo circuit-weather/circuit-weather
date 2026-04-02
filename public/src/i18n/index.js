@@ -1,4 +1,5 @@
 import { getUserLocale } from '../utils/locale.js';
+import { SafeStorage } from '../utils/storage.js';
 import { de } from './locales/de.js';
 import { en } from './locales/en.js';
 import { enGB } from './locales/en-GB.js';
@@ -25,6 +26,19 @@ const TRANSLATIONS = {
     'zh-CN': zhCN,
 };
 
+export const LANGUAGE_NAMES = {
+    'en-NZ': 'English (NZ)',
+    'en-GB': 'English (UK)',
+    'en-US': 'English (US)',
+    'de': 'Deutsch',
+    'es': 'Español',
+    'fr': 'Français',
+    'it': 'Italiano',
+    'pt-BR': 'Português (BR)',
+    'zh-CN': '简体中文',
+    'ja': '日本語',
+};
+
 const LOCALE_ALIASES = {
     pt: 'pt-BR',
     zh: 'zh-CN',
@@ -49,13 +63,15 @@ function normalise(locale) {
         localeString = rawLocale;
     }
 
-    if (TRANSLATIONS[localeString]) return localeString;
-
     const base = localeString.split('-')[0];
     if (base === 'en') {
         if (localeString.startsWith('en-GB')) return 'en-GB';
-        return localeString.startsWith('en-US') ? 'en-US' : 'en-NZ';
+        if (localeString.startsWith('en-US')) return 'en-US'
+        return 'en-NZ';
     }
+
+    if (TRANSLATIONS[localeString]) return localeString;
+
     if (TRANSLATIONS[base]) return base;
     if (LOCALE_ALIASES[base]) return LOCALE_ALIASES[base];
     return 'en-NZ';
@@ -63,11 +79,12 @@ function normalise(locale) {
 
 class I18n {
     constructor() {
-        this.locale = 'en';
+        this.locale = 'en-NZ';
     }
 
     init(locale = getUserLocale()) {
-        this.locale = normalise(locale);
+        const stored = SafeStorage.getItem('language');
+        this.locale = normalise(stored || locale);
         if (typeof document !== 'undefined' && document.documentElement) {
             document.documentElement.lang = this.locale;
         }
@@ -75,6 +92,7 @@ class I18n {
 
     setLocale(locale) {
         this.locale = normalise(locale);
+        SafeStorage.setItem('language', this.locale);
         if (typeof document !== 'undefined' && document.documentElement) {
             document.documentElement.lang = this.locale;
             this.apply();

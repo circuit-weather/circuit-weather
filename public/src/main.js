@@ -1,5 +1,6 @@
 import { CircuitWeatherApp } from './CircuitWeatherApp.js';
 import { PrivacyModal } from './ui/PrivacyModal.js';
+import { LanguageManager } from './ui/LanguageManager.js';
 import { i18n } from './i18n/index.js';
 
 /**
@@ -15,6 +16,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Initialize the privacy modal
     new PrivacyModal();
+
+    // Initialize the language manager
+    new LanguageManager();
 
     // Register Service Worker for offline support and PWA features
     if ('serviceWorker' in navigator) {

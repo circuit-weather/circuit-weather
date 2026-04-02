@@ -85,3 +85,7 @@ s (colors, spacing) to blend in.
 ## 2026-10-25 - Explicit Visual Styling for Dynamically Disabled Buttons
 **Learning:** When JavaScript dynamically disables a button (e.g., `btn.disabled = true` during a network retry or loading state), relying solely on the browser's default disabled styling is often insufficient. Without explicit CSS for the `:disabled` state (like reduced opacity and a `not-allowed` cursor), users may not visually register that the button is temporarily inactive, leading to confusion or repeated clicks.
 **Action:** Always pair dynamic `disabled = true` logic with explicit `.btn:disabled` CSS rules (e.g., `opacity: 0.5; cursor: not-allowed;`) to ensure clear, immediate visual feedback that aligns with the semantic state of the element.
+
+## 2024-05-15 - Language Selection UI in Sidebar Footer
+**Learning:** Implementing a language selector in a constrained space like a sidebar footer requires a "pop-out" (upward-opening) menu to avoid obscuring other elements and to ensure accessibility across various screen sizes. Manual selection should always override automatic locale detection and persist across sessions via local storage.
+**Action:** Added a `LanguageManager` component that handles an upward-expanding menu (`bottom: 100%`) in the sidebar footer. Integrated with the i18n system to ensure real-time UI updates via `data-i18n` attributes and persistent storage using `SafeStorage`.
