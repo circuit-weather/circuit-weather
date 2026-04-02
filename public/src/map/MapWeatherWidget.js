@@ -8,25 +8,26 @@ export const MapWeatherWidget = L.Control.extend({
         this._div = L.DomUtil.create('div', 'leaflet-control-weather');
         this._div.setAttribute('role', 'region');
         this._div.setAttribute('aria-label', i18n.t('weather.currentCircuitWeather'));
+        this._div.setAttribute('data-i18n-attr', 'aria-label:weather.currentCircuitWeather');
         this._div.setAttribute('tabindex', '0');
 
         // Bolt Optimization: Create DOM structure once and reuse
         // This avoids frequent innerHTML parsing/GC during map interactions
         this._div.innerHTML = `
-            <h2 class="weather-widget-heading">${i18n.t('weather.currentConditions')}</h2>
-            <div class="weather-widget-metric" role="group" aria-label="${i18n.t('weather.temperature')}" title="${i18n.t('weather.temperature')}">
+            <h2 class="weather-widget-heading" data-i18n="weather.currentConditions">${i18n.t('weather.currentConditions')}</h2>
+            <div class="weather-widget-metric" role="group" aria-label="${i18n.t('weather.temperature')}" title="${i18n.t('weather.temperature')}" data-i18n-attr="aria-label:weather.temperature,title:weather.temperature">
                 <svg class="icon-weather icon-temp" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z" /></svg>
                 <span class="temp-value">--</span>
             </div>
-            <div class="weather-widget-metric" role="group" aria-label="${i18n.t('weather.rainChance')}" title="${i18n.t('weather.rainChance')}">
+            <div class="weather-widget-metric" role="group" aria-label="${i18n.t('weather.rainChance')}" title="${i18n.t('weather.rainChance')}" data-i18n-attr="aria-label:weather.rainChance,title:weather.rainChance">
                 <svg class="icon-weather icon-rain" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M16 14v6"/><path d="M8 14v6"/><path d="M12 16v6"/></svg>
                 <span class="rain-value">--%</span>
             </div>
-            <div class="weather-widget-metric" role="group" aria-label="${i18n.t('weather.humidity')}" title="${i18n.t('weather.humidity')}">
+            <div class="weather-widget-metric" role="group" aria-label="${i18n.t('weather.humidity')}" title="${i18n.t('weather.humidity')}" data-i18n-attr="aria-label:weather.humidity,title:weather.humidity">
                 <svg class="icon-weather icon-humidity" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" /></svg>
                 <span class="humid-value">--%</span>
             </div>
-            <div class="weather-widget-metric" role="group" aria-label="${i18n.t('weather.windSpeed')}" title="${i18n.t('weather.wind')}">
+            <div class="weather-widget-metric" role="group" aria-label="${i18n.t('weather.windSpeed')}" title="${i18n.t('weather.wind')}" data-i18n-attr="aria-label:weather.windSpeed,title:weather.wind">
                  <svg class="icon-weather icon-wind" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2" /></svg>
                 <span class="wind-value">--</span>
             </div>
