@@ -24,7 +24,7 @@ export class MapManager {
       const config = await response.json();
 
       if (!config.mapboxToken) {
-        console.warn('Mapbox token is missing. Please ensure MAPBOX_ACCESS_TOKEN is set as a Secret in the Cloudflare dashboard (Workers & Pages → your Worker → Settings → Variables and Secrets).');
+        console.warn('Mapbox token is missing. Please ensure MAPBOX_ACCESS_TOKEN is set in Cloudflare for both Production and Preview environments.');
         throw new Error('Mapbox token not available');
       }
 
@@ -59,6 +59,8 @@ export class MapManager {
         attributionControl: true
       });
 
+      this.map.addControl(new mapboxgl.NavigationControl(), 'top-right');
+
       this.mapboxLanguage = new MapboxLanguage({
         defaultLanguage: this.getMapboxLanguageCode(i18n.locale)
       });
@@ -67,7 +69,6 @@ export class MapManager {
       this.map.on('load', () => {
         this.isMapbox = true;
         this.setupResizeObserver();
-        this.createMapboxZoomControl();
         resolve(this.map);
       });
 
@@ -118,46 +119,6 @@ export class MapManager {
       });
       this.resizeObserver.observe(mapContainer);
     }
-  }
-
-  /**
-   * Creates custom zoom buttons for the Mapbox map using the same class names and
-   * structure as the Leaflet zoom control, so all existing CSS and RecentreControl
-   * injection work without modification.
-   */
-  createMapboxZoomControl() {
-    const mapContainer = document.getElementById('map');
-    if (!mapContainer) return;
-
-    const zoomControl = document.createElement('div');
-    zoomControl.className = 'leaflet-control-zoom mapbox-zoom-control';
-
-    const zoomIn = document.createElement('button');
-    zoomIn.className = 'leaflet-control-zoom-in';
-    zoomIn.setAttribute('type', 'button');
-    zoomIn.setAttribute('aria-label', '+');
-    zoomIn.setAttribute('title', 'Zoom in');
-    zoomIn.textContent = '+';
-
-    const zoomOut = document.createElement('button');
-    zoomOut.className = 'leaflet-control-zoom-out';
-    zoomOut.setAttribute('type', 'button');
-    zoomOut.setAttribute('aria-label', '−');
-    zoomOut.setAttribute('title', 'Zoom out');
-    zoomOut.textContent = '−';
-
-    zoomIn.addEventListener('click', () => this.map.zoomIn());
-    zoomOut.addEventListener('click', () => this.map.zoomOut());
-
-    // Stop map interactions when clicking control buttons
-    [zoomIn, zoomOut].forEach(btn => {
-      btn.addEventListener('mousedown', e => e.stopPropagation());
-      btn.addEventListener('dblclick', e => e.stopPropagation());
-    });
-
-    zoomControl.appendChild(zoomIn);
-    zoomControl.appendChild(zoomOut);
-    mapContainer.appendChild(zoomControl);
   }
 
   destroy() {

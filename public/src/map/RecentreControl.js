@@ -14,25 +14,23 @@ export class RecentreControl {
     }
 
     init() {
-        // Find the zoom control container. For both Leaflet and the custom Mapbox zoom
-        // control (MapManager.createMapboxZoomControl), the container has .leaflet-control-zoom.
-        const zoomControl = document.querySelector('.leaflet-control-zoom');
+        // Find the zoom control container (Leaflet or Mapbox)
+        const zoomControl = document.querySelector('.leaflet-control-zoom') || document.querySelector('.mapboxgl-ctrl-zoom-in')?.parentNode;
         if (!zoomControl) return;
 
         const recenterLabel = t('recenterOnCircuit');
+        const isMapbox = !this.map.hasLayer;
 
-        // Always use a <button> and the shared recentre CSS class regardless of map renderer.
-        // The custom Mapbox zoom control uses the same class names as Leaflet, so styling is unified.
+        // Create the recentre button
         this.button = document.createElement('button');
-        this.button.className = 'leaflet-control-zoom-recentre';
-        this.button.setAttribute('type', 'button');
+        this.button.className = isMapbox ? 'mapboxgl-ctrl-icon recentre-control-mapbox' : 'leaflet-control-zoom-recentre';
 
         this.button.title = `${recenterLabel} (C)`;
         this.button.setAttribute('role', 'button');
         this.button.setAttribute('aria-label', recenterLabel);
         this.button.setAttribute('aria-keyshortcuts', 'c');
         this.button.innerHTML = `
-            <svg class="recentre-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 20px; height: 20px;">
+            <svg class="recentre-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 20px; height: 20px; ${isMapbox ? 'margin: 4px;' : ''}">
                 <circle cx="12" cy="12" r="3"/>
                 <path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>
             </svg>
@@ -46,8 +44,6 @@ export class RecentreControl {
         if (typeof L !== 'undefined' && L.DomEvent) {
             L.DomEvent.disableClickPropagation(this.button);
         }
-
-        const isMapbox = !this.map.hasLayer;
 
         const triggerRecentre = () => {
             if (this.circuitCenter) {

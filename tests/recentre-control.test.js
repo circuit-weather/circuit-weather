@@ -89,7 +89,7 @@ describe('RecentreControl', () => {
         control = new RecentreControl(mapMock);
 
         // Verify button creation
-        expect(mockDocument.createElement).toHaveBeenCalledWith('a');
+        expect(mockDocument.createElement).toHaveBeenCalledWith('button');
         expect(control.button).toBeDefined();
         expect(control.button.className).toBe('leaflet-control-zoom-recentre');
         // Check mock calls on the button instance, not the spy directly if checking specific attribute
@@ -255,7 +255,7 @@ describe('RecentreControl', () => {
             control = new RecentreControl(mapboxMock);
 
             expect(mockDocument.createElement).toHaveBeenCalledWith('button');
-            expect(control.button.className).toBe('mapboxgl-ctrl-icon');
+            expect(control.button.className).toBe('mapboxgl-ctrl-icon recentre-control-mapbox');
         });
 
         it('should recentre map on click using flyTo (Mapbox mode)', () => {

@@ -381,11 +381,7 @@ export class WeatherRadar {
                         type: 'raster',
                         tiles: [frame.url],
                         tileSize: 512,
-                        // RainViewer free tier limit is tile zoom 7 (Jan 2026).
-                        // Unlike Leaflet (which uses zoomOffset: -1 to subtract 1 from map zoom),
-                        // Mapbox fills {z} directly with no offset. maxzoom: 7 ensures Mapbox
-                        // never requests tiles beyond zoom 7, matching the Leaflet behaviour.
-                        maxzoom: 7,
+                        maxzoom: 8,
                         minzoom: 1
                     });
                 }

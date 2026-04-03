@@ -625,14 +625,6 @@ body {
     bottom: 28px;
 }
 
-/* Mapbox custom zoom control — same position as Leaflet zoom control */
-.mapbox-zoom-control {
-    position: absolute;
-    right: 20px;
-    bottom: 28px;
-    z-index: 2;
-}
-
 .leaflet-control-zoom-in,
 .leaflet-control-zoom-out {
     display: flex !important;
@@ -704,7 +696,7 @@ body {
 
 .radar-controls {
     position: absolute;
-    bottom: 36px; /* Raised to clear Mapbox attribution logo */
+    bottom: var(--spacing-md);
     left: 50%;
     transform: translateX(-50%);
     display: flex;
@@ -1300,12 +1292,6 @@ body {
         bottom: 84px;
     }
 
-    /* Mapbox custom zoom control - match Leaflet mobile position */
-    .mapbox-zoom-control {
-        right: 8px;
-        bottom: 84px;
-    }
-
     .leaflet-control-zoom {
         margin: 0 !important;
         gap: 6px;
@@ -1491,7 +1477,7 @@ body {
 .map-countdown {
     position: absolute;
     left: 20px;
-    bottom: 36px; /* Raised to clear Mapbox attribution logo */
+    bottom: var(--spacing-md);
     display: block;
     background: var(--sidebar-bg);
     backdrop-filter: var(--glass-blur);
