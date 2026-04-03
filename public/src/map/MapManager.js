@@ -30,17 +30,10 @@ export class MapManager {
 
       await this.initMapbox(config.mapboxToken);
     } catch (error) {
-      console.warn('Mapbox initialization failed, falling back to Leaflet:', error.message || error);
+      const rawMessage = error.message || String(error);
+      const sanitizedMessage = rawMessage.replace(/access_token=[^&]+/g, 'access_token=***');
 
-      // Temporary visible error toast for mobile debugging
-      const isMobile = window.matchMedia('(max-width: 768px)').matches;
-      if (isMobile) {
-        const errorMsg = document.createElement('div');
-        errorMsg.style.cssText = 'position:fixed;top:0;left:0;right:0;background:red;color:white;padding:10px;z-index:9999;font-size:12px;font-family:monospace;pointer-events:none;';
-        errorMsg.textContent = 'Mapbox Fallback: ' + (error.message || error);
-        document.body.appendChild(errorMsg);
-        setTimeout(() => { if (errorMsg.parentNode) errorMsg.parentNode.removeChild(errorMsg); }, 10000);
-      }
+      console.warn('Mapbox initialization failed, falling back to Leaflet:', sanitizedMessage);
 
       this.initLeaflet();
     }
