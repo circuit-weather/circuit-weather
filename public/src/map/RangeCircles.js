@@ -179,45 +179,13 @@ export class RangeCircles {
             this.map.removeLayer(l);
         }
 
-        // Circuit center marker
-        if (this.centerMarker) {
-            this.centerMarker.setLatLng(center);
-            this.centerMarker.setStyle({ color: rangeColor });
-            if (!this.map.hasLayer(this.centerMarker)) this.centerMarker.addTo(this.map);
-        } else {
-            this.centerMarker = L.circleMarker(center, {
-                interactive: false,
-                keyboard: false,
-                radius: 6,
-                color: rangeColor,
-                fillColor: '#ffffff',
-                fillOpacity: 1,
-                weight: 2,
-            });
-            this.centerMarker.addTo(this.map);
-        }
-        if (this.centerMarker.bringToFront) {
-            this.centerMarker.bringToFront();
-        }
     }
 
     drawMapbox(center, steps, rangeColor) {
         const multiplier = this.unit === 'metric' ? 1000 : 1609.34;
         const features = [];
 
-        // 1. Center Marker
-        features.push({
-            type: 'Feature',
-            geometry: {
-                type: 'Point',
-                coordinates: [center[1], center[0]]
-            },
-            properties: {
-                isCenter: true
-            }
-        });
-
-        // 2. Rings & Labels
+        // Rings & Labels
         steps.forEach((distance, index) => {
             const radius = distance * multiplier;
             // Generate circle polygon
@@ -274,20 +242,6 @@ export class RangeCircles {
                     'line-width': ['match', ['get', 'index'], 0, 2, 1],
                     'line-opacity': 0.7,
                     'line-dasharray': ['match', ['get', 'index'], 0, [1], [4, 4]]
-                }
-            });
-
-            // Center Marker
-            this.map.addLayer({
-                id: 'range-center-point',
-                type: 'circle',
-                source: 'range-circles',
-                filter: ['==', 'isCenter', true],
-                paint: {
-                    'circle-radius': 6,
-                    'circle-color': '#ffffff',
-                    'circle-stroke-color': rangeColor,
-                    'circle-stroke-width': 2
                 }
             });
 
@@ -398,13 +352,11 @@ export class RangeCircles {
 
         if (isMapbox) {
             if (this.map.getLayer('range-circles-line')) this.map.removeLayer('range-circles-line');
-            if (this.map.getLayer('range-center-point')) this.map.removeLayer('range-center-point');
             if (this.map.getLayer('range-labels')) this.map.removeLayer('range-labels');
             if (this.map.getSource('range-circles')) this.map.removeSource('range-circles');
         } else {
             this.circles.forEach(c => this.map.removeLayer(c));
             this.labels.forEach(l => this.map.removeLayer(l));
-            if (this.centerMarker) this.map.removeLayer(this.centerMarker);
         }
 
         this.circles = [];
