@@ -157,7 +157,7 @@ describe('Worker Security: Strict Content-Type Validation', () => {
     });
   });
 
-  describe('Leaflet Assets Proxy (/api/assets/*)', () => {
+  describe('Vendor Assets Proxy (/api/assets/*)', () => {
     it('allows text/css; charset=utf-8', async () => {
         // Valid hash for leaflet.css
         const hash = 'p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=';

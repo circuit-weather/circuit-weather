@@ -301,9 +301,18 @@ export class WeatherRadar {
         if (this.failedTiles) this.failedTiles.clear();
         this.updateErrorUI();
 
+        const isMapbox = !this.map.hasLayer;
+
         // Clear existing layers if any (full reset)
         this.layers.forEach(layer => {
-            if (layer) this.map.removeLayer(layer);
+            if (layer) {
+                if (isMapbox) {
+                    if (this.map.getLayer(layer.id)) this.map.removeLayer(layer.id);
+                    if (this.map.getSource(layer.sourceId)) this.map.removeSource(layer.sourceId);
+                } else {
+                    this.map.removeLayer(layer);
+                }
+            }
         });
         // Bolt Optimization: Lazy initialize layers array with nulls
         // We only create the Leaflet layer when it's needed (or preloaded)
@@ -313,7 +322,11 @@ export class WeatherRadar {
         this.currentFrame = this.frames.length - 1;
 
         // Force map to recalculate size
-        this.map.invalidateSize();
+        if (this.map.invalidateSize) {
+            this.map.invalidateSize();
+        } else if (this.map.resize) {
+            this.map.resize();
+        }
 
         // Create the current (latest) frame immediately so it's ready
         if (this.currentFrame >= 0) {
@@ -333,9 +346,88 @@ export class WeatherRadar {
         if (index < 0 || index >= this.frames.length) return null;
 
         if (!this.layers[index]) {
-            this.layers[index] = this.createLayer(this.frames[index], index);
+            const isMapbox = !this.map.hasLayer;
+            if (isMapbox) {
+                this.layers[index] = this.createMapboxLayer(this.frames[index], index);
+            } else {
+                this.layers[index] = this.createLayer(this.frames[index], index);
+            }
         }
         return this.layers[index];
+    }
+
+    createMapboxLayer(frame, index) {
+        const sourceId = `radar-source-${index}`;
+        const layerId = `radar-layer-${index}`;
+
+        // Return a proxy object that mimics Leaflet's API for the rest of the class
+        const layerProxy = {
+            id: layerId,
+            sourceId: sourceId,
+            frameTime: frame.time,
+            framePath: frame.path,
+            isLoaded: false,
+            events: {},
+
+            setOpacity: (opacity) => {
+                if (this.map.getLayer(layerId)) {
+                    this.map.setPaintProperty(layerId, 'raster-opacity', opacity);
+                }
+            },
+
+            addTo: (map) => {
+                if (!map.getSource(sourceId)) {
+                    map.addSource(sourceId, {
+                        type: 'raster',
+                        tiles: [frame.url],
+                        tileSize: 512,
+                        // RainViewer free tier limit is tile zoom 7 (Jan 2026).
+                        // Unlike Leaflet (which uses zoomOffset: -1 to subtract 1 from map zoom),
+                        // Mapbox fills {z} directly with no offset. maxzoom: 7 ensures Mapbox
+                        // never requests tiles beyond zoom 7, matching the Leaflet behaviour.
+                        maxzoom: 7,
+                        minzoom: 1
+                    });
+                }
+                if (!map.getLayer(layerId)) {
+                    map.addLayer({
+                        id: layerId,
+                        type: 'raster',
+                        source: sourceId,
+                        paint: {
+                            'raster-opacity': 0.01,
+                            'raster-fade-duration': 0
+                        }
+                    });
+
+                    // Fire load event when Mapbox finishes rendering this source
+                    map.once('idle', () => {
+                        this.isLoaded = true;
+                        if (layerProxy.events['load']) layerProxy.events['load']();
+                    });
+                }
+            },
+
+            setZIndex: () => {}, // Mapbox layers are ordered by when they are added or using beforeId
+
+            on: (event, callback) => {
+                layerProxy.events[event] = callback;
+            },
+
+            off: (event) => {
+                delete layerProxy.events[event];
+            },
+
+            redraw: () => {
+                if (this.map.getSource(sourceId)) {
+                    // Mapbox doesn't have a simple redraw, we force it by replacing the tiles array
+                    const source = this.map.getSource(sourceId);
+                    source.setTiles([frame.url]);
+                }
+            }
+        };
+
+        return layerProxy;
     }
 
     /**
@@ -579,6 +671,8 @@ export class WeatherRadar {
 
     // Bolt Optimization: Reuse Leaflet layers to reduce DOM churn
     reconcileLayers(newFrames) {
+        const isMapbox = !this.map.hasLayer;
+
         // Map (time + path) -> Layer
         const existingLayerMap = new Map();
 
@@ -620,7 +714,12 @@ export class WeatherRadar {
 
         // Remove unused layers
         existingLayerMap.forEach(layer => {
-            this.map.removeLayer(layer);
+            if (isMapbox) {
+                if (this.map.getLayer(layer.id)) this.map.removeLayer(layer.id);
+                if (this.map.getSource(layer.sourceId)) this.map.removeSource(layer.sourceId);
+            } else {
+                this.map.removeLayer(layer);
+            }
         });
 
         // Update state
@@ -664,8 +763,11 @@ export class WeatherRadar {
         if (!currentLayer) return;
 
         // Add to map if not already (needed to trigger tile loading)
-        if (!this.map.hasLayer(currentLayer)) {
-            currentLayer.addTo(this.map);
+        const isMapbox = !this.map.hasLayer;
+        if (isMapbox) {
+            if (!this.map.getLayer(currentLayer.id)) currentLayer.addTo(this.map);
+        } else {
+            if (!this.map.hasLayer(currentLayer)) currentLayer.addTo(this.map);
         }
 
         return new Promise((resolve) => {
@@ -725,7 +827,10 @@ export class WeatherRadar {
                 return;
             }
 
-            if (this.map.hasLayer(layer)) {
+            const isMapbox = !this.map.hasLayer;
+            const isOnMap = isMapbox ? !!this.map.getLayer(layer.id) : this.map.hasLayer(layer);
+
+            if (isOnMap) {
                 // Already on map (maybe from showFrame).
                 // We assume it's handling itself, but we'll wait a small bit just to space out requests
                 setTimeout(resolve, 500);
@@ -781,10 +886,13 @@ export class WeatherRadar {
 
         const previousIndex = this.visibleLayerIndex;
 
+        const isMapbox = !this.map.hasLayer;
+
         // Get or create the current layer and add to map if needed
         const layer = this.getLayer(index);
         if (layer) {
-            if (!this.map.hasLayer(layer)) {
+            const isOnMap = isMapbox ? !!this.map.getLayer(layer.id) : this.map.hasLayer(layer);
+            if (!isOnMap) {
                 layer.addTo(this.map);
             }
             // Show this layer
@@ -803,9 +911,12 @@ export class WeatherRadar {
         // Preload next frame to map at opacity 0 (ensures tiles load ahead of time)
         const nextIndex = (index + 1) % this.frames.length;
         const nextLayer = this.getLayer(nextIndex);
-        if (nextLayer && !this.map.hasLayer(nextLayer)) {
-            nextLayer.addTo(this.map);
-            nextLayer.setOpacity(0);
+        if (nextLayer) {
+            const isNextOnMap = isMapbox ? !!this.map.getLayer(nextLayer.id) : this.map.hasLayer(nextLayer);
+            if (!isNextOnMap) {
+                nextLayer.addTo(this.map);
+                nextLayer.setOpacity(0);
+            }
         }
 
         // Update state

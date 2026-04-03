@@ -7,9 +7,14 @@ export const CONFIG = {
     rainViewerApi: '/api/radar',
     trackApi: '/api/track',
     weatherApi: 'https://api.open-meteo.com/v1/forecast',
-    // Use Carto basemaps (reliable, free, no key)
+    // Use Carto basemaps (reliable, free, no key) - used as fallback
     mapTiles: 'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',
     mapTilesDark: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+
+    // Mapbox vector styles
+    mapboxStyleLight: 'mapbox://styles/mapbox/streets-v12',
+    mapboxStyleDark: 'mapbox://styles/mapbox/dark-v11',
+
     defaultCenter: [48.8566, 2.3522],
     defaultZoom: 3,
     circuitZoom: 10,

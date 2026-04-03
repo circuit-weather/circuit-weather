@@ -286,10 +286,25 @@ describe('TrackLayer', () => {
         const circuitId = 'monaco';
         trackLayer.cache.set(circuitId, layerMock);
 
-        const originalGet = trackLayer.cache.get.bind(trackLayer.cache);
-        trackLayer.cache.get = vi.fn().mockImplementation((id) => {
+        // We can simulate the race condition by changing the circuit ID immediately after calling loadTrack
+        // Since loadTrack is async, the first part runs synchronously up to the first await.
+        // Wait, cache check is completely synchronous now in TrackLayer.js!
+        // `if (this.cache.has(circuitId)) { if (this.currentCircuitId !== circuitId) return; ... }`
+        // We need to change the currentCircuitId before it reaches that check, or just after it's set.
+
+        // Instead of overriding the Map's get method (which doesn't work if has() is called first),
+        // we'll just mock mapMock.hasLayer (which is called right after) to change the ID to test the abort logic.
+        // Actually, the new implementation checks:
+        // if (this.cache.has(circuitId)) {
+        //     if (this.currentCircuitId !== circuitId) return;
+        //     // Mapbox logic ...
+        //     this.layer = this.cache.get(circuitId);
+
+        const originalHas = trackLayer.cache.has.bind(trackLayer.cache);
+        trackLayer.cache.has = vi.fn().mockImplementation((id) => {
+            // Change ID during the has() check, before it verifies
             trackLayer.currentCircuitId = 'changed';
-            return originalGet(id);
+            return originalHas(id);
         });
 
         await trackLayer.loadTrack(circuitId);

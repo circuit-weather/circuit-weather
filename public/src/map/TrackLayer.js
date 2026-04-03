@@ -12,7 +12,9 @@ export class TrackLayer {
     }
 
     bindEvents() {
-        this.map.on('zoomend', () => this.updateStyle());
+        if (this.map.on) {
+            this.map.on(this.map.getContainer ? 'zoomend' : 'zoomend', () => this.updateStyle());
+        }
     }
 
     resolveTrackColor() {
@@ -31,8 +33,9 @@ export class TrackLayer {
     }
 
     updateStyle() {
-        if (!this.layer) return;
+        if (!this.layer && !this.currentCircuitId) return;
 
+        const isMapbox = !this.map.hasLayer;
         const zoom = this.map.getZoom();
         let weight = 4;
 
@@ -42,7 +45,15 @@ export class TrackLayer {
         else weight = 1;
 
         // Use cached color
-        this.layer.setStyle({ weight: weight, color: this.trackColor });
+        if (isMapbox && this.currentCircuitId) {
+            const layerId = `track-layer-${this.currentCircuitId}`;
+            if (this.map.getLayer(layerId)) {
+                this.map.setPaintProperty(layerId, 'line-width', weight);
+                this.map.setPaintProperty(layerId, 'line-color', this.trackColor);
+            }
+        } else if (this.layer) {
+            this.layer.setStyle({ weight: weight, color: this.trackColor });
+        }
     }
 
     async loadTrack(circuitId) {
@@ -55,19 +66,49 @@ export class TrackLayer {
         }
 
         try {
-            // Check cache first (Bolt Optimization: Cache L.geoJSON layer instead of raw data)
-            if (this.cache.has(circuitId)) {
-                this.layer = this.cache.get(circuitId);
+            const isMapbox = !this.map.hasLayer;
 
+            // Check cache first
+            if (this.cache.has(circuitId)) {
                 // Check if this is still the requested circuit
                 if (this.currentCircuitId !== circuitId) return;
 
-                if (!this.map.hasLayer(this.layer)) {
-                    this.layer.addTo(this.map);
+                if (isMapbox) {
+                    const sourceId = `track-source-${circuitId}`;
+                    const layerId = `track-layer-${circuitId}`;
+
+                    if (!this.map.getSource(sourceId)) {
+                        this.map.addSource(sourceId, {
+                            type: 'geojson',
+                            data: this.cache.get(circuitId)
+                        });
+                    }
+
+                    if (!this.map.getLayer(layerId)) {
+                        this.map.addLayer({
+                            id: layerId,
+                            type: 'line',
+                            source: sourceId,
+                            layout: {
+                                'line-join': 'round',
+                                'line-cap': 'round'
+                            },
+                            paint: {
+                                'line-color': this.trackColor,
+                                'line-width': 4,
+                                'line-opacity': 0.8
+                            }
+                        });
+                    }
+                } else {
+                    this.layer = this.cache.get(circuitId);
+                    if (!this.map.hasLayer(this.layer)) {
+                        this.layer.addTo(this.map);
+                    }
+                    this.layer.bringToBack();
                 }
 
                 this.updateStyle();
-                this.layer.bringToBack();
                 return;
             }
 
@@ -93,29 +134,60 @@ export class TrackLayer {
             if (this.currentCircuitId !== circuitId) return;
 
             const trackColor = this.trackColor;
-            this.layer = L.geoJSON(data, {
-                style: {
-                    interactive: false,
-                    color: trackColor,
-                    weight: 4, // Initial, will be updated immediately
-                    opacity: 0.8,
-                    fillOpacity: 0,
-                    lineCap: 'round',
-                    lineJoin: 'round',
-                    className: 'track-path'
+
+            if (isMapbox) {
+                // Cache raw GeoJSON for Mapbox
+                this.cache.set(circuitId, data);
+
+                const sourceId = `track-source-${circuitId}`;
+                const layerId = `track-layer-${circuitId}`;
+
+                if (!this.map.getSource(sourceId)) {
+                    this.map.addSource(sourceId, {
+                        type: 'geojson',
+                        data: data
+                    });
                 }
-            });
 
-            // Cache the created layer
-            this.cache.set(circuitId, this.layer);
+                if (!this.map.getLayer(layerId)) {
+                    this.map.addLayer({
+                        id: layerId,
+                        type: 'line',
+                        source: sourceId,
+                        layout: {
+                            'line-join': 'round',
+                            'line-cap': 'round'
+                        },
+                        paint: {
+                            'line-color': trackColor,
+                            'line-width': 4,
+                            'line-opacity': 0.8
+                        }
+                    });
+                }
+            } else {
+                this.layer = L.geoJSON(data, {
+                    style: {
+                        interactive: false,
+                        color: trackColor,
+                        weight: 4, // Initial, will be updated immediately
+                        opacity: 0.8,
+                        fillOpacity: 0,
+                        lineCap: 'round',
+                        lineJoin: 'round',
+                        className: 'track-path'
+                    }
+                });
 
-            this.layer.addTo(this.map);
+                // Cache the created Leaflet layer
+                this.cache.set(circuitId, this.layer);
+
+                this.layer.addTo(this.map);
+                this.layer.bringToBack();
+            }
 
             // Apply correct weight for current zoom
             this.updateStyle();
-
-            // Ensure track is below other overlays (like the center dot)
-            this.layer.bringToBack();
 
         } catch (error) {
             console.warn('Failed to load track layout:', error);
@@ -123,10 +195,23 @@ export class TrackLayer {
     }
 
     clear() {
-        if (this.layer) {
-            this.map.removeLayer(this.layer);
-            this.layer = null;
+        const isMapbox = !this.map.hasLayer;
+
+        if (isMapbox) {
+            if (this.currentCircuitId) {
+                const layerId = `track-layer-${this.currentCircuitId}`;
+                if (this.map.getLayer(layerId)) {
+                    this.map.removeLayer(layerId);
+                }
+                // We keep the source attached or cached for performance, but the layer is hidden
+            }
+        } else {
+            if (this.layer) {
+                this.map.removeLayer(this.layer);
+                this.layer = null;
+            }
         }
+
         this.currentCircuitId = null;
     }
 }
