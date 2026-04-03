@@ -366,8 +366,8 @@ export class CircuitWeatherApp {
         document.documentElement.style.setProperty('--mobile-controls-offset', `${controlsBottom}px`);
     }
 
-    handleThemeChange(theme) {
-        this.mapManager.setTheme(theme);
+    async handleThemeChange(theme) {
+        await this.mapManager.setTheme(theme);
         if (this.rangeCircles) {
             this.rangeCircles.updateTheme();
             if (this.currentCircuitCenter) {
@@ -376,6 +376,12 @@ export class CircuitWeatherApp {
         }
         if (this.trackLayer) {
             this.trackLayer.updateTheme();
+        }
+        if (this.radar) {
+            // Restore radar layers if they were wiped by Mapbox style change
+            if (typeof this.radar.updateTheme === 'function') {
+                this.radar.updateTheme();
+            }
         }
     }
 
