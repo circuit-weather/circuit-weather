@@ -625,6 +625,14 @@ body {
     bottom: 28px;
 }
 
+/* Mapbox custom zoom control — same position as Leaflet zoom control */
+.mapbox-zoom-control {
+    position: absolute;
+    right: 20px;
+    bottom: 28px;
+    z-index: 2;
+}
+
 .leaflet-control-zoom-in,
 .leaflet-control-zoom-out {
     display: flex !important;
@@ -1288,6 +1296,12 @@ body {
     .leaflet-top.leaflet-left {
         top: auto;
         left: auto;
+        right: 8px;
+        bottom: 84px;
+    }
+
+    /* Mapbox custom zoom control - match Leaflet mobile position */
+    .mapbox-zoom-control {
         right: 8px;
         bottom: 84px;
     }
