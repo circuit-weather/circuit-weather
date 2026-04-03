@@ -58,6 +58,7 @@ vi.stubGlobal("ResizeObserver", resizeObserverMock);
 vi.stubGlobal("window", {
   ResizeObserver: resizeObserverMock,
   addEventListener: vi.fn(),
+  matchMedia: vi.fn().mockReturnValue({ matches: false }),
 });
 
 // Import the class under test
