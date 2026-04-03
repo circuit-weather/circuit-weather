@@ -1,13 +1,32 @@
 import { CONFIG } from '../config.js';
+import { SafeStorage } from '../utils/storage.js';
 
 export class F1API {
     constructor() {
         this.cache = new Map();
+        this.LOCAL_STORAGE_KEY = 'f1_schedule_cache';
+        this.CACHE_DURATION_MS = 24 * 60 * 60 * 1000; // 24 hours
     }
 
     async getSchedule() {
         const cacheKey = 'schedule';
         if (this.cache.has(cacheKey)) return this.cache.get(cacheKey);
+
+        // Try to get from localStorage first
+        const cachedDataStr = SafeStorage.getItem(this.LOCAL_STORAGE_KEY);
+        if (cachedDataStr) {
+            try {
+                const cachedData = JSON.parse(cachedDataStr);
+                const now = Date.now();
+                if (cachedData.timestamp && (now - cachedData.timestamp < this.CACHE_DURATION_MS)) {
+                    this.cache.set(cacheKey, cachedData.races);
+                    return cachedData.races;
+                }
+            } catch (e) {
+                // Ignore parse errors, just fetch fresh
+                console.warn('Failed to parse cached schedule:', e);
+            }
+        }
 
         const response = await fetch(`${CONFIG.f1ApiBase}/current.json`);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
@@ -16,6 +35,13 @@ export class F1API {
         const races = data.MRData?.RaceTable?.Races || [];
 
         this.cache.set(cacheKey, races);
+
+        // Save to localStorage
+        SafeStorage.setItem(this.LOCAL_STORAGE_KEY, JSON.stringify({
+            timestamp: Date.now(),
+            races: races
+        }));
+
         return races;
     }
 
