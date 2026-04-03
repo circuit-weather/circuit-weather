@@ -5,6 +5,8 @@ const createMockElement = (id) => {
     const el = {
         id,
         addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        dispatchEvent: vi.fn(),
         classList: {
             add: vi.fn(),
             remove: vi.fn(),
@@ -23,6 +25,9 @@ const createMockElement = (id) => {
             return createMockElement('child');
         }),
         appendChild: vi.fn(),
+        getBoundingClientRect: vi.fn(() => ({
+            top: 0, left: 0, right: 0, bottom: 0, width: 0, height: 0
+        })),
     };
     return el;
 };
@@ -36,13 +41,31 @@ const documentMock = {
     createDocumentFragment: vi.fn(() => ({ appendChild: vi.fn() })),
     head: { appendChild: vi.fn() },
     body: { appendChild: vi.fn() },
+    documentElement: {
+        style: {
+            setProperty: vi.fn()
+        }
+    },
 };
 
 vi.stubGlobal('document', documentMock);
+vi.stubGlobal('ResizeObserver', vi.fn().mockImplementation(() => ({
+    observe: vi.fn(),
+    unobserve: vi.fn(),
+    disconnect: vi.fn(),
+})));
+vi.stubGlobal('MutationObserver', vi.fn().mockImplementation(() => ({
+    observe: vi.fn(),
+    disconnect: vi.fn(),
+})));
 vi.stubGlobal('window', {
     matchMedia: vi.fn(() => ({
         matches: false,
         addEventListener: vi.fn()
+    })),
+    getComputedStyle: vi.fn(() => ({
+        display: 'none',
+        height: '0px'
     })),
     location: { reload: vi.fn() },
     setInterval: global.setInterval,
@@ -1064,6 +1087,13 @@ describe('CircuitWeatherApp Pure Methods', () => {
         });
 
         it('binds sessionSelect change event to selectSession', () => {
+            // Mock map attribution control
+            const mockAttribution = createMockElement('leaflet-control-attribution');
+            document.querySelector.mockImplementation((sel) => {
+                if (sel === '.leaflet-control-attribution, .mapboxgl-ctrl-attrib') return mockAttribution;
+                return createMockElement(sel);
+            });
+
             app.bindEvents();
 
             // Extract the event listener added to sessionSelect

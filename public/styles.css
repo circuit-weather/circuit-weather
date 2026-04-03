@@ -47,6 +47,11 @@
 
     /* Typography */
     --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+    /* Mobile Layout Offsets (Programmatically updated) */
+    --mobile-top-offset: 52px;
+    --mobile-radar-offset: 44px;
+    --mobile-controls-offset: 110px;
 }
 
 /* Dark Mode */
@@ -1275,7 +1280,7 @@ body {
         right: 8px;
         transform: none;
         padding: var(--spacing-sm);
-        bottom: 20px;
+        bottom: var(--mobile-radar-offset);
     }
 
     .radar-play-btn {
@@ -1297,13 +1302,14 @@ body {
         top: auto;
         left: auto;
         right: 8px;
-        bottom: 84px;
+        bottom: var(--mobile-controls-offset);
     }
 
     /* Mapbox custom zoom control - match Leaflet mobile position */
     .mapbox-zoom-control {
         right: 8px;
-        bottom: 84px;
+        bottom: var(--mobile-controls-offset);
+        z-index: 600;
     }
 
     .leaflet-control-zoom {
@@ -1532,8 +1538,9 @@ body {
 @media (max-width: 1024px) {
     .map-countdown {
         left: 8px;
-        bottom: 84px;
+        bottom: var(--mobile-controls-offset);
         max-width: 160px;
+        z-index: 600;
     }
 }
 
@@ -1607,15 +1614,20 @@ body {
 
 /* Reposition weather widget on mobile */
 @media (max-width: 768px) {
-    .leaflet-top.leaflet-right {
-        /* Position below header (56px) + layout padding */
-        top: calc(56px + var(--spacing-sm));
-        right: var(--spacing-sm);
-        left: auto;
+    /* Target both Leaflet and Mapbox top-right containers to prevent collisions */
+    .leaflet-top.leaflet-right,
+    .mapboxgl-ctrl-top-right {
+        /* Position below header (56px) + layout padding + mobile race info banner (~52-80px) */
+        top: calc(var(--mobile-top-offset) + var(--spacing-sm)) !important;
+        right: var(--spacing-sm) !important;
+        left: auto !important;
+        /* Ensure it sits above the background and below the highest header overlays */
+        z-index: 600;
     }
 
-    /* Remove default top margin from Leaflet controls to align with banner */
-    .leaflet-top.leaflet-right .leaflet-control {
+    /* Remove default top margin from controls to align accurately */
+    .leaflet-top.leaflet-right .leaflet-control,
+    .mapboxgl-ctrl-top-right .mapboxgl-ctrl {
         margin: 0 !important;
     }
 }

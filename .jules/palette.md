@@ -93,3 +93,7 @@ s (colors, spacing) to blend in.
 ## 2026-10-26 - Keyboard Focus bounds on Pop-Out Menus
 **Learning:** For pop-out menus (like the Language selector), clicking outside will reliably close the menu via standard document click handlers. However, if a keyboard user tabs out of the menu container, the menu often remains open while focus moves to unrelated elements, creating a confusing and inaccessible experience.
 **Action:** Always bind a `focusout` event listener to pop-out menus that uses `requestAnimationFrame` (or a brief `setTimeout`) to verify if `document.activeElement` has moved outside the widget's bounds, and close it automatically if so.
+
+## 2025-05-15 - Mobile UI Layout Collision Fix
+**Learning:** The mobile UI layout uses a tiered vertical positioning strategy to prevent element collisions. The optimal offsets are programmatically calculated using Playwright to ensure an 8px vertical gap between overlapping absolute-positioned layers: 52px for the top-right weather widget to clear the race banner, 44px for the bottom radar bar to clear Mapbox logo/attribution, and 110px for interactive map controls (zoom, countdown) to clear the radar bar.
+**Action:** Implemented programmatically-derived offsets in `public/styles.css` within responsive `@media` blocks, ensuring 8px clearance between all mobile map overlays.

@@ -1092,7 +1092,11 @@ export class WeatherRadar {
     }
 
     showControls(visible) {
-        if (this.ui.controls) this.ui.controls.style.display = visible ? 'flex' : 'none';
+        if (this.ui.controls) {
+            this.ui.controls.style.display = visible ? 'flex' : 'none';
+            // Dispatch event for CircuitWeatherApp to recalculate layout offsets
+            this.ui.controls.dispatchEvent(new CustomEvent('radar:toggle', { bubbles: true, detail: { visible } }));
+        }
     }
 
     /**

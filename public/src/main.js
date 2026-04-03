@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize the main application
     const app = new CircuitWeatherApp();
     app.init();
+    window.app = app; // Expose for testing
 
     // Initialize the privacy modal
     new PrivacyModal();
