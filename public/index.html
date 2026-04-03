@@ -73,7 +73,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- Mapbox GL CSS -->
-    <link href="https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.css" rel="stylesheet">
+    <link href="/api/assets/mapbox-gl.css" rel="stylesheet">
 
     <!-- Leaflet CSS (Fallback) -->
     <link rel="stylesheet" href="/api/assets/leaflet.css"
@@ -421,10 +421,10 @@
         </div>
     </dialog>
 
-    <!-- Mapbox GL JS -->
-    <script src="https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.js"></script>
+    <!-- Mapbox GL JS (Proxied to bypass strict adblockers) -->
+    <script src="/api/assets/mapbox-gl.js"></script>
     <!-- Mapbox GL Language Plugin -->
-    <script src="https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-language/v1.0.1/mapbox-gl-language.js"></script>
+    <script src="/api/assets/mapbox-gl-language.js"></script>
 
     <!-- Leaflet JS (Fallback, Proxied for strict CSP) -->
     <script src="/api/assets/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="

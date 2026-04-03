@@ -35,7 +35,8 @@ const TIMEOUT_API_TILES = 5000;
 const TIMEOUT_API_TRACKS = 10000;
 const TIMEOUT_API_ASSETS = 10000;
 
-const LEAFLET_ASSETS = new Map([
+const VENDOR_ASSETS = new Map([
+  // Leaflet Assets
   ['leaflet.js', {
     upstream: 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
     contentTypes: ['application/javascript', 'text/javascript'], // Allow both standard and legacy
@@ -71,6 +72,20 @@ const LEAFLET_ASSETS = new Map([
     contentTypes: ['image/png'],
     integrity: 'Jk9cZAM58ELdcpBiz8BMF/jqDymIK1OOOEjtjxDttNo='
   }],
+
+  // Mapbox GL JS Assets
+  ['mapbox-gl.js', {
+    upstream: 'https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.js',
+    contentTypes: ['application/javascript', 'text/javascript']
+  }],
+  ['mapbox-gl.css', {
+    upstream: 'https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.css',
+    contentTypes: ['text/css']
+  }],
+  ['mapbox-gl-language.js', {
+    upstream: 'https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-language/v1.0.1/mapbox-gl-language.js',
+    contentTypes: ['application/javascript', 'text/javascript']
+  }]
 ]);
 
 const ALLOWED_TILE_HEADERS = ['Content-Type', 'Content-Length', 'Last-Modified', 'ETag', 'Date'];
@@ -133,9 +148,9 @@ export default {
       return handleTrackRequest(request, env, ctx);
     }
 
-    // Handle Leaflet proxy (Strict CSP)
+    // Handle Vendor proxy (Leaflet & Mapbox) (Strict CSP & AdBlock Bypass)
     if (path.startsWith('/api/assets/')) {
-      return handleLeafletRequest(request, env, ctx);
+      return handleAssetRequest(request, env, ctx);
     }
 
     // Handle map config request (Securely injects Mapbox token)
@@ -510,14 +525,14 @@ async function handleTrackRequest(request, env, ctx) {
 }
 
 /**
- * Handle Leaflet Assets proxy to enable strict CSP (remove unpkg.com)
- * Proxies JS, CSS, and images from unpkg
+ * Handle Vendor Assets proxy to enable strict CSP and bypass tracking blockers
+ * Proxies JS, CSS, and images from unpkg and Mapbox CDNs
  */
-async function handleLeafletRequest(request, env, ctx) {
+async function handleAssetRequest(request, env, ctx) {
   const url = new URL(request.url);
   const path = url.pathname.replace('/api/assets/', '');
 
-  const config = LEAFLET_ASSETS.get(path);
+  const config = VENDOR_ASSETS.get(path);
   if (!config) {
     return createErrorResponse(request, 404, 'File not found');
   }
