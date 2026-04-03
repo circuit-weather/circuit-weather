@@ -1304,6 +1304,7 @@ body {
     .mapbox-zoom-control {
         right: 8px;
         bottom: 150px;
+        z-index: 600;
     }
 
     .leaflet-control-zoom {
@@ -1534,6 +1535,7 @@ body {
         left: 8px;
         bottom: 150px;
         max-width: 160px;
+        z-index: 600;
     }
 }
 
@@ -1607,15 +1609,21 @@ body {
 
 /* Reposition weather widget on mobile */
 @media (max-width: 768px) {
-    .leaflet-top.leaflet-right {
-        /* Position below header (56px) + layout padding + mobile race info banner (~52px) */
-        top: calc(130px + var(--spacing-sm));
-        right: var(--spacing-sm);
-        left: auto;
+    /* Target both Leaflet and Mapbox top-right containers to prevent collisions */
+    .leaflet-top.leaflet-right,
+    .mapboxgl-ctrl-top-right {
+        /* Position below header (56px) + layout padding + mobile race info banner (~52-80px) */
+        /* Increased to 160px to clear multi-line banners on small screens */
+        top: calc(160px + var(--spacing-sm)) !important;
+        right: var(--spacing-sm) !important;
+        left: auto !important;
+        /* Ensure it sits above the background and below the highest header overlays */
+        z-index: 600;
     }
 
-    /* Remove default top margin from Leaflet controls to align with banner */
-    .leaflet-top.leaflet-right .leaflet-control {
+    /* Remove default top margin from controls to align accurately */
+    .leaflet-top.leaflet-right .leaflet-control,
+    .mapboxgl-ctrl-top-right .mapboxgl-ctrl {
         margin: 0 !important;
     }
 }

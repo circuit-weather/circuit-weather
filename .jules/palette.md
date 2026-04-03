@@ -95,5 +95,5 @@ s (colors, spacing) to blend in.
 **Action:** Always bind a `focusout` event listener to pop-out menus that uses `requestAnimationFrame` (or a brief `setTimeout`) to verify if `document.activeElement` has moved outside the widget's bounds, and close it automatically if so.
 
 ## 2025-05-15 - Mobile UI Layout Collision Fix
-**Learning:** The mobile UI layout uses a tiered vertical positioning strategy to prevent element collisions: the top-right weather widget is offset by 130px + spacing to clear the race info banner, the bottom radar controls are offset by 72px to clear map attribution, and interactive map controls (zoom, countdown) are offset by 150px from the bottom.
+**Learning:** The mobile UI layout uses a tiered vertical positioning strategy to prevent element collisions: the top-right weather widget is offset by 160px + spacing to clear the race info banner, the bottom radar controls are offset by 72px to clear map attribution, and interactive map controls (zoom, countdown) are offset by 150px from the bottom. Added `z-index: 600` to all top/bottom map overlays to ensure they sit above the dynamic race info banner and mobile header on small screens.
 **Action:** Adjusted CSS offsets in `public/styles.css` within `@media` blocks to resolve overlaps between the circuit banner, current conditions widget, radar controls, and map attribution logo.
