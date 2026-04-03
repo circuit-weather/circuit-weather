@@ -35,6 +35,7 @@ vi.stubGlobal('document', {
         return elements[id];
     }),
     createElement: vi.fn((tag) => createMockElement(tag)),
+    createDocumentFragment: vi.fn(() => createMockElement('fragment')),
     addEventListener: vi.fn((event, handler) => {
         if (!eventHandlers[event]) eventHandlers[event] = [];
         eventHandlers[event].push(handler);

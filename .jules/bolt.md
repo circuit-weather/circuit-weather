@@ -35,3 +35,7 @@
 ## 2024-05-27 - CSS Variable Access in Animation Loops
 **Learning:** `getComputedStyle(element).getPropertyValue()` forces a synchronous style recalculation (reflow), which causes significant layout thrashing when called inside frequent event handlers (like `zoomend` or `draw` loops).
 **Action:** Cache CSS variable values in component state and update them only when the theme changes (via `MutationObserver` or explicit callback), rather than querying the DOM on every render frame.
+
+## 2026-04-03 - DocumentFragment DOM Batching Optimization
+**Learning:** Appending elements directly to the DOM inside a loop causes synchronous reflows/repaints for each iteration, which leads to layout thrashing and poor performance (O(N) layout recalculations).
+**Action:** Use `DocumentFragment` to build DOM structures off-screen within loops, and append the complete fragment to the DOM in a single operation to batch updates and reduce reflows to O(1).
