@@ -24,7 +24,7 @@ export class MapManager {
       const config = await response.json();
 
       if (!config.mapboxToken) {
-        console.warn('Mapbox token is missing. Please ensure MAPBOX_ACCESS_TOKEN is set in Cloudflare for both Production and Preview environments.');
+        console.warn('Mapbox token is missing. Please ensure MAPBOX_ACCESS_TOKEN is set as a Secret in the Cloudflare dashboard (Workers & Pages → your Worker → Settings → Variables and Secrets).');
         throw new Error('Mapbox token not available');
       }
 

@@ -571,9 +571,9 @@ async function handleAssetRequest(request, env, ctx) {
     const status = upstreamResponse.status;
     if (!upstreamResponse.ok) {
       if (env.ENVIRONMENT !== 'production') {
-        console.error(`Leaflet Fetch Error (${path}): ${status}`);
+        console.error(`Vendor Asset Fetch Error (${path}): ${status}`);
       }
-      return createErrorResponse(request, 502, 'Failed to load Leaflet asset', {
+      return createErrorResponse(request, 502, 'Failed to load vendor asset', {
         'X-Upstream-Status': status.toString()
       });
     }
@@ -586,7 +586,7 @@ async function handleAssetRequest(request, env, ctx) {
 
     if (!isValidType) {
       if (env.ENVIRONMENT !== 'production') {
-        console.error(`Leaflet Invalid Content-Type (${path}): ${contentType} (expected ${config.contentTypes.join(' or ')})`);
+        console.error(`Vendor Asset Invalid Content-Type (${path}): ${contentType} (expected ${config.contentTypes.join(' or ')})`);
       }
       return createErrorResponse(request, 502, 'Invalid upstream content type');
     }
@@ -636,9 +636,9 @@ async function handleAssetRequest(request, env, ctx) {
 
   } catch (error) {
     if (env.ENVIRONMENT !== 'production') {
-      console.error('Leaflet Proxy Error:', error);
+      console.error('Vendor Asset Proxy Error:', error);
     }
-    return createErrorResponse(request, 502, 'Leaflet fetch failed');
+    return createErrorResponse(request, 502, 'Vendor asset fetch failed');
   }
 }
 
