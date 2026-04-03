@@ -1,5 +1,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
+// Imports must be at top level
+import { RangeCircles } from '../public/src/map/RangeCircles.js';
+import { SafeStorage } from '../public/src/utils/storage.js';
+
+// Mock SafeStorage
+vi.mock('../public/src/utils/storage.js', () => ({
+    SafeStorage: {
+        getItem: vi.fn(),
+        setItem: vi.fn(),
+    }
+}));
+
 // Mock Leaflet
 const mockCircle = {
     addTo: vi.fn(),
@@ -334,6 +346,69 @@ describe('RangeCircles Logic', () => {
             rangeCircles.center = [0, 0];
             rangeCircles.updateVisibility();
             expect(spy).toHaveBeenCalledWith([0, 0]);
+        });
+    });
+});
+
+describe('RangeCircles Logic (Mapbox GL JS)', () => {
+    let rangeCircles;
+    const mapboxMock = {
+        on: vi.fn(),
+        hasLayer: undefined, // undefined function triggers the Mapbox logic path in the class
+        getBounds: vi.fn(() => ({
+            getNorth: vi.fn(() => 51.52),
+        })),
+        getSource: vi.fn(),
+        addSource: vi.fn(),
+        getLayer: vi.fn(),
+        addLayer: vi.fn(),
+        removeLayer: vi.fn(),
+        removeSource: vi.fn(),
+    };
+
+    beforeEach(() => {
+        vi.clearAllMocks();
+        rangeCircles = new RangeCircles(mapboxMock);
+        rangeCircles.unit = 'metric';
+    });
+
+    describe('Drawing & Clearing Mapbox Layers', () => {
+        it('calculates mapbox bounds and draws features correctly', () => {
+            mapboxMock.getSource.mockReturnValue(null); // Force addSource path
+
+            const center = [51.5, -0.1];
+            rangeCircles.draw(center);
+
+            expect(mapboxMock.addSource).toHaveBeenCalledWith('range-circles', expect.any(Object));
+            expect(mapboxMock.addLayer).toHaveBeenCalledWith(expect.objectContaining({id: 'range-circles-line'}));
+            expect(mapboxMock.addLayer).toHaveBeenCalledWith(expect.objectContaining({id: 'range-center-point'}));
+            expect(mapboxMock.addLayer).toHaveBeenCalledWith(expect.objectContaining({id: 'range-labels'}));
+        });
+
+        it('updates existing mapbox source if it exists', () => {
+            const mockSource = { setData: vi.fn() };
+            mapboxMock.getSource.mockReturnValue(mockSource);
+
+            const center = [51.5, -0.1];
+            rangeCircles.draw(center);
+
+            expect(mapboxMock.addSource).not.toHaveBeenCalled();
+            expect(mockSource.setData).toHaveBeenCalledWith(expect.objectContaining({
+                type: 'FeatureCollection'
+            }));
+        });
+
+        it('clears mapbox layers and sources', () => {
+            // Setup so it tries to remove
+            mapboxMock.getLayer.mockReturnValue(true);
+            mapboxMock.getSource.mockReturnValue(true);
+
+            rangeCircles.clear();
+
+            expect(mapboxMock.removeLayer).toHaveBeenCalledWith('range-circles-line');
+            expect(mapboxMock.removeLayer).toHaveBeenCalledWith('range-center-point');
+            expect(mapboxMock.removeLayer).toHaveBeenCalledWith('range-labels');
+            expect(mapboxMock.removeSource).toHaveBeenCalledWith('range-circles');
         });
     });
 });

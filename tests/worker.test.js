@@ -472,7 +472,7 @@ describe("Worker Logic", () => {
     });
   });
 
-  describe("Leaflet Assets Proxy (/api/assets/*)", () => {
+  describe("Vendor Assets Proxy (/api/assets/*)", () => {
     // Valid hash for leaflet.js from worker.js
     const VALID_HASH_B64 = "20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=";
 

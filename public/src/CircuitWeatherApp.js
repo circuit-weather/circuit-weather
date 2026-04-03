@@ -67,7 +67,7 @@ export class CircuitWeatherApp {
         this.showLoading(true, i18n.t('loading.schedule'));
 
         try {
-            const map = this.mapManager.init();
+            const map = await this.mapManager.init();
 
             // Sidebar manager for mobile
             this.sidebarManager = new SidebarManager();
@@ -86,9 +86,21 @@ export class CircuitWeatherApp {
             // Bolt Optimization: Initialized after overlays so they can respond to the initial theme apply
             this.themeManager = new ThemeManager(this.handleThemeChange.bind(this));
 
-            // Map weather widget (Leaflet control)
-            this.mapWeatherWidget = new MapWeatherWidget({ position: 'topright' });
-            this.mapWeatherWidget.addTo(map);
+            // Map weather widget (Leaflet/Mapbox control)
+            this.mapWeatherWidget = new MapWeatherWidget();
+
+            const isMapbox = !map.hasLayer;
+            if (isMapbox) {
+                map.addControl(this.mapWeatherWidget, 'top-right');
+            } else {
+                // Safely wrap the widget in a native Leaflet control to avoid recursive addTo calls
+                const WeatherControl = L.Control.extend({
+                    options: { position: 'topright' },
+                    onAdd: () => this.mapWeatherWidget.onAdd(map),
+                    onRemove: () => this.mapWeatherWidget.onRemove(map)
+                });
+                map.addControl(new WeatherControl());
+            }
 
             this.bindEvents();
 

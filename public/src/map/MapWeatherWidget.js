@@ -1,17 +1,17 @@
 import { i18n } from '../i18n/index.js';
 
 /**
- * Custom Leaflet Control for showing weather data on the map.
+ * Custom Control for showing weather data on the map.
+ * Compatible with both Leaflet and Mapbox GL JS interfaces.
  */
-export const MapWeatherWidget = L.Control.extend({
-    onAdd: function (map) {
-        this._div = L.DomUtil.create('div', 'leaflet-control-weather');
+class MapWeatherWidgetClass {
+    constructor() {
+        this._div = document.createElement('div');
+        this._div.className = 'leaflet-control-weather mapboxgl-ctrl mapboxgl-ctrl-group';
         this._div.setAttribute('role', 'region');
         this._div.setAttribute('aria-label', i18n.t('weather.currentCircuitWeather'));
         this._div.setAttribute('tabindex', '0');
 
-        // Bolt Optimization: Create DOM structure once and reuse
-        // This avoids frequent innerHTML parsing/GC during map interactions
         this._div.innerHTML = `
             <h2 class="weather-widget-heading">${i18n.t('weather.currentConditions')}</h2>
             <div class="weather-widget-metric" role="group" aria-label="${i18n.t('weather.temperature')}" title="${i18n.t('weather.temperature')}">
@@ -32,22 +32,33 @@ export const MapWeatherWidget = L.Control.extend({
             </div>
         `;
 
-        // Cache references to the dynamic elements
         this._ui = {
             temp: this._div.querySelector('.temp-value'),
             rain: this._div.querySelector('.rain-value'),
             humid: this._div.querySelector('.humid-value'),
             wind: this._div.querySelector('.wind-value')
         };
+    }
 
+    // Leaflet interface
+    onAdd(map) {
+        // Ensure Leaflet-specific classes are present
+        this._div.classList.add('leaflet-control');
         return this._div;
-    },
+    }
 
-    onRemove: function (map) {
-        this._ui = null;
-    },
+    onRemove(map) {
+        if (this._div.parentNode) {
+            this._div.parentNode.removeChild(this._div);
+        }
+    }
 
-    update: function (weather) {
+    // Mapbox GL JS interface
+    getDefaultPosition() {
+        return 'top-right';
+    }
+
+    update(weather) {
         if (!this._div || !this._ui) return;
 
         if (!weather || !weather.current) {
@@ -63,10 +74,15 @@ export const MapWeatherWidget = L.Control.extend({
         const humidity = Math.round(weather.current.relative_humidity_2m || 0);
         const wind = Math.round(weather.current.wind_speed_10m);
 
-        // Bolt Optimization: Update textContent instead of innerHTML
         this._ui.temp.textContent = `${temp}${weather.units.temperature_2m}`;
         this._ui.rain.textContent = `${rain}%`;
         this._ui.humid.textContent = `${humidity}%`;
         this._ui.wind.textContent = `${wind} ${weather.units.wind_speed_10m}`;
     }
-});
+}
+
+// Ensure the class supports both L.Control.extend patterns (if called via Leaflet) and standard ES6 class patterns (Mapbox)
+export const MapWeatherWidget = function() {
+    return new MapWeatherWidgetClass();
+};
+MapWeatherWidget.prototype = MapWeatherWidgetClass.prototype;
