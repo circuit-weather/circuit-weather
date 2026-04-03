@@ -10,7 +10,6 @@ export class MapManager {
     this.isMapbox = false;
     this.tileLayer = null; // Used for Leaflet fallback
     this.resizeObserver = null;
-    this.mapboxLanguage = null;
 
     // Bind the language change handler so we can safely add/remove it
     this.handleLanguageChange = this.handleLanguageChange.bind(this);
@@ -59,15 +58,11 @@ export class MapManager {
         attributionControl: true
       });
 
-      this.mapboxLanguage = new MapboxLanguage({
-        defaultLanguage: this.getMapboxLanguageCode(i18n.locale)
-      });
-      this.map.addControl(this.mapboxLanguage);
-
       this.map.on('load', () => {
         this.isMapbox = true;
         this.setupResizeObserver();
         this.createMapboxZoomControl();
+        this.applyMapLanguage(this.getMapboxLanguageCode(i18n.locale));
         resolve(this.map);
       });
 
@@ -178,15 +173,9 @@ export class MapManager {
       const styleUrl = theme === "dark" ? CONFIG.mapboxStyleDark : CONFIG.mapboxStyleLight;
       this.map.setStyle(styleUrl);
 
-      // After the new style loads, re-apply the current language.
-      // The plugin's own style.load handler re-applies defaultLanguage (set at construction),
-      // so we listen on style.load too and override it with the live locale.
+      // Re-apply the current language after the new style loads.
       this.map.once('style.load', () => {
-        if (this.mapboxLanguage) {
-          const code = this.getMapboxLanguageCode(i18n.locale);
-          const newStyle = this.mapboxLanguage.setLanguage(this.map.getStyle(), code);
-          this.map.setStyle(newStyle);
-        }
+        this.applyMapLanguage(this.getMapboxLanguageCode(i18n.locale));
       });
     } else {
       const tileUrl = theme === "dark" ? CONFIG.mapTilesDark : CONFIG.mapTiles;
@@ -217,19 +206,53 @@ export class MapManager {
   }
 
   handleLanguageChange(e) {
-    if (this.isMapbox && this.mapboxLanguage) {
-      const code = this.getMapboxLanguageCode(e.detail.locale);
-      const newStyle = this.mapboxLanguage.setLanguage(this.map.getStyle(), code);
-      this.map.setStyle(newStyle);
+    if (this.isMapbox) {
+      this.applyMapLanguage(this.getMapboxLanguageCode(e.detail.locale));
     }
   }
 
+  /**
+   * Updates map label layers to display names in the given language.
+   *
+   * The mapbox-gl-language plugin is incompatible with Mapbox GL JS v3 / Standard styles —
+   * it was written for the v1/v2 era and only partially works (CJK scripts happen to match
+   * its heuristics but Latin-script languages do not). We use setLayoutProperty directly
+   * instead, which is the approach Mapbox recommends for v3.
+   *
+   * @param {string} lang - A Mapbox-supported language code e.g. 'en', 'fr', 'ja', 'zh-Hans'
+   */
+  applyMapLanguage(lang) {
+    if (!this.map || !this.isMapbox) return;
+
+    const nameField = lang === 'mul' ? 'name' : `name_${lang}`;
+    // Use coalesce so labels fall back to the local name if no translation exists
+    const textField = ['coalesce', ['get', nameField], ['get', 'name']];
+
+    this.map.getStyle().layers.forEach(layer => {
+      if (layer.type !== 'symbol') return;
+      const field = this.map.getLayoutProperty(layer.id, 'text-field');
+      if (!field) return;
+      // Only update layers that already have a name expression — avoids touching
+      // layers that use text-field for non-place labels (e.g. route numbers)
+      const fieldStr = JSON.stringify(field);
+      if (fieldStr.includes('"name') || fieldStr.includes("'name")) {
+        try {
+          this.map.setLayoutProperty(layer.id, 'text-field', textField);
+        } catch (_) {
+          // Some layers in the Standard style are slot-managed and cannot be updated directly
+        }
+      }
+    });
+  }
+
   getMapboxLanguageCode(locale) {
-    // Mapbox supports specific language codes (ar, en, es, fr, de, it, pt, ru, zh-Hans, zh-Hant, ja, ko, vi)
+    // Maps app locale codes to Mapbox vector tile name field suffixes.
+    // Supported fields in Mapbox Streets v8: name_ar, name_de, name_en, name_es,
+    // name_fr, name_it, name_ja, name_ko, name_pt, name_ru, name_vi, name_zh-Hans, name_zh-Hant
     const base = locale.split('-')[0];
 
     if (base === 'zh') {
-      return 'zh-Hans'; // Default to simplified
+      return 'zh-Hans'; // Simplified Chinese
     }
 
     const supported = ['ar', 'en', 'es', 'fr', 'de', 'it', 'pt', 'ru', 'ja', 'ko', 'vi'];
