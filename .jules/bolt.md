@@ -39,3 +39,7 @@
 ## 2026-04-03 - DocumentFragment DOM Batching Optimization
 **Learning:** Appending elements directly to the DOM inside a loop causes synchronous reflows/repaints for each iteration, which leads to layout thrashing and poor performance (O(N) layout recalculations).
 **Action:** Use `DocumentFragment` to build DOM structures off-screen within loops, and append the complete fragment to the DOM in a single operation to batch updates and reduce reflows to O(1).
+
+## 2024-05-28 - Mapbox Redundant Style Updates
+**Learning:** Calling `setPaintProperty` or `setStyle` repeatedly with the same values during high-frequency events (like throttled map `move`) causes redundant internal validations and minor performance overhead in Mapbox/Leaflet renderers.
+**Action:** Cache the currently applied style values (e.g., `weight` and `color`) and add an early return to skip API calls if the desired style matches the cached state.
