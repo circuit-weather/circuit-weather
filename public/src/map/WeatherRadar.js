@@ -1123,6 +1123,34 @@ export class WeatherRadar {
         }
     }
 
+    /**
+     * Responds to theme changes. For Mapbox, a style change wipes all layers,
+     * so we need to re-add the active and preloaded layers to the map.
+     */
+    updateTheme() {
+        const isMapbox = !this.map.hasLayer;
+        if (!isMapbox) return;
+
+        // Reset the proxy layers so they re-create themselves on the new style
+        this.layers.forEach((layer, index) => {
+            if (layer) {
+                // If it was already on the map, we need to re-add it
+                const wasOnMap = !!this.map.getLayer(layer.id);
+                const wasVisible = this.visibleLayerIndex === index;
+
+                // Important: We must clear the cached proxy layer because Mapbox sources/layers
+                // are style-specific. Re-using the same ID on a new style without fresh addSource/addLayer fails.
+                this.layers[index] = null;
+
+                if (wasOnMap || wasVisible) {
+                    const newLayer = this.getLayer(index);
+                    newLayer.addTo(this.map);
+                    newLayer.setOpacity(wasVisible ? CONFIG.radarOpacity : 0);
+                }
+            }
+        });
+    }
+
     formatDuration(totalMinutes) {
         const days = Math.floor(totalMinutes / (24 * 60));
         const hours = Math.floor((totalMinutes % (24 * 60)) / 60);

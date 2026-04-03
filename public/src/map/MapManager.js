@@ -173,9 +173,12 @@ export class MapManager {
       const styleUrl = theme === "dark" ? CONFIG.mapboxStyleDark : CONFIG.mapboxStyleLight;
       this.map.setStyle(styleUrl);
 
-      // Re-apply the current language after the new style loads.
-      this.map.once('style.load', () => {
-        this.applyMapLanguage(this.getMapboxLanguageCode(i18n.locale));
+      return new Promise((resolve) => {
+        // Re-apply the current language after the new style loads.
+        this.map.once('style.load', () => {
+          this.applyMapLanguage(this.getMapboxLanguageCode(i18n.locale));
+          resolve();
+        });
       });
     } else {
       const tileUrl = theme === "dark" ? CONFIG.mapTilesDark : CONFIG.mapTiles;
@@ -189,6 +192,7 @@ export class MapManager {
         subdomains: "abcd",
       });
       this.tileLayer.addTo(this.map);
+      return Promise.resolve();
     }
   }
 

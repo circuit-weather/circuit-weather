@@ -1234,7 +1234,7 @@ describe('CircuitWeatherApp Pure Methods', () => {
             // Verify callback sets map theme
             const callback = ThemeManager.mock.calls[0][0];
             const theme = 'dark';
-            callback(theme);
+            await callback(theme);
             expect(app.mapManager.setTheme).toHaveBeenCalledWith(theme);
         });
 
@@ -1290,7 +1290,7 @@ describe('CircuitWeatherApp Pure Methods', () => {
             app.rangeCircles.draw = vi.fn();
 
             // Invoke callback
-            callback('light');
+            await callback('light');
 
             // Should update theme but NOT draw circles
             expect(app.mapManager.setTheme).toHaveBeenCalledWith('light');
@@ -1306,7 +1306,7 @@ describe('CircuitWeatherApp Pure Methods', () => {
             app.currentCircuitCenter = [10, 20];
             app.rangeCircles.draw = vi.fn();
 
-            callback('light');
+            await callback('light');
 
             expect(app.rangeCircles.draw).toHaveBeenCalledWith([10, 20]);
         });
@@ -1321,7 +1321,7 @@ describe('CircuitWeatherApp Pure Methods', () => {
 
             // Invoke callback
             // Should not throw
-            expect(() => callback('light')).not.toThrow();
+            await expect(callback('light')).resolves.not.toThrow();
             expect(app.mapManager.setTheme).toHaveBeenCalledWith('light');
         });
     });

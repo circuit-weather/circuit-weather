@@ -73,6 +73,10 @@ export class TrackLayer {
             if (this.map.getLayer(layerId)) {
                 this.map.setPaintProperty(layerId, 'line-width', weight);
                 this.map.setPaintProperty(layerId, 'line-color', this.trackColor);
+            } else {
+                // Layer missing (likely due to Mapbox style change).
+                // Re-load from cache to re-add source and layer to the new style.
+                this.loadTrack(this.currentCircuitId);
             }
         } else if (this.layer) {
             this.layer.setStyle({ weight: weight, color: this.trackColor });
