@@ -42,7 +42,7 @@ async def run():
         context = await browser.new_context(viewport={'width': 390, 'height': 844}, user_agent='Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/14.0 Mobile/15E148 Safari/604.1')
         page = await context.new_page()
 
-        await page.goto('http://localhost:8080?renderer=mapbox')
+        await page.goto('http://localhost:8787?renderer=mapbox')
         await page.wait_for_selector('.mapboxgl-map')
 
         await page.evaluate('''async () => {

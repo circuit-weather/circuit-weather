@@ -395,6 +395,7 @@ export class WeatherRadar {
                     });
                 }
                 if (!map.getLayer(layerId)) {
+                    const beforeId = map.getLayer('range-circles-line') ? 'range-circles-line' : null;
                     map.addLayer({
                         id: layerId,
                         type: 'raster',
@@ -403,7 +404,7 @@ export class WeatherRadar {
                             'raster-opacity': 0.01,
                             'raster-fade-duration': 0
                         }
-                    });
+                    }, beforeId);
 
                     // Fire load event when Mapbox finishes rendering this source
                     map.once('idle', () => {
