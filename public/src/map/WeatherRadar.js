@@ -18,7 +18,7 @@ export class WeatherRadar {
         this.speedIndex = CONFIG.defaultSpeedIndex;
 
         // Shared time formatter (O(1) creation, reuse in loops)
-        this.timeFormatter = new Intl.DateTimeFormat(navigator.language, {
+        this.timeFormatter = new Intl.DateTimeFormat(i18n.locale, {
             hour: '2-digit',
             minute: '2-digit',
             hour12: false
@@ -54,6 +54,7 @@ export class WeatherRadar {
 
         this.boundLoop = this.loop.bind(this);
         this.handleSpaceKey = this.handleSpaceKey.bind(this);
+        this.handleLanguageChange = this.handleLanguageChange.bind(this);
         this.bindEvents();
         this.updateSpeedLabel();
 
@@ -82,6 +83,9 @@ export class WeatherRadar {
 
         // Global shortcut: Space to toggle play/pause
         document.addEventListener('keydown', this.handleSpaceKey);
+
+        // Listen for language changes
+        document.addEventListener('i18n:change', this.handleLanguageChange);
     }
 
     handleSpaceKey(e) {
@@ -101,6 +105,7 @@ export class WeatherRadar {
 
     destroy() {
         document.removeEventListener('keydown', this.handleSpaceKey);
+        document.removeEventListener('i18n:change', this.handleLanguageChange);
     }
 
     cycleSpeed() {
@@ -1096,6 +1101,23 @@ export class WeatherRadar {
      * @param {number} totalMinutes
      * @returns {string} e.g. "1 day 2 hours 30 minutes"
      */
+    handleLanguageChange() {
+        // Update time formatter with new locale
+        this.timeFormatter = new Intl.DateTimeFormat(i18n.locale, {
+            hour: '2-digit',
+            minute: '2-digit',
+            hour12: false
+        });
+
+        this.updateSpeedLabel();
+        this.updateSlider();
+
+        // Update current frame time display
+        if (this.visibleLayerIndex >= 0) {
+            this.updateTimeDisplay(this.frames[this.visibleLayerIndex]?.time);
+        }
+    }
+
     formatDuration(totalMinutes) {
         const days = Math.floor(totalMinutes / (24 * 60));
         const hours = Math.floor((totalMinutes % (24 * 60)) / 60);

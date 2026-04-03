@@ -255,7 +255,7 @@ describe('RecentreControl', () => {
             control = new RecentreControl(mapboxMock);
 
             expect(mockDocument.createElement).toHaveBeenCalledWith('button');
-            expect(control.button.className).toBe('mapboxgl-ctrl-icon recentre-control-mapbox');
+            expect(control.button.className).toBe('leaflet-control-zoom-recentre');
         });
 
         it('should recentre map on click using flyTo (Mapbox mode)', () => {
