@@ -139,10 +139,14 @@ export class MapManager {
       const styleUrl = theme === "dark" ? CONFIG.mapboxStyleDark : CONFIG.mapboxStyleLight;
       this.map.setStyle(styleUrl);
 
-      // Ensure language stays applied after style change
-      this.map.once('styledata', () => {
+      // After the new style loads, re-apply the current language.
+      // The plugin's own style.load handler re-applies defaultLanguage (set at construction),
+      // so we listen on style.load too and override it with the live locale.
+      this.map.once('style.load', () => {
         if (this.mapboxLanguage) {
-          this.mapboxLanguage.setLanguage(this.map, this.getMapboxLanguageCode(i18n.locale));
+          const code = this.getMapboxLanguageCode(i18n.locale);
+          const newStyle = this.mapboxLanguage.setLanguage(this.map.getStyle(), code);
+          this.map.setStyle(newStyle);
         }
       });
     } else {
@@ -176,7 +180,8 @@ export class MapManager {
   handleLanguageChange(e) {
     if (this.isMapbox && this.mapboxLanguage) {
       const code = this.getMapboxLanguageCode(e.detail.locale);
-      this.mapboxLanguage.setLanguage(this.map, code);
+      const newStyle = this.mapboxLanguage.setLanguage(this.map.getStyle(), code);
+      this.map.setStyle(newStyle);
     }
   }
 
