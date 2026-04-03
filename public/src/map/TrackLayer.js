@@ -8,6 +8,8 @@ export class TrackLayer {
         this.cache = new Map();
         // Bolt Optimization: Cache track color to avoid getComputedStyle thrashing
         this.trackColor = this.resolveTrackColor();
+        this.currentWeight = null;
+        this.appliedTrackColor = null;
         this.bindEvents();
     }
 
@@ -56,6 +58,14 @@ export class TrackLayer {
         else if (zoom >= 10) weight = 4;
         else if (zoom >= 8) weight = 2;
         else weight = 1;
+
+        // Bolt Optimization: Skip redundant style updates
+        if (this.currentWeight === weight && this.appliedTrackColor === this.trackColor) {
+            return;
+        }
+
+        this.currentWeight = weight;
+        this.appliedTrackColor = this.trackColor;
 
         // Use cached color
         if (isMapbox && this.currentCircuitId) {
@@ -226,5 +236,7 @@ export class TrackLayer {
         }
 
         this.currentCircuitId = null;
+        this.currentWeight = null;
+        this.appliedTrackColor = null;
     }
 }
