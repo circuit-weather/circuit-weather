@@ -24,12 +24,13 @@ export class MapManager {
       const config = await response.json();
 
       if (!config.mapboxToken) {
+        console.warn('Mapbox token is missing. Please ensure MAPBOX_ACCESS_TOKEN is set in Cloudflare for both Production and Preview environments.');
         throw new Error('Mapbox token not available');
       }
 
       await this.initMapbox(config.mapboxToken);
     } catch (error) {
-      console.warn('Mapbox initialization failed, falling back to Leaflet:', error);
+      console.warn('Mapbox initialization failed, falling back to Leaflet:', error.message || error);
       this.initLeaflet();
     }
 
