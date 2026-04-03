@@ -56,8 +56,11 @@ export class MapManager {
         style: styleUrl,
         center: [CONFIG.defaultCenter[1], CONFIG.defaultCenter[0]], // Mapbox is [lng, lat]
         zoom: CONFIG.defaultZoom - 1, // Mapbox zoom is roughly Leaflet zoom - 1
-        attributionControl: true
+        attributionControl: false // Added manually below to control position
       });
+
+      // Place attribution (logo + text) in top-left to keep bottom corners clear
+      this.map.addControl(new mapboxgl.AttributionControl({ compact: false }), 'top-left');
 
       this.mapboxLanguage = new MapboxLanguage({
         defaultLanguage: this.getMapboxLanguageCode(i18n.locale)
