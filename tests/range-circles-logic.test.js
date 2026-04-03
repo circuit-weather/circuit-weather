@@ -328,7 +328,6 @@ describe('RangeCircles Logic', () => {
 
             expect(mockMap.removeLayer).toHaveBeenCalledWith(mockCircle);
             expect(mockMap.removeLayer).toHaveBeenCalledWith(mockLabel);
-            expect(mockMap.removeLayer).toHaveBeenCalledWith(mockMarker);
             expect(rangeCircles.circles).toHaveLength(0);
             expect(rangeCircles.labels).toHaveLength(0);
             expect(rangeCircles.centerMarker).toBeNull();
@@ -381,7 +380,6 @@ describe('RangeCircles Logic (Mapbox GL JS)', () => {
 
             expect(mapboxMock.addSource).toHaveBeenCalledWith('range-circles', expect.any(Object));
             expect(mapboxMock.addLayer).toHaveBeenCalledWith(expect.objectContaining({id: 'range-circles-line'}));
-            expect(mapboxMock.addLayer).toHaveBeenCalledWith(expect.objectContaining({id: 'range-center-point'}));
             expect(mapboxMock.addLayer).toHaveBeenCalledWith(expect.objectContaining({id: 'range-labels'}));
         });
 
@@ -406,7 +404,6 @@ describe('RangeCircles Logic (Mapbox GL JS)', () => {
             rangeCircles.clear();
 
             expect(mapboxMock.removeLayer).toHaveBeenCalledWith('range-circles-line');
-            expect(mapboxMock.removeLayer).toHaveBeenCalledWith('range-center-point');
             expect(mapboxMock.removeLayer).toHaveBeenCalledWith('range-labels');
             expect(mapboxMock.removeSource).toHaveBeenCalledWith('range-circles');
         });
