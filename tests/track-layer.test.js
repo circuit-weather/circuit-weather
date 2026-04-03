@@ -76,7 +76,7 @@ describe('TrackLayer', () => {
     });
 
     it('should initialize and bind events', () => {
-        expect(mapMock.on).toHaveBeenCalledWith('zoomend', expect.any(Function));
+        expect(mapMock.on).toHaveBeenCalledWith('moveend', expect.any(Function));
         // Check initial color resolution
         expect(trackLayer.trackColor).toBe('#e10600'); // Light theme fallback
     });

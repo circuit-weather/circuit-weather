@@ -146,7 +146,7 @@ describe('RangeCircles Logic', () => {
         it('binds events correctly', () => {
             rangeCircles = new RangeCircles(mockMap);
             expect(mockToggle.addEventListener).toHaveBeenCalledWith('click', expect.any(Function));
-            expect(mockMap.on).toHaveBeenCalledWith('zoomend', expect.any(Function));
+            expect(mockMap.on).toHaveBeenCalledWith('moveend', expect.any(Function));
         });
 
         it('updates UI classes based on active unit', () => {

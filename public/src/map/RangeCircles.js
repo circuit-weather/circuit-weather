@@ -32,9 +32,22 @@ export class RangeCircles {
             });
         }
 
-        // Adjust visible circles based on zoom
+        // Adjust visible circles based on zoom and map movement
         if (this.map.on) {
-            this.map.on(this.map.getContainer ? 'zoomend' : 'zoomend', () => this.updateVisibility());
+            const isMapbox = !this.map.hasLayer;
+            if (isMapbox) {
+                // Bolt Optimization: Throttled move updates to prevent main thread lag
+                let rafId = null;
+                this.map.on('move', () => {
+                    if (rafId) return;
+                    rafId = requestAnimationFrame(() => {
+                        this.updateVisibility();
+                        rafId = null;
+                    });
+                });
+            } else {
+                this.map.on('moveend', () => this.updateVisibility());
+            }
         }
     }
 
@@ -295,7 +308,7 @@ export class RangeCircles {
             const north = bounds.getNorth();
             // Haversine formula roughly equivalent
             const R = 6371e3; // metres
-            const deltaLat = (north - center[0]) * Math.PI/180;
+            const deltaLat = Math.abs(north - center[0]) * Math.PI/180;
             visibleRadiusMeters = R * deltaLat;
         } else {
             const bounds = this.map.getBounds();
