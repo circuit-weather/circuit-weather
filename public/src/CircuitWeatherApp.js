@@ -235,7 +235,16 @@ export class CircuitWeatherApp {
      * Initializes ResizeObservers to handle dynamic layout updates when UI elements change size.
      */
     initResizeObserver() {
-        const update = () => this.updateLayoutOffsets();
+        // Bolt Optimization: Debounce layout updates using requestAnimationFrame
+        // to prevent thrashing when ResizeObserver or MutationObserver fire frequently
+        let rafId = null;
+        const update = () => {
+            if (rafId) return;
+            rafId = requestAnimationFrame(() => {
+                this.updateLayoutOffsets();
+                rafId = null;
+            });
+        };
         const observer = new ResizeObserver(update);
 
         if (this.ui.mobileHeader) observer.observe(this.ui.mobileHeader);
@@ -301,16 +310,20 @@ export class CircuitWeatherApp {
 
         // TOP OFFSETS: Avoid mobile race banner
         let topOffset = 56; // Default header height
-        if (this.ui.mobileRaceInfo && window.getComputedStyle(this.ui.mobileRaceInfo).display !== 'none') {
-            const headerBox = this.ui.mobileHeader ? this.ui.mobileHeader.getBoundingClientRect() : { bottom: 56 };
+        if (this.ui.mobileRaceInfo) {
             const bannerBox = this.ui.mobileRaceInfo.getBoundingClientRect();
-            // Offset is the bottom of the banner relative to the top of the map area
-            // (Assuming map top is at the bottom of the mobile-header, but CSS calc adds header already)
-            // Actually top: var(--mobile-top-offset) in CSS is used to position the widget.
-            // If banner is at Y=56 and H=44, widget should be at 56+44=100.
-            // Since we use top: calc(var(--mobile-top-offset) + var(--spacing-sm)),
-            // we want var(--mobile-top-offset) to represent the bottom edge of the banner.
-            topOffset = bannerBox.bottom;
+            // Bolt Optimization: Replace getComputedStyle with bounds check to avoid reflow thrashing
+            if (bannerBox.height > 0) {
+                // Offset is the bottom of the banner relative to the top of the map area
+                // (Assuming map top is at the bottom of the mobile-header, but CSS calc adds header already)
+                // Actually top: var(--mobile-top-offset) in CSS is used to position the widget.
+                // If banner is at Y=56 and H=44, widget should be at 56+44=100.
+                // Since we use top: calc(var(--mobile-top-offset) + var(--spacing-sm)),
+                // we want var(--mobile-top-offset) to represent the bottom edge of the banner.
+                topOffset = bannerBox.bottom;
+            } else if (this.ui.mobileHeader) {
+                topOffset = this.ui.mobileHeader.getBoundingClientRect().bottom;
+            }
         } else if (this.ui.mobileHeader) {
             topOffset = this.ui.mobileHeader.getBoundingClientRect().bottom;
         }
@@ -338,8 +351,12 @@ export class CircuitWeatherApp {
 
         // Interactive controls bottom offset = radar bottom + radar height + 8px gap
         let radarHeight = 0;
-        if (this.ui.radarControls && window.getComputedStyle(this.ui.radarControls).display !== 'none') {
-            radarHeight = this.ui.radarControls.getBoundingClientRect().height;
+        if (this.ui.radarControls) {
+            const radarBox = this.ui.radarControls.getBoundingClientRect();
+            // Bolt Optimization: Replace getComputedStyle with bounds check
+            if (radarBox.height > 0) {
+                radarHeight = radarBox.height;
+            }
         }
         const controlsBottom = radarBottom + radarHeight + (radarHeight > 0 ? 8 : 0);
 
