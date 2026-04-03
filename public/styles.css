@@ -1275,7 +1275,7 @@ body {
         right: 8px;
         transform: none;
         padding: var(--spacing-sm);
-        bottom: 72px;
+        bottom: 56px;
     }
 
     .radar-play-btn {
@@ -1297,13 +1297,13 @@ body {
         top: auto;
         left: auto;
         right: 8px;
-        bottom: 150px;
+        bottom: 128px;
     }
 
     /* Mapbox custom zoom control - match Leaflet mobile position */
     .mapbox-zoom-control {
         right: 8px;
-        bottom: 150px;
+        bottom: 128px;
         z-index: 600;
     }
 
@@ -1533,7 +1533,7 @@ body {
 @media (max-width: 1024px) {
     .map-countdown {
         left: 8px;
-        bottom: 150px;
+        bottom: 128px;
         max-width: 160px;
         z-index: 600;
     }
@@ -1613,8 +1613,8 @@ body {
     .leaflet-top.leaflet-right,
     .mapboxgl-ctrl-top-right {
         /* Position below header (56px) + layout padding + mobile race info banner (~52-80px) */
-        /* Increased to 160px to clear multi-line banners on small screens */
-        top: calc(160px + var(--spacing-sm)) !important;
+        /* Adjusted to 116px to clear banners without excessive dead space */
+        top: calc(116px + var(--spacing-sm)) !important;
         right: var(--spacing-sm) !important;
         left: auto !important;
         /* Ensure it sits above the background and below the highest header overlays */
