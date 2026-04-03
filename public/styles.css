@@ -47,6 +47,11 @@
 
     /* Typography */
     --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+    /* Mobile Layout Offsets (Programmatically updated) */
+    --mobile-top-offset: 52px;
+    --mobile-radar-offset: 44px;
+    --mobile-controls-offset: 110px;
 }
 
 /* Dark Mode */
@@ -1275,8 +1280,7 @@ body {
         right: 8px;
         transform: none;
         padding: var(--spacing-sm);
-        /* Programmatically calculated to 25px to clear map attribution with 8px gap */
-        bottom: 25px;
+        bottom: var(--mobile-radar-offset);
     }
 
     .radar-play-btn {
@@ -1298,15 +1302,13 @@ body {
         top: auto;
         left: auto;
         right: 8px;
-        /* Programmatically calculated to 91px to clear radar bar with 8px gap */
-        bottom: 91px;
+        bottom: var(--mobile-controls-offset);
     }
 
     /* Mapbox custom zoom control - match Leaflet mobile position */
     .mapbox-zoom-control {
         right: 8px;
-        /* Programmatically calculated to 91px to clear radar bar with 8px gap */
-        bottom: 91px;
+        bottom: var(--mobile-controls-offset);
         z-index: 600;
     }
 
@@ -1536,8 +1538,7 @@ body {
 @media (max-width: 1024px) {
     .map-countdown {
         left: 8px;
-        /* Programmatically calculated to 91px to clear radar bar with 8px gap */
-        bottom: 91px;
+        bottom: var(--mobile-controls-offset);
         max-width: 160px;
         z-index: 600;
     }
@@ -1617,8 +1618,7 @@ body {
     .leaflet-top.leaflet-right,
     .mapboxgl-ctrl-top-right {
         /* Position below header (56px) + layout padding + mobile race info banner (~52-80px) */
-        /* Programmatically calculated to 52px to clear banner with 8px gap */
-        top: calc(52px + var(--spacing-sm)) !important;
+        top: calc(var(--mobile-top-offset) + var(--spacing-sm)) !important;
         right: var(--spacing-sm) !important;
         left: auto !important;
         /* Ensure it sits above the background and below the highest header overlays */

@@ -4,6 +4,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 const createMockElement = (id) => ({
     id,
     addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+    dispatchEvent: vi.fn(),
     classList: {
         add: vi.fn(),
         remove: vi.fn(),
@@ -15,6 +17,9 @@ const createMockElement = (id) => ({
     removeAttribute: vi.fn(),
     textContent: '',
     value: '',
+    getBoundingClientRect: vi.fn(() => ({
+        top: 0, left: 0, right: 0, bottom: 0, width: 0, height: 0
+    })),
 });
 
 const documentMock = {
@@ -71,6 +76,7 @@ describe('WeatherRadar Lifecycle & Playback', () => {
         radar = new WeatherRadar(mockMap);
 
         // Mock UI
+        radar.ui.controls = createMockElement('radarControls');
         radar.ui.slider = createMockElement('radarSlider');
         radar.ui.time = createMockElement('radarTime');
         radar.ui.relative = createMockElement('radarRelative');
@@ -614,7 +620,7 @@ describe('WeatherRadar Lifecycle & Playback', () => {
         });
 
         it('showControls sets display flex if visible, none if not', () => {
-            radar.ui.controls = { style: { display: '' } };
+            radar.ui.controls = createMockElement('radarControls');
 
             radar.showControls(true);
             expect(radar.ui.controls.style.display).toBe('flex');

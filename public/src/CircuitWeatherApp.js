@@ -62,6 +62,9 @@ export class CircuitWeatherApp {
             mobileCountryFlag: document.getElementById('mobileCountryFlag'),
             mobileRaceInfoName: document.getElementById('mobileRaceInfoName'),
             mobileRaceInfoCircuit: document.getElementById('mobileRaceInfoCircuit'),
+            mobileHeader: document.querySelector('.mobile-header'),
+            radarControls: document.getElementById('radarControls'),
+            mapContainer: document.getElementById('map'),
         };
 
         this.showLoading(true, i18n.t('loading.schedule'));
@@ -74,6 +77,7 @@ export class CircuitWeatherApp {
 
             // Handle resize events for mobile visibility
             this.bindResizeHandler();
+            this.initResizeObserver();
 
             // Recentre control (added to zoom control container)
             this.recentreControl = new RecentreControl(map);
@@ -220,7 +224,48 @@ export class CircuitWeatherApp {
             // Note: Map resizing is handled by ResizeObserver in MapManager
             // Update visibility when crossing the breakpoint
             this.updateMobileVisibility();
+            this.updateLayoutOffsets();
         });
+    }
+
+    /**
+     * Initializes ResizeObservers to handle dynamic layout updates when UI elements change size.
+     */
+    initResizeObserver() {
+        const update = () => this.updateLayoutOffsets();
+        const observer = new ResizeObserver(update);
+
+        if (this.ui.mobileHeader) observer.observe(this.ui.mobileHeader);
+        if (this.ui.mobileRaceInfo) observer.observe(this.ui.mobileRaceInfo);
+        if (this.ui.mapContainer) observer.observe(this.ui.mapContainer);
+
+        // Observe existing attribution controls
+        const bottomControls = ['.mapboxgl-ctrl-bottom-left', '.mapboxgl-ctrl-bottom-right', '.leaflet-control-attribution'];
+        bottomControls.forEach(selector => {
+            const el = document.querySelector(selector);
+            if (el) observer.observe(el);
+        });
+
+        // Watch for dynamically added map controls (common with Mapbox)
+        const mutationObserver = new MutationObserver((mutations) => {
+            let shouldUpdate = false;
+            for (const mutation of mutations) {
+                mutation.addedNodes.forEach(node => {
+                    if (node.nodeType === Node.ELEMENT_NODE) {
+                        const isControl = bottomControls.some(sel => node.matches(sel) || node.querySelector(sel));
+                        if (isControl) {
+                            observer.observe(node);
+                            shouldUpdate = true;
+                        }
+                    }
+                });
+            }
+            if (shouldUpdate) update();
+        });
+
+        if (this.ui.mapContainer) {
+            mutationObserver.observe(this.ui.mapContainer, { childList: true, subtree: true });
+        }
     }
 
     updateMobileVisibility() {
@@ -241,6 +286,64 @@ export class CircuitWeatherApp {
         }
 
         // Note: Map resizing is handled by ResizeObserver in MapManager
+    }
+
+    /**
+     * Programmatically calculates and updates CSS variables for mobile UI offsets.
+     * This prevents collisions between absolute-positioned map overlays (weather, radar, controls)
+     * and UI elements like the header, race banner, and map attribution/logo.
+     */
+    updateLayoutOffsets() {
+        if (!this.mobileQuery.matches) return;
+
+        // TOP OFFSETS: Avoid mobile race banner
+        let topOffset = 56; // Default header height
+        if (this.ui.mobileRaceInfo && window.getComputedStyle(this.ui.mobileRaceInfo).display !== 'none') {
+            const headerBox = this.ui.mobileHeader ? this.ui.mobileHeader.getBoundingClientRect() : { bottom: 56 };
+            const bannerBox = this.ui.mobileRaceInfo.getBoundingClientRect();
+            // Offset is the bottom of the banner relative to the top of the map area
+            // (Assuming map top is at the bottom of the mobile-header, but CSS calc adds header already)
+            // Actually top: var(--mobile-top-offset) in CSS is used to position the widget.
+            // If banner is at Y=56 and H=44, widget should be at 56+44=100.
+            // Since we use top: calc(var(--mobile-top-offset) + var(--spacing-sm)),
+            // we want var(--mobile-top-offset) to represent the bottom edge of the banner.
+            topOffset = bannerBox.bottom;
+        } else if (this.ui.mobileHeader) {
+            topOffset = this.ui.mobileHeader.getBoundingClientRect().bottom;
+        }
+
+        // Subtract mobile-header height because the map container starts *at* the header's bottom in CSS
+        // Actually .map { top: 56px } in CSS.
+        // If bannerBox.bottom is 100, and map top is 56, we want the widget top to be 100 - 56 = 44px into the map.
+        const mapTop = 56;
+        const mobileTopVar = Math.max(0, topOffset - mapTop) + 2; // Added 2px safety buffer
+
+        // BOTTOM OFFSETS: Avoid Mapbox Logo / Attribution
+        let attributionHeight = 25; // Safe default for attribution/logo
+        const attribution = document.querySelector('.mapboxgl-ctrl-bottom-left') ||
+                            document.querySelector('.mapboxgl-ctrl-bottom-right') ||
+                            document.querySelector('.leaflet-control-attribution');
+
+        if (attribution) {
+            const attrBox = attribution.getBoundingClientRect();
+            const mapBox = this.ui.mapContainer ? this.ui.mapContainer.getBoundingClientRect() : { bottom: window.innerHeight };
+            attributionHeight = Math.max(25, mapBox.bottom - attrBox.top);
+        }
+
+        // Radar bottom offset = attribution height + 8px gap
+        const radarBottom = attributionHeight + 8;
+
+        // Interactive controls bottom offset = radar bottom + radar height + 8px gap
+        let radarHeight = 0;
+        if (this.ui.radarControls && window.getComputedStyle(this.ui.radarControls).display !== 'none') {
+            radarHeight = this.ui.radarControls.getBoundingClientRect().height;
+        }
+        const controlsBottom = radarBottom + radarHeight + (radarHeight > 0 ? 8 : 0);
+
+        // Apply to CSS variables
+        document.documentElement.style.setProperty('--mobile-top-offset', `${mobileTopVar}px`);
+        document.documentElement.style.setProperty('--mobile-radar-offset', `${radarBottom}px`);
+        document.documentElement.style.setProperty('--mobile-controls-offset', `${controlsBottom}px`);
     }
 
     handleThemeChange(theme) {
@@ -291,6 +394,9 @@ export class CircuitWeatherApp {
                 }
             });
         }
+
+        // Update layout when radar controls are toggled
+        document.addEventListener('radar:toggle', () => this.updateLayoutOffsets());
 
         // Note: Weather updates are now pinned to circuit, not triggered by map pan
         // This reduces API calls significantly - weather only updates when circuit changes or every 5 minutes
