@@ -125,6 +125,7 @@ export class RangeCircles {
                     dashArray: index > 0 ? '4, 4' : null
                 });
                 if (!this.map.hasLayer(circle)) circle.addTo(this.map);
+                circle.bringToFront();
             } else {
                 const circle = L.circle(center, {
                     interactive: false,
@@ -137,6 +138,7 @@ export class RangeCircles {
                     opacity: 0.7,
                 });
                 circle.addTo(this.map);
+                circle.bringToFront();
                 this.circles.push(circle);
             }
 
@@ -156,6 +158,7 @@ export class RangeCircles {
                 });
                 labelMarker.setIcon(newIcon);
                 if (!this.map.hasLayer(labelMarker)) labelMarker.addTo(this.map);
+                labelMarker.setZIndexOffset(1000);
             } else {
                 const label = L.divIcon({
                     className: 'range-label',
@@ -165,6 +168,7 @@ export class RangeCircles {
                 });
                 const labelMarker = L.marker(labelLatLng, { icon: label, interactive: false, keyboard: false });
                 labelMarker.addTo(this.map);
+                labelMarker.setZIndexOffset(1000);
                 this.labels.push(labelMarker);
             }
         });
@@ -265,6 +269,10 @@ export class RangeCircles {
                 }
             });
         }
+
+        // Always move to top to ensure visibility over radar
+        if (this.map.getLayer('range-circles-line')) this.map.moveLayer('range-circles-line');
+        if (this.map.getLayer('range-labels')) this.map.moveLayer('range-labels');
     }
 
     generateCirclePolygon(center, radius, points) {

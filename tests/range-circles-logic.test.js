@@ -18,6 +18,7 @@ const mockCircle = {
     setLatLng: vi.fn(),
     setRadius: vi.fn(),
     setStyle: vi.fn(),
+    bringToFront: vi.fn(),
 };
 
 const mockMarker = {
@@ -25,6 +26,7 @@ const mockMarker = {
     setLatLng: vi.fn(),
     setIcon: vi.fn(),
     remove: vi.fn(),
+    setZIndexOffset: vi.fn(),
 };
 
 const mockMap = {
@@ -363,6 +365,7 @@ describe('RangeCircles Logic (Mapbox GL JS)', () => {
         addLayer: vi.fn(),
         removeLayer: vi.fn(),
         removeSource: vi.fn(),
+        moveLayer: vi.fn(),
     };
 
     beforeEach(() => {

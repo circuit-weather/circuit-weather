@@ -577,12 +577,13 @@ export class CircuitWeatherApp {
             const lng = parseFloat(race.location.long);
             this.currentCircuitCenter = [lat, lng];
             this.mapManager.setView(lat, lng);
-            this.rangeCircles.draw([lat, lng]);
 
             // Load track layout
             if (race.circuit && race.circuit.circuitId) {
                 this.trackLayer.loadTrack(race.circuit.circuitId);
             }
+
+            this.rangeCircles.draw([lat, lng]);
 
             // Update recentre control
             if (this.recentreControl) {
