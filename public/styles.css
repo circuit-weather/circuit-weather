@@ -1275,7 +1275,8 @@ body {
         right: 8px;
         transform: none;
         padding: var(--spacing-sm);
-        bottom: 56px;
+        /* Programmatically calculated to 25px to clear map attribution with 8px gap */
+        bottom: 25px;
     }
 
     .radar-play-btn {
@@ -1297,13 +1298,15 @@ body {
         top: auto;
         left: auto;
         right: 8px;
-        bottom: 128px;
+        /* Programmatically calculated to 91px to clear radar bar with 8px gap */
+        bottom: 91px;
     }
 
     /* Mapbox custom zoom control - match Leaflet mobile position */
     .mapbox-zoom-control {
         right: 8px;
-        bottom: 128px;
+        /* Programmatically calculated to 91px to clear radar bar with 8px gap */
+        bottom: 91px;
         z-index: 600;
     }
 
@@ -1533,7 +1536,8 @@ body {
 @media (max-width: 1024px) {
     .map-countdown {
         left: 8px;
-        bottom: 128px;
+        /* Programmatically calculated to 91px to clear radar bar with 8px gap */
+        bottom: 91px;
         max-width: 160px;
         z-index: 600;
     }
@@ -1613,8 +1617,8 @@ body {
     .leaflet-top.leaflet-right,
     .mapboxgl-ctrl-top-right {
         /* Position below header (56px) + layout padding + mobile race info banner (~52-80px) */
-        /* Adjusted to 116px to clear banners without excessive dead space */
-        top: calc(116px + var(--spacing-sm)) !important;
+        /* Programmatically calculated to 52px to clear banner with 8px gap */
+        top: calc(52px + var(--spacing-sm)) !important;
         right: var(--spacing-sm) !important;
         left: auto !important;
         /* Ensure it sits above the background and below the highest header overlays */
