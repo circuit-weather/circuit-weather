@@ -38,6 +38,7 @@ export class CircuitWeatherApp {
         this.mobileQuery = window.matchMedia('(max-width: 768px)');
 
         this.ui = {};
+        this.handleLanguageChange = this.handleLanguageChange.bind(this);
     }
 
     async init() {
@@ -109,6 +110,8 @@ export class CircuitWeatherApp {
             this.races = schedule.map(r => this.f1Api.parseRace(r));
 
             this.populateRoundSelect();
+
+            document.addEventListener('i18n:change', this.handleLanguageChange);
 
             // Check for initial route or auto-select next
             const params = this.router.getParams();
@@ -877,6 +880,29 @@ export class CircuitWeatherApp {
                 this.selectSession(session);
             }
         }
+    }
+
+    handleLanguageChange() {
+        this.populateRoundSelect();
+        if (this.selectedRace) {
+            if (this.ui.roundSelect) this.ui.roundSelect.value = this.selectedRace.round;
+            this.populateSessionSelect(this.selectedRace.sessions);
+
+            if (this.selectedSession) {
+                if (this.ui.sessionSelect) this.ui.sessionSelect.value = this.selectedSession.id;
+                const sessionTime = new Date(`${this.selectedSession.date}T${this.selectedSession.time}`);
+                // Re-render current forecast with new translations
+                this.updateSessionForecast(sessionTime, this.selectedSession.id);
+            }
+        } else {
+            if (this.ui.sessionSelect) {
+                this.ui.sessionSelect.title = i18n.t('controls.selectRoundFirst');
+                this.ui.sessionSelect.innerHTML = `<option value="">${escapeHtml(i18n.t('controls.selectRoundFirst'))}</option>`;
+            }
+        }
+
+        // Update other translated UI elements
+        this.updatePageMetadata();
     }
 
     showLoading(visible, text = i18n.t('common.loading')) {
