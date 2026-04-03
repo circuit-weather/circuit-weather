@@ -83,7 +83,7 @@ const VENDOR_ASSETS = new Map([
     contentTypes: ['text/css']
   }],
   ['mapbox-gl-language.js', {
-    upstream: 'https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-language/v1.0.1/mapbox-gl-language.js',
+    upstream: 'https://api.mapbox.com/mapbox-gl-js/plugins/mapbox-gl-language/v1.0.0/mapbox-gl-language.js',
     contentTypes: ['application/javascript', 'text/javascript']
   }]
 ]);
