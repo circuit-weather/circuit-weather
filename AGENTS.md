@@ -11,7 +11,7 @@ Circuit Weather is a real-time F1 race circuit weather radar application. It dis
 | Layer    | Technology                                          |
 | -------- | --------------------------------------------------- |
 | Frontend | Vanilla HTML/CSS/JS                                 |
-| Mapping  | Leaflet.js with Carto basemaps                      |
+| Mapping  | Mapbox GL JS (Primary) & Leaflet.js with Carto (Fallback) |
 | Backend  | Cloudflare Workers with Static Assets               |
 | APIs     | Jolpica F1, RainViewer, Open-Meteo, GitHub (Tracks) |
 
@@ -164,7 +164,7 @@ mode = "smart"
 
 2. **Map Display**
    - Centred on selected circuit
-   - Dark/light mode basemaps (Carto)
+   - Dark/light mode basemaps (Mapbox natively, Carto for Leaflet fallback)
    - Dynamic range circles (outline only) that scale based on map zoom/bounds
    - Distance labels on circles
 
