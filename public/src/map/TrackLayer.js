@@ -13,7 +13,20 @@ export class TrackLayer {
 
     bindEvents() {
         if (this.map.on) {
-            this.map.on(this.map.getContainer ? 'zoomend' : 'zoomend', () => this.updateStyle());
+            const isMapbox = !this.map.hasLayer;
+            if (isMapbox) {
+                // Bolt Optimization: Throttled move updates to prevent main thread lag
+                let rafId = null;
+                this.map.on('move', () => {
+                    if (rafId) return;
+                    rafId = requestAnimationFrame(() => {
+                        this.updateStyle();
+                        rafId = null;
+                    });
+                });
+            } else {
+                this.map.on('moveend', () => this.updateStyle());
+            }
         }
     }
 
