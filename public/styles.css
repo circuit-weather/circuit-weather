@@ -704,7 +704,7 @@ body {
 
 .radar-controls {
     position: absolute;
-    bottom: var(--spacing-md);
+    bottom: 36px; /* Raised to clear Mapbox attribution logo */
     left: 50%;
     transform: translateX(-50%);
     display: flex;
@@ -1491,7 +1491,7 @@ body {
 .map-countdown {
     position: absolute;
     left: 20px;
-    bottom: var(--spacing-md);
+    bottom: 36px; /* Raised to clear Mapbox attribution logo */
     display: block;
     background: var(--sidebar-bg);
     backdrop-filter: var(--glass-blur);
