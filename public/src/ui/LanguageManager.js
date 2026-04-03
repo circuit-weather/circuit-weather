@@ -24,6 +24,10 @@ export class LanguageManager {
 
     populateMenu() {
         this.menu.innerHTML = '';
+        // Bolt Optimization: Use DocumentFragment to batch DOM insertions
+        // Reduces reflows when populating the language menu
+        const fragment = document.createDocumentFragment();
+
         Object.entries(LANGUAGE_NAMES).forEach(([locale, name]) => {
             const button = document.createElement('button');
             button.className = 'language-item';
@@ -36,8 +40,10 @@ export class LanguageManager {
                 this.close();
             });
 
-            this.menu.appendChild(button);
+            fragment.appendChild(button);
         });
+
+        this.menu.appendChild(fragment);
     }
 
     bindEvents() {
