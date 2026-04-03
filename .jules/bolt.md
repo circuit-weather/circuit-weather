@@ -43,3 +43,7 @@
 ## 2024-05-28 - Mapbox Redundant Style Updates
 **Learning:** Calling `setPaintProperty` or `setStyle` repeatedly with the same values during high-frequency events (like throttled map `move`) causes redundant internal validations and minor performance overhead in Mapbox/Leaflet renderers.
 **Action:** Cache the currently applied style values (e.g., `weight` and `color`) and add an early return to skip API calls if the desired style matches the cached state.
+
+## 2024-05-29 - Redundant URL Parsing
+**Learning:** Re-instantiating `new URL(request.url)` in child routing functions after it was already parsed in the main request handler causes measurable overhead in hot paths and creates unnecessary allocations.
+**Action:** Pass the already parsed `url` object down the call stack to child handlers as a parameter instead of re-parsing the request URL.

@@ -99,6 +99,7 @@ export default {
       });
     }
 
+
     const url = new URL(request.url);
     const path = url.pathname;
 
@@ -121,12 +122,12 @@ export default {
 
     // Only /api/* routes reach this worker (configured via run_worker_first)
     if (path.startsWith('/api/f1/')) {
-      return handleApiRequest(request, env, ctx);
+      return handleApiRequest(request, env, ctx, url);
     }
 
     // Handle health request
     if (path === '/api/health') {
-      return handleHealthRequest(request, env, ctx);
+      return handleHealthRequest(request, env, ctx, url);
     }
 
     // Handle radar requests
@@ -136,17 +137,17 @@ export default {
 
     // Handle radar tile requests (Optimized Cache)
     if (path.startsWith('/api/tiles/')) {
-      return handleTileRequest(request, env, ctx);
+      return handleTileRequest(request, env, ctx, url);
     }
 
     // Handle track requests
     if (path.startsWith('/api/track/')) {
-      return handleTrackRequest(request, env, ctx);
+      return handleTrackRequest(request, env, ctx, url);
     }
 
     // Handle Vendor proxy (Leaflet & Mapbox) (Strict CSP & AdBlock Bypass)
     if (path.startsWith('/api/assets/')) {
-      return handleAssetRequest(request, env, ctx);
+      return handleAssetRequest(request, env, ctx, url);
     }
 
     // Handle map config request (Securely injects Mapbox token)
@@ -263,13 +264,13 @@ function handleConfigRequest(request, env, ctx) {
 /**
  * Handle F1 API requests with caching
  */
-async function handleApiRequest(request, env, ctx) {
+async function handleApiRequest(request, env, ctx, url) {
   // SEC: Ensure request is not from a script tag (XSSI protection)
   if (!checkFetchDest(request)) {
     return createErrorResponse(request, 403, 'Invalid fetch destination');
   }
 
-  const url = new URL(request.url);
+
   // Extract path parameters after /api/f1/
   // e.g. /api/f1/current -> current
   const apiPath = url.pathname.replace('/api/f1/', '');
@@ -398,13 +399,13 @@ async function handleApiRequest(request, env, ctx) {
 /**
  * Handle Track GeoJSON requests with caching
  */
-async function handleTrackRequest(request, env, ctx) {
+async function handleTrackRequest(request, env, ctx, url) {
   // SEC: Ensure request is not from a script tag (XSSI protection)
   if (!checkFetchDest(request)) {
     return createErrorResponse(request, 403, 'Invalid fetch destination');
   }
 
-  const url = new URL(request.url);
+
   // Extract geoJsonId from /api/track/:id
   const trackId = url.pathname.replace('/api/track/', '');
 
@@ -524,8 +525,8 @@ async function handleTrackRequest(request, env, ctx) {
  * Handle Vendor Assets proxy to enable strict CSP and bypass tracking blockers
  * Proxies JS, CSS, and images from unpkg and Mapbox CDNs
  */
-async function handleAssetRequest(request, env, ctx) {
-  const url = new URL(request.url);
+async function handleAssetRequest(request, env, ctx, url) {
+
   const path = url.pathname.replace('/api/assets/', '');
 
   const config = VENDOR_ASSETS.get(path);
@@ -642,7 +643,7 @@ async function handleAssetRequest(request, env, ctx) {
  * Handle Health Check request
  * Checks connectivity to key upstream APIs and returns basic system status.
  */
-async function handleHealthRequest(request, env, ctx) {
+async function handleHealthRequest(request, env, ctx, url) {
   // SEC: Ensure request is not from a script tag (XSSI protection)
   if (!checkFetchDest(request)) {
     return createErrorResponse(request, 403, 'Invalid fetch destination');
@@ -650,8 +651,8 @@ async function handleHealthRequest(request, env, ctx) {
 
   // Caching Strategy: Cache the health check for 60 seconds
   // Prevents abuse of the health endpoint as a DDOS vector against upstreams
-  const healthUrl = new URL(request.url);
-  const cacheKey = new Request(healthUrl.origin + healthUrl.pathname);
+
+  const cacheKey = new Request(url.origin + url.pathname);
   const cache = caches.default;
 
   let response = await cache.match(cacheKey);
@@ -741,8 +742,8 @@ async function handleHealthRequest(request, env, ctx) {
  * Handle Radar Tile requests with robust caching
  * Route: /api/tiles/...
  */
-async function handleTileRequest(request, env, ctx) {
-  const url = new URL(request.url);
+async function handleTileRequest(request, env, ctx, url) {
+
   // Extract path suffix: /api/tiles/v2/radar/... -> /v2/radar/...
   const tilePath = url.pathname.replace('/api/tiles', '');
 
