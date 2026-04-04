@@ -102,14 +102,19 @@ export class MapManager {
   setupResizeObserver() {
     const mapContainer = document.getElementById("map");
     if (mapContainer && window.ResizeObserver) {
+      let rafId = null;
       this.resizeObserver = new ResizeObserver(() => {
-        if (this.map) {
-          if (this.isMapbox) {
-            this.map.resize();
-          } else {
-            this.map.invalidateSize();
+        if (rafId) return;
+        rafId = requestAnimationFrame(() => {
+          if (this.map) {
+            if (this.isMapbox) {
+              this.map.resize();
+            } else {
+              this.map.invalidateSize();
+            }
           }
-        }
+          rafId = null;
+        });
       });
       this.resizeObserver.observe(mapContainer);
     }

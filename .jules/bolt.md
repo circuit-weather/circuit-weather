@@ -47,3 +47,7 @@
 ## 2024-05-29 - Redundant URL Parsing
 **Learning:** Re-instantiating `new URL(request.url)` in child routing functions after it was already parsed in the main request handler causes measurable overhead in hot paths and creates unnecessary allocations.
 **Action:** Pass the already parsed `url` object down the call stack to child handlers as a parameter instead of re-parsing the request URL.
+
+## 2026-04-04 - requestAnimationFrame mocking in Vitest
+**Learning:** When mocking `requestAnimationFrame` in Vitest to test debouncing logic, stubbing it with synchronous execution (e.g. `cb()`) locks the debounce flag because the callback clears the flag before the outer function returns its ID.
+**Action:** Use `vi.stubGlobal('requestAnimationFrame', vi.fn((cb) => setTimeout(cb, 0)))` and `vi.useFakeTimers()` to properly test async rAF debouncing without locking.
