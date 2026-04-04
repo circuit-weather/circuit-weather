@@ -1,6 +1,32 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { CONFIG } from "../public/src/config.js";
 
+// Mock Mapbox
+const mapboxMapMock = {
+  on: vi.fn(),
+  once: vi.fn(),
+  setStyle: vi.fn(),
+  flyTo: vi.fn(),
+  resize: vi.fn(),
+  zoomIn: vi.fn(),
+  zoomOut: vi.fn(),
+  remove: vi.fn(),
+  getStyle: vi.fn(() => ({
+    layers: []
+  })),
+  getLayoutProperty: vi.fn(),
+  setLayoutProperty: vi.fn(),
+};
+
+// Use a variable we can modify instead of stubbing directly initially to handle
+// how mock implementations are scoped per test block
+const mapboxglMock = {
+  Map: vi.fn(() => mapboxMapMock),
+  accessToken: ''
+};
+
+vi.stubGlobal("mapboxgl", mapboxglMock);
+
 // Mock Leaflet (L)
 const mapMock = {
   setView: vi.fn(),
@@ -68,11 +94,15 @@ const { MapManager } = await import("../public/src/map/MapManager.js");
 
 describe("MapManager", () => {
   let mapManager;
+  let consoleWarnSpy;
+  let consoleErrorSpy;
 
   beforeEach(() => {
     vi.clearAllMocks();
     mapManager = new MapManager();
     resizeCallback = null; // Reset callback
+    consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+    consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
   });
 
   it("should initialize the map with default configuration (fallback to Leaflet)", async () => {
@@ -241,5 +271,289 @@ describe("MapManager", () => {
 
     // Restore mock
     documentMock.documentElement.getAttribute = originalGetAttribute;
+  });
+
+  describe("Mapbox functionality", () => {
+    let mockFetch;
+
+    beforeEach(() => {
+      mockFetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({ mapboxToken: 'test-token' })
+      });
+      vi.stubGlobal("fetch", mockFetch);
+      // Reset mapboxgl mock properties since we're using the global stub
+      mapboxglMock.Map.mockClear();
+      mapboxglMock.accessToken = '';
+
+      // Reset mapbox map mock as well to prevent spillover
+      Object.values(mapboxMapMock).forEach(mockFn => {
+        if (vi.isMockFunction(mockFn)) mockFn.mockClear();
+      });
+      mapboxMapMock.getStyle.mockReturnValue({ layers: [] });
+    });
+
+    it("should initialize Mapbox successfully", async () => {
+      const mockZoomIn = createMockElement('zoomIn');
+      const mockZoomOut = createMockElement('zoomOut');
+      const mockZoomControl = createMockElement('zoomControl');
+      mockZoomControl.appendChild = vi.fn();
+      mockZoomIn.setAttribute = vi.fn();
+      mockZoomOut.setAttribute = vi.fn();
+      mockZoomIn.addEventListener = vi.fn();
+      mockZoomOut.addEventListener = vi.fn();
+
+      const originalCreateElement = document.createElement;
+      document.createElement = vi.fn()
+        .mockReturnValueOnce(mockZoomControl)
+        .mockReturnValueOnce(mockZoomIn)
+        .mockReturnValueOnce(mockZoomOut);
+
+      // Setup mock to immediately resolve 'load' event synchronously to allow init to resolve Mapbox Map
+      mapboxMapMock.on.mockImplementation((event, callback) => {
+        if (event === 'load') callback();
+      });
+
+      // We need to ensure that getElementById('map') returns an object with appendChild
+      // because `createMapboxZoomControl` depends on it.
+      const mockContainer = createMockElement('map');
+      mockContainer.appendChild = vi.fn();
+      documentMock.getElementById.mockReturnValue(mockContainer);
+
+      const map = await mapManager.init();
+
+      expect(mockFetch).toHaveBeenCalledWith('/api/config');
+      expect(globalThis.mapboxgl.accessToken).toBe('test-token');
+      expect(mapboxglMock.Map).toHaveBeenCalledWith({
+        container: 'map',
+        style: CONFIG.mapboxStyleLight,
+        center: [CONFIG.defaultCenter[1], CONFIG.defaultCenter[0]],
+        zoom: CONFIG.defaultZoom - 1,
+        attributionControl: true
+      });
+
+      expect(map).toBe(mapboxMapMock);
+      expect(mapManager.isMapbox).toBe(true);
+      expect(resizeObserverMock).toHaveBeenCalled();
+
+      document.createElement = originalCreateElement;
+    });
+
+    it("should fallback and resolve to leaflet on Mapbox error before load", async () => {
+      // Setup mock to immediately invoke error handler before load completes
+      mapboxMapMock.on.mockImplementation((event, callback) => {
+        if (event === 'error') callback({ error: { message: 'Network error' } });
+      });
+
+      // The Mapbox promise should reject, caught by init(), calling initLeaflet()
+      const map = await mapManager.init();
+
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        'Mapbox initialization failed, falling back to Leaflet:',
+        'Network error'
+      );
+      // It falls back to Leaflet if Mapbox init fails
+      expect(leafletMock.map).toHaveBeenCalled();
+      expect(mapManager.isMapbox).toBe(false);
+      expect(map).toBe(mapMock); // Leaflet mock
+    });
+
+    it("should fallback to Leaflet if fetch config fails", async () => {
+      mapboxglMock.Map.mockClear();
+      vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false }));
+
+      await mapManager.init();
+
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        'Mapbox initialization failed, falling back to Leaflet:',
+        'Failed to fetch config' // Match exact error string formatting
+      );
+      expect(leafletMock.map).toHaveBeenCalled();
+    });
+
+    it("should fallback to Leaflet if mapboxToken is missing", async () => {
+      mapboxglMock.Map.mockClear();
+      vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({}) // No mapboxToken
+      }));
+
+      await mapManager.init();
+
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        'Mapbox token is missing. Please ensure MAPBOX_ACCESS_TOKEN is set as a Secret in the Cloudflare dashboard (Workers & Pages → your Worker → Settings → Variables and Secrets).'
+      );
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        'Mapbox initialization failed, falling back to Leaflet:',
+        'Mapbox token not available'
+      );
+      expect(leafletMock.map).toHaveBeenCalled();
+    });
+
+    it("should create mapbox zoom control", async () => {
+      const mockContainer = createMockElement('map');
+      mockContainer.appendChild = vi.fn();
+      documentMock.getElementById.mockReturnValue(mockContainer);
+
+      const mockZoomControl = createMockElement('zoomControl');
+      mockZoomControl.appendChild = vi.fn();
+      const mockZoomIn = createMockElement('zoomIn');
+      mockZoomIn.setAttribute = vi.fn();
+      mockZoomIn.addEventListener = vi.fn();
+      const mockZoomOut = createMockElement('zoomOut');
+      mockZoomOut.setAttribute = vi.fn();
+      mockZoomOut.addEventListener = vi.fn();
+
+      const originalCreateElement = document.createElement;
+      document.createElement = vi.fn()
+        .mockReturnValueOnce(mockZoomControl)
+        .mockReturnValueOnce(mockZoomIn)
+        .mockReturnValueOnce(mockZoomOut);
+
+      // Need load event to resolve initMapbox
+      mapboxMapMock.on.mockImplementation((event, callback) => {
+        if (event === 'load') callback();
+      });
+      await mapManager.init();
+
+      expect(mockContainer.appendChild).toHaveBeenCalledWith(mockZoomControl);
+      expect(mockZoomControl.appendChild).toHaveBeenCalledWith(mockZoomIn);
+      expect(mockZoomControl.appendChild).toHaveBeenCalledWith(mockZoomOut);
+
+      // Trigger zoom clicks
+      mockZoomIn.addEventListener.mock.calls.find(call => call[0] === 'click')[1]();
+      expect(mapboxMapMock.zoomIn).toHaveBeenCalled();
+
+      mockZoomOut.addEventListener.mock.calls.find(call => call[0] === 'click')[1]();
+      expect(mapboxMapMock.zoomOut).toHaveBeenCalled();
+
+      document.createElement = originalCreateElement;
+    });
+
+    it("should set Mapbox theme correctly", async () => {
+      mapboxMapMock.on.mockImplementation((event, callback) => {
+        if (event === 'load') callback();
+      });
+      mapboxMapMock.once.mockImplementation((event, callback) => {
+        if (event === 'style.load') callback();
+      });
+
+      await mapManager.init();
+      vi.clearAllMocks(); // clear initial calls
+
+      // need isMapbox to be true
+      mapManager.isMapbox = true;
+      mapManager.map = mapboxMapMock;
+
+      await mapManager.setTheme("dark");
+
+      expect(mapboxMapMock.setStyle).toHaveBeenCalledWith(CONFIG.mapboxStyleDark);
+    });
+
+    it("should apply mapbox language and get language code correctly", async () => {
+      const mockZoomIn = createMockElement('zoomIn');
+      const mockZoomOut = createMockElement('zoomOut');
+      const mockZoomControl = createMockElement('zoomControl');
+      mockZoomControl.appendChild = vi.fn();
+      mockZoomIn.setAttribute = vi.fn();
+      mockZoomOut.setAttribute = vi.fn();
+      mockZoomIn.addEventListener = vi.fn();
+      mockZoomOut.addEventListener = vi.fn();
+
+      const originalCreateElement = document.createElement;
+      document.createElement = vi.fn()
+        .mockReturnValueOnce(mockZoomControl)
+        .mockReturnValueOnce(mockZoomIn)
+        .mockReturnValueOnce(mockZoomOut);
+
+      // Mock map style layers
+      mapboxMapMock.getStyle.mockReturnValue({
+        layers: [
+          { id: 'layer1', type: 'symbol' },
+          { id: 'layer2', type: 'line' }
+        ]
+      });
+      mapboxMapMock.getLayoutProperty.mockReturnValue(['get', 'name']);
+
+      mapboxMapMock.on.mockImplementation((event, callback) => {
+        if (event === 'load') callback();
+      });
+
+      await mapManager.init();
+
+      // Test applyMapLanguage
+      expect(mapboxMapMock.setLayoutProperty).toHaveBeenCalledWith(
+        'layer1',
+        'text-field',
+        ['coalesce', ['get', 'name_en'], ['get', 'name']]
+      );
+
+      // Test getMapboxLanguageCode logic
+      expect(mapManager.getMapboxLanguageCode('zh-CN')).toBe('zh-Hans');
+      expect(mapManager.getMapboxLanguageCode('fr-CA')).toBe('fr');
+      expect(mapManager.getMapboxLanguageCode('xx-YY')).toBe('en'); // fallback
+
+      document.createElement = originalCreateElement;
+    });
+
+    it("should update view with setView for Mapbox", async () => {
+      mapboxMapMock.on.mockImplementation((event, callback) => {
+        if (event === 'load') callback();
+      });
+
+      // await mapManager.init();
+      mapManager.isMapbox = true;
+      mapManager.map = mapboxMapMock;
+
+      const lat = 51.505;
+      const lng = -0.09;
+      const zoom = 13;
+
+      mapManager.setView(lat, lng, zoom);
+
+      expect(mapboxMapMock.flyTo).toHaveBeenCalledWith({
+        center: [lng, lat],
+        zoom: zoom - 1
+      });
+    });
+
+    it("should log error if Mapbox runtime error occurs after load", async () => {
+      const mockZoomIn = createMockElement('zoomIn');
+      const mockZoomOut = createMockElement('zoomOut');
+      const mockZoomControl = createMockElement('zoomControl');
+      mockZoomControl.appendChild = vi.fn();
+      mockZoomIn.setAttribute = vi.fn();
+      mockZoomOut.setAttribute = vi.fn();
+      mockZoomIn.addEventListener = vi.fn();
+      mockZoomOut.addEventListener = vi.fn();
+
+      const originalCreateElement = document.createElement;
+      document.createElement = vi.fn()
+        .mockReturnValueOnce(mockZoomControl)
+        .mockReturnValueOnce(mockZoomIn)
+        .mockReturnValueOnce(mockZoomOut);
+
+      let errorCallback;
+      mapboxMapMock.on.mockImplementation((event, callback) => {
+        if (event === 'load') callback();
+        if (event === 'error') errorCallback = callback;
+      });
+
+      await mapManager.init();
+
+      // Trigger error after load
+      if(errorCallback) {
+        errorCallback({ error: { message: 'Runtime error' } });
+      } else {
+        throw new Error("errorCallback not set");
+      }
+
+      expect(consoleErrorSpy).toHaveBeenCalledWith(
+        "Mapbox runtime error:",
+        { error: { message: 'Runtime error' } }
+      );
+
+      document.createElement = originalCreateElement;
+    });
   });
 });
