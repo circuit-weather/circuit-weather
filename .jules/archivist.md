@@ -181,3 +181,7 @@ Prevention: Avoid duplicating configuration values in documentation; reference t
 ## 2026-03-30 - Privacy Policy Drift for Local Storage Keys
 **Learning:** When adding new features like Internationalization (i18n) that persist user preferences (e.g., the `language` key via `SafeStorage`), the `PRIVACY.md` documentation detailing local storage usage often drifts from the actual implementation.
 **Action:** Always verify `PRIVACY.md` when introducing new client-side storage keys to ensure transparency about data residing on the user's device.
+
+## 2025-04-04 - Documenting Mapbox Integration and Environment Configuration
+**Learning:** The project migrated to use Mapbox GL JS as the primary map renderer (falling back to Leaflet.js with Carto), but the `README.md` and `AGENTS.md` files still primarily referenced Leaflet and Carto and omitted the `MAPBOX_ACCESS_TOKEN` environment variable.
+**Action:** Updated documentation in `README.md` and `AGENTS.md` to accurately reflect the primary use of Mapbox and document the `MAPBOX_ACCESS_TOKEN`.

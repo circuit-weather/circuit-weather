@@ -148,7 +148,9 @@ mode = "smart"
 
 ### Environment
 
-- No environment variables required (optional: `ENVIRONMENT` defaults to 'production')
+- Environment variables:
+  - `MAPBOX_ACCESS_TOKEN` (optional): Required to use the primary Mapbox GL JS renderer. If omitted, the app falls back to Leaflet.js.
+  - `ENVIRONMENT` (optional): Defaults to 'production'.
 - No build step required (vanilla JS)
 
 ---
