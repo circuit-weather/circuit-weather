@@ -61,6 +61,8 @@ vi.stubGlobal("window", {
   matchMedia: vi.fn().mockReturnValue({ matches: false }),
 });
 
+vi.stubGlobal("requestAnimationFrame", vi.fn((cb) => setTimeout(cb, 0)));
+
 // Import the class under test
 const { MapManager } = await import("../public/src/map/MapManager.js");
 
@@ -157,6 +159,7 @@ describe("MapManager", () => {
   });
 
   it("should invalidate map size when ResizeObserver triggers", async () => {
+    vi.useFakeTimers();
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false }));
     await mapManager.init();
 
@@ -166,7 +169,12 @@ describe("MapManager", () => {
     // Trigger the resize callback
     resizeCallback();
 
+    // Advance timers so setTimeout(cb, 0) runs
+    vi.advanceTimersByTime(0);
+
     expect(mapMock.invalidateSize).toHaveBeenCalled();
+
+    vi.useRealTimers();
   });
 
   it("should handle missing map container gracefully during init", async () => {
