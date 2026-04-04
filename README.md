@@ -27,13 +27,13 @@ Key features include:
 
 ## How it works
 
-The application is built with vanilla HTML, CSS, and native ES modules, keeping it lightweight and fast. It uses Leaflet.js for interesting interactive maps.
+The application is built with vanilla HTML, CSS, and native ES modules, keeping it lightweight and fast. It uses Mapbox GL JS as the primary map renderer, falling back to Leaflet.js for interesting interactive maps.
 
 The frontend is organised into small, maintainable modules located in `public/src/`. It uses native browser support for ES modules (`import`/`export`), which means there is **no build step** required. The files are served directly as-is, making the development workflow extremely simple.
 
 External API and asset requests (Jolpica F1, RainViewer, GitHub for track layouts, and Unpkg for Leaflet assets) are proxied through a **Cloudflare Worker** to cache data at the edge, enforce strict Content Security Policy (CSP), and protect user privacy. Weather forecasts are fetched directly from Open-Meteo by the client to ensure reliability. Optimised **512px tile caching** is used to reduce request volume by 75% compared to standard implementations.
 
-The map tiles are provided by Carto (based on OpenStreetMap data), ensuring a clean look that works well with the weather overlays.
+The primary map tiles and rendering are provided by Mapbox. When falling back to Leaflet, map tiles are provided by Carto (based on OpenStreetMap data), ensuring a clean look that works well with the weather overlays.
 
 ## Credits
 
@@ -42,7 +42,8 @@ Huge thanks to the free APIs and data sources that make this possible:
 - **[Jolpica F1](https://jolpi.ca/)** for the race data.
 - **[RainViewer](https://www.rainviewer.com/)** for the weather radar.
 - **[Open-Meteo](https://open-meteo.com/)** for the weather forecasts.
-- **[Carto](https://carto.com/)** & **[OpenStreetMap](https://www.openstreetmap.org/)** for the map tiles.
+- **[Mapbox](https://www.mapbox.com/)** for the primary map rendering and tiles.
+- **[Carto](https://carto.com/)** & **[OpenStreetMap](https://www.openstreetmap.org/)** for the fallback map tiles.
 - **[bacinger/f1-circuits](https://github.com/bacinger/f1-circuits)** for the circuit track data.
 - **[Google Fonts](https://fonts.google.com/)** for the typography.
 - **[FlagCDN](https://flagcdn.com/)** for the country flags.
