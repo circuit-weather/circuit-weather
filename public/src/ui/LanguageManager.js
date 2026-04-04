@@ -34,10 +34,33 @@ export class LanguageManager {
             button.dataset.locale = locale;
             button.textContent = name;
             button.type = 'button';
+            button.setAttribute('role', 'menuitem');
 
             button.addEventListener('click', () => {
                 i18n.setLocale(locale);
                 this.close();
+            });
+
+            // Palette UX: Add keyboard navigation for menu items
+            button.addEventListener('keydown', (e) => {
+                const items = Array.from(this.menu.querySelectorAll('.language-item'));
+                const index = items.indexOf(e.target);
+
+                let nextIndex = -1;
+                if (e.key === 'ArrowDown') {
+                    nextIndex = (index + 1) % items.length;
+                } else if (e.key === 'ArrowUp') {
+                    nextIndex = (index - 1 + items.length) % items.length;
+                } else if (e.key === 'Home') {
+                    nextIndex = 0;
+                } else if (e.key === 'End') {
+                    nextIndex = items.length - 1;
+                }
+
+                if (nextIndex !== -1) {
+                    e.preventDefault();
+                    items[nextIndex].focus();
+                }
             });
 
             fragment.appendChild(button);
@@ -50,6 +73,14 @@ export class LanguageManager {
         this.toggleBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             this.toggle();
+        });
+
+        // Palette UX: Open menu with arrow keys from the toggle button
+        this.toggleBtn.addEventListener('keydown', (e) => {
+            if ((e.key === 'ArrowDown' || e.key === 'ArrowUp') && !this.isOpen) {
+                e.preventDefault();
+                this.open();
+            }
         });
 
         // Close when clicking outside
@@ -104,6 +135,11 @@ export class LanguageManager {
         this.isOpen = false;
         this.menu.classList.remove('visible');
         this.toggleBtn.setAttribute('aria-expanded', 'false');
+
+        // Palette UX: Restore focus to toggle button if focus is currently within the menu
+        if (this.menu.contains(document.activeElement)) {
+            this.toggleBtn.focus();
+        }
     }
 
     updateActiveLanguage() {
