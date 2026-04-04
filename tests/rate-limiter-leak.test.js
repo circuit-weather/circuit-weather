@@ -20,19 +20,19 @@ describe('RateLimiter Memory Leak', () => {
     limiter.check('1.1.1.1');
     limiter.check('2.2.2.2');
 
-    expect(limiter.store.size).toBe(2);
+    expect(limiter.activeStore.size).toBe(2);
 
     // 2. Add more IPs, forcing eviction
     limiter.check('trigger');
 
     // Size should still be at most MAX_IPS
-    expect(limiter.store.size).toBeLessThanOrEqual(MAX_IPS);
+    expect(limiter.activeStore.size).toBeLessThanOrEqual(MAX_IPS);
 
     // 3. Keep adding more IPs to test eviction
     limiter.check('3.3.3.3');
     limiter.check('4.4.4.4');
     limiter.check('5.5.5.5');
 
-    expect(limiter.store.size).toBeLessThanOrEqual(MAX_IPS);
+    expect(limiter.activeStore.size).toBeLessThanOrEqual(MAX_IPS);
   });
 });
