@@ -40,47 +40,49 @@ const VENDOR_ASSETS = new Map([
   ['leaflet.js', {
     upstream: 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
     contentTypes: ['application/javascript', 'text/javascript'], // Allow both standard and legacy
-    integrity: '20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo='
+    integrity: 'sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo='
   }],
   ['leaflet.css', {
     upstream: 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
     contentTypes: ['text/css'],
-    integrity: 'p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY='
+    integrity: 'sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY='
   }],
   ['images/layers.png', {
     upstream: 'https://unpkg.com/leaflet@1.9.4/dist/images/layers.png',
     contentTypes: ['image/png'],
-    integrity: 'Hbvp0CjikvNvy6j4s6KNXokydU/CIVuaxp5M3s9RB8Y='
+    integrity: 'sha256-Hbvp0CjikvNvy6j4s6KNXokydU/CIVuaxp5M3s9RB8Y='
   }],
   ['images/layers-2x.png', {
     upstream: 'https://unpkg.com/leaflet@1.9.4/dist/images/layers-2x.png',
     contentTypes: ['image/png'],
-    integrity: 'Bm2sqFDY/77wB68AsG6sABVyje4nnFHzy2xxbffELt8='
+    integrity: 'sha256-Bm2sqFDY/77wB68AsG6sABVyje4nnFHzy2xxbffELt8='
   }],
   ['images/marker-icon.png', {
     upstream: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
     contentTypes: ['image/png'],
-    integrity: 'V0w6XMqF9BFAhbaEFZbWLwDXyJLHsD8oy/owHesdxDc='
+    integrity: 'sha256-V0w6XMqF9BFAhbaEFZbWLwDXyJLHsD8oy/owHesdxDc='
   }],
   ['images/marker-icon-2x.png', {
     upstream: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
     contentTypes: ['image/png'],
-    integrity: 'ABecTB7oMNOhCEEq4NKU9Vd2z+sIXGASmjmqb8SuJSg='
+    integrity: 'sha256-ABecTB7oMNOhCEEq4NKU9Vd2z+sIXGASmjmqb8SuJSg='
   }],
   ['images/marker-shadow.png', {
     upstream: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
     contentTypes: ['image/png'],
-    integrity: 'Jk9cZAM58ELdcpBiz8BMF/jqDymIK1OOOEjtjxDttNo='
+    integrity: 'sha256-Jk9cZAM58ELdcpBiz8BMF/jqDymIK1OOOEjtjxDttNo='
   }],
 
   // Mapbox GL JS Assets
   ['mapbox-gl.js', {
     upstream: 'https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.js',
-    contentTypes: ['application/javascript', 'text/javascript']
+    contentTypes: ['application/javascript', 'text/javascript'],
+    integrity: 'sha256-XievuhzYVFGutWsnId8IFgRDPUifg9ukMeHybMz1zGA='
   }],
   ['mapbox-gl.css', {
     upstream: 'https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.css',
-    contentTypes: ['text/css']
+    contentTypes: ['text/css'],
+    integrity: 'sha256-zy0HsKcYGtHYBDlDLGruL8UAMxlizCfK+kpn6NAOf+8='
   }]
 ]);
 

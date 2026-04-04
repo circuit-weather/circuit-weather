@@ -141,7 +141,7 @@ export function checkFetchDest(request) {
 export async function calculateHash(buffer) {
   const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return btoa(String.fromCharCode(...hashArray));
+  return `sha256-${btoa(String.fromCharCode(...hashArray))}`;
 }
 
 /**

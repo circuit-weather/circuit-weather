@@ -103,7 +103,7 @@ describe('Worker Utils Helpers', () => {
             // SHA-256 of 'hello world' is known:
             // b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9
             // Base64 of that: uU0nuZNNPgilLlLX2n2r+sSE7+N6U4DukIj3rOLvzek=
-            expect(hash).toBe('uU0nuZNNPgilLlLX2n2r+sSE7+N6U4DukIj3rOLvzek=');
+            expect(hash).toBe('sha256-uU0nuZNNPgilLlLX2n2r+sSE7+N6U4DukIj3rOLvzek=');
         });
 
         it('returns different hashes for different inputs', async () => {
