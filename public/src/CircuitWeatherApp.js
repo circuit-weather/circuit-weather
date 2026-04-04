@@ -532,6 +532,49 @@ export class CircuitWeatherApp {
         const twitterUrl = document.querySelector('meta[name="twitter:url"]');
         if (twitterUrl) twitterUrl.setAttribute('content', window.location.href);
 
+        // Scout: Inject dynamic BreadcrumbList JSON-LD
+        // Value: Improves SERP display by providing search engines with clear navigational context for nested routes.
+        let breadcrumbScript = document.getElementById('dynamic-breadcrumb-ld');
+        if (!breadcrumbScript) {
+            breadcrumbScript = document.createElement('script');
+            breadcrumbScript.id = 'dynamic-breadcrumb-ld';
+            breadcrumbScript.type = 'application/ld+json';
+            document.head.appendChild(breadcrumbScript);
+        }
+
+        const baseUrl = window.location.origin || 'https://circuit-weather.racing';
+        const breadcrumbs = {
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            "itemListElement": [
+                {
+                    "@type": "ListItem",
+                    "position": 1,
+                    "name": "Circuit Weather",
+                    "item": baseUrl
+                }
+            ]
+        };
+
+        if (this.selectedRace) {
+            breadcrumbs.itemListElement.push({
+                "@type": "ListItem",
+                "position": 2,
+                "name": this.selectedRace.name,
+                "item": `${baseUrl}/f1/${this.selectedRace.round}`
+            });
+
+            if (this.selectedSession) {
+                breadcrumbs.itemListElement.push({
+                    "@type": "ListItem",
+                    "position": 3,
+                    "name": this.selectedSession.name,
+                    "item": `${baseUrl}/f1/${this.selectedRace.round}/${this.selectedSession.id}`
+                });
+            }
+        }
+        breadcrumbScript.textContent = JSON.stringify(breadcrumbs);
+
         // Scout: Inject dynamic JSON-LD structured data for the selected session
         // Value: Improves rich snippets in SERP by providing explicit event details (SportsEvent) to search engines.
         if (this.selectedRace && this.selectedSession && this.selectedSession.date && this.selectedSession.time) {
