@@ -51,3 +51,7 @@
 ## 2026-04-04 - requestAnimationFrame mocking in Vitest
 **Learning:** When mocking `requestAnimationFrame` in Vitest to test debouncing logic, stubbing it with synchronous execution (e.g. `cb()`) locks the debounce flag because the callback clears the flag before the outer function returns its ID.
 **Action:** Use `vi.stubGlobal('requestAnimationFrame', vi.fn((cb) => setTimeout(cb, 0)))` and `vi.useFakeTimers()` to properly test async rAF debouncing without locking.
+
+## 2026-04-04 - RateLimiter Memory Exhaustion DoS Prevention
+**Learning:** When optimizing RateLimiters with Generational Garbage Collection (using active and previous Maps) to avoid O(N) cleanup blocking, the size capacity limits (e.g., `maxIps`) must be enforced during both new record creation AND when promoting records from the previous generation. Failing to bound promotions allows an attacker to infinitely grow the map by continuously refreshing stale IPs across windows, leading to a Memory Exhaustion DoS.
+**Action:** Always ensure capacity limits are evaluated after any insertion into the `activeStore`, including promotions.

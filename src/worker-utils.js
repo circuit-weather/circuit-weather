@@ -155,12 +155,32 @@ export class RateLimiter {
     this.windowMs = windowMs;
     this.rate = limit / windowMs; // Tokens per ms
     this.maxIps = maxIps;
-    this.store = new Map();
+    this.activeStore = new Map();
+    this.previousStore = new Map();
+    this.lastRotate = Date.now();
   }
 
   check(ip) {
     const now = Date.now();
-    let record = this.store.get(ip);
+
+    // Generational rotation
+    if (now - this.lastRotate >= this.windowMs) {
+      this.previousStore = this.activeStore;
+      this.activeStore = new Map();
+      this.lastRotate = now;
+    }
+
+    let record = this.activeStore.get(ip);
+    let promoted = false;
+
+    if (!record) {
+      record = this.previousStore.get(ip);
+      if (record) {
+        // We will promote this record.
+        this.previousStore.delete(ip);
+        promoted = true;
+      }
+    }
 
     if (record) {
       const elapsed = now - record.lastCheck;
@@ -168,22 +188,29 @@ export class RateLimiter {
       record.tokens = Math.min(this.limit, record.tokens + refill);
       record.lastCheck = now;
 
-      // Move to end (LRU update)
-      this.store.delete(ip);
-      this.store.set(ip, record);
-    } else {
-      // SEC: Prevent memory exhaustion DoS
-      if (this.store.size >= this.maxIps) {
-        // If full, evict oldest entry (LRU) to make room
-        // Map.keys().next() is O(1) in V8
-        const oldestIp = this.store.keys().next().value;
-        this.store.delete(oldestIp);
+      if (!promoted) {
+        // Just move to end (LRU update)
+        this.activeStore.delete(ip);
       }
-
+      // If promoted, it wasn't in activeStore yet, so we don't need to delete from activeStore.
+    } else {
       // Start with full tokens
       record = { tokens: this.limit, lastCheck: now };
-      this.store.set(ip, record);
     }
+
+    // If it's a new entry (either brand new or promoted), we might exceed maxIps.
+    // However, if we just deleted it from activeStore (the !promoted && record case),
+    // the size decreased by 1, so adding it back won't exceed the limit.
+    // So the size check is only necessary if it wasn't already in activeStore.
+    if (promoted || !this.activeStore.has(ip)) {
+        // SEC: Prevent memory exhaustion DoS
+        if (this.activeStore.size >= this.maxIps) {
+          // If full, evict oldest entry (LRU) to make room
+          const oldestIp = this.activeStore.keys().next().value;
+          this.activeStore.delete(oldestIp);
+        }
+    }
+    this.activeStore.set(ip, record);
 
     if (record.tokens >= 1) {
       record.tokens -= 1;
