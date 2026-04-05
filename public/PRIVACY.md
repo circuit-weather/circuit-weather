@@ -47,9 +47,15 @@ While we proxy some data, your browser connects directly to the following servic
 
 ### Mapping & Assets
 
+**Mapbox**
+
+- **Purpose:** Provides the primary map background tiles and vector rendering.
+- **Data Sent:** Your browser connects directly to Mapbox APIs (`api.mapbox.com` and `events.mapbox.com`). Your IP address and request metadata are visible to Mapbox as part of standard web requests.
+- **Privacy Policy:** [mapbox.com/legal/privacy](https://www.mapbox.com/legal/privacy/)
+
 **Carto (OpenStreetMap)**
 
-- **Purpose:** Provides the base map background tiles.
+- **Purpose:** Provides the fallback base map background tiles when Mapbox is unavailable.
 - **Data Sent:** Your browser fetches map images directly from Carto's CDN.
 - **Privacy Policy:** [carto.com/privacy](https://carto.com/privacy/)
 
@@ -75,6 +81,7 @@ The following services provide the raw data that we process and cache via Cloudf
 - **GitHub (bacinger/f1-circuits):** Stores static track layout files (GeoJSON).
 - **RainViewer:** Weather radar tiles (2-hour edge cache) and metadata (1-minute cache).
 - **Leaflet (via Unpkg):** Map interaction library assets (proxied for security).
+- **Mapbox (via Mapbox CDN):** Map interaction library assets (proxied for security).
 
 ## Local Storage
 

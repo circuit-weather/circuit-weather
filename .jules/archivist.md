@@ -185,3 +185,8 @@ Prevention: Avoid duplicating configuration values in documentation; reference t
 ## 2025-04-04 - Documenting Mapbox Integration and Environment Configuration
 **Learning:** The project migrated to use Mapbox GL JS as the primary map renderer (falling back to Leaflet.js with Carto), but the `README.md` and `AGENTS.md` files still primarily referenced Leaflet and Carto and omitted the `MAPBOX_ACCESS_TOKEN` environment variable.
 **Action:** Updated documentation in `README.md` and `AGENTS.md` to accurately reflect the primary use of Mapbox and document the `MAPBOX_ACCESS_TOKEN`.
+
+## 2026-04-05 - Privacy Policy Drift for Third-Party Mapping APIs
+
+**Learning:** When the project migrated to use Mapbox GL JS as the primary map renderer, `PRIVACY.md` drifted and omitted Mapbox entirely from both the "Mapping & Assets" direct connections list and the "Data Sources (Proxied)" list, despite CSP headers (`_headers`) and `worker.js` actively demonstrating these new data flows (`api.mapbox.com` and proxied `mapbox-gl.js`).
+**Action:** Always cross-reference changes to Content Security Policy (CSP) rules (`_headers`) and Cloudflare Worker proxy routes (`worker.js`) with `PRIVACY.md` to ensure any new third-party services and data flows are transparently documented.
