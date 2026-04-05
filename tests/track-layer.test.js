@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 // Mock Leaflet before import
 const layerMock = {
@@ -36,6 +36,9 @@ const documentMock = {
     }
 };
 vi.stubGlobal('document', documentMock);
+
+// Mock requestAnimationFrame
+vi.stubGlobal('requestAnimationFrame', (cb) => setTimeout(cb, 0));
 
 import { TrackLayer } from '../public/src/map/TrackLayer.js';
 import { CIRCUIT_MAP, CONFIG } from '../public/src/config.js';
@@ -310,5 +313,150 @@ describe('TrackLayer', () => {
         await trackLayer.loadTrack(circuitId);
 
         expect(layerMock.addTo).not.toHaveBeenCalled();
+    });
+});
+
+describe('Mapbox Environment', () => {
+    let trackLayer;
+    let mapboxMapMock;
+
+    beforeEach(() => {
+        vi.useFakeTimers();
+        vi.clearAllMocks();
+
+        mapboxMapMock = {
+            on: vi.fn(),
+            off: vi.fn(),
+            getZoom: vi.fn().mockReturnValue(10),
+            // No hasLayer means isMapbox = true
+            getLayer: vi.fn((id) => trackLayer.mapboxLayers?.has(id)),
+            getSource: vi.fn((id) => trackLayer.mapboxSources?.has(id)),
+            setPaintProperty: vi.fn(),
+            addSource: vi.fn((id) => {
+                trackLayer.mapboxSources = trackLayer.mapboxSources || new Set();
+                trackLayer.mapboxSources.add(id);
+            }),
+            addLayer: vi.fn((layer) => {
+                trackLayer.mapboxLayers = trackLayer.mapboxLayers || new Set();
+                trackLayer.mapboxLayers.add(layer.id);
+            }),
+            removeLayer: vi.fn((id) => {
+                trackLayer.mapboxLayers?.delete(id);
+            }),
+        };
+
+        trackLayer = new TrackLayer(mapboxMapMock);
+        trackLayer.mapboxLayers = new Set();
+        trackLayer.mapboxSources = new Set();
+    });
+
+    afterEach(() => {
+        vi.useRealTimers();
+    });
+
+    it('should bind events for mapbox using requestAnimationFrame', () => {
+        expect(mapboxMapMock.on).toHaveBeenCalledWith('move', expect.any(Function));
+
+        const moveCallback = mapboxMapMock.on.mock.calls.find(call => call[0] === 'move')[1];
+        trackLayer.updateStyle = vi.fn();
+
+        moveCallback(); // Sets up RAF
+        expect(trackLayer.updateStyle).not.toHaveBeenCalled(); // Debounced
+
+        vi.advanceTimersByTime(0); // Trigger RAF
+        expect(trackLayer.updateStyle).toHaveBeenCalled();
+
+        // Second call while RAF is pending should be ignored
+        trackLayer.updateStyle.mockClear();
+        moveCallback();
+        moveCallback();
+        vi.advanceTimersByTime(0);
+        expect(trackLayer.updateStyle).toHaveBeenCalledTimes(1);
+    });
+
+    it('should update style when layer exists', () => {
+        trackLayer.currentCircuitId = 'monaco';
+        trackLayer.mapboxLayers.add('track-layer-monaco');
+        trackLayer.trackColor = '#123456';
+
+        trackLayer.updateStyle();
+
+        expect(mapboxMapMock.setPaintProperty).toHaveBeenCalledWith('track-layer-monaco', 'line-width', 4);
+        expect(mapboxMapMock.setPaintProperty).toHaveBeenCalledWith('track-layer-monaco', 'line-color', '#123456');
+    });
+
+    it('should trigger reload if layer is missing during updateStyle', () => {
+        trackLayer.currentCircuitId = 'monaco';
+        // Layer missing because we didn't add it to mapboxLayers
+        trackLayer.loadTrack = vi.fn();
+
+        trackLayer.updateStyle();
+
+        expect(trackLayer.loadTrack).toHaveBeenCalledWith('monaco');
+    });
+
+    it('should load track and add to mapbox successfully', async () => {
+        const circuitId = 'monaco';
+        const mockData = { type: 'FeatureCollection', features: [] };
+
+        fetchMock.mockResolvedValueOnce({
+            ok: true,
+            json: async () => mockData
+        });
+
+        await trackLayer.loadTrack(circuitId);
+
+        expect(mapboxMapMock.addSource).toHaveBeenCalledWith(`track-source-${circuitId}`, expect.objectContaining({
+            type: 'geojson',
+            data: mockData
+        }));
+        expect(mapboxMapMock.addLayer).toHaveBeenCalledWith(expect.objectContaining({
+            id: `track-layer-${circuitId}`,
+            type: 'line',
+            source: `track-source-${circuitId}`
+        }));
+        expect(trackLayer.cache.has(circuitId)).toBe(true);
+    });
+
+    it('should load track from cache for mapbox', async () => {
+        const circuitId = 'monaco';
+        const mockData = { type: 'FeatureCollection', features: [] };
+        trackLayer.cache.set(circuitId, mockData);
+
+        await trackLayer.loadTrack(circuitId);
+
+        expect(fetchMock).not.toHaveBeenCalled();
+        expect(mapboxMapMock.addSource).toHaveBeenCalledWith(`track-source-${circuitId}`, expect.objectContaining({
+            type: 'geojson',
+            data: mockData
+        }));
+        expect(mapboxMapMock.addLayer).toHaveBeenCalledWith(expect.objectContaining({
+            id: `track-layer-${circuitId}`,
+            type: 'line',
+            source: `track-source-${circuitId}`
+        }));
+    });
+
+    it('should not add source/layer again if they exist when loading from cache', async () => {
+        const circuitId = 'monaco';
+        const mockData = { type: 'FeatureCollection', features: [] };
+        trackLayer.cache.set(circuitId, mockData);
+        trackLayer.mapboxSources.add(`track-source-${circuitId}`);
+        trackLayer.mapboxLayers.add(`track-layer-${circuitId}`);
+
+        await trackLayer.loadTrack(circuitId);
+
+        expect(mapboxMapMock.addSource).not.toHaveBeenCalled();
+        expect(mapboxMapMock.addLayer).not.toHaveBeenCalled();
+    });
+
+    it('should clear mapbox layer if currentCircuitId is set', () => {
+        trackLayer.currentCircuitId = 'monaco';
+        trackLayer.mapboxLayers.add('track-layer-monaco');
+
+        trackLayer.clear();
+
+        expect(mapboxMapMock.removeLayer).toHaveBeenCalledWith('track-layer-monaco');
+        expect(trackLayer.currentCircuitId).toBeNull();
     });
 });
