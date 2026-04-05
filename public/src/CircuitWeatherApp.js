@@ -588,11 +588,17 @@ export class CircuitWeatherApp {
 
             const sessionStart = new Date(`${this.selectedSession.date}T${this.selectedSession.time}`).toISOString();
 
+            // Scout: Inject dynamic JSON-LD structured data for the selected session
+            // Value: Improves rich snippets in SERP by providing explicit event details (SportsEvent) to search engines.
+            // Scout: Added sport, url, and image to the SportsEvent schema to provide search engines with richer context about the entity for better indexing.
             const schema = {
                 "@context": "https://schema.org",
                 "@type": "SportsEvent",
                 "name": `${this.selectedRace.name} - ${this.selectedSession.name}`,
+                "sport": "Formula 1",
                 "startDate": sessionStart,
+                "url": window.location.href,
+                "image": "https://circuit-weather.racing/icon-512.png",
                 "location": {
                     "@type": "Place",
                     "name": this.selectedRace.circuit ? this.selectedRace.circuit.circuitName : this.selectedRace.location.country,
