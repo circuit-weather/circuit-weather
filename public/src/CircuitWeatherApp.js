@@ -495,10 +495,8 @@ export class CircuitWeatherApp {
             // Race page: "Bahrain GP Weather - Circuit Weather"
             title = i18n.t('meta.raceTitle', { raceName: this.selectedRace.name });
             desc = i18n.t('meta.raceDesc', { raceName: this.selectedRace.name });
-        } else {
-            // Default home page title
-            title = defaultTitle;
         }
+        // If neither, defaults are preserved
 
         // Update Title: Crucial for primary SERP display and browser history
         document.title = title;
