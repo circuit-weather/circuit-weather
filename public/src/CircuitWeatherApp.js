@@ -571,7 +571,11 @@ export class CircuitWeatherApp {
                 });
             }
         }
-        breadcrumbScript.textContent = JSON.stringify(breadcrumbs);
+        // SEC: Sanitize JSON string for inline script injection to prevent XSS
+        breadcrumbScript.textContent = JSON.stringify(breadcrumbs)
+            .replace(/</g, '\\u003c')
+            .replace(/>/g, '\\u003e')
+            .replace(/&/g, '\\u0026');
 
         // Scout: Inject dynamic JSON-LD structured data for the selected session
         // Value: Improves rich snippets in SERP by providing explicit event details (SportsEvent) to search engines.
@@ -606,7 +610,11 @@ export class CircuitWeatherApp {
                     }
                 }
             };
-            jsonLdScript.textContent = JSON.stringify(schema);
+            // SEC: Sanitize JSON string for inline script injection to prevent XSS
+            jsonLdScript.textContent = JSON.stringify(schema)
+                .replace(/</g, '\\u003c')
+                .replace(/>/g, '\\u003e')
+                .replace(/&/g, '\\u0026');
         } else {
             // Remove the dynamic schema if no specific session is selected
             const existingScript = document.getElementById('dynamic-json-ld');
