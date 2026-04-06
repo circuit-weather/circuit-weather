@@ -23,5 +23,8 @@
     "@vitest/coverage-v8": "^1.6.1",
     "vitest": "^1.6.0",
     "wrangler": "^4.68.0"
+  },
+  "dependencies": {
+    "jsdom": "^24.1.3"
   }
 }
