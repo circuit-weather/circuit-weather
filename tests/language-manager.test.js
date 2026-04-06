@@ -87,10 +87,6 @@ describe('LanguageManager', () => {
         expect(manager.isOpen).toBe(true);
 
         const handlers = eventHandlers['keydown'];
-        const escHandler = handlers.find(h => {
-             // test running it to see if it's the right one
-             try { h({ key: 'Escape' }); return true; } catch (e) { return false; }
-        });
 
         // Actually run handlers
         handlers.forEach(h => h({ key: 'Escape' }));
@@ -161,7 +157,6 @@ describe('LanguageManager', () => {
 
     it('focusout closes menu if focus moves outside', () => {
         manager.open();
-        const handlers = eventHandlers['focusout'];
         // The element that has the focusout listener is the menu itself, not document.
         // Wait, where is the focusout listener?
         // this.menu.addEventListener('focusout', ... )
