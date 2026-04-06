@@ -155,12 +155,13 @@ Prevention: Avoid duplicating configuration values in documentation; reference t
 **Action:** Updated `.github/workflows/ci.yml` to use Node 24.x and updated `AGENTS.md` to recommend Node 24+ for local development.
 
 ## 2026-03-12 - Legacy Cloudflare Pages References
+
 **Learning:** The project migrated to Cloudflare Workers with Static Assets, but PRIVACY.md and AGENTS.md file tree still incorrectly referenced Cloudflare Pages.
 **Action:** Removed mentions of Cloudflare Pages to accurately reflect the single-worker architecture.
 
 ## 2026-03-13 - Standardizing Local Dev Runner Command
 
-**Learning:** `AGENTS.md` local development instructions incorrectly suggested using `npx wrangler dev` alongside a commented-out `# pnpm run dev` fallback. While standardizing on `pnpm run dev` ensures exact version matching with CI, developers may not have `pnpm` available, or may have `wrangler` installed globally. Documenting a single standard path without explaining *why* or providing fallbacks for varying environments creates friction for contributors.
+**Learning:** `AGENTS.md` local development instructions incorrectly suggested using `npx wrangler dev` alongside a commented-out `# pnpm run dev` fallback. While standardizing on `pnpm run dev` ensures exact version matching with CI, developers may not have `pnpm` available, or may have `wrangler` installed globally. Documenting a single standard path without explaining _why_ or providing fallbacks for varying environments creates friction for contributors.
 **Action:** Updated `AGENTS.md` to explicitly state `pnpm run dev` as the standard (for CI parity), while actively documenting `wrangler dev` (for global installs) and `npx wrangler dev` (for dynamic fetching) as explicitly reasoned fallbacks.
 
 ## 2026-03-14 - Privacy Proxy Drift for Proxied Assets
@@ -175,14 +176,16 @@ Prevention: Avoid duplicating configuration values in documentation; reference t
 
 ## 2026-03-29 - Rate Limiter Scope Clarification
 
-**Learning:** `AGENTS.md` documented the Rate Limiter as "1000 req/min", which was ambiguously worded and failed to specify that the limit applies *per IP* and *per isolate*. The implementation in `src/worker.js` instantiates the `RateLimiter` per isolate and keys by `CF-Connecting-IP`.
+**Learning:** `AGENTS.md` documented the Rate Limiter as "1000 req/min", which was ambiguously worded and failed to specify that the limit applies _per IP_ and _per isolate_. The implementation in `src/worker.js` instantiates the `RateLimiter` per isolate and keys by `CF-Connecting-IP`.
 **Action:** Updated `AGENTS.md` to explicitly state the limit is "1000 req/min per IP per isolate" to avoid confusion about global vs individual limits.
 
 ## 2026-03-30 - Privacy Policy Drift for Local Storage Keys
+
 **Learning:** When adding new features like Internationalization (i18n) that persist user preferences (e.g., the `language` key via `SafeStorage`), the `PRIVACY.md` documentation detailing local storage usage often drifts from the actual implementation.
 **Action:** Always verify `PRIVACY.md` when introducing new client-side storage keys to ensure transparency about data residing on the user's device.
 
 ## 2025-04-04 - Documenting Mapbox Integration and Environment Configuration
+
 **Learning:** The project migrated to use Mapbox GL JS as the primary map renderer (falling back to Leaflet.js with Carto), but the `README.md` and `AGENTS.md` files still primarily referenced Leaflet and Carto and omitted the `MAPBOX_ACCESS_TOKEN` environment variable.
 **Action:** Updated documentation in `README.md` and `AGENTS.md` to accurately reflect the primary use of Mapbox and document the `MAPBOX_ACCESS_TOKEN`.
 
@@ -190,3 +193,8 @@ Prevention: Avoid duplicating configuration values in documentation; reference t
 
 **Learning:** When the project migrated to use Mapbox GL JS as the primary map renderer, `PRIVACY.md` drifted and omitted Mapbox entirely from both the "Mapping & Assets" direct connections list and the "Data Sources (Proxied)" list, despite CSP headers (`_headers`) and `worker.js` actively demonstrating these new data flows (`api.mapbox.com` and proxied `mapbox-gl.js`).
 **Action:** Always cross-reference changes to Content Security Policy (CSP) rules (`_headers`) and Cloudflare Worker proxy routes (`worker.js`) with `PRIVACY.md` to ensure any new third-party services and data flows are transparently documented.
+
+## 2026-04-06 - Local Storage Documentation Drift: Cached Application Data
+
+**Learning:** When using `SafeStorage` (or `localStorage`) not just for simple preference flags (like theme/unit) but also for caching application data (such as `f1_schedule_cache`), the documentation in `PRIVACY.md` often drifts. Developers tend to remember to document user-facing settings but forget internal data caches.
+**Action:** When auditing or updating `PRIVACY.md` regarding local storage, always grep for all usages of `SafeStorage` and `localStorage` across the entire codebase to ensure both preference flags and internal data caches are fully and transparently documented.
