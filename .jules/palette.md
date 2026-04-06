@@ -71,3 +71,9 @@ ors (LIVE, NEXT) to the visible label, rather than relying on external badges th
 **Action:** Always implement robust arrow key navigation for custom menus. Ensure the trigger button can open the menu using Arrow Down/Up, and implement bounded or wrapping Arrow Down/Up navigation within the menu list items, along with Home/End support and role="menuitem" for semantics.## 2024-05-27 - Language Menu Keyboard Focus Indicators
 **Learning:** Even when keyboard navigation inside a custom menu is fully implemented (e.g., using arrow keys to move focus between `.language-item` buttons), users may still be lost if there isn't a dedicated `:focus-visible` CSS rule. Relying only on hover states (`:hover`) or active states (`.active`) is insufficient for keyboard-only users who need visual confirmation of the currently focused element.
 **Action:** Always ensure that custom interactive list items or menu elements include explicit `:focus-visible` styles (such as an outline and `z-index` adjustment) to guarantee that keyboard focus is visually clear.
+## 2026-04-06 - Title Tooltips on State-Driven Icon Buttons
+**Learning:** When icon-only buttons (like a hamburger menu or sidebar toggle) change their  dynamically to reflect state changes (e.g., from 'Open menu' to 'Close menu'), relying only on  leaves visual users without an updated tooltip on hover.
+**Action:** Always ensure the  attribute is updated synchronously alongside the  when the action verb of an icon button changes.
+## 2026-10-26 - Title Tooltips on State-Driven Icon Buttons
+**Learning:** When icon-only buttons (like a hamburger menu or sidebar toggle) change their `aria-label` dynamically to reflect state changes (e.g., from 'Open menu' to 'Close menu'), relying only on `aria-label` leaves visual users without an updated tooltip on hover.
+**Action:** Always ensure the `title` attribute is updated synchronously alongside the `aria-label` when the action verb of an icon button changes.
