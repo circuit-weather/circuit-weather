@@ -78,10 +78,12 @@ export class SidebarManager {
             if (this.mobileMenuBtn) {
                 this.mobileMenuBtn.setAttribute('aria-expanded', 'true');
                 this.mobileMenuBtn.setAttribute('aria-label', i18n.t('common.closeMenu'));
+                this.mobileMenuBtn.setAttribute('title', i18n.t('common.closeMenu'));
             }
             if (this.toggleBtn) {
                 this.toggleBtn.setAttribute('aria-expanded', 'true');
                 this.toggleBtn.setAttribute('aria-label', i18n.t('common.closeMenu'));
+                this.toggleBtn.setAttribute('title', i18n.t('common.closeMenu'));
             }
 
             // Move focus to close button inside sidebar for accessibility
@@ -105,10 +107,12 @@ export class SidebarManager {
             if (this.mobileMenuBtn) {
                 this.mobileMenuBtn.setAttribute('aria-expanded', 'false');
                 this.mobileMenuBtn.setAttribute('aria-label', i18n.t('common.openMenu'));
+                this.mobileMenuBtn.setAttribute('title', i18n.t('common.openMenu'));
             }
             if (this.toggleBtn) {
                 this.toggleBtn.setAttribute('aria-expanded', 'false');
                 this.toggleBtn.setAttribute('aria-label', i18n.t('common.openMenu'));
+                this.toggleBtn.setAttribute('title', i18n.t('common.openMenu'));
             }
 
             // Return focus to menu button if it's visible (mobile)
