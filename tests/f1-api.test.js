@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { F1API } from '../public/src/api/F1API.js';
+import { SafeStorage } from '../public/src/utils/storage.js';
 
 describe('F1API', () => {
     describe('parseRace', () => {
@@ -95,6 +96,8 @@ describe('F1API', () => {
             vi.clearAllMocks();
             mockFetch = vi.fn();
             vi.stubGlobal('fetch', mockFetch);
+            vi.spyOn(SafeStorage, 'getItem');
+            vi.spyOn(SafeStorage, 'setItem');
             api = new F1API();
         });
 
@@ -166,6 +169,57 @@ describe('F1API', () => {
 
             const result = await api.getSchedule();
             expect(result).toEqual([]);
+        });
+
+        it('returns cached data from localStorage if valid', async () => {
+            const mockRaces = [{ round: '3', raceName: 'Local Storage GP' }];
+            SafeStorage.getItem.mockReturnValueOnce(JSON.stringify({
+                timestamp: Date.now(),
+                races: mockRaces
+            }));
+
+            const result = await api.getSchedule();
+
+            expect(result).toEqual(mockRaces);
+            expect(mockFetch).not.toHaveBeenCalled();
+            expect(SafeStorage.getItem).toHaveBeenCalledWith('f1_schedule_cache');
+        });
+
+        it('fetches fresh data if localStorage cache is expired', async () => {
+            const mockRaces = [{ round: '4', raceName: 'Fresh GP' }];
+            SafeStorage.getItem.mockReturnValueOnce(JSON.stringify({
+                timestamp: Date.now() - (48 * 60 * 60 * 1000), // 48 hours ago
+                races: [{ round: '3', raceName: 'Expired GP' }]
+            }));
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: () => Promise.resolve({
+                    MRData: { RaceTable: { Races: mockRaces } }
+                }),
+            });
+
+            const result = await api.getSchedule();
+
+            expect(result).toEqual(mockRaces);
+            expect(mockFetch).toHaveBeenCalledTimes(1);
+            expect(SafeStorage.setItem).toHaveBeenCalledWith('f1_schedule_cache', expect.any(String));
+        });
+
+        it('fetches fresh data if localStorage contains invalid JSON', async () => {
+            const mockRaces = [{ round: '5', raceName: 'Invalid Cache GP' }];
+            SafeStorage.getItem.mockReturnValueOnce('invalid-json');
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: () => Promise.resolve({
+                    MRData: { RaceTable: { Races: mockRaces } }
+                }),
+            });
+
+            const result = await api.getSchedule();
+
+            expect(result).toEqual(mockRaces);
+            expect(mockFetch).toHaveBeenCalledTimes(1);
+            expect(SafeStorage.setItem).toHaveBeenCalledWith('f1_schedule_cache', expect.any(String));
         });
     });
 });
