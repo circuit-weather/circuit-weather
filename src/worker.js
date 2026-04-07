@@ -8,6 +8,7 @@
  * - /api/tiles/*
  * - /api/track/*
  * - /api/assets/*
+ * - /api/config
  * 
  * Static assets and SPA fallback are handled by Cloudflare's asset configuration
  * via wrangler.toml's run_worker_first and not_found_handling settings.

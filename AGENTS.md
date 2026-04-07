@@ -8,12 +8,12 @@ Circuit Weather is a real-time F1 race circuit weather radar application. It dis
 
 ## Technology Stack
 
-| Layer    | Technology                                          |
-| -------- | --------------------------------------------------- |
-| Frontend | Vanilla HTML/CSS/JS                                 |
+| Layer    | Technology                                                |
+| -------- | --------------------------------------------------------- |
+| Frontend | Vanilla HTML/CSS/JS                                       |
 | Mapping  | Mapbox GL JS (Primary) & Leaflet.js with Carto (Fallback) |
-| Backend  | Cloudflare Workers with Static Assets               |
-| APIs     | Jolpica F1, RainViewer, Open-Meteo, GitHub (Tracks) |
+| Backend  | Cloudflare Workers with Static Assets                     |
+| APIs     | Jolpica F1, RainViewer, Open-Meteo, GitHub (Tracks)       |
 
 ---
 
@@ -121,7 +121,6 @@ pnpm run dev # or 'npx wrangler dev' / 'wrangler dev' based on environment avail
 
 **Note**: The project is connected to Cloudflare via GitHub integration. Pushing to `main` triggers automatic deployment - no manual `wrangler deploy` needed.
 
-
 ### Cloudflare Configuration (wrangler.toml)
 
 ```toml
@@ -203,7 +202,6 @@ mode = "smart"
    - Fetched directly from Open-Meteo API
    - Hourly forecast timeline
 
-
 ### API Endpoints
 
 | Endpoint        | Purpose                                                                              |
@@ -212,8 +210,9 @@ mode = "smart"
 | `/api/radar`    | Proxies to RainViewer Maps API with 1-minute caching (initializes animation)         |
 | `/api/tiles/*`  | Proxies to RainViewer tile API with 2-hour edge caching (512px optimized)            |
 | `/api/track/*`  | Proxies to GitHub for GeoJSON track data with 24-hour caching                        |
-| `/api/assets/*` | Proxies to unpkg for Leaflet assets with 1-year immutable caching (strict CSP)       |
+| `/api/assets/*` | Proxies to Leaflet and Mapbox assets with 1-year immutable caching (strict CSP)      |
 | `/api/health`   | System status check (connectivity to upstreams, version, env) with 60-second caching |
+| `/api/config`   | Securely provides client configuration (e.g., Mapbox token) to the frontend          |
 
 ---
 

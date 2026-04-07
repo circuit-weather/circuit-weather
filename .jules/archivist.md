@@ -198,3 +198,8 @@ Prevention: Avoid duplicating configuration values in documentation; reference t
 
 **Learning:** When using `SafeStorage` (or `localStorage`) not just for simple preference flags (like theme/unit) but also for caching application data (such as `f1_schedule_cache`), the documentation in `PRIVACY.md` often drifts. Developers tend to remember to document user-facing settings but forget internal data caches.
 **Action:** When auditing or updating `PRIVACY.md` regarding local storage, always grep for all usages of `SafeStorage` and `localStorage` across the entire codebase to ensure both preference flags and internal data caches are fully and transparently documented.
+
+## 2026-04-07 - Undocumented API Endpoints
+
+**Learning:** Internal endpoints like `/api/config` were implemented but missing from `AGENTS.md` and `src/worker.js` headers, leading to an incomplete API documentation.
+**Action:** When adding or modifying routes in `src/worker.js`, always update the API Endpoints table in `AGENTS.md` and the docstring in `src/worker.js`.
