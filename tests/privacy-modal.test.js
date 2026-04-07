@@ -446,7 +446,7 @@ describe("PrivacyModal", () => {
       // Fallback order for 'en': PRIVACY.en.md (doesn't exist but is tried) -> en-GB -> en-US -> /PRIVACY.md
       // Actually it depends on the mocked i18n.locale.
       // In beforeEach it's 'en'. resolvePrivacyLocale('en') returns 'en-NZ'.
-      expect(global.fetch).toHaveBeenCalledWith("/privacy/PRIVACY.en-NZ.md");
+      expect(global.fetch).toHaveBeenCalledWith("/privacy/PRIVACY.en-NZ.md", expect.objectContaining({ signal: expect.any(AbortSignal) }));
       expect(modal.loaded).toBe(true);
 
       // Verify visibility
@@ -557,8 +557,8 @@ describe("PrivacyModal", () => {
 
       await modal.open();
 
-      expect(global.fetch).toHaveBeenNthCalledWith(1, "/privacy/PRIVACY.fr.md");
-      expect(global.fetch).toHaveBeenNthCalledWith(2, "/privacy/PRIVACY.en-GB.md");
+      expect(global.fetch).toHaveBeenNthCalledWith(1, "/privacy/PRIVACY.fr.md", expect.objectContaining({ signal: expect.any(AbortSignal) }));
+      expect(global.fetch).toHaveBeenNthCalledWith(2, "/privacy/PRIVACY.en-GB.md", expect.objectContaining({ signal: expect.any(AbortSignal) }));
       expect(modal.content.innerHTML).toContain("Contenu");
     });
   });
