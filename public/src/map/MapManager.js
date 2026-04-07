@@ -18,7 +18,10 @@ export class MapManager {
   async init() {
     try {
       // Fetch the config to get the mapbox token safely
-      const response = await fetch('/api/config');
+      // SEC: Add timeout to prevent hanging connections if the API proxy is unresponsive
+      const response = await fetch('/api/config', {
+          signal: AbortSignal.timeout(5000)
+      });
       if (!response.ok) throw new Error('Failed to fetch config');
       const config = await response.json();
 

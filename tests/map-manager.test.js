@@ -322,7 +322,7 @@ describe("MapManager", () => {
 
       const map = await mapManager.init();
 
-      expect(mockFetch).toHaveBeenCalledWith('/api/config');
+      expect(mockFetch).toHaveBeenCalledWith('/api/config', expect.objectContaining({ signal: expect.any(AbortSignal) }));
       expect(globalThis.mapboxgl.accessToken).toBe('test-token');
       expect(mapboxglMock.Map).toHaveBeenCalledWith({
         container: 'map',

@@ -86,7 +86,10 @@ export class PrivacyModal {
       let markdown = null;
 
       for (const path of paths) {
-        const response = await fetch(path);
+        // SEC: Add timeout to prevent hanging connections during document fetch
+        const response = await fetch(path, {
+            signal: AbortSignal.timeout(3000)
+        });
         if (!response.ok) continue;
         markdown = await response.text();
         break;

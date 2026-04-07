@@ -28,7 +28,10 @@ export class F1API {
             }
         }
 
-        const response = await fetch(`${CONFIG.f1ApiBase}/current.json`);
+        // SEC: Add timeout to prevent hanging connections if the API proxy is unresponsive
+        const response = await fetch(`${CONFIG.f1ApiBase}/current.json`, {
+            signal: AbortSignal.timeout(5000)
+        });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
         const data = await response.json();
