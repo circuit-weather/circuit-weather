@@ -588,7 +588,13 @@ export class CircuitWeatherApp {
                 document.head.appendChild(jsonLdScript);
             }
 
-            const sessionStart = new Date(`${this.selectedSession.date}T${this.selectedSession.time}`).toISOString();
+            const startObj = new Date(`${this.selectedSession.date}T${this.selectedSession.time}`);
+            const sessionStart = startObj.toISOString();
+
+            // Scout: Calculate an estimated end time (2 hours after start) to satisfy search engine
+            // requirements for Event schema, preventing 'Missing field "endDate"' warnings in Rich Results.
+            const endObj = new Date(startObj.getTime() + 2 * 60 * 60 * 1000);
+            const sessionEnd = endObj.toISOString();
 
             // Scout: Inject dynamic JSON-LD structured data for the selected session
             // Value: Improves rich snippets in SERP by providing explicit event details (SportsEvent) to search engines.
@@ -599,6 +605,8 @@ export class CircuitWeatherApp {
                 "name": `${this.selectedRace.name} - ${this.selectedSession.name}`,
                 "sport": "Formula 1",
                 "startDate": sessionStart,
+                "endDate": sessionEnd,
+                "eventStatus": "https://schema.org/EventScheduled",
                 "url": window.location.href,
                 "image": "https://circuit-weather.racing/icon-512.png",
                 "location": {
