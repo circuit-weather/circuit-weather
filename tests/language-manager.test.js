@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { i18n } from '../public/src/i18n/index.js';
+import { i18n, LANGUAGE_NAMES } from '../public/src/i18n/index.js';
 import { LanguageManager } from '../public/src/ui/LanguageManager.js';
 
 // --- DOM Mocks ---
@@ -231,6 +231,74 @@ describe('LanguageManager', () => {
         expect(spy).toHaveBeenCalled();
     });
 
+    it('handles keyboard navigation for menu items', () => {
+        let buttonKeydownHandler = null;
+
+        const originalCreateElement = document.createElement;
+        const mockItems = [];
+        // create enough mock items for all locales
+        const localeCount = Object.keys(LANGUAGE_NAMES || { "en-NZ": "English (NZ)", "fr": "Français", "de": "Deutsch" }).length || 10;
+        for (let i = 0; i < localeCount; i++) {
+            mockItems.push(createMockElement(`btn${i}`));
+        }
+        let createIndex = 0;
+
+        document.createElement = vi.fn((tag) => {
+             const el = mockItems[createIndex++];
+             // In case there are more create elements than locales, fallback to a new mock
+             if (!el) {
+                 const fallbackEl = createMockElement(tag);
+                 fallbackEl.addEventListener = vi.fn((ev, h) => {
+                      if (ev === 'keydown') buttonKeydownHandler = h;
+                 });
+                 return fallbackEl;
+             }
+             el.addEventListener = vi.fn((ev, h) => {
+                  if (ev === 'keydown') buttonKeydownHandler = h;
+             });
+             return el;
+        });
+
+        // Set up the items in the menu so Array.from(this.menu.querySelectorAll) works
+        elements['languageMenu'].querySelectorAll = vi.fn(() => mockItems);
+
+        manager.populateMenu();
+
+        expect(buttonKeydownHandler).not.toBeNull();
+
+        const preventDefault = vi.fn();
+
+        // 1. ArrowDown
+        buttonKeydownHandler({ key: 'ArrowDown', target: mockItems[0], preventDefault });
+        expect(preventDefault).toHaveBeenCalled();
+        expect(mockItems[1].focus).toHaveBeenCalled();
+
+        // 2. ArrowUp
+        preventDefault.mockClear();
+        buttonKeydownHandler({ key: 'ArrowUp', target: mockItems[0], preventDefault });
+        expect(preventDefault).toHaveBeenCalled();
+        expect(mockItems[mockItems.length - 1].focus).toHaveBeenCalled(); // wraps around
+
+        // 3. Home
+        preventDefault.mockClear();
+        buttonKeydownHandler({ key: 'Home', target: mockItems[2], preventDefault });
+        expect(preventDefault).toHaveBeenCalled();
+        expect(mockItems[0].focus).toHaveBeenCalled();
+
+        // 4. End
+        preventDefault.mockClear();
+        buttonKeydownHandler({ key: 'End', target: mockItems[0], preventDefault });
+        expect(preventDefault).toHaveBeenCalled();
+        expect(mockItems[mockItems.length - 1].focus).toHaveBeenCalled();
+
+        // 5. Unrelated key
+        preventDefault.mockClear();
+        buttonKeydownHandler({ key: 'A', target: mockItems[0], preventDefault });
+        expect(preventDefault).not.toHaveBeenCalled();
+
+        document.createElement = originalCreateElement;
+    });
+
     it('clicking language item sets locale and closes menu', () => {
         let buttonClickHandler = null;
 
@@ -269,5 +337,51 @@ describe('LanguageManager', () => {
          toggleHandler(event);
          expect(event.stopPropagation).toHaveBeenCalled();
          expect(spy).toHaveBeenCalled();
+    });
+
+    it('opens menu with arrow keys from the toggle button', () => {
+        const keydownHandler = elements['languageToggle'].addEventListener.mock.calls.find(call => call[0] === 'keydown')[1];
+
+        manager.isOpen = false;
+        const spyOpen = vi.spyOn(manager, 'open');
+
+        // Down arrow
+        let preventDefault = vi.fn();
+        keydownHandler({ key: 'ArrowDown', preventDefault });
+        expect(preventDefault).toHaveBeenCalled();
+        expect(spyOpen).toHaveBeenCalledTimes(1);
+
+        // Up arrow
+        preventDefault.mockClear();
+        spyOpen.mockClear();
+        manager.isOpen = false; // Reset to closed
+        keydownHandler({ key: 'ArrowUp', preventDefault });
+        expect(preventDefault).toHaveBeenCalled();
+        expect(spyOpen).toHaveBeenCalledTimes(1);
+
+        // Doesn't open if already open
+        preventDefault.mockClear();
+        spyOpen.mockClear();
+        manager.isOpen = true; // Open
+        keydownHandler({ key: 'ArrowDown', preventDefault });
+        expect(preventDefault).not.toHaveBeenCalled();
+        expect(spyOpen).not.toHaveBeenCalled();
+
+        // Other keys
+        preventDefault.mockClear();
+        spyOpen.mockClear();
+        manager.isOpen = false;
+        keydownHandler({ key: 'Enter', preventDefault });
+        expect(preventDefault).not.toHaveBeenCalled();
+        expect(spyOpen).not.toHaveBeenCalled();
+    });
+
+    it('restores focus to toggle button when menu is closed', () => {
+        manager.open();
+        // Simulate focus within menu
+        elements['languageMenu'].contains.mockReturnValue(true);
+        const focusSpy = vi.spyOn(elements['languageToggle'], 'focus');
+        manager.close();
+        expect(focusSpy).toHaveBeenCalled();
     });
 });
