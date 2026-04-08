@@ -11,7 +11,8 @@ export class ThemeManager {
 
     getInitialTheme() {
         const stored = SafeStorage.getItem('theme');
-        if (stored) return stored;
+        // SEC: Validate stored theme to prevent DOM attribute injection via poisoned localStorage
+        if (stored === 'dark' || stored === 'light') return stored;
         return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     }
 

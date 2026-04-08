@@ -7,7 +7,9 @@
 (function () {
     try {
         const stored = localStorage.getItem('theme');
-        const theme = stored || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+        // SEC: Validate stored theme to prevent DOM attribute injection via poisoned localStorage
+        const isValidTheme = stored === 'dark' || stored === 'light';
+        const theme = isValidTheme ? stored : (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
         document.documentElement.setAttribute('data-theme', theme);
 
         // Palette: Set theme-color meta tag for mobile browsers
