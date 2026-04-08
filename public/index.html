@@ -202,7 +202,9 @@
                             </dl>
                             <div class="weather-timeline" id="weatherTimeline" tabindex="0" role="region"
                                 aria-label="Hourly forecast">
-                                <!-- Timeline items injected here -->
+                                <ol class="weather-timeline-list">
+                                    <!-- Timeline items injected here -->
+                                </ol>
                             </div>
                         </div>
                     </div>
@@ -454,22 +456,24 @@
                 </div>
             </dl>
             <div class="weather-timeline" id="weatherTimeline">
-                <!-- Scout: Upgraded generic div wrapper to semantic time element in skeletons -->
-                <div class="weather-timeline-item">
-                    <time class="weather-timeline-time skeleton"><span class="skeleton-text" style="width: 30px"></span></time>
-                    <div class="weather-timeline-condition skeleton"><span class="skeleton-text" style="width: 80px"></span></div>
-                    <div class="weather-timeline-temp skeleton"><span class="skeleton-text" style="width: 30px"></span></div>
-                </div>
-                <div class="weather-timeline-item">
-                    <time class="weather-timeline-time skeleton"><span class="skeleton-text" style="width: 30px"></span></time>
-                    <div class="weather-timeline-condition skeleton"><span class="skeleton-text" style="width: 80px"></span></div>
-                    <div class="weather-timeline-temp skeleton"><span class="skeleton-text" style="width: 30px"></span></div>
-                </div>
-                <div class="weather-timeline-item">
-                    <time class="weather-timeline-time skeleton"><span class="skeleton-text" style="width: 30px"></span></time>
-                    <div class="weather-timeline-condition skeleton"><span class="skeleton-text" style="width: 80px"></span></div>
-                    <div class="weather-timeline-temp skeleton"><span class="skeleton-text" style="width: 30px"></span></div>
-                </div>
+                <ol class="weather-timeline-list">
+                    <!-- Scout: Upgraded generic div wrapper to semantic time element in skeletons -->
+                    <li class="weather-timeline-item">
+                        <time class="weather-timeline-time skeleton"><span class="skeleton-text" style="width: 30px"></span></time>
+                        <div class="weather-timeline-condition skeleton"><span class="skeleton-text" style="width: 80px"></span></div>
+                        <div class="weather-timeline-temp skeleton"><span class="skeleton-text" style="width: 30px"></span></div>
+                    </li>
+                    <li class="weather-timeline-item">
+                        <time class="weather-timeline-time skeleton"><span class="skeleton-text" style="width: 30px"></span></time>
+                        <div class="weather-timeline-condition skeleton"><span class="skeleton-text" style="width: 80px"></span></div>
+                        <div class="weather-timeline-temp skeleton"><span class="skeleton-text" style="width: 30px"></span></div>
+                    </li>
+                    <li class="weather-timeline-item">
+                        <time class="weather-timeline-time skeleton"><span class="skeleton-text" style="width: 30px"></span></time>
+                        <div class="weather-timeline-condition skeleton"><span class="skeleton-text" style="width: 80px"></span></div>
+                        <div class="weather-timeline-temp skeleton"><span class="skeleton-text" style="width: 30px"></span></div>
+                    </li>
+                </ol>
             </div>
         </div>
     </template>
