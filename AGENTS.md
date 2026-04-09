@@ -38,8 +38,10 @@ Circuit Weather is a real-time F1 race circuit weather radar application. It dis
 | Jolpica F1 API  | Race schedule data (1-hour cache)                                | Proxied (Cached)     |
 | RainViewer      | Weather radar tiles (2-hour cache) and metadata (1-minute cache) | Proxied (Cached)     |
 | Open-Meteo      | Weather forecasts                                                | Direct (Client-side) |
-| Carto           | Map basemap tiles                                                | Direct (Client-side) |
+| Mapbox API      | Primary map basemap tiles and rendering                          | Direct (Client-side) |
+| Carto           | Fallback map basemap tiles                                       | Direct (Client-side) |
 | GitHub          | Track GeoJSON data (24-hour cache)                               | Proxied (Cached)     |
+| Mapbox CDN      | Map library assets (1-year cache)                                | Proxied (Cached)     |
 | Unpkg (Leaflet) | Map library assets (1-year cache)                                | Proxied (Cached)     |
 | Google Fonts    | Typography                                                       | Direct (Client-side) |
 | FlagCDN         | Country flags                                                    | Direct (Client-side) |
@@ -204,15 +206,15 @@ mode = "smart"
 
 ### API Endpoints
 
-| Endpoint        | Purpose                                                                              |
-| --------------- | ------------------------------------------------------------------------------------ |
-| `/api/f1/*`     | Proxies to Jolpica F1 API with 1-hour edge caching                                   |
-| `/api/radar`    | Proxies to RainViewer Maps API with 1-minute caching (initializes animation)         |
-| `/api/tiles/*`  | Proxies to RainViewer tile API with 2-hour edge caching (512px optimized)            |
-| `/api/track/*`  | Proxies to GitHub for GeoJSON track data with 24-hour caching                        |
-| `/api/assets/*` | Proxies to Leaflet and Mapbox assets with 1-year immutable caching (strict CSP)      |
-| `/api/health`   | System status check (connectivity to upstreams, version, env) with 60-second caching |
-| `/api/config`   | Securely provides client configuration (e.g., Mapbox token) to the frontend          |
+| Endpoint        | Purpose                                                                                          |
+| --------------- | ------------------------------------------------------------------------------------------------ |
+| `/api/f1/*`     | Proxies to Jolpica F1 API with 1-hour edge caching                                               |
+| `/api/radar`    | Proxies to RainViewer Maps API with 1-minute caching (initializes animation)                     |
+| `/api/tiles/*`  | Proxies to RainViewer tile API with 2-hour edge caching (512px optimized)                        |
+| `/api/track/*`  | Proxies to GitHub for GeoJSON track data with 24-hour caching                                    |
+| `/api/assets/*` | Proxies to Leaflet and Mapbox assets with 1-year immutable caching (strict CSP)                  |
+| `/api/health`   | System status check (connectivity to upstreams, version, env) with 60-second caching             |
+| `/api/config`   | Securely provides client configuration (e.g., Mapbox token) to the frontend with 24-hour caching |
 
 ---
 
