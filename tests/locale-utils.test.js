@@ -2,7 +2,6 @@
 
 import { beforeEach, describe, expect, it } from 'vitest';
 import { getLocaleMeta, getUserLocale, usesImperialUnits } from '../public/src/utils/locale.js';
-import { t } from '../public/src/utils/localeText.js';
 import { i18n } from '../public/src/i18n/index.js';
 
 describe('Locale helpers', () => {
@@ -47,16 +46,16 @@ describe('Locale helpers', () => {
             configurable: true,
         });
         i18n.init();
-        expect(t('unitMetricLabel')).toBe('Kilometers');
-        expect(t('recenterOnCircuit')).toBe('Recenter on circuit');
+        expect(i18n.t('controls.metricLabel')).toBe('Kilometers');
+        expect(i18n.t('map.recenterOnCircuit')).toBe('Recenter on circuit');
 
         Object.defineProperty(navigator, 'languages', {
             value: ['en-NZ'],
             configurable: true,
         });
         i18n.init();
-        expect(t('unitMetricLabel')).toBe('Kilometres');
-        expect(t('recenterOnCircuit')).toBe('Recentre on circuit');
+        expect(i18n.t('controls.metricLabel')).toBe('Kilometres');
+        expect(i18n.t('map.recenterOnCircuit')).toBe('Recentre on circuit');
     });
 
 
