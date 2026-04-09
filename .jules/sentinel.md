@@ -33,7 +33,9 @@
 **Vulnerability:** Several critical client-side API requests (`F1API.js`, `MapManager.js`, `PrivacyModal.js`) used the `fetch` API without a timeout. This is a DoS or resiliency risk where an unresponsive backend or proxy could cause the application to hang indefinitely, blocking the main thread from completing critical initialization or UI updates.
 **Learning:** Even when the backend Cloudflare Worker has its own strict upstream timeouts configured, the client browser still needs local request timeouts because the network connection between the client and the worker proxy itself can stall or hang.
 **Prevention:** Always include `signal: AbortSignal.timeout(duration)` on all client-side external `fetch` calls to ensure the application fails securely and gracefully.
+
 ## 2025-02-28 - Validate localStorage inputs against DOM attribute injection
+
 **Vulnerability:** Application read the `theme` value directly from `localStorage` and injected it unconditionally into the `data-theme` attribute of the DOM root (`document.documentElement.setAttribute("data-theme", theme)`). While `setAttribute` inherently blocks traditional XSS, a malicious actor or cross-site scripting vulnerability could poison `localStorage`, injecting an unexpected attribute value that breaks the visual layout or sets up a CSS injection attack vector.
 **Learning:** Even within an SPA where user inputs are generally escaped, values retrieved from local browser storage (which could be modified by other scripts on the same origin or physical access) must be treated as untrusted user input.
 **Prevention:** Strictly validate `localStorage` values against expected enumerations (e.g., `"dark"` or `"light"`) before injecting them into the DOM.

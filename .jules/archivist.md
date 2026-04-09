@@ -203,3 +203,8 @@ Prevention: Avoid duplicating configuration values in documentation; reference t
 
 **Learning:** Internal endpoints like `/api/config` were implemented but missing from `AGENTS.md` and `src/worker.js` headers, leading to an incomplete API documentation.
 **Action:** When adding or modifying routes in `src/worker.js`, always update the API Endpoints table in `AGENTS.md` and the docstring in `src/worker.js`.
+
+## 2026-04-09 - Architecture Documentation Drift
+
+**Learning:** When core infrastructure components (like the primary map renderer or proxy endpoints) change, documentation in files like `AGENTS.md` and `README.md` often drift and fail to reflect the new architecture accurately (e.g., omitting Mapbox CDN from the proxied services list).
+**Action:** Always cross-reference architecture claims in documentation with the actual implementation (like `src/worker.js` and `_headers`) to ensure accuracy.
