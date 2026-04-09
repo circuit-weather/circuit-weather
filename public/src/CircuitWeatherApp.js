@@ -603,6 +603,7 @@ export class CircuitWeatherApp {
                 "@context": "https://schema.org",
                 "@type": "SportsEvent",
                 "name": `${this.selectedRace.name} - ${this.selectedSession.name}`,
+                "description": desc,
                 "sport": "Formula 1",
                 "startDate": sessionStart,
                 "endDate": sessionEnd,
