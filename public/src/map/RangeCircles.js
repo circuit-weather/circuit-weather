@@ -1,6 +1,6 @@
 import { SafeStorage } from '../utils/storage.js';
 import { usesImperialUnits } from '../utils/locale.js';
-import { t } from '../utils/localeText.js';
+import { i18n } from '../i18n/index.js';
 
 export class RangeCircles {
     constructor(map) {
@@ -59,8 +59,8 @@ export class RangeCircles {
     }
 
     updateToggleUI() {
-        const metricLabel = t('unitMetricLabel');
-        const imperialLabel = t('controls.imperialLabel');
+        const metricLabel = i18n.t('controls.metricLabel');
+        const imperialLabel = i18n.t('controls.imperialLabel');
 
         document.querySelectorAll('.unit-option').forEach(opt => {
             const isActive = opt.dataset.unit === this.unit;

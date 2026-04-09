@@ -1,5 +1,5 @@
 import { CONFIG } from '../config.js';
-import { t } from '../utils/localeText.js';
+import { i18n } from '../i18n/index.js';
 
 /**
  * Control to recentre the map on the current circuit.
@@ -19,7 +19,7 @@ export class RecentreControl {
         const zoomControl = document.querySelector('.leaflet-control-zoom');
         if (!zoomControl) return;
 
-        const recenterLabel = t('recenterOnCircuit');
+        const recenterLabel = i18n.t('map.recenterOnCircuit');
 
         // Always use a <button> and the shared recentre CSS class regardless of map renderer.
         // The custom Mapbox zoom control uses the same class names as Leaflet, so styling is unified.
