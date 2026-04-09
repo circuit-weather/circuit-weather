@@ -133,6 +133,25 @@ describe('WeatherRadar Timer Logic', () => {
 
         vi.useRealTimers();
     });
+
+    it('should cancel hideErrorTimer when updateErrorUI is called with errors', () => {
+        vi.useFakeTimers();
+
+        // Start with no errors to create the timer
+        radar.failedTiles = new Set();
+        radar.updateErrorUI();
+
+        expect(radar.hideErrorTimer).not.toBeNull();
+
+        // Introduce errors
+        radar.failedTiles = new Set(['tile1']);
+        radar.updateErrorUI();
+
+        // The timer should be cleared
+        expect(radar.hideErrorTimer).toBeNull();
+
+        vi.useRealTimers();
+    });
 });
 
 describe('waitForTilesToLoad', () => {
