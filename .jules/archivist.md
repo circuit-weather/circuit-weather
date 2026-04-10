@@ -208,3 +208,8 @@ Prevention: Avoid duplicating configuration values in documentation; reference t
 
 **Learning:** When core infrastructure components (like the primary map renderer or proxy endpoints) change, documentation in files like `AGENTS.md` and `README.md` often drift and fail to reflect the new architecture accurately (e.g., omitting Mapbox CDN from the proxied services list).
 **Action:** Always cross-reference architecture claims in documentation with the actual implementation (like `src/worker.js` and `_headers`) to ensure accuracy.
+
+## 2026-04-10 - Architecture Documentation Drift for Leaflet Assets
+
+**Learning:** While `worker.js` and `PRIVACY.md` explicitly documented that `Mapbox CDN` for `Mapbox GL JS assets` was being proxied to enforce strict Content Security Policy (CSP), the overarching `README.md` file had drifted and failed to list `Mapbox CDN` alongside `Unpkg` in the "How it works" section.
+**Action:** Always cross-reference the `README.md` list of proxied services with `worker.js` (specifically the `VENDOR_ASSETS` block) and `PRIVACY.md` to ensure architectural claims are exhaustive.
