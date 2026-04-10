@@ -116,4 +116,18 @@ describe('i18n', () => {
         document.removeEventListener('i18n:change', handler);
     });
 
+    it('handles invalid root or missing attributes gracefully in apply()', () => {
+        expect(() => i18n.apply(null)).not.toThrow();
+        expect(() => i18n.apply({})).not.toThrow();
+
+        document.body.innerHTML = '<label data-i18n="">Empty key</label>';
+        expect(() => i18n.apply()).not.toThrow();
+
+        document.body.innerHTML = '<button data-i18n-attr="">Empty rule</button>';
+        expect(() => i18n.apply()).not.toThrow();
+
+        document.body.innerHTML = '<button data-i18n-attr="aria-label:,:common.openMenu,invalidFormat">Bad Mapping</button>';
+        expect(() => i18n.apply()).not.toThrow();
+    });
+
 });
