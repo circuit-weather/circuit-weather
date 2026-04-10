@@ -31,7 +31,7 @@ The application is built with vanilla HTML, CSS, and native ES modules, keeping 
 
 The frontend is organised into small, maintainable modules located in `public/src/`. It uses native browser support for ES modules (`import`/`export`), which means there is **no build step** required. The files are served directly as-is, making the development workflow extremely simple.
 
-External API and asset requests (Jolpica F1, RainViewer, GitHub for track layouts, and Unpkg for Leaflet assets) are proxied through a **Cloudflare Worker** to cache data at the edge, enforce strict Content Security Policy (CSP), and protect user privacy. Weather forecasts are fetched directly from Open-Meteo by the client to ensure reliability. Optimised **512px tile caching** is used to reduce request volume by 75% compared to standard implementations.
+External API and asset requests (Jolpica F1, RainViewer, GitHub for track layouts, Unpkg for Leaflet assets, and Mapbox CDN for Mapbox GL JS assets) are proxied through a **Cloudflare Worker** to cache data at the edge, enforce strict Content Security Policy (CSP), and protect user privacy. Weather forecasts are fetched directly from Open-Meteo by the client to ensure reliability. Optimised **512px tile caching** is used to reduce request volume by 75% compared to standard implementations.
 
 The primary map tiles and rendering are provided by Mapbox. When falling back to Leaflet, map tiles are provided by Carto (based on OpenStreetMap data), ensuring a clean look that works well with the weather overlays.
 
