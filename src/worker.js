@@ -155,7 +155,7 @@ export default {
 
     // Handle map config request (Securely injects Mapbox token)
     if (path === '/api/config') {
-      return handleConfigRequest(request, env, ctx);
+      return handleConfigRequest(request, env);
     }
 
     // For any other /api/* routes, return 404
@@ -236,7 +236,7 @@ function cacheAndReturnError(request, cache, cacheKey, status, message, extraDet
  * Handle Config Request
  * Securely returns public tokens (like Mapbox) to the frontend without exposing them in source code.
  */
-function handleConfigRequest(request, env, ctx) {
+function handleConfigRequest(request, env) {
   // SEC: Ensure request is not from a script tag (XSSI protection)
   if (!checkFetchDest(request)) {
     return createErrorResponse(request, 403, 'Invalid fetch destination');
