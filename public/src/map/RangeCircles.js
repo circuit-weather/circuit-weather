@@ -19,7 +19,8 @@ export class RangeCircles {
 
     getInitialUnit() {
         const stored = SafeStorage.getItem('unit');
-        if (stored) return stored;
+        // SEC: Validate stored unit to prevent application logic bypass or unexpected behavior via poisoned localStorage
+        if (stored === 'metric' || stored === 'imperial') return stored;
         return usesImperialUnits() ? 'imperial' : 'metric';
     }
 
