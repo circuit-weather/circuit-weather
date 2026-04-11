@@ -13,3 +13,8 @@
 **Action:** Updated `tests/track-layer.test.js` to mock `getLayer`, `addLayer`, `getSource`, `addSource`, and `removeLayer` to act as a proper stateful `Set` to prevent infinite loading recursion.
 
 ## 2026-04-09 - WeatherRadar Timer Logic\n**Learning:** The `WeatherRadar` implementation dynamically calculates the remaining time for rate limit toasts (using `Math.ceil((this.rateLimitResetTime - Date.now()) / 1000)`) rather than using a static timeout, which requires testing to accommodate fractional seconds or potential drift. Additionally, the `hideErrorTimer` debounces the removal of the toast to prevent flickering, and tests must assert its cancellation (using fake timers) when new errors are actively injected.\n**Action:** When testing UI timer components like `WeatherRadar`, explicitly use `vi.useFakeTimers()` to isolate debouncing behavior and verify that timers like `hideErrorTimer` are cleanly cancelled (e.g., set to null) upon state transitions, avoiding flaky real-time assertions.
+
+## 2026-04-11 - Mocking requestAnimationFrame Mapbox Move Events
+
+**Learning:** When testing Mapbox GL JS map 'move' event throttlers, stubbing `requestAnimationFrame` as a `setTimeout` alongside fake timers allows for testing asynchronous debouncing synchronously.
+**Action:** Implemented a new `Move Optimization` test within `tests/range-circles-logic.test.js` ensuring full branch coverage of the Mapbox `map.on('move', ...)` throttle logic.

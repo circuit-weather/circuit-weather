@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 
 // Imports must be at top level
 import { RangeCircles } from '../public/src/map/RangeCircles.js';
@@ -372,6 +372,39 @@ describe('RangeCircles Logic (Mapbox GL JS)', () => {
         vi.clearAllMocks();
         rangeCircles = new RangeCircles(mapboxMock);
         rangeCircles.unit = 'metric';
+    });
+
+    describe('Move Optimization', () => {
+        beforeEach(() => {
+            vi.useFakeTimers();
+            vi.stubGlobal('requestAnimationFrame', vi.fn((cb) => setTimeout(cb, 0)));
+        });
+
+        afterEach(() => {
+            vi.useRealTimers();
+        });
+
+        it('throttles map move events using requestAnimationFrame', () => {
+            rangeCircles.updateVisibility = vi.fn();
+
+            expect(mapboxMock.on).toHaveBeenCalledWith('move', expect.any(Function));
+
+            const moveHandler = mapboxMock.on.mock.calls.find(call => call[0] === 'move')[1];
+
+            // Trigger move multiple times synchronously
+            moveHandler();
+            moveHandler();
+            moveHandler();
+
+            // Initially, updateVisibility shouldn't be called yet
+            expect(rangeCircles.updateVisibility).not.toHaveBeenCalled();
+
+            // Fast forward timers to let requestAnimationFrame (mocked as setTimeout) execute
+            vi.runAllTimers();
+
+            // updateVisibility should only be called once due to throttling
+            expect(rangeCircles.updateVisibility).toHaveBeenCalledTimes(1);
+        });
     });
 
     describe('Drawing & Clearing Mapbox Layers', () => {
