@@ -1075,6 +1075,86 @@ describe('CircuitWeatherApp Pure Methods', () => {
     // Init Lifecycle
     // ---------------------------------------------------------------
     // ---------------------------------------------------------------
+    // handleLanguageChange
+    // ---------------------------------------------------------------
+    describe('handleLanguageChange', () => {
+        it('updates select menus and translates page metadata', () => {
+            app.populateRoundSelect = vi.fn();
+            app.populateSessionSelect = vi.fn();
+            app.updateSessionForecast = vi.fn();
+            app.updatePageMetadata = vi.fn();
+            app.ui.roundSelect = createMockElement('roundSelect');
+            app.ui.sessionSelect = createMockElement('sessionSelect');
+
+            app.selectedRace = { round: '5', sessions: [{ id: 'fp1' }] };
+            app.selectedSession = { id: 'fp1', date: '2023-05-05', time: '14:00:00' };
+
+            app.handleLanguageChange();
+
+            expect(app.populateRoundSelect).toHaveBeenCalled();
+            expect(app.ui.roundSelect.value).toBe('5');
+            expect(app.populateSessionSelect).toHaveBeenCalledWith(app.selectedRace.sessions);
+            expect(app.ui.sessionSelect.value).toBe('fp1');
+            expect(app.updateSessionForecast).toHaveBeenCalledWith(new Date('2023-05-05T14:00:00'), 'fp1');
+            expect(app.updatePageMetadata).toHaveBeenCalled();
+        });
+
+        it('handles case where no race is selected', () => {
+            app.populateRoundSelect = vi.fn();
+            app.updatePageMetadata = vi.fn();
+            app.ui.sessionSelect = createMockElement('sessionSelect');
+            app.selectedRace = null;
+
+            app.handleLanguageChange();
+
+            expect(app.populateRoundSelect).toHaveBeenCalled();
+            expect(app.ui.sessionSelect.title).toBeTruthy();
+            expect(app.ui.sessionSelect.innerHTML).toContain('<option');
+            expect(app.updatePageMetadata).toHaveBeenCalled();
+        });
+    });
+
+    // ---------------------------------------------------------------
+    // handleThemeChange
+    // ---------------------------------------------------------------
+    describe('handleThemeChange', () => {
+        it('updates map manager and layer themes', async () => {
+            app.mapManager.setTheme = vi.fn().mockResolvedValue();
+            app.rangeCircles.updateTheme = vi.fn();
+            app.rangeCircles.draw = vi.fn();
+            app.trackLayer.updateTheme = vi.fn();
+            app.radar.updateTheme = vi.fn();
+            app.currentCircuitCenter = [10, 20];
+
+            await app.handleThemeChange('dark');
+
+            expect(app.mapManager.setTheme).toHaveBeenCalledWith('dark');
+            expect(app.rangeCircles.updateTheme).toHaveBeenCalled();
+            expect(app.rangeCircles.draw).toHaveBeenCalledWith([10, 20]);
+            expect(app.trackLayer.updateTheme).toHaveBeenCalled();
+            expect(app.radar.updateTheme).toHaveBeenCalled();
+        });
+
+        it('handles null layers safely', async () => {
+            app.mapManager.setTheme = vi.fn().mockResolvedValue();
+            app.rangeCircles = null;
+            app.trackLayer = null;
+            app.radar = null;
+
+            await expect(app.handleThemeChange('dark')).resolves.not.toThrow();
+        });
+
+        it('handles radar without updateTheme method', async () => {
+            app.mapManager.setTheme = vi.fn().mockResolvedValue();
+            app.rangeCircles = null;
+            app.trackLayer = null;
+            app.radar = {}; // Object without updateTheme
+
+            await expect(app.handleThemeChange('dark')).resolves.not.toThrow();
+        });
+    });
+
+    // ---------------------------------------------------------------
     // bindEvents — outcome: events are attached to DOM elements
     // ---------------------------------------------------------------
     describe('bindEvents', () => {
