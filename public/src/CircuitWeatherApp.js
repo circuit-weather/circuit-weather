@@ -151,7 +151,8 @@ export class CircuitWeatherApp {
                             <line x1="12" y1="16" x2="12.01" y2="16"></line>
                         </svg>
                     </div>
-                    <h3 data-i18n="errors.connectionFailed">${escapeHtml(i18n.t('errors.connectionFailed'))}</h3>
+                    <!-- Scout: Upgraded from h3 to h2 to fix broken heading hierarchy. When connection fails, this replaces the sidebar content which sits directly under the h1 sidebar-header. -->
+                    <h2 data-i18n="errors.connectionFailed">${escapeHtml(i18n.t('errors.connectionFailed'))}</h2>
                     <p>${escapeHtml(message)}</p>
                     <button class="retry-btn" type="button" data-i18n="common.retry" data-i18n-attr="aria-label:errors.retryConnection" aria-label="${escapeHtml(i18n.t('errors.retryConnection'))}">${escapeHtml(i18n.t('common.retry'))}</button>
                 </div>
