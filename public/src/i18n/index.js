@@ -63,7 +63,7 @@ function normalise(locale) {
     try {
         localeString = new Intl.Locale(rawLocale).toString();
     } catch {
-        localeString = rawLocale;
+        localeString = 'en-NZ';
     }
 
     const base = localeString.split('-')[0];
