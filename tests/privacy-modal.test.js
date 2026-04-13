@@ -222,6 +222,23 @@ describe("PrivacyModal", () => {
       global.DOMParser = originalDOMParser;
     });
 
+    it("returns #unsafe-url if DOMParser throws an error", () => {
+      const originalDOMParser = global.DOMParser;
+      class ThrowingDOMParser {
+        parseFromString() {
+          throw new Error("Parse error");
+        }
+      }
+      global.DOMParser = ThrowingDOMParser;
+
+      const md = "[link](https://example.com/safe)";
+      const html = modal.parseMarkdown(md);
+      expect(extractHref(html)).toBe("#unsafe-url");
+
+      // Restore original mock
+      global.DOMParser = originalDOMParser;
+    });
+
     it("fails securely and blocks URL if DOMParser returns null doc", () => {
       const originalDOMParser = global.DOMParser;
       class NullDocDOMParser {
@@ -488,6 +505,30 @@ describe("PrivacyModal", () => {
       expect(modal.triggerElement).toBeNull();
     });
 
+    it("handles missing content element when fetch fails", async () => {
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      global.fetch.mockRejectedValue(new Error("Network error"));
+
+      modal.content = null;
+      await modal.open();
+
+      expect(modal.loaded).toBe(false);
+      expect(errorSpy).toHaveBeenCalled();
+      errorSpy.mockRestore();
+    });
+
+    it("throws an error when no translation is available", async () => {
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      global.fetch.mockResolvedValue({ ok: true, text: async () => "" });
+
+      await modal.open();
+
+      expect(modal.loaded).toBe(false);
+      expect(errorSpy).toHaveBeenCalledWith("Failed to load privacy policy:", expect.any(Error));
+      expect(modal.content.innerHTML).toContain("Failed to load privacy policy");
+      errorSpy.mockRestore();
+    });
+
     it("handles fetch errors gracefully", async () => {
       const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
       global.fetch.mockRejectedValue(new Error("Network error"));
@@ -516,6 +557,11 @@ describe("PrivacyModal", () => {
         "/privacy/PRIVACY.en-US.md",
         "/PRIVACY.md",
       ]);
+    });
+
+    it("falls back to en-NZ for completely unknown locales", () => {
+      i18n.locale = "xx-YY";
+      expect(modal.resolvePrivacyLocale("xx-YY")).toBe("en-NZ");
     });
 
     it("normalises regional locales to supported translation files", () => {
