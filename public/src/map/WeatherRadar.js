@@ -149,7 +149,9 @@ export class WeatherRadar {
 
     async getFramesFromApi() {
         try {
-            const response = await fetch(CONFIG.rainViewerApi);
+            const response = await fetch(CONFIG.rainViewerApi, {
+                signal: AbortSignal.timeout(5000)
+            });
             if (!response.ok) {
                 console.error(`RainViewer API error: ${response.status}`);
                 return [];
@@ -513,7 +515,7 @@ export class WeatherRadar {
         // Worker now passes through 429 status for this check
         const checkUrl = CONFIG.rainViewerApi;
 
-        fetch(checkUrl, { method: 'HEAD' })
+        fetch(checkUrl, { method: 'HEAD', signal: AbortSignal.timeout(5000) })
             .then(response => {
                 this.isCheckingStatus = false;
 

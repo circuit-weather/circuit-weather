@@ -148,7 +148,9 @@ export class TrackLayer {
                 url = `${CONFIG.trackApi}/${geoJsonId}.geojson`;
             }
 
-            const response = await fetch(url);
+            const response = await fetch(url, {
+                signal: AbortSignal.timeout(5000)
+            });
 
             if (!response.ok) throw new Error(`Track fetch failed: ${response.status}`);
 
