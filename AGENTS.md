@@ -199,7 +199,12 @@ mode = "smart"
    - Persists in localStorage
    - Updates range circles
 
-8. **Weather Forecast**
+8. **Language Toggle**
+   - Multi-language support (e.g., English, French, Spanish)
+   - Persists in localStorage
+   - Updates UI text dynamically
+
+9. **Weather Forecast**
    - Session-specific weather forecast (temperature, rain probability, wind)
    - Fetched directly from Open-Meteo API
    - Hourly forecast timeline
