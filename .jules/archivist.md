@@ -213,3 +213,8 @@ Prevention: Avoid duplicating configuration values in documentation; reference t
 
 **Learning:** While `worker.js` and `PRIVACY.md` explicitly documented that `Mapbox CDN` for `Mapbox GL JS assets` was being proxied to enforce strict Content Security Policy (CSP), the overarching `README.md` file had drifted and failed to list `Mapbox CDN` alongside `Unpkg` in the "How it works" section.
 **Action:** Always cross-reference the `README.md` list of proxied services with `worker.js` (specifically the `VENDOR_ASSETS` block) and `PRIVACY.md` to ensure architectural claims are exhaustive.
+
+## 2026-04-14 - Omitted major feature in Core Features
+
+**Learning:** `AGENTS.md` omitted "Language Toggle" from its "Core Features" section, even though the feature is fully implemented, documented in `PRIVACY.md`, and is an active feature.
+**Action:** Added the "Language Toggle" feature to `AGENTS.md` to ensure a single source of truth for application capabilities.
