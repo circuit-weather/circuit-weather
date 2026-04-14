@@ -153,7 +153,7 @@ describe('TrackLayer', () => {
 
         await trackLayer.loadTrack(circuitId);
 
-        expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining(geoJsonId));
+        expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining(geoJsonId), expect.objectContaining({ signal: expect.any(AbortSignal) }));
         expect(L.geoJSON).toHaveBeenCalledWith(mockData, expect.any(Object));
         expect(layerMock.addTo).toHaveBeenCalledWith(mapMock);
         expect(layerMock.bringToBack).toHaveBeenCalled();
@@ -238,7 +238,7 @@ describe('TrackLayer', () => {
         await trackLayer.loadTrack(circuitId);
 
         // Should include .geojson extension in GitHub mode
-        expect(fetchMock).toHaveBeenCalledWith(`${CONFIG.trackApi}/${geoJsonId}.geojson`);
+        expect(fetchMock).toHaveBeenCalledWith(`${CONFIG.trackApi}/${geoJsonId}.geojson`, expect.objectContaining({ signal: expect.any(AbortSignal) }));
 
         // Restore
         // @ts-ignore
