@@ -517,6 +517,32 @@ describe("MapManager", () => {
       });
     });
 
+    it("should handle language change event when isMapbox is true", () => {
+      mapManager.isMapbox = true;
+      vi.spyOn(mapManager, 'applyMapLanguage').mockImplementation(() => {});
+      vi.spyOn(mapManager, 'getMapboxLanguageCode').mockReturnValue('en');
+      mapManager.handleLanguageChange({ detail: { locale: 'en-US' } });
+      expect(mapManager.getMapboxLanguageCode).toHaveBeenCalledWith('en-US');
+      expect(mapManager.applyMapLanguage).toHaveBeenCalledWith('en');
+    });
+
+    it("should catch setLayoutProperty errors for slot-managed layers", async () => {
+      mapboxMapMock.getStyle.mockReturnValue({
+        layers: [
+          { id: 'layer1', type: 'symbol' },
+        ]
+      });
+      mapboxMapMock.getLayoutProperty.mockReturnValue(['get', 'name']);
+      mapboxMapMock.setLayoutProperty.mockImplementation(() => {
+        throw new Error('slot-managed');
+      });
+      mapManager.isMapbox = true;
+      mapManager.map = mapboxMapMock;
+      expect(() => {
+        mapManager.applyMapLanguage('en');
+      }).not.toThrow();
+    });
+
     it("should log error if Mapbox runtime error occurs after load", async () => {
       const mockZoomIn = createMockElement('zoomIn');
       const mockZoomOut = createMockElement('zoomOut');

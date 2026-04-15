@@ -175,6 +175,10 @@ describe('MapWeatherWidget', () => {
         expect(() => uninitializedWidget.update(null)).not.toThrow();
     });
 
+    it('should return top-right for Mapbox default position', () => {
+        expect(widget.getDefaultPosition()).toBe('top-right');
+    });
+
     it('should not throw if update called after onRemove', () => {
         widget.onRemove(mapMock);
         // Should return early

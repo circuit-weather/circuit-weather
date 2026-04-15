@@ -385,6 +385,19 @@ describe('Mapbox Environment', () => {
         expect(mapboxMapMock.setPaintProperty).toHaveBeenCalledWith('track-layer-monaco', 'line-color', '#123456');
     });
 
+    it('should skip redundant style updates', () => {
+        trackLayer.currentCircuitId = 'monaco';
+        trackLayer.mapboxLayers.add('track-layer-monaco');
+        trackLayer.trackColor = '#123456';
+
+        trackLayer.updateStyle();
+        expect(mapboxMapMock.setPaintProperty).toHaveBeenCalledTimes(2);
+
+        // Call again with no zoom change or color change
+        trackLayer.updateStyle();
+        expect(mapboxMapMock.setPaintProperty).toHaveBeenCalledTimes(2);
+    });
+
     it('should trigger reload if layer is missing during updateStyle', () => {
         trackLayer.currentCircuitId = 'monaco';
         // Layer missing because we didn't add it to mapboxLayers
