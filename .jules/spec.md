@@ -18,3 +18,7 @@
 
 **Learning:** When testing Mapbox GL JS map 'move' event throttlers, stubbing `requestAnimationFrame` as a `setTimeout` alongside fake timers allows for testing asynchronous debouncing synchronously.
 **Action:** Implemented a new `Move Optimization` test within `tests/range-circles-logic.test.js` ensuring full branch coverage of the Mapbox `map.on('move', ...)` throttle logic.
+
+## 2026-05-18 - WeatherClient sessionTime Mocking
+**Learning:** In `WeatherClient` tests, ensure the `sessionTime` parameter passed to methods like `getForecast()` is explicitly constructed as a valid `Date` object, not a generic string or default mock, because the internal caching logic directly invokes `sessionTime.getTime()` to generate cache keys.
+**Action:** Updated tests to explicitly pass `new Date()` as `sessionTime` to avoid `TypeError: sessionTime.getTime is not a function`.

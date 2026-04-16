@@ -374,3 +374,73 @@ describe('WeatherClient', () => {
         });
     });
 });
+
+describe('WeatherClient cache edge cases', () => {
+    let client;
+    beforeEach(() => {
+        client = new WeatherClient();
+    });
+
+    it('evicts the oldest cache entry when exceeding maxCacheSize', async () => {
+        const sessionTime = new Date();
+        const rLat = Number(51.5).toFixed(2);
+        const rLon = Number(-0.1).toFixed(2);
+        const cacheKey = `${rLat},${rLon},${sessionTime.getTime()}`;
+
+        global.fetch = vi.fn().mockResolvedValue({
+            ok: true,
+            json: async () => ({
+                current: { temp: 20 },
+                current_units: { temp: 'C' },
+                hourly: {
+                    time: [Math.floor(sessionTime.getTime() / 1000)],
+                    temperature_2m: [20],
+                    relative_humidity_2m: [50],
+                    precipitation_probability: [0],
+                    wind_speed_10m: [10],
+                    wind_direction_10m: [180],
+                    weather_code: [0]
+                }
+            })
+        });
+
+        for (let i = 0; i < client.maxCacheSize; i++) {
+            client.cache.set(`old-key-${i}`, { timestamp: Date.now(), data: {} });
+        }
+
+        await client.getForecast(51.5, -0.1, sessionTime);
+
+        expect(client.cache.size).toBe(client.maxCacheSize);
+        expect(client.cache.has('old-key-0')).toBe(false);
+        expect(client.cache.has(cacheKey)).toBe(true);
+    });
+
+    it('deletes cache entry when entry timestamp is older than TTL', async () => {
+        const sessionTime = new Date();
+        const rLat = Number(51.5).toFixed(2);
+        const rLon = Number(-0.1).toFixed(2);
+        const cacheKey = `${rLat},${rLon},${sessionTime.getTime()}`;
+
+        global.fetch = vi.fn().mockResolvedValue({
+            ok: true,
+            json: async () => ({
+                current: { temp: 20 },
+                current_units: { temp: 'C' },
+                hourly: {
+                    time: [Math.floor(sessionTime.getTime() / 1000)],
+                    temperature_2m: [20],
+                    relative_humidity_2m: [50],
+                    precipitation_probability: [0],
+                    wind_speed_10m: [10],
+                    wind_direction_10m: [180],
+                    weather_code: [0]
+                }
+            })
+        });
+
+        const past = Date.now() - (client.cacheTTL + 1000);
+        client.cache.set(cacheKey, { timestamp: past, data: {} });
+
+        await client.getForecast(51.5, -0.1, sessionTime);
+    });
+});
