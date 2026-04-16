@@ -131,3 +131,33 @@ describe('i18n', () => {
     });
 
 });
+
+
+describe('i18n branch coverage edge cases', () => {
+    it('handles falsy locale in normalise via setLocale', () => {
+        i18n.setLocale(null);
+        expect(i18n.locale).toBe('en-NZ');
+    });
+
+    it('resolves aliased locales correctly', () => {
+        i18n.setLocale('pt-PT');
+        expect(i18n.locale).toBe('pt-BR');
+
+        i18n.setLocale('zh-TW');
+        expect(i18n.locale).toBe('zh-CN');
+    });
+
+    it('returns the key if translation is missing', () => {
+        expect(i18n.t('missing.key')).toBe('missing.key');
+    });
+
+    it('returns the key if intermediate path is missing', () => {
+        expect(i18n.t('missing.path.key')).toBe('missing.path.key');
+    });
+
+    it('returns empty string if interpolation parameter is missing', () => {
+        i18n.setLocale('en-NZ');
+        const result = i18n.t('forecast.availableFrom');
+        expect(result).toBe('Forecast available from ');
+    });
+});
