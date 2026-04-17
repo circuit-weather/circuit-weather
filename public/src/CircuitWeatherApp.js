@@ -613,10 +613,17 @@ export class CircuitWeatherApp {
                 "image": "https://circuit-weather.racing/icon-512.png",
                 "location": {
                     "@type": "Place",
-                    "name": this.selectedRace.circuit ? this.selectedRace.circuit.circuitName : this.selectedRace.location.country,
+                    "name": this.selectedRace.circuit ? this.selectedRace.circuit.circuitName : (this.selectedRace.location ? this.selectedRace.location.country : ""),
                     "address": {
                         "@type": "PostalAddress",
                         "addressCountry": this.selectedRace.location ? this.selectedRace.location.country : ""
+                    },
+                    // Scout: Injected precise GeoCoordinates into the Place schema.
+                    // Value: Helps search engines exactly geolocate the event for better local search relevance and map integrations.
+                    "geo": {
+                        "@type": "GeoCoordinates",
+                        "latitude": this.selectedRace.location ? this.selectedRace.location.lat : "",
+                        "longitude": this.selectedRace.location ? this.selectedRace.location.long : ""
                     }
                 }
             };

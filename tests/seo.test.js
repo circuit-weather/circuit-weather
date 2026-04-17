@@ -264,4 +264,26 @@ describe('SEO Title Updates', () => {
 
         expect(removeSpy).toHaveBeenCalledWith(script);
     });
+
+    it('should safely handle missing location object in JSON-LD generation', async () => {
+        app.races.push({
+            round: '2',
+            name: 'Saudi Arabian Grand Prix',
+            sessions: [
+                { id: 'qualifying', name: 'Qualifying', date: '2024-03-08', time: '17:00:00Z' }
+            ],
+            // Deliberately missing location object
+        });
+
+        app.selectRound('2');
+        await app.selectSession('qualifying');
+
+        const script = document.getElementById('dynamic-json-ld');
+        expect(script).toBeDefined();
+
+        const schema = JSON.parse(script.textContent);
+        expect(schema.location.address.addressCountry).toBe('');
+        expect(schema.location.geo.latitude).toBe('');
+        expect(schema.location.geo.longitude).toBe('');
+    });
 });
