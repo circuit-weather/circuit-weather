@@ -139,6 +139,15 @@ describe('MapWeatherWidget', () => {
         expect(widget._ui.rain.textContent).toBe('--%');
     });
 
+    it('should return early if _div or _ui is missing', () => {
+        widget._div = null;
+        expect(() => widget.update({})).not.toThrow();
+
+        widget._div = document.createElement('div');
+        widget._ui = null;
+        expect(() => widget.update({})).not.toThrow();
+    });
+
     it('should default missing metric values to 0', () => {
         const partialData = {
             current: {
