@@ -613,7 +613,7 @@ export class CircuitWeatherApp {
                 "image": "https://circuit-weather.racing/icon-512.png",
                 "location": {
                     "@type": "Place",
-                    "name": this.selectedRace.circuit ? this.selectedRace.circuit.circuitName : this.selectedRace.location.country,
+                    "name": this.selectedRace.circuit ? this.selectedRace.circuit.circuitName : (this.selectedRace.location ? this.selectedRace.location.country : ""),
                     "address": {
                         "@type": "PostalAddress",
                         "addressCountry": this.selectedRace.location ? this.selectedRace.location.country : ""
