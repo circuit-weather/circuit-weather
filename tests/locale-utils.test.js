@@ -1,7 +1,7 @@
 /* @vitest-environment jsdom */
 
 import { beforeEach, describe, expect, it } from 'vitest';
-import { getLocaleMeta, getUserLocale, usesImperialUnits } from '../public/src/utils/locale.js';
+import { parseLocale, getUserLocale, usesImperialUnits } from '../public/src/utils/locale.js';
 import { i18n } from '../public/src/i18n/index.js';
 
 describe('Locale helpers', () => {
@@ -18,8 +18,8 @@ describe('Locale helpers', () => {
     });
 
     it('parses language and region from locale strings', () => {
-        expect(getLocaleMeta('en-US')).toEqual({ language: 'en', region: 'US' });
-        expect(getLocaleMeta('en_NZ')).toEqual({ language: 'en', region: 'NZ' });
+        expect(parseLocale('en-US')).toEqual({ language: 'en', region: 'US' });
+        expect(parseLocale('en_NZ')).toEqual({ language: 'en', region: 'NZ' });
     });
 
     it('detects imperial unit regions correctly', () => {
@@ -60,16 +60,16 @@ describe('Locale helpers', () => {
 
 
     it('handles invalid locale types in parseLocale', () => {
-        expect(getLocaleMeta(null)).toEqual({ language: 'en', region: 'NZ' });
-        expect(getLocaleMeta(123)).toEqual({ language: 'en', region: 'NZ' });
+        expect(parseLocale(null)).toEqual({ language: 'en', region: 'NZ' });
+        expect(parseLocale(123)).toEqual({ language: 'en', region: 'NZ' });
     });
 
     it('handles cases where Intl.Locale fails or returns missing data', () => {
         // Fallback catch block handles non-standard but string formats
-        expect(getLocaleMeta('english')).toEqual({ language: 'english', region: '' });
-        expect(getLocaleMeta('-')).toEqual({ language: 'en', region: '' });
-        expect(getLocaleMeta('en-')).toEqual({ language: 'en', region: '' });
-        expect(getLocaleMeta('-US')).toEqual({ language: 'en', region: 'US' });
+        expect(parseLocale('english')).toEqual({ language: 'english', region: '' });
+        expect(parseLocale('-')).toEqual({ language: 'en', region: '' });
+        expect(parseLocale('en-')).toEqual({ language: 'en', region: '' });
+        expect(parseLocale('-US')).toEqual({ language: 'en', region: 'US' });
 
         // Mock Intl.Locale returning empty language to hit branch 11
         const originalIntlLocale = globalThis.Intl.Locale;
@@ -80,7 +80,7 @@ describe('Locale helpers', () => {
                     this.region = 'NZ';
                 }
             };
-            expect(getLocaleMeta('mock')).toEqual({ language: 'en', region: 'NZ' });
+            expect(parseLocale('mock')).toEqual({ language: 'en', region: 'NZ' });
         } finally {
             globalThis.Intl.Locale = originalIntlLocale;
         }
