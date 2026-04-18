@@ -1,6 +1,6 @@
 const IMPERIAL_REGIONS = new Set(['US', 'LR', 'MM']);
 
-function parseLocale(locale) {
+export function parseLocale(locale) {
     if (!locale || typeof locale !== 'string') {
         return { language: 'en', region: 'NZ' };
     }
@@ -32,11 +32,7 @@ export function getUserLocale() {
     return locale || 'en-NZ';
 }
 
-export function getLocaleMeta(locale = getUserLocale()) {
-    return parseLocale(locale);
-}
-
 export function usesImperialUnits(locale = getUserLocale()) {
-    const { region } = getLocaleMeta(locale);
+    const { region } = parseLocale(locale);
     return IMPERIAL_REGIONS.has(region);
 }
