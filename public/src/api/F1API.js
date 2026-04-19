@@ -18,7 +18,8 @@ export class F1API {
             try {
                 const cachedData = JSON.parse(cachedDataStr);
                 const now = Date.now();
-                if (cachedData.timestamp && (now - cachedData.timestamp < this.CACHE_DURATION_MS)) {
+                // SEC: Validate that cachedData.races is an Array to prevent application logic bypass/errors from poisoned localStorage
+                if (cachedData.timestamp && (now - cachedData.timestamp < this.CACHE_DURATION_MS) && Array.isArray(cachedData.races)) {
                     this.cache.set(cacheKey, cachedData.races);
                     return cachedData.races;
                 }
