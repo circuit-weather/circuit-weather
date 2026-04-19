@@ -63,6 +63,15 @@ const mockUnitOption = {
     closest: vi.fn((selector) => selector === '.unit-option' ? mockUnitOption : null),
 };
 
+const mockImperialOption = {
+    dataset: { unit: 'imperial' },
+    classList: {
+        toggle: vi.fn(),
+    },
+    setAttribute: vi.fn(),
+    closest: vi.fn((selector) => selector === '.unit-option' ? mockImperialOption : null),
+};
+
 const mockToggle = {
     addEventListener: vi.fn(),
 };
@@ -70,7 +79,7 @@ const mockToggle = {
 // Mock DOM
 vi.stubGlobal('document', {
     getElementById: vi.fn((id) => id === 'unitToggle' ? mockToggle : null),
-    querySelectorAll: vi.fn(() => [mockUnitOption]),
+    querySelectorAll: vi.fn(() => [mockUnitOption, mockImperialOption]),
     documentElement: {
         getAttribute: vi.fn(() => 'dark'),
         style: {
@@ -116,6 +125,8 @@ describe('RangeCircles Logic', () => {
         mockUnitOption.classList.toggle.mockClear();
         mockUnitOption.setAttribute.mockClear();
         mockToggle.addEventListener.mockClear();
+        mockImperialOption.classList.toggle.mockClear();
+        mockImperialOption.setAttribute.mockClear();
     });
 
     describe('Initialization & Unit Detection', () => {
@@ -156,6 +167,14 @@ describe('RangeCircles Logic', () => {
             // mockUnitOption.dataset.unit is 'metric'
             expect(mockUnitOption.classList.toggle).toHaveBeenCalledWith('active', true);
             expect(mockUnitOption.setAttribute).toHaveBeenCalledWith('aria-pressed', true);
+            expect(mockUnitOption.setAttribute).toHaveBeenCalledWith('aria-label', 'Kilometres');
+            expect(mockUnitOption.setAttribute).toHaveBeenCalledWith('title', 'Kilometres');
+
+            // mockImperialOption.dataset.unit is 'imperial'
+            expect(mockImperialOption.classList.toggle).toHaveBeenCalledWith('active', false);
+            expect(mockImperialOption.setAttribute).toHaveBeenCalledWith('aria-pressed', false);
+            expect(mockImperialOption.setAttribute).toHaveBeenCalledWith('aria-label', 'Miles');
+            expect(mockImperialOption.setAttribute).toHaveBeenCalledWith('title', 'Miles');
         });
 
         it('handles UI interaction for unit toggle', () => {
