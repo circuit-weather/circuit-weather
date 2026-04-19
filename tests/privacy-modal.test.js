@@ -559,6 +559,31 @@ describe("PrivacyModal", () => {
       ]);
     });
 
+    it("handles explicit falsy locale fallback safely", () => {
+      expect(modal.resolvePrivacyLocale(null)).toBe("en-NZ");
+      expect(modal.resolvePrivacyLocale("")).toBe("en-NZ");
+      expect(modal.resolvePrivacyLocale(undefined)).toBe("en-NZ");
+
+      // Force getPrivacyPolicyPaths to run with falsy locale
+      i18n.locale = null;
+      expect(modal.getPrivacyPolicyPaths()).toEqual([
+        "/privacy/PRIVACY.en-NZ.md",
+        "/privacy/PRIVACY.en-GB.md",
+        "/privacy/PRIVACY.en-US.md",
+        "/PRIVACY.md",
+      ]);
+    });
+
+    it("handles non-supported base languages", () => {
+      expect(modal.resolvePrivacyLocale("ko-KR")).toBe("en-NZ");
+    });
+
+    it("handles en regional variations", () => {
+      expect(modal.resolvePrivacyLocale("en-AU")).toBe("en-NZ");
+      expect(modal.resolvePrivacyLocale("pt-PT")).toBe("pt-BR");
+      expect(modal.resolvePrivacyLocale("zh-TW")).toBe("zh-CN");
+    });
+
     it("falls back to en-NZ for completely unknown locales", () => {
       i18n.locale = "xx-YY";
       expect(modal.resolvePrivacyLocale("xx-YY")).toBe("en-NZ");
