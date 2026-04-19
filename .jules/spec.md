@@ -20,5 +20,11 @@
 **Action:** Implemented a new `Move Optimization` test within `tests/range-circles-logic.test.js` ensuring full branch coverage of the Mapbox `map.on('move', ...)` throttle logic.
 
 ## 2026-05-18 - WeatherClient sessionTime Mocking
+
 **Learning:** In `WeatherClient` tests, ensure the `sessionTime` parameter passed to methods like `getForecast()` is explicitly constructed as a valid `Date` object, not a generic string or default mock, because the internal caching logic directly invokes `sessionTime.getTime()` to generate cache keys.
 **Action:** Updated tests to explicitly pass `new Date()` as `sessionTime` to avoid `TypeError: sessionTime.getTime is not a function`.
+
+## 2024-05-14 - RangeCircles Mocking Quirks
+
+**Learning:** When mocking multiple DOM elements that are queried via `querySelectorAll` (e.g., unit toggle options in `RangeCircles.js`), ensure all possible options are included in the mock return array, and that each mock element responds correctly to `dataset` properties and `setAttribute` to avoid failing tests during UI state changes.
+**Action:** Updated `tests/range-circles-logic.test.js` to correctly mock both `metric` and `imperial` unit options and verified the attributes were correctly checked, resolving the failing CI feedback and ensuring full test coverage.

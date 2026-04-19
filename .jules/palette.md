@@ -98,6 +98,8 @@ ors (LIVE, NEXT) to the visible label, rather than relying on external badges th
 
 **Learning:** When icon-only buttons (like a hamburger menu or sidebar toggle) change their `aria-label` dynamically to reflect state changes (e.g., from 'Open menu' to 'Close menu'), relying only on `aria-label` leaves visual users without an updated tooltip on hover.
 **Action:** Always ensure the `title` attribute is updated synchronously alongside the `aria-label` when the action verb of an icon button changes.
+
 ## 2024-04-19 - Smooth Link Transitions
+
 **Learning:** The `.link-button` and `.sidebar-footer a` elements lacked a hover/focus transition out-of-the-box, making color changes feel abrupt.
 **Action:** Always verify if non-primary interactive elements (like footer links or text-only buttons) are utilizing the design system's established `var(--transition-fast)` for hover/focus state changes to maintain a polished, cohesive feel.
