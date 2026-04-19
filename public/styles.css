@@ -573,6 +573,7 @@ body {
 .sidebar-footer a {
     color: var(--color-text-secondary);
     text-decoration: none;
+    transition: color var(--transition-fast);
 }
 
 .sidebar-footer a:hover {
@@ -587,6 +588,7 @@ body {
     cursor: pointer;
     color: var(--color-text-secondary);
     text-decoration: none;
+    transition: color var(--transition-fast);
 }
 
 .link-button:hover {
