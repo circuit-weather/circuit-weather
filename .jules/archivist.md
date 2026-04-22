@@ -218,3 +218,8 @@ Prevention: Avoid duplicating configuration values in documentation; reference t
 
 **Learning:** `AGENTS.md` omitted "Language Toggle" from its "Core Features" section, even though the feature is fully implemented, documented in `PRIVACY.md`, and is an active feature.
 **Action:** Added the "Language Toggle" feature to `AGENTS.md` to ensure a single source of truth for application capabilities.
+
+## 2026-04-18 - Missing .env.example
+
+**Learning:** `AGENTS.md` documented the usage of `MAPBOX_ACCESS_TOKEN` and `ENVIRONMENT` environment variables, and the worker.js consumes them. However, no `.env.example` file was present in the repository, making local environment setup less discoverable.
+**Action:** Added `.env.example` file to document the expected environment variables to prevent configuration drift and make it easier to configure.
