@@ -1972,3 +1972,28 @@ button:disabled,
     transform: scale(0.95);
     transition: transform 0.1s ease;
 }
+
+/* BMC Button styles */
+.bmc-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 7px 15px;
+    background-color: #FF5F5F;
+    color: #ffffff !important;
+    border-radius: 8px;
+    text-decoration: none;
+    font-family: 'Poppins', sans-serif;
+    font-size: 14px;
+    font-weight: 500;
+    transition: background-color var(--transition-fast);
+}
+
+.bmc-button:hover {
+    background-color: #ff7c7c;
+}
+
+.bmc-button img {
+    height: 18px;
+    margin-right: 8px;
+}

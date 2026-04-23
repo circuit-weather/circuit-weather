@@ -700,9 +700,14 @@ export class CircuitWeatherApp {
     }
 
     updateRaceInfo(race) {
+        if (!race) return;
         const country = race.location?.country;
         const code = COUNTRY_CODES[country];
         const flagUrl = code ? `https://flagcdn.com/w80/${code}.png` : '';
+
+        const translatedCountry = this.i18n.t(`countries.${country}`, { defaultValue: country });
+        const translatedRace = this.i18n.t(`races.${race.name}`, { defaultValue: race.name });
+        const translatedCircuit = this.i18n.t(`circuits.${race.circuit?.circuitName}`, { defaultValue: race.circuit?.circuitName });
 
         // Sidebar banner
         if (this.ui.raceInfoBanner) {
@@ -710,11 +715,11 @@ export class CircuitWeatherApp {
         }
         if (this.ui.countryFlag && flagUrl) {
             this.ui.countryFlag.src = flagUrl;
-            this.ui.countryFlag.alt = `${country} flag`;
+            this.ui.countryFlag.alt = `${translatedCountry} flag`;
         }
-        if (this.ui.raceInfoCountry) this.ui.raceInfoCountry.textContent = country || '';
-        if (this.ui.raceInfoName) this.ui.raceInfoName.textContent = race.name || '';
-        if (this.ui.raceInfoCircuit) this.ui.raceInfoCircuit.textContent = race.circuit?.circuitName || '';
+        if (this.ui.raceInfoCountry) this.ui.raceInfoCountry.textContent = translatedCountry || '';
+        if (this.ui.raceInfoName) this.ui.raceInfoName.textContent = translatedRace || '';
+        if (this.ui.raceInfoCircuit) this.ui.raceInfoCircuit.textContent = translatedCircuit || '';
 
         // Mobile overlay
         if (this.ui.mobileRaceInfo) {
