@@ -721,4 +721,32 @@ describe('WeatherRadar Lifecycle & Playback', () => {
             expect(mockLayer.off).toHaveBeenCalledWith('load', expect.any(Function));
         });
     });
+
+    describe('handleLanguageChange Coverage', () => {
+        it('updates formatters and UI components', () => {
+            const updateSpeedLabelSpy = vi.spyOn(radar, 'updateSpeedLabel').mockImplementation(() => {});
+            const updateSliderSpy = vi.spyOn(radar, 'updateSlider').mockImplementation(() => {});
+            const updateTimeDisplaySpy = vi.spyOn(radar, 'updateTimeDisplay').mockImplementation(() => {});
+
+            radar.visibleLayerIndex = 0;
+            radar.frames = [{ time: 1234567890 }];
+
+            radar.handleLanguageChange();
+
+            expect(radar.timeFormatter).toBeInstanceOf(Intl.DateTimeFormat);
+            expect(updateSpeedLabelSpy).toHaveBeenCalled();
+            expect(updateSliderSpy).toHaveBeenCalled();
+            expect(updateTimeDisplaySpy).toHaveBeenCalledWith(1234567890);
+        });
+
+        it('does not update time display if no visible layer', () => {
+            const updateTimeDisplaySpy = vi.spyOn(radar, 'updateTimeDisplay').mockImplementation(() => {});
+            radar.visibleLayerIndex = -1;
+
+            radar.handleLanguageChange();
+
+            expect(updateTimeDisplaySpy).not.toHaveBeenCalled();
+        });
+    });
+
 });
