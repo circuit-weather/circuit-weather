@@ -700,7 +700,11 @@ export class CircuitWeatherApp {
     }
 
     updateRaceInfo(race) {
-        if (!race) return;
+        if (!race) {
+            if (this.ui.raceInfoBanner) this.ui.raceInfoBanner.style.display = 'none';
+            if (this.ui.mobileRaceInfo) this.ui.mobileRaceInfo.style.display = 'none';
+            return;
+        }
         const country = race.location?.country;
         const code = COUNTRY_CODES[country];
         const flagUrl = code ? `https://flagcdn.com/w80/${code}.png` : '';
