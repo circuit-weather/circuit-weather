@@ -12,3 +12,8 @@
 
 **Learning:** The `public/index.html` file employs separate DOM structures for desktop sidebars (`<aside class="sidebar">`), mobile headers (`<header class="mobile-header">`), and crawler fallbacks (`<noscript>`). When optimizing semantic HTML or heading hierarchies for SEO, carefully orchestrate updates across these distinct sections to avoid accidentally introducing duplicate root-level tags (like multiple `<h1>` elements) that could confuse search engines.
 **Action:** When modifying heading hierarchies for fallback or mobile content, always verify the global document context to maintain a strict, hierarchical outline (e.g., cascading from `<h2>` down) if an `<h1>` is already structurally necessary elsewhere in the SPA shell.
+
+## 2025-04-24 - Role="button" on native anchors
+
+**Learning:** Memory explicitly states that native `<a href="...">` anchor tags should not use `role="button"` as it overrides their semantic identity, causing crawlers to treat them as widgets rather than navigational paths.
+**Action:** Always scan for and remove `role="button"` from native `<a>` tags with `href` attributes, but ensure existing CSS classes (like `.link-button`) are retained so visual layout remains completely unaffected.

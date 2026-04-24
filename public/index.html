@@ -245,8 +245,8 @@
                     <div id="languageMenu" class="language-menu" role="menu"></div>
                 </div>
                 <span>•</span>
-                <!-- Scout: Converted privacy button to an anchor tag with href for crawler discoverability -->
-                <a href="/PRIVACY.md" id="privacyLink" class="link-button" role="button" data-i18n="privacy.link">Privacy</a>
+                <!-- Scout: Converted privacy button to an anchor tag with href for crawler discoverability. Removed role="button" so search engines treat it as a followable navigational path, not an interactive widget. -->
+                <a href="/PRIVACY.md" id="privacyLink" class="link-button" data-i18n="privacy.link">Privacy</a>
                 <span>•</span>
                 <!-- Scout: Added title attribute to external link to provide search engines with more context about the destination -->
                 <a href="https://github.com/circuit-weather/circuit-weather" target="_blank" rel="noopener noreferrer"
