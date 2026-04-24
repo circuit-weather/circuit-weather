@@ -705,9 +705,9 @@ export class CircuitWeatherApp {
         const code = COUNTRY_CODES[country];
         const flagUrl = code ? `https://flagcdn.com/w80/${code}.png` : '';
 
-        const translatedCountry = this.i18n.t(`countries.${country}`, { defaultValue: country });
-        const translatedRace = this.i18n.t(`races.${race.name}`, { defaultValue: race.name });
-        const translatedCircuit = this.i18n.t(`circuits.${race.circuit?.circuitName}`, { defaultValue: race.circuit?.circuitName });
+        const translatedCountry = this.i18n ? this.i18n.t(`countries.${country}`, { defaultValue: country }) : country;
+        const translatedRace = this.i18n ? this.i18n.t(`races.${race.name}`, { defaultValue: race.name }) : race.name;
+        const translatedCircuit = this.i18n ? this.i18n.t(`circuits.${race.circuit?.circuitName}`, { defaultValue: race.circuit?.circuitName }) : race.circuit?.circuitName;
 
         // Sidebar banner
         if (this.ui.raceInfoBanner) {

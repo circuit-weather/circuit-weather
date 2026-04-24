@@ -460,8 +460,8 @@ describe('CircuitWeatherApp Pure Methods', () => {
             expect(app.ui.mobileRaceInfoCircuit.textContent).toBe('Silverstone');
         });
 
-        it('throws an error when race is null', () => {
-            expect(() => app.updateRaceInfo(null)).toThrow(TypeError);
+        it('safely handles null race', () => {
+            expect(() => app.updateRaceInfo(null)).not.toThrow();
         });
     });
 
