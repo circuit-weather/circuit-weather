@@ -55,6 +55,7 @@ export const en = {
         pause: 'Pause radar animation',
         playTitle: 'Play (Space)',
         pauseTitle: 'Pause (Space)',
+        changePlaybackSpeed: 'Change playback speed',
         playbackSpeed: 'Playback speed: {{speed}}',
         sessionStart: 'Session start',
         beforeSession: '{{duration}} before session',

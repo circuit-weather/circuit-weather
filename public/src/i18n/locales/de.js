@@ -20,7 +20,7 @@ export const de = {
     },
     radar: {
         play: 'Radar abspielen', pause: 'Radar pausieren', playTitle: 'Abspielen (Leertaste)', pauseTitle: 'Pause (Leertaste)',
-        playbackSpeed: 'Wiedergabegeschwindigkeit: {{speed}}', sessionStart: 'Session-Start', beforeSession: '{{duration}} vor der Session',
+        changePlaybackSpeed: 'Wiedergabegeschwindigkeit ändern', playbackSpeed: 'Wiedergabegeschwindigkeit: {{speed}}', sessionStart: 'Session-Start', beforeSession: '{{duration}} vor der Session',
         afterSession: '{{duration}} nach der Session', forecast: 'Prognose', live: 'Live', liveAria: 'Live-Radar',
         minutesAgo: 'Vor {{count}} Min', minutesAgoPlural: 'Vor {{count}} Min', connectionInstability: 'Verbindungsinstabilitat',
         serviceError: 'Dienstfehler', highTraffic: 'Hohe Auslastung', rateLimitExceeded: 'Ratenlimit uberschritten. Kurz pausiert.',

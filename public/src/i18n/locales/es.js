@@ -21,7 +21,7 @@ export const es = {
     },
     radar: {
         play: 'Reproducir radar', pause: 'Pausar radar', playTitle: 'Reproducir (Espacio)', pauseTitle: 'Pausar (Espacio)',
-        playbackSpeed: 'Velocidad de reproduccion: {{speed}}', sessionStart: 'Inicio de sesion', beforeSession: '{{duration}} antes de la sesion',
+        changePlaybackSpeed: 'Cambiar velocidad de reproducción', playbackSpeed: 'Velocidad de reproduccion: {{speed}}', sessionStart: 'Inicio de sesion', beforeSession: '{{duration}} antes de la sesion',
         afterSession: '{{duration}} despues de la sesion', forecast: 'Pronostico', live: 'En vivo', liveAria: 'Radar en vivo',
         minutesAgo: 'Hace {{count}} min', minutesAgoPlural: 'Hace {{count}} mins', connectionInstability: 'Inestabilidad de conexion',
         serviceError: 'Error del servicio', highTraffic: 'Alto trafico', rateLimitExceeded: 'Limite de peticiones excedido. Pausa momentanea.',

@@ -20,7 +20,7 @@ export const zhCN = {
     },
     radar: {
         play: '播放雷达动画', pause: '暂停雷达动画', playTitle: '播放 (Space)', pauseTitle: '暂停 (Space)',
-        playbackSpeed: '播放速度: {{speed}}', sessionStart: '赛段开始', beforeSession: '距赛段开始前 {{duration}}', afterSession: '赛段开始后 {{duration}}',
+        changePlaybackSpeed: '更改播放速度', playbackSpeed: '播放速度: {{speed}}', sessionStart: '赛段开始', beforeSession: '距赛段开始前 {{duration}}', afterSession: '赛段开始后 {{duration}}',
         forecast: '预报', live: '实时', liveAria: '实时雷达', minutesAgo: '{{count}} 分钟前', minutesAgoPlural: '{{count}} 分钟前',
         connectionInstability: '连接不稳定', serviceError: '服务错误', highTraffic: '访问量高',
         rateLimitExceeded: '请求过于频繁，已暂时暂停。', retryingFailedTiles: '正在重试 {{count}} 个失败瓦片...', radarStatus: '雷达状态: {{status}}',

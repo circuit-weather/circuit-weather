@@ -55,7 +55,7 @@ export const hu = {
         pause: 'Radar animáció szüneteltetése',
         playTitle: 'Lejátszás (Szóköz)',
         pauseTitle: 'Szünet (Szóköz)',
-        playbackSpeed: 'Lejátszási sebesség: {{speed}}',
+        changePlaybackSpeed: 'Lejátszási sebesség módosítása', playbackSpeed: 'Lejátszási sebesség: {{speed}}',
         sessionStart: 'Esemény kezdete',
         beforeSession: '{{duration}} az esemény előtt',
         afterSession: '{{duration}} az esemény után',

@@ -1,0 +1,3 @@
+## 2024-04-24 - HTML data-i18n-attr for dynamically updated attributes
+**Learning:** Even if an element's attribute (like an `aria-label` or `title`) is dynamically updated by a JavaScript component after load (e.g. `WeatherRadar.js` updating playback speeds), the initial HTML markup must still use `data-i18n-attr` to localize the initial state. This ensures screen readers and crawlers see localized strings before the JS executes.
+**Action:** When extracting hardcoded strings from HTML, check if they represent an initial state for a dynamically updated attribute. If so, create a dedicated base translation key for that initial state and use `data-i18n-attr` to bind it.
