@@ -84,6 +84,8 @@ export const hu = {
     },
     map: {
         recenterOnCircuit: 'Központosítás a pályára',
+        zoomIn: 'Nagyítás',
+        zoomOut: 'Kicsinyítés',
     },
     privacy: {
         link: 'Adatvédelem',

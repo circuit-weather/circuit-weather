@@ -30,7 +30,7 @@ export const es = {
     countdown: {
         startsIn: 'Empieza en', day: 'dia', dayPlural: 'dias', hour: 'hora', hourPlural: 'horas', minute: 'minuto', minutePlural: 'minutos', second: 'segundo', secondPlural: 'segundos',
     },
-    map: { recenterOnCircuit: 'Recentrar en circuito' },
+    map: { recenterOnCircuit: 'Recentrar en circuito', zoomIn: 'Acercar', zoomOut: 'Alejar' },
     privacy: {
         link: 'Privacidad',
         title: 'Politica de privacidad',

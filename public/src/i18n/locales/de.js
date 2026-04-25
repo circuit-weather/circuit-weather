@@ -27,7 +27,7 @@ export const de = {
         retryingFailedTiles: 'Versuche {{count}} fehlgeschlagene Kachel{{suffix}} erneut...', radarStatus: 'Radarstatus: {{status}}',
     },
     countdown: { startsIn: 'Startet in', day: 'Tag', dayPlural: 'Tage', hour: 'Stunde', hourPlural: 'Stunden', minute: 'Minute', minutePlural: 'Minuten', second: 'Sekunde', secondPlural: 'Sekunden' },
-    map: { recenterOnCircuit: 'Auf Strecke zentrieren' },
+    map: { recenterOnCircuit: 'Auf Strecke zentrieren', zoomIn: 'Vergrößern', zoomOut: 'Verkleinern' },
     privacy: {
         link: 'Datenschutz',
         title: 'Datenschutzerklarung',

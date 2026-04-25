@@ -138,15 +138,15 @@ export class MapManager {
     const zoomIn = document.createElement('button');
     zoomIn.className = 'leaflet-control-zoom-in';
     zoomIn.setAttribute('type', 'button');
-    zoomIn.setAttribute('aria-label', '+');
-    zoomIn.setAttribute('title', 'Zoom in');
+    zoomIn.setAttribute('aria-label', i18n.t('map.zoomIn'));
+    zoomIn.setAttribute('title', i18n.t('map.zoomIn'));
     zoomIn.textContent = '+';
 
     const zoomOut = document.createElement('button');
     zoomOut.className = 'leaflet-control-zoom-out';
     zoomOut.setAttribute('type', 'button');
-    zoomOut.setAttribute('aria-label', '−');
-    zoomOut.setAttribute('title', 'Zoom out');
+    zoomOut.setAttribute('aria-label', i18n.t('map.zoomOut'));
+    zoomOut.setAttribute('title', i18n.t('map.zoomOut'));
     zoomOut.textContent = '−';
 
     zoomIn.addEventListener('click', () => this.map.zoomIn());

@@ -28,7 +28,7 @@ export const ptBR = {
         retryingFailedTiles: 'A tentar novamente {{count}} bloco{{suffix}} com falha...', radarStatus: 'Estado do radar: {{status}}',
     },
     countdown: { startsIn: 'Comeca em', day: 'dia', dayPlural: 'dias', hour: 'hora', hourPlural: 'horas', minute: 'minuto', minutePlural: 'minutos', second: 'segundo', secondPlural: 'segundos' },
-    map: { recenterOnCircuit: 'Recentrar no circuito' },
+    map: { recenterOnCircuit: 'Recentrar no circuito', zoomIn: 'Aproximar', zoomOut: 'Afastar' },
     privacy: {
         link: 'Privacidade',
         title: 'Politica de privacidade',
