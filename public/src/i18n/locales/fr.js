@@ -28,7 +28,7 @@ export const fr = {
         retryingFailedTiles: 'Nouvelle tentative pour {{count}} tuile{{suffix}} en echec...', radarStatus: 'Statut radar : {{status}}',
     },
     countdown: { startsIn: 'Debute dans', day: 'jour', dayPlural: 'jours', hour: 'heure', hourPlural: 'heures', minute: 'minute', minutePlural: 'minutes', second: 'seconde', secondPlural: 'secondes' },
-    map: { recenterOnCircuit: 'Recentrer sur le circuit' },
+    map: { recenterOnCircuit: 'Recentrer sur le circuit', zoomIn: 'Zoomer', zoomOut: 'Dézoomer' },
     privacy: {
         link: 'Confidentialite',
         title: 'Politique de confidentialite',

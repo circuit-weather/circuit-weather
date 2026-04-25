@@ -85,6 +85,8 @@ export const en = {
     },
     map: {
         recenterOnCircuit: 'Recentre on circuit',
+        zoomIn: 'Zoom in',
+        zoomOut: 'Zoom out',
     },
     privacy: {
         link: 'Privacy',

@@ -26,7 +26,7 @@ export const zhCN = {
         rateLimitExceeded: '请求过于频繁，已暂时暂停。', retryingFailedTiles: '正在重试 {{count}} 个失败瓦片...', radarStatus: '雷达状态: {{status}}',
     },
     countdown: { startsIn: '开始倒计时', day: '天', dayPlural: '天', hour: '小时', hourPlural: '小时', minute: '分钟', minutePlural: '分钟', second: '秒', secondPlural: '秒' },
-    map: { recenterOnCircuit: '回到赛道中心' },
+    map: { recenterOnCircuit: '回到赛道中心', zoomIn: '放大', zoomOut: '缩小' },
     privacy: {
         link: '隐私',
         title: '隐私政策',

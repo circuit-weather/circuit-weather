@@ -26,7 +26,7 @@ export const ja = {
         rateLimitExceeded: 'リクエスト上限を超えました。しばらく待機します。', retryingFailedTiles: '失敗したタイル {{count}} 件を再試行中...', radarStatus: 'レーダー状態: {{status}}',
     },
     countdown: { startsIn: '開始まで', day: '日', dayPlural: '日', hour: '時間', hourPlural: '時間', minute: '分', minutePlural: '分', second: '秒', secondPlural: '秒' },
-    map: { recenterOnCircuit: 'サーキットに再センタリング' },
+    map: { recenterOnCircuit: 'サーキットに再センタリング', zoomIn: '拡大', zoomOut: '縮小' },
     privacy: {
         link: 'プライバシー',
         title: 'プライバシーポリシー',
