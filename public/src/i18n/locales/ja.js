@@ -20,7 +20,7 @@ export const ja = {
     },
     radar: {
         play: 'レーダー再生', pause: 'レーダー一時停止', playTitle: '再生 (Space)', pauseTitle: '一時停止 (Space)',
-        playbackSpeed: '再生速度: {{speed}}', sessionStart: 'セッション開始', beforeSession: 'セッション {{duration}} 前', afterSession: 'セッション {{duration}} 後',
+        changePlaybackSpeed: '再生速度を変更', playbackSpeed: '再生速度: {{speed}}', sessionStart: 'セッション開始', beforeSession: 'セッション {{duration}} 前', afterSession: 'セッション {{duration}} 後',
         forecast: '予報', live: 'ライブ', liveAria: 'ライブレーダー', minutesAgo: '{{count}} 分前', minutesAgoPlural: '{{count}} 分前',
         connectionInstability: '接続が不安定です', serviceError: 'サービスエラー', highTraffic: 'アクセス集中',
         rateLimitExceeded: 'リクエスト上限を超えました。しばらく待機します。', retryingFailedTiles: '失敗したタイル {{count}} 件を再試行中...', radarStatus: 'レーダー状態: {{status}}',
