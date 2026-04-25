@@ -79,6 +79,8 @@ Circuit Weather 是一个开源网站应用，用于显示 Formula 1 赛道的�
 
 - **theme:** `light` 或 `dark`
 - **unit:** `metric` 或 `imperial`
+- **language:** 您选择的语言 (如 `zh-CN`, `en-US`)
+- **f1_schedule_cache:** 缓存 F1 赛程数据 (24小时缓存)
 
 这些数据仅保存在你的设备上。
 

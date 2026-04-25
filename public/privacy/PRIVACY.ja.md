@@ -79,6 +79,8 @@ Circuit Weather は、Formula 1 サーキット向けのリアルタイム天気
 
 - **theme:** `light` または `dark`
 - **unit:** `metric` または `imperial`
+- **language:** 選択した言語 (例: `ja`, `en-US`)
+- **f1_schedule_cache:** F1のスケジュールデータをキャッシュします (24時間キャッシュ)
 
 これらのデータは端末内にのみ保存されます。
 

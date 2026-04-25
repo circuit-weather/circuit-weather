@@ -79,6 +79,8 @@ A beállításokat a böngészője helyileg tárolja:
 
 - **theme (téma):** `light` (világos) vagy `dark` (sötét)
 - **unit (mértékegység):** `metric` (metrikus) vagy `imperial` (birodalmi)
+- **language (nyelv):** a kiválasztott nyelv (pl. `hu`, `en-US`)
+- **f1_schedule_cache:** gyorsítótárazza az F1 naptáradatokat (24 órás gyorsítótár)
 
 Ezek az adatok az Ön eszközén maradnak, és nem kerülnek elküldésre a szervereinkre.
 

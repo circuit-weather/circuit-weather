@@ -218,3 +218,8 @@ Prevention: Avoid duplicating configuration values in documentation; reference t
 
 **Learning:** `AGENTS.md` omitted "Language Toggle" from its "Core Features" section, even though the feature is fully implemented, documented in `PRIVACY.md`, and is an active feature.
 **Action:** Added the "Language Toggle" feature to `AGENTS.md` to ensure a single source of truth for application capabilities.
+## 2026-04-25 - Fixing Privacy Policy Drift across Localized Versions\n**Learning:** When updating  to reflect new local storage keys (like `language` and `f1_schedule_cache`), it's crucial to also update all localized versions in `public/privacy/` to maintain consistency and compliance. Python or JS scripts can be used to safely append new items while matching surrounding formatting.\n**Action:** Always write a script or manually ensure that any modifications to the root `PRIVACY.md` list of local storage items are faithfully replicated across all `public/privacy/PRIVACY.*.md` variants.
+
+## 2026-04-25 - Fixing Privacy Policy Drift across Localized Versions
+**Learning:** When updating `PRIVACY.md` to reflect new local storage keys (like `language` and `f1_schedule_cache`), it's crucial to also update all localized versions in `public/privacy/` to maintain consistency and compliance. Scripts can be used to safely append new items while matching surrounding formatting.
+**Action:** Always write a script or manually ensure that any modifications to the root `PRIVACY.md` list of local storage items are faithfully replicated across all `public/privacy/PRIVACY.*.md` variants.

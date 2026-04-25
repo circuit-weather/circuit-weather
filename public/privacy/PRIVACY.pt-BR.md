@@ -79,6 +79,8 @@ Preferencias guardadas localmente no navegador:
 
 - **theme:** `light` ou `dark`
 - **unit:** `metric` ou `imperial`
+- **language:** o seu idioma selecionado (ex. `pt-BR`, `en-US`)
+- **f1_schedule_cache:** faz cache dos dados do calendário da F1 (cache de 24 horas)
 
 ## Open source
 
