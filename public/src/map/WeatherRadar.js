@@ -952,6 +952,8 @@ export class WeatherRadar {
         const timeStr = this.timeFormatter.format(date);
 
         this.ui.time.textContent = timeStr;
+        // Scout: Added datetime attribute to <time> element for semantic SEO value and machine-readability
+        this.ui.time.setAttribute('datetime', date.toISOString());
 
         let relativeText = '';
         let accessibleText = ''; // Palette A11y: New variable for screen reader text
@@ -1027,11 +1029,21 @@ export class WeatherRadar {
         }
 
         if (this.ui.timeStart && this.ui.timeEnd && this.frames.length > 0) {
-            this.ui.timeStart.textContent = this.timeFormatter.format(new Date(this.frames[0].time * 1000));
-            this.ui.timeEnd.textContent = this.timeFormatter.format(new Date(this.frames[this.frames.length - 1].time * 1000));
+            const startDate = new Date(this.frames[0].time * 1000);
+            const endDate = new Date(this.frames[this.frames.length - 1].time * 1000);
+
+            this.ui.timeStart.textContent = this.timeFormatter.format(startDate);
+            // Scout: Added datetime attribute to <time> element for semantic SEO value and machine-readability
+            this.ui.timeStart.setAttribute('datetime', startDate.toISOString());
+
+            this.ui.timeEnd.textContent = this.timeFormatter.format(endDate);
+            // Scout: Added datetime attribute to <time> element for semantic SEO value and machine-readability
+            this.ui.timeEnd.setAttribute('datetime', endDate.toISOString());
         } else if (this.ui.timeStart && this.ui.timeEnd) {
             this.ui.timeStart.textContent = '--:--';
+            this.ui.timeStart.removeAttribute('datetime');
             this.ui.timeEnd.textContent = '--:--';
+            this.ui.timeEnd.removeAttribute('datetime');
         }
     }
 
