@@ -1407,6 +1407,109 @@ describe('CircuitWeatherApp Pure Methods', () => {
     });
 });
 
+
+    describe('Mobile Layout Offsets', () => {
+        let app;
+
+        beforeEach(() => {
+            vi.clearAllMocks();
+            app = new CircuitWeatherApp();
+            app.ui.mobileRaceInfo = createMockElement('mobileRaceInfo');
+            app.ui.mobileHeader = createMockElement('mobileHeader');
+            app.ui.mapContainer = createMockElement('map');
+            app.ui.radarControls = createMockElement('radar-controls');
+        });
+
+        afterEach(() => {
+            // Restore any timer overrides
+            if (vi.isFakeTimers()) {
+                vi.useRealTimers();
+            }
+        });
+
+        it('calculates top offset from mobile header when banner height is 0', () => {
+            app.mobileQuery = { matches: true };
+
+            app.ui.mobileRaceInfo.getBoundingClientRect = vi.fn(() => ({ height: 0, bottom: 0 }));
+            app.ui.mobileHeader.getBoundingClientRect = vi.fn(() => ({ bottom: 60 }));
+            app.ui.radarControls.getBoundingClientRect = vi.fn(() => ({ height: 0 }));
+            app.ui.mapContainer.getBoundingClientRect = vi.fn(() => ({ bottom: 800 }));
+
+            const spy = vi.spyOn(document.documentElement.style, 'setProperty');
+
+            app.updateLayoutOffsets();
+
+            // Expected mobileTopVar = Math.max(0, 60 - 56) + 2 = 6
+            expect(spy).toHaveBeenCalledWith('--mobile-top-offset', '6px');
+        });
+
+        it('calculates controls bottom offset correctly with radar height > 0', () => {
+            app.mobileQuery = { matches: true };
+
+            app.ui.mobileRaceInfo = null;
+            app.ui.mobileHeader.getBoundingClientRect = vi.fn(() => ({ bottom: 60 }));
+            app.ui.radarControls.getBoundingClientRect = vi.fn(() => ({ height: 50 }));
+
+            // Note: attribution logic checks document.querySelector.
+            // If no attribution element is found, attributionHeight = 25.
+            // Radar bottom offset = 25 + 8 = 33.
+            // Controls bottom offset = 33 + 50 + 8 = 91.
+
+            const spy = vi.spyOn(document.documentElement.style, 'setProperty');
+
+            app.updateLayoutOffsets();
+
+            expect(spy).toHaveBeenCalledWith('--mobile-controls-offset', '91px');
+        });
+
+        it('debounces layout updates using requestAnimationFrame in initResizeObserver', () => {
+            vi.useFakeTimers();
+
+            let rafCb = null;
+            const origRaf = global.requestAnimationFrame;
+            global.requestAnimationFrame = vi.fn(cb => {
+                rafCb = cb;
+                return 123;
+            });
+
+            app.updateLayoutOffsets = vi.fn();
+
+            // Mock ResizeObserver
+            let resizeCb = null;
+            const MockResizeObserver = vi.fn(function(cb) {
+                resizeCb = cb;
+                this.observe = vi.fn();
+                this.disconnect = vi.fn();
+            });
+            const origRo = global.ResizeObserver;
+            global.ResizeObserver = MockResizeObserver;
+
+            // Mock MutationObserver
+            const origMo = global.MutationObserver;
+            global.MutationObserver = vi.fn(function(cb) {
+                this.observe = vi.fn();
+                this.disconnect = vi.fn();
+            });
+
+            app.initResizeObserver();
+
+            // Call the resize observer callback
+            resizeCb();
+            resizeCb(); // Call twice to verify debounce (rafId check)
+
+            expect(requestAnimationFrame).toHaveBeenCalledTimes(1);
+
+            // Execute the RAF callback
+            rafCb();
+            expect(app.updateLayoutOffsets).toHaveBeenCalledTimes(1);
+
+            // Cleanup local globals
+            global.requestAnimationFrame = origRaf;
+            global.ResizeObserver = origRo;
+            global.MutationObserver = origMo;
+        });
+    });
+
     describe('Mobile Visibility', () => {
         let app;
         beforeEach(() => {
