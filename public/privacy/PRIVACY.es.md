@@ -79,6 +79,8 @@ El navegador guarda preferencias locales:
 
 - **theme:** `light` o `dark`
 - **unit:** `metric` o `imperial`
+- **language:** su idioma seleccionado (ej. `es`, `en-US`)
+- **f1_schedule_cache:** guarda en caché los datos del calendario de F1 (caché de 24 horas)
 
 Estos datos permanecen en tu dispositivo.
 

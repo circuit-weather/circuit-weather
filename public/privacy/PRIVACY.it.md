@@ -79,6 +79,8 @@ Preferenze salvate localmente nel browser:
 
 - **theme:** `light` o `dark`
 - **unit:** `metric` o `imperial`
+- **language:** la lingua selezionata (es. `it`, `en-US`)
+- **f1_schedule_cache:** memorizza i dati del calendario F1 (cache di 24 ore)
 
 ## Open source
 
