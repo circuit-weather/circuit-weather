@@ -1,5 +1,5 @@
 export const ja = {
-    common: { loading: '読み込み中...', retry: '再試行', retrying: '再試行中...', selectLanguage: '言語', openMenu: 'メニューを開く', closeMenu: 'メニューを閉じる' },
+    common: { loading: '読み込み中...', retry: '再試行', retrying: '再試行中...', selectLanguage: '言語', openMenu: 'メニューを開く', closeMenu: 'メニューを閉じる', skipToContent: 'メインコンテンツへスキップ' },
     theme: { toggle: 'ライト/ダークモードを切り替え', switchToLight: 'ライトモードに切り替え', switchToDark: 'ダークモードに切り替え' },
     loading: { schedule: 'レーススケジュールを読み込み中...', session: 'セッションデータを読み込み中...' },
     controls: {
