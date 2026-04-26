@@ -1775,6 +1775,25 @@ body {
    =================================== */
 
 /* Global Focus Styles */
+.skip-link {
+    position: absolute;
+    top: -40px;
+    left: 0;
+    background: var(--color-primary);
+    color: white;
+    padding: var(--spacing-sm) var(--spacing-md);
+    z-index: 10000;
+    transition: top var(--transition-fast);
+    border-bottom-right-radius: var(--radius-md);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.skip-link:focus {
+    top: 0;
+    outline: 2px solid white;
+    outline-offset: -4px;
+}
 :focus-visible {
     outline: 2px solid var(--color-primary);
     outline-offset: 2px;

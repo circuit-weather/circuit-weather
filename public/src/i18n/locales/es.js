@@ -1,5 +1,5 @@
 export const es = {
-    common: { loading: 'Cargando...', retry: 'Reintentar', retrying: 'Reintentando...', selectLanguage: 'Idioma', openMenu: 'Abrir menu', closeMenu: 'Cerrar menu' },
+    common: { loading: 'Cargando...', retry: 'Reintentar', retrying: 'Reintentando...', selectLanguage: 'Idioma', openMenu: 'Abrir menu', closeMenu: 'Cerrar menu', skipToContent: 'Saltar al contenido principal' },
     theme: { toggle: 'Cambiar modo claro/oscuro', switchToLight: 'Cambiar a modo claro', switchToDark: 'Cambiar a modo oscuro' },
     loading: { schedule: 'Cargando calendario de carreras...', session: 'Cargando datos de la sesion...' },
     controls: {

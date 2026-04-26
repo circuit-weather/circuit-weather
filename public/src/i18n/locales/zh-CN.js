@@ -1,5 +1,5 @@
 export const zhCN = {
-    common: { loading: '加载中...', retry: '重试', retrying: '正在重试...', selectLanguage: '语言', openMenu: '打开菜单', closeMenu: '关闭菜单' },
+    common: { loading: '加载中...', retry: '重试', retrying: '正在重试...', selectLanguage: '语言', openMenu: '打开菜单', closeMenu: '关闭菜单', skipToContent: '跳转到主要内容' },
     theme: { toggle: '切换明亮/深色模式', switchToLight: '切换到明亮模式', switchToDark: '切换到深色模式' },
     loading: { schedule: '正在加载比赛赛历...', session: '正在加载赛段数据...' },
     controls: {

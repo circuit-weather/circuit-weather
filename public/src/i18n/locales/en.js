@@ -6,6 +6,7 @@ export const en = {
         selectLanguage: 'Language',
         openMenu: 'Open menu',
         closeMenu: 'Close menu',
+        skipToContent: 'Skip to main content',
     },
     loading: {
         schedule: 'Loading race schedule...',
