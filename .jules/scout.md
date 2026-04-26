@@ -17,3 +17,8 @@
 
 **Learning:** Memory explicitly states that native `<a href="...">` anchor tags should not use `role="button"` as it overrides their semantic identity, causing crawlers to treat them as widgets rather than navigational paths.
 **Action:** Always scan for and remove `role="button"` from native `<a>` tags with `href` attributes, but ensure existing CSS classes (like `.link-button`) are retained so visual layout remains completely unaffected.
+
+## 2025-04-26 - max-image-preview SEO directive
+
+**Learning:** Adding the `<meta name="robots" content="max-image-preview:large">` directive is a highly effective, invisible SEO optimization that enables Google Discover and search results to use large, high-quality image previews, drastically improving Click-Through Rates (CTR).
+**Action:** When acting as Scout, actively seek out opportunities to add or augment the `robots` meta tag with `max-image-preview:large`, `max-snippet:-1`, and `max-video-preview:-1` on content-heavy pages.
