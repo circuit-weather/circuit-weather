@@ -207,6 +207,55 @@ describe("MapManager", () => {
     vi.useRealTimers();
   });
 
+  it("should resize mapbox map when ResizeObserver triggers", async () => {
+    vi.useFakeTimers();
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ mapboxToken: 'test-token' })
+    }));
+
+    const mockContainer = createMockElement('map');
+    mockContainer.appendChild = vi.fn();
+    documentMock.getElementById.mockReturnValue(mockContainer);
+
+    const mockZoomControl = createMockElement('zoomControl');
+    mockZoomControl.appendChild = vi.fn();
+    const mockZoomIn = createMockElement('zoomIn');
+    mockZoomIn.setAttribute = vi.fn();
+    mockZoomIn.addEventListener = vi.fn();
+    const mockZoomOut = createMockElement('zoomOut');
+    mockZoomOut.setAttribute = vi.fn();
+    mockZoomOut.addEventListener = vi.fn();
+
+    const originalCreateElement = document.createElement;
+    document.createElement = vi.fn()
+      .mockReturnValueOnce(mockZoomControl)
+      .mockReturnValueOnce(mockZoomIn)
+      .mockReturnValueOnce(mockZoomOut);
+
+    // need load event to resolve initMapbox
+    mapboxMapMock.on.mockImplementation((event, callback) => {
+      if (event === 'load') callback();
+    });
+
+    await mapManager.init();
+
+    // Ensure callback was captured
+    expect(resizeCallback).toBeDefined();
+
+    // Trigger the resize callback
+    resizeCallback();
+
+    // Advance timers so setTimeout(cb, 0) runs
+    vi.advanceTimersByTime(0);
+
+    expect(mapManager.isMapbox).toBe(true);
+    expect(mapboxMapMock.resize).toHaveBeenCalled();
+
+    document.createElement = originalCreateElement;
+    vi.useRealTimers();
+  });
+
   it("should handle missing map container gracefully during init", async () => {
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false }));
 
