@@ -123,6 +123,40 @@ describe('WeatherRadar Layer Reconciliation', () => {
             expect(layer1.setZIndex).toHaveBeenCalledWith(100 + 1);
         });
 
+
+        it('should remove unused layers from the mapbox map', () => {
+            // Arrange
+            const mapboxMockMap = {
+                getLayer: vi.fn().mockReturnValue(true),
+                getSource: vi.fn().mockReturnValue(true),
+                removeLayer: vi.fn(),
+                removeSource: vi.fn(),
+                // Notice the missing hasLayer method making isMapbox evaluate to true
+            };
+            const mapboxRadar = new WeatherRadar(mapboxMockMap);
+            const frame1 = { time: 100, path: '/path1' };
+            const layer1 = {
+                id: 'radar-100',
+                sourceId: 'radar-source-100',
+                frameTime: 100,
+                framePath: '/path1'
+            };
+
+            mapboxRadar.layers = [layer1];
+            mapboxRadar.frames = [frame1];
+
+            // New frames (empty, so layer1 is unused)
+            const newFrames = [];
+
+            // Act
+            mapboxRadar.reconcileLayers(newFrames);
+
+            // Assert
+            expect(mapboxRadar.layers).toHaveLength(0);
+            expect(mapboxMockMap.removeLayer).toHaveBeenCalledWith('radar-100');
+            expect(mapboxMockMap.removeSource).toHaveBeenCalledWith('radar-source-100');
+        });
+
         it('should remove unused layers from the map', () => {
             // Arrange
             const frame1 = { time: 100, path: '/path1' };
