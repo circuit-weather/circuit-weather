@@ -176,6 +176,42 @@ describe('waitForTilesToLoad', () => {
         expect(result).toBeUndefined();
     });
 
+
+    it('adds layer to mapbox map and resolves via fallback if layer does not fire load', async () => {
+        const mockLayer = {
+            id: 'mockLayer-id',
+            addTo: vi.fn(), // Code calls this.map.hasLayer/getLayer but then calls currentLayer.addTo(this.map) in both branches
+            on: vi.fn(),
+            off: vi.fn()
+        };
+
+        // Use a localized mockMap specifically for this test
+        const localMockMap = {
+            addLayer: vi.fn(),
+            getLayer: vi.fn().mockReturnValue(false)
+        };
+
+        radar.map = localMockMap;
+        vi.spyOn(radar, 'getLayer').mockReturnValue(mockLayer);
+
+        vi.useFakeTimers();
+        try {
+            const promise = radar.waitForTilesToLoad();
+
+            // Advance by fallback timeout
+            vi.advanceTimersByTime(30000);
+            await promise;
+
+            expect(localMockMap.getLayer).toHaveBeenCalledWith('mockLayer-id');
+            expect(mockLayer.addTo).toHaveBeenCalledWith(localMockMap);
+            expect(radar.showFrame).toHaveBeenCalledWith(0);
+        } finally {
+            vi.useRealTimers();
+            // Restore radar map to the outer mockMap
+            radar.map = mockMap;
+        }
+    });
+
     it('adds layer to map and resolves on load event', async () => {
         const mockLayer = {
             addTo: vi.fn(),
