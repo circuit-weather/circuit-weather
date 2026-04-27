@@ -6,6 +6,7 @@ export const hu = {
         selectLanguage: 'Nyelv',
         openMenu: 'Menü megnyitása',
         closeMenu: 'Menü bezárása',
+        skipToContent: 'Ugrás a fő tartalomra',
     },
     loading: {
         schedule: 'Versenynaptár betöltése...',
