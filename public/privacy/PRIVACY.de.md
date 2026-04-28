@@ -47,6 +47,12 @@ Der Browser kann fur Karten, Tiles und Widgets direkt mit Drittanbietern kommuni
 
 ### Karten und Assets
 
+**Mapbox**
+
+- **Zweck:** Bereitstellung der primären Hintergrundkarten und Vektordarstellung.
+- **Gesendete Daten:** Ihr Browser verbindet sich direkt mit den Mapbox-APIs (`api.mapbox.com` und `events.mapbox.com`). Ihre IP-Adresse und Anfrage-Metadaten sind für Mapbox im Rahmen standardmäßiger Webanfragen sichtbar.
+- **Datenschutzerklärung:** [mapbox.com/legal/privacy](https://www.mapbox.com/legal/privacy/)
+
 **Carto (OpenStreetMap)**
 
 - **Zweck:** Basiskarten-Tiles.
@@ -72,6 +78,7 @@ Der Browser kann fur Karten, Tiles und Widgets direkt mit Drittanbietern kommuni
 - **GitHub (bacinger/f1-circuits)**
 - **RainViewer**
 - **Leaflet (via Unpkg)**
+- **Mapbox (über Mapbox CDN):** Interaktionsbibliothek für Karten (aus Sicherheitsgründen geproxyt).
 
 ## Lokaler Speicher
 

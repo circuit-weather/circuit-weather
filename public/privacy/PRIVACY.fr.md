@@ -47,6 +47,12 @@ Votre navigateur peut se connecter directement a certains services tiers.
 
 ### Cartographie et assets
 
+**Mapbox**
+
+- **But :** Fournit les tuiles de fond de carte principales et le rendu vectoriel.
+- **Donnees envoyees :** Votre navigateur se connecte directement aux API Mapbox (`api.mapbox.com` et `events.mapbox.com`). Votre adresse IP et les metadonnees de requete sont visibles par Mapbox dans le cadre de requetes web standard.
+- **Politique :** [mapbox.com/legal/privacy](https://www.mapbox.com/legal/privacy/)
+
 **Carto (OpenStreetMap)**
 
 - **But :** Tuiles de fond de carte.
@@ -72,6 +78,7 @@ Votre navigateur peut se connecter directement a certains services tiers.
 - **GitHub (bacinger/f1-circuits)**
 - **RainViewer**
 - **Leaflet (via Unpkg)**
+- **Mapbox (via Mapbox CDN) :** Assets de bibliothèque de carte (proxyfiés par sécurité).
 
 ## Stockage local
 

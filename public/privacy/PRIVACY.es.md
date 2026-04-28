@@ -47,6 +47,12 @@ Tu navegador puede conectarse directamente a servicios de terceros para mapas, t
 
 ### Mapas y recursos
 
+**Mapbox**
+
+- **Proposito:** Proporciona los tiles de mapa base principales y renderizado vectorial.
+- **Datos enviados:** Tu navegador se conecta directamente a las APIs de Mapbox (`api.mapbox.com` y `events.mapbox.com`). Tu direccion IP y los metadatos de la peticion son visibles para Mapbox como parte de las peticiones web estandar.
+- **Politica de privacidad:** [mapbox.com/legal/privacy](https://www.mapbox.com/legal/privacy/)
+
 **Carto (OpenStreetMap)**
 
 - **Proposito:** Tiles de mapa base.
@@ -72,6 +78,7 @@ Tu navegador puede conectarse directamente a servicios de terceros para mapas, t
 - **GitHub (bacinger/f1-circuits):** Archivos GeoJSON de circuitos.
 - **RainViewer:** Metadatos y tiles de radar.
 - **Leaflet (via Unpkg):** Recursos de libreria de mapas.
+- **Mapbox (vía Mapbox CDN):** Recursos de librería de mapas (con proxy por seguridad).
 
 ## Almacenamiento local
 

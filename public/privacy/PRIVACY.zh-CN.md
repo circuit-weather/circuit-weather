@@ -47,6 +47,12 @@ Circuit Weather 是一个开源网站应用，用于显示 Formula 1 赛道的�
 
 ### 地图与资源
 
+**Mapbox**
+
+- **目的:** 提供主要的地图背景瓦片和矢量渲染。
+- **发送的数据:** 您的浏览器直接连接到 Mapbox API（`api.mapbox.com` 和 `events.mapbox.com`）。您的 IP 地址和请求元数据作为标准 Web 请求的一部分对 Mapbox 可见。
+- **隐私政策:** [mapbox.com/legal/privacy](https://www.mapbox.com/legal/privacy/)
+
 **Carto (OpenStreetMap)**
 
 - **用途:** 提供底图瓦片。
@@ -72,6 +78,7 @@ Circuit Weather 是一个开源网站应用，用于显示 Formula 1 赛道的�
 - **GitHub (bacinger/f1-circuits)**
 - **RainViewer**
 - **Leaflet (via Unpkg)**
+- **Mapbox (通过 Mapbox CDN):** 地图交互库资产 (为了安全而进行代理)。
 
 ## 本地存储
 

@@ -223,3 +223,8 @@ Prevention: Avoid duplicating configuration values in documentation; reference t
 ## 2026-04-25 - Fixing Privacy Policy Drift across Localized Versions
 **Learning:** When updating `PRIVACY.md` to reflect new local storage keys (like `language` and `f1_schedule_cache`), it's crucial to also update all localized versions in `public/privacy/` to maintain consistency and compliance. Scripts can be used to safely append new items while matching surrounding formatting.
 **Action:** Always write a script or manually ensure that any modifications to the root `PRIVACY.md` list of local storage items are faithfully replicated across all `public/privacy/PRIVACY.*.md` variants.
+
+## 2026-04-28 - Regex Limitations and Formatting When Injecting Legal Text
+
+**Learning:** When using Node.js scripts to inject text into markdown files (like `PRIVACY.*.md`), using template literals with indentation can inadvertently inject whitespace, breaking markdown formatting by converting text into code blocks. Also, relying on complex `RegExp` for trailing lines with various localized characters can fail (e.g., throwing `SyntaxError: Invalid regular expression... Nothing to repeat`) if the regex string is not properly escaped for all possible localized punctuation.
+**Action:** Always left-align script contents and template literals in heredocs (e.g., `cat << 'EOF' > script.cjs`). Use exact string replacements or highly simplified regexes (like `targetAfter: 'Leaflet'`) to bypass character encoding and regex escaping errors in localized files.

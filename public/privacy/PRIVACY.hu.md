@@ -47,6 +47,12 @@ A böngészője közvetlenül is csatlakozhat harmadik féltől származó szolg
 
 ### Térképek és Eszközök
 
+**Mapbox**
+
+- **Cel:** Biztositja az elsodleges terkephatter csempeket es a vektoros megjelenitest.
+- **Elkuldott Adatok:** A bongeszoje kozvetlenul csatlakozik a Mapbox API-khoz (`api.mapbox.com` es `events.mapbox.com`). Az IP-cime es a keres metaadatai a szokvanyos webes keresek reszekent lathatoak a Mapbox szamara.
+- **Adatvedelmi Iranyelvek:** [mapbox.com/legal/privacy](https://www.mapbox.com/legal/privacy/)
+
 **Carto (OpenStreetMap)**
 
 - **Cél:** Alaptérkép csempék.
@@ -72,6 +78,7 @@ A böngészője közvetlenül is csatlakozhat harmadik féltől származó szolg
 - **GitHub (bacinger/f1-circuits):** GeoJSON pályafájlok.
 - **RainViewer:** Radar metaadatok és csempék.
 - **Leaflet (az Unpkg-n keresztül):** Térképkönyvtár eszközei.
+- **Mapbox (a Mapbox CDN-en keresztül):** Térkép interakciós könyvtár eszközei (biztonsági okokból proxizva).
 
 ## Helyi Tárolás
 
