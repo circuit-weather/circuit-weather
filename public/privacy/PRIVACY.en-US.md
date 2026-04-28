@@ -47,6 +47,12 @@ Your browser may connect directly to third-party services for maps, tiles, and w
 
 ### Mapping and Assets
 
+**Mapbox**
+
+- **Purpose:** Provides the primary map background tiles and vector rendering.
+- **Data sent:** Your browser connects directly to Mapbox APIs (`api.mapbox.com` and `events.mapbox.com`). Your IP address and request metadata are visible to Mapbox as part of standard web requests.
+- **Privacy policy:** [mapbox.com/legal/privacy](https://www.mapbox.com/legal/privacy/)
+
 **Carto (OpenStreetMap)**
 
 - **Purpose:** Basemap tiles.
@@ -72,6 +78,7 @@ Your browser may connect directly to third-party services for maps, tiles, and w
 - **GitHub (bacinger/f1-circuits):** GeoJSON track files.
 - **RainViewer:** Radar metadata and tiles.
 - **Leaflet (via Unpkg):** Map library assets.
+- **Mapbox (via Mapbox CDN):** Map interaction library assets (proxied for security).
 
 ## Local Storage
 

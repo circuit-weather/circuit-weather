@@ -47,6 +47,12 @@ Circuit Weather は、Formula 1 サーキット向けのリアルタイム天気
 
 ### 地図とアセット
 
+**Mapbox**
+
+- **目的:** 主要なマップ背景タイルとベクターレンダリングを提供します。
+- **送信されるデータ:** ブラウザは直接 Mapbox API (`api.mapbox.com` および `events.mapbox.com`) に接続します。IPアドレスとリクエストのメタデータは標準的なウェブリクエストの一部としてMapboxに表示されます。
+- **プライバシーポリシー:** [mapbox.com/legal/privacy](https://www.mapbox.com/legal/privacy/)
+
 **Carto (OpenStreetMap)**
 
 - **目的:** ベースマップタイルの提供。
@@ -72,6 +78,7 @@ Circuit Weather は、Formula 1 サーキット向けのリアルタイム天気
 - **GitHub (bacinger/f1-circuits)**
 - **RainViewer**
 - **Leaflet (via Unpkg)**
+- **Mapbox (Mapbox CDN 経由):** マップライブラリアセット (セキュリティのためプロキシされます)。
 
 ## ローカルストレージ
 

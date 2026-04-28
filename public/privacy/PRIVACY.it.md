@@ -47,6 +47,12 @@ Il browser puo connettersi direttamente ad alcuni servizi per mappe, tile e widg
 
 ### Mappe e asset
 
+**Mapbox**
+
+- **Scopo:** Fornisce i tile di sfondo della mappa principali e il rendering vettoriale.
+- **Dati Inviati:** Il tuo browser si connette direttamente alle API di Mapbox (`api.mapbox.com` e `events.mapbox.com`). Il tuo indirizzo IP e i metadati della richiesta sono visibili a Mapbox come parte delle richieste web standard.
+- **Politica sulla privacy:** [mapbox.com/legal/privacy](https://www.mapbox.com/legal/privacy/)
+
 **Carto (OpenStreetMap)**
 
 - **Scopo:** Tile mappa base.
@@ -72,6 +78,7 @@ Il browser puo connettersi direttamente ad alcuni servizi per mappe, tile e widg
 - **GitHub (bacinger/f1-circuits)**
 - **RainViewer**
 - **Leaflet (via Unpkg)**
+- **Mapbox (via Mapbox CDN):** Asset della libreria mappa (proxati per sicurezza).
 
 ## Archiviazione locale
 
