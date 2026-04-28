@@ -3,6 +3,7 @@ export const it = {
     theme: { toggle: 'Attiva tema chiaro/scuro', switchToLight: 'Passa al tema chiaro', switchToDark: 'Passa al tema scuro' },
     loading: { schedule: 'Caricamento calendario gare...', session: 'Caricamento dati sessione...' },
     controls: {
+        onlyF1Supported: 'Attualmente e supportata solo la Formula 1', f1: 'Formula 1',
         series: 'Serie', round: 'Round', session: 'Sessione', units: 'Unita',
         selectRound: 'Seleziona round...', selectRoundFirst: 'Seleziona prima un round', selectSession: 'Seleziona sessione...',
         metricLabel: 'Chilometri', imperialLabel: 'Miglia',

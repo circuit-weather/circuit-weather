@@ -3,6 +3,7 @@ export const fr = {
     theme: { toggle: 'Basculer mode clair/sombre', switchToLight: 'Passer en mode clair', switchToDark: 'Passer en mode sombre' },
     loading: { schedule: 'Chargement du calendrier des courses...', session: 'Chargement des donnees de session...' },
     controls: {
+        onlyF1Supported: 'Seule la Formule 1 est actuellement prise en charge', f1: 'Formule 1',
         series: 'Serie', round: 'Manche', session: 'Session', units: 'Unites',
         selectRound: 'Selectionner une manche...', selectRoundFirst: 'Selectionnez d\'abord une manche', selectSession: 'Selectionner une session...',
         metricLabel: 'Kilometres', imperialLabel: 'Miles',
