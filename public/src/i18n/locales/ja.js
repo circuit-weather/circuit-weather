@@ -3,6 +3,7 @@ export const ja = {
     theme: { toggle: 'ライト/ダークモードを切り替え', switchToLight: 'ライトモードに切り替え', switchToDark: 'ダークモードに切り替え' },
     loading: { schedule: 'レーススケジュールを読み込み中...', session: 'セッションデータを読み込み中...' },
     controls: {
+        onlyF1Supported: '現在はF1のみサポートされています', f1: 'F1',
         series: 'シリーズ', round: 'ラウンド', session: 'セッション', units: '単位',
         selectRound: 'ラウンドを選択...', selectRoundFirst: '先にラウンドを選択してください', selectSession: 'セッションを選択...',
         metricLabel: 'キロメートル', imperialLabel: 'マイル',

@@ -18,6 +18,7 @@ export const hu = {
         switchToDark: 'Váltás sötét módra',
     },
     controls: {
+        onlyF1Supported: 'Jelenleg csak a Forma-1 támogatott', f1: 'Forma-1',
         series: 'Sorozat',
         round: 'Forduló',
         session: 'Esemény',

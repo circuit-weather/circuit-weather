@@ -3,6 +3,7 @@ export const ptBR = {
     theme: { toggle: 'Alternar modo claro/escuro', switchToLight: 'Mudar para modo claro', switchToDark: 'Mudar para modo escuro' },
     loading: { schedule: 'A carregar calendario de corridas...', session: 'A carregar dados da sessao...' },
     controls: {
+        onlyF1Supported: 'Atualmente, apenas a Formula 1 e suportada', f1: 'Formula 1',
         series: 'Serie', round: 'Ronda', session: 'Sessao', units: 'Unidades',
         selectRound: 'Selecionar ronda...', selectRoundFirst: 'Selecione primeiro uma ronda', selectSession: 'Selecionar sessao...',
         metricLabel: 'Quilometros', imperialLabel: 'Milhas',

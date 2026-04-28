@@ -3,6 +3,7 @@ export const zhCN = {
     theme: { toggle: '切换明亮/深色模式', switchToLight: '切换到明亮模式', switchToDark: '切换到深色模式' },
     loading: { schedule: '正在加载比赛赛历...', session: '正在加载赛段数据...' },
     controls: {
+        onlyF1Supported: '目前仅支持 F1', f1: 'F1',
         series: '系列赛', round: '分站', session: '赛段', units: '单位',
         selectRound: '选择分站...', selectRoundFirst: '请先选择分站', selectSession: '选择赛段...',
         metricLabel: '公里', imperialLabel: '英里',

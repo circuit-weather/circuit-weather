@@ -3,6 +3,7 @@ export const es = {
     theme: { toggle: 'Cambiar modo claro/oscuro', switchToLight: 'Cambiar a modo claro', switchToDark: 'Cambiar a modo oscuro' },
     loading: { schedule: 'Cargando calendario de carreras...', session: 'Cargando datos de la sesion...' },
     controls: {
+        onlyF1Supported: 'Actualmente solo se admite Formula 1', f1: 'Formula 1',
         series: 'Serie', round: 'Ronda', session: 'Sesion', units: 'Unidades',
         selectRound: 'Selecciona ronda...', selectRoundFirst: 'Selecciona una ronda primero', selectSession: 'Selecciona sesion...',
         metricLabel: 'Kilometros', imperialLabel: 'Millas',
