@@ -1508,6 +1508,62 @@ describe('CircuitWeatherApp Pure Methods', () => {
             global.ResizeObserver = origRo;
             global.MutationObserver = origMo;
         });
+
+        it('observes dynamically added map controls using MutationObserver', () => {
+            let moCb = null;
+            const origMo = global.MutationObserver;
+            global.MutationObserver = vi.fn(function(cb) {
+                moCb = cb;
+                this.observe = vi.fn();
+                this.disconnect = vi.fn();
+            });
+
+            let resizeCb = null;
+            const origRo = global.ResizeObserver;
+            let mockObserve = vi.fn();
+            global.ResizeObserver = vi.fn(function(cb) {
+                resizeCb = cb;
+                this.observe = mockObserve;
+                this.disconnect = vi.fn();
+            });
+
+            let rafCb = null;
+            const origRaf = global.requestAnimationFrame;
+            global.requestAnimationFrame = vi.fn(cb => {
+                rafCb = cb;
+                return 123;
+            });
+
+            app.updateLayoutOffsets = vi.fn();
+
+            // Mock Node globally as it's used in CircuitWeatherApp.js
+            const origNode = global.Node;
+            global.Node = { ELEMENT_NODE: 1 };
+
+            app.initResizeObserver();
+
+            // Simulate mutation adding a relevant node
+            const mockNode = {
+                nodeType: 1, // Node.ELEMENT_NODE
+                matches: vi.fn(sel => sel === '.mapboxgl-ctrl-bottom-left'),
+                querySelector: vi.fn()
+            };
+
+            moCb([{ addedNodes: [mockNode] }]);
+
+            expect(mockObserve).toHaveBeenCalledWith(mockNode);
+            expect(requestAnimationFrame).toHaveBeenCalledTimes(1);
+
+            // Restore globals
+            global.MutationObserver = origMo;
+            global.ResizeObserver = origRo;
+            global.requestAnimationFrame = origRaf;
+            if (origNode !== undefined) {
+                global.Node = origNode;
+            } else {
+                delete global.Node;
+            }
+        });
     });
 
     describe('Mobile Visibility', () => {
