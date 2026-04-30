@@ -49,7 +49,7 @@ export class CountdownTimer {
         let timeText;
         if (hours > 24) {
             const days = Math.floor(hours / 24);
-            timeText = `${days}d ${hours % 24}h`;
+            timeText = `${days}${i18n.t('countdown.dayShort')} ${hours % 24}${i18n.t('countdown.hourShort')}`;
         } else {
             timeText = `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
         }
