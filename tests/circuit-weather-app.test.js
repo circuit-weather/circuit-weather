@@ -153,7 +153,9 @@ vi.mock('../public/src/map/MapWeatherWidget.js', () => ({
     MapWeatherWidget: vi.fn().mockImplementation(function () {
         return {
             addTo: vi.fn(),
-            update: vi.fn()
+            update: vi.fn(),
+            onAdd: vi.fn(),
+            onRemove: vi.fn()
         }
     })
 }));
@@ -1253,6 +1255,28 @@ describe('CircuitWeatherApp Pure Methods', () => {
             app.mapManager.init = vi.fn().mockReturnValue({});
         });
 
+        it('wraps widget in L.Control for Leaflet initialization', async () => {
+            const mockAddControl = vi.fn();
+            vi.stubGlobal('L', { Control: { extend: vi.fn().mockReturnValue(class MockControl {}) } });
+            app.mapWeatherWidget = { onAdd: vi.fn(), onRemove: vi.fn() };
+            app.mapManager.init = vi.fn().mockResolvedValue({ hasLayer: true, addControl: mockAddControl });
+
+            await app.init();
+
+            expect(global.L.Control.extend).toHaveBeenCalledWith(expect.objectContaining({
+                options: { position: 'topright' },
+                onAdd: expect.any(Function),
+                onRemove: expect.any(Function)
+            }));
+            expect(mockAddControl).toHaveBeenCalled();
+
+            const extendArg = global.L.Control.extend.mock.calls[0][0];
+            extendArg.onAdd({});
+            extendArg.onRemove({});
+            expect(app.mapWeatherWidget.onAdd).toHaveBeenCalled();
+            expect(app.mapWeatherWidget.onRemove).toHaveBeenCalled();
+        });
+
         it('successfully initializes components and fetches schedule', async () => {
             app.mapManager.init = vi.fn().mockResolvedValue({ hasLayer: false, addControl: vi.fn() });
 
@@ -1425,6 +1449,21 @@ describe('CircuitWeatherApp Pure Methods', () => {
             if (vi.isFakeTimers()) {
                 vi.useRealTimers();
             }
+        });
+
+        it('calculates top offset from banner bottom when banner height is > 0', () => {
+            app.mobileQuery = { matches: true };
+
+            app.ui.mobileRaceInfo.getBoundingClientRect = vi.fn(() => ({ height: 44, bottom: 100 }));
+            app.ui.radarControls.getBoundingClientRect = vi.fn(() => ({ height: 0 }));
+            app.ui.mapContainer.getBoundingClientRect = vi.fn(() => ({ bottom: 800 }));
+
+            const spy = vi.spyOn(document.documentElement.style, 'setProperty');
+
+            app.updateLayoutOffsets();
+
+            // Expected mobileTopVar = Math.max(0, 100 - 56) + 2 = 46
+            expect(spy).toHaveBeenCalledWith('--mobile-top-offset', '46px');
         });
 
         it('calculates top offset from mobile header when banner height is 0', () => {
