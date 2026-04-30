@@ -161,6 +161,7 @@ export class CircuitWeatherApp {
             if (btn) {
                 btn.addEventListener('click', () => {
                     btn.disabled = true;
+                    btn.setAttribute('aria-disabled', 'true');
                     // Palette UX: Add loading spinner to async submit button
                     btn.innerHTML = `<svg style="width: 1rem; height: 1rem; margin-right: 0.5rem; animation: spin 1s linear infinite;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"></path></svg>${escapeHtml(i18n.t('common.retrying'))}`;
                     btn.setAttribute('aria-label', i18n.t('errors.retryingConnection'));
@@ -395,6 +396,7 @@ export class CircuitWeatherApp {
                     // Palette UX: Reset session select when round is cleared
                     if (this.ui.sessionSelect) {
                         this.ui.sessionSelect.disabled = true;
+                        this.ui.sessionSelect.setAttribute('aria-disabled', 'true');
                         this.ui.sessionSelect.title = i18n.t('controls.selectRoundFirst');
                         this.ui.sessionSelect.innerHTML = `<option value="">${escapeHtml(i18n.t('controls.selectRoundFirst'))}</option>`;
                     }
@@ -735,6 +737,7 @@ export class CircuitWeatherApp {
         if (!select) return;
 
         select.disabled = false;
+        select.setAttribute('aria-disabled', 'false');
         select.removeAttribute('title');
         select.innerHTML = `<option value="">${escapeHtml(i18n.t('controls.selectSession'))}</option>`;
 
