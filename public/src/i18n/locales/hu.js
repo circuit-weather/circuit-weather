@@ -82,8 +82,7 @@ export const hu = {
         minute: 'perc',
         minutePlural: 'perc',
         second: 'másodperc',
-        secondPlural: 'másodperc',
-    },
+        secondPlural: 'másodperc', dayShort: 'n', hourShort: 'ó'},
     map: {
         recenterOnCircuit: 'Központosítás a pályára',
         zoomIn: 'Nagyítás',

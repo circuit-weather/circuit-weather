@@ -26,7 +26,7 @@ export const zhCN = {
         connectionInstability: '连接不稳定', serviceError: '服务错误', highTraffic: '访问量高',
         rateLimitExceeded: '请求过于频繁，已暂时暂停。', retryingFailedTiles: '正在重试 {{count}} 个失败瓦片...', radarStatus: '雷达状态: {{status}}',
     },
-    countdown: { startsIn: '开始倒计时', day: '天', dayPlural: '天', hour: '小时', hourPlural: '小时', minute: '分钟', minutePlural: '分钟', second: '秒', secondPlural: '秒' },
+    countdown: { startsIn: '开始倒计时', day: '天', dayPlural: '天', hour: '小时', hourPlural: '小时', minute: '分钟', minutePlural: '分钟', second: '秒', secondPlural: '秒' , dayShort: '天', hourShort: '小时' },
     map: { recenterOnCircuit: '回到赛道中心', zoomIn: '放大', zoomOut: '缩小' },
     privacy: {
         link: '隐私',
