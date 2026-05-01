@@ -1054,21 +1054,22 @@ export class CircuitWeatherApp {
 
             // Scout: Upgraded generic unordered list (ul) to an ordered list (ol) to semantically indicate to search engines and screen readers that the hourly forecast is a chronological, time-ordered sequence of events.
             timelineHtml = `
-                <div class="weather-timeline" id="weatherTimeline" tabindex="0" role="region" data-i18n-attr="aria-label:forecast.hourlyForecast" aria-label="${escapeHtml(i18n.t('forecast.hourlyForecast'))}">
+                <section class="weather-timeline" id="weatherTimeline" tabindex="0" data-i18n-attr="aria-label:forecast.hourlyForecast" aria-label="${escapeHtml(i18n.t('forecast.hourlyForecast'))}">
                     <ol class="weather-timeline-list">
                         ${items}
                     </ol>
-                </div>
+                </section>
             `;
         }
 
         // Inject into content
         if (content) {
             content.innerHTML = `
-                <div class="weather-dashboard">
+                <!-- Scout: Upgraded generic div wrappers to semantic article and section for explicit document outline parsing -->
+                <article class="weather-dashboard">
                     ${currentHtml}
                     ${timelineHtml}
-                </div>
+                </article>
             `;
         }
     }
