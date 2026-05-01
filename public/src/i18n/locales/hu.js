@@ -93,7 +93,7 @@ export const hu = {
         title: 'Adatvédelmi irányelvek',
         closePolicy: 'Adatvédelmi irányelvek bezárása',
         contentAria: 'Adatvédelmi irányelvek tartalma',
-        opensInNewTab: 'új lapon nyílik meg',
+        opensInNewTab: '(új lapon nyílik meg)',
         loadFailed: 'Nem sikerült betölteni az adatvédelmi irányelveket. Kérjük, próbálja újra később.',
     },
     errors: {

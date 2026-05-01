@@ -35,7 +35,7 @@ export const it = {
         title: 'Informativa sulla privacy',
         closePolicy: 'Chiudi informativa sulla privacy',
         contentAria: 'Contenuto informativa sulla privacy',
-        opensInNewTab: 'si apre in una nuova scheda',
+        opensInNewTab: '(si apre in una nuova scheda)',
         loadFailed: 'Impossibile caricare la privacy policy. Riprova piu tardi.',
     },
     errors: {
