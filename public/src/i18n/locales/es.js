@@ -36,7 +36,7 @@ export const es = {
         title: 'Politica de privacidad',
         closePolicy: 'Cerrar politica de privacidad',
         contentAria: 'Contenido de la politica de privacidad',
-        opensInNewTab: 'se abre en una pestana nueva',
+        opensInNewTab: '(se abre en una pestana nueva)',
         loadFailed: 'No se pudo cargar la politica de privacidad. Intentalo de nuevo mas tarde.',
     },
     errors: {

@@ -34,7 +34,7 @@ export const de = {
         title: 'Datenschutzerklarung',
         closePolicy: 'Datenschutzerklarung schliessen',
         contentAria: 'Inhalt der Datenschutzerklarung',
-        opensInNewTab: 'wird in einem neuen Tab geoffnet',
+        opensInNewTab: '(wird in einem neuen Tab geoffnet)',
         loadFailed: 'Datenschutzerklarung konnte nicht geladen werden. Bitte spater erneut versuchen.',
     },
     errors: {

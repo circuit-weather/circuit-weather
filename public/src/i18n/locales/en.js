@@ -94,7 +94,7 @@ export const en = {
         title: 'Privacy Policy',
         closePolicy: 'Close privacy policy',
         contentAria: 'Privacy Policy content',
-        opensInNewTab: 'opens in a new tab',
+        opensInNewTab: '(opens in a new tab)',
         loadFailed: 'Failed to load privacy policy. Please try again later.',
     },
     errors: {

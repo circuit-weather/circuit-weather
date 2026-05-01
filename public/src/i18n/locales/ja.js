@@ -33,7 +33,7 @@ export const ja = {
         title: 'プライバシーポリシー',
         closePolicy: 'プライバシーポリシーを閉じる',
         contentAria: 'プライバシーポリシーの内容',
-        opensInNewTab: '新しいタブで開きます',
+        opensInNewTab: '(新しいタブで開きます)',
         loadFailed: 'プライバシーポリシーを読み込めませんでした。後でもう一度お試しください。',
     },
     errors: {

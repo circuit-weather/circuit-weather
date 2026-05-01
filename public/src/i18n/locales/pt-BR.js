@@ -35,7 +35,7 @@ export const ptBR = {
         title: 'Politica de privacidade',
         closePolicy: 'Fechar politica de privacidade',
         contentAria: 'Conteudo da politica de privacidade',
-        opensInNewTab: 'abre em novo separador',
+        opensInNewTab: '(abre em novo separador)',
         loadFailed: 'Falha ao carregar a politica de privacidade. Tente novamente mais tarde.',
     },
     errors: {

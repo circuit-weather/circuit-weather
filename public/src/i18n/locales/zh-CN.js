@@ -33,7 +33,7 @@ export const zhCN = {
         title: '隐私政策',
         closePolicy: '关闭隐私政策',
         contentAria: '隐私政策内容',
-        opensInNewTab: '将在新标签页打开',
+        opensInNewTab: '(将在新标签页打开)',
         loadFailed: '无法加载隐私政策。请稍后重试。',
     },
     errors: {

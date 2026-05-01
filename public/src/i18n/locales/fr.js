@@ -35,7 +35,7 @@ export const fr = {
         title: 'Politique de confidentialite',
         closePolicy: 'Fermer la politique de confidentialite',
         contentAria: 'Contenu de la politique de confidentialite',
-        opensInNewTab: 'ouvre dans un nouvel onglet',
+        opensInNewTab: '(ouvre dans un nouvel onglet)',
         loadFailed: 'Impossible de charger la politique de confidentialite. Veuillez reessayer plus tard.',
     },
     errors: {
