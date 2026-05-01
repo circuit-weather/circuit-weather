@@ -22,3 +22,7 @@
 
 **Learning:** Adding the `<meta name="robots" content="max-image-preview:large">` directive is a highly effective, invisible SEO optimization that enables Google Discover and search results to use large, high-quality image previews, drastically improving Click-Through Rates (CTR).
 **Action:** When acting as Scout, actively seek out opportunities to add or augment the `robots` meta tag with `max-image-preview:large`, `max-snippet:-1`, and `max-video-preview:-1` on content-heavy pages.
+## 2025-05-01 - Cloudflare API Workers Cannot Do Edge HTML SEO Rewrites
+
+**Learning:** The application uses Cloudflare Pages/Workers (`wrangler.toml`) where `src/worker.js` is configured to only intercept API routes (`run_worker_first = ["/api/*"]`). It cannot be used for Edge HTML rewriting (e.g., dynamically injecting specific Open Graph meta tags for Facebook crawlers) because the main SPA HTML is served directly as a static asset.
+**Action:** When attempting to improve static metadata that requires crawler visibility without executing JS (like `og:image`), do not attempt to write Edge handlers in `src/worker.js`.
