@@ -16,7 +16,7 @@ export const ptBR = {
     },
     weather: {
         currentConditions: 'Condições atuais',
-        temp: 'Temp', rain: 'Chuva', wind: 'Vento', windDirection: 'Direcao do vento: {{direction}} ({{degrees}} graus)',
+        temp: 'Temp.', rain: 'Chuva', wind: 'Vento', windDirection: 'Direcao do vento: {{direction}} ({{degrees}} graus)',
         timelineAria: '{{time}}. {{description}}. Temperatura {{temp}} graus. Probabilidade de chuva {{rain}}%. Vento {{wind}} {{windUnit}}.',
         currentCircuitWeather: 'Tempo atual do circuito', temperature: 'Temperatura', rainChance: 'Chance de chuva', humidity: 'Humidade', windSpeed: 'Velocidade do vento',
     },

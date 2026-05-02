@@ -1,3 +1,3 @@
-## 2024-04-24 - HTML data-i18n-attr for dynamically updated attributes
-**Learning:** Even if an element's attribute (like an `aria-label` or `title`) is dynamically updated by a JavaScript component after load (e.g. `WeatherRadar.js` updating playback speeds), the initial HTML markup must still use `data-i18n-attr` to localize the initial state. This ensures screen readers and crawlers see localized strings before the JS executes.
-**Action:** When extracting hardcoded strings from HTML, check if they represent an initial state for a dynamically updated attribute. If so, create a dedicated base translation key for that initial state and use `data-i18n-attr` to bind it.
+## 2024-05-02 - Degree Symbol in HTML Replacement
+**Learning:** When using `replace_with_git_merge_diff` to extract hardcoded strings in HTML containing special characters (like the degree symbol `°`), terminal output (like `cat`) might render them in a specific way that differs from the raw source code or how it appears in the browser. The `SEARCH` block must strictly match the characters exactly as they appear in the file.
+**Action:** Always verify the exact character representation using a file reader or outputting a very tight `sed` or `head`/`tail` bound on the target lines before attempting a merge diff.
