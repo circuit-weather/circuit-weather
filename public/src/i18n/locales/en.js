@@ -41,7 +41,7 @@ export const en = {
     },
     weather: {
         currentConditions: 'Current Conditions',
-        temp: 'Temp',
+        temp: 'Temp.',
         rain: 'Rain',
         wind: 'Wind',
         windDirection: 'Wind direction: {{direction}} ({{degrees}} degrees)',

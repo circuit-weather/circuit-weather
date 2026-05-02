@@ -16,7 +16,7 @@ export const fr = {
     },
     weather: {
         currentConditions: 'Conditions actuelles',
-        temp: 'Temp', rain: 'Pluie', wind: 'Vent', windDirection: 'Direction du vent : {{direction}} ({{degrees}} degres)',
+        temp: 'Temp.', rain: 'Pluie', wind: 'Vent', windDirection: 'Direction du vent : {{direction}} ({{degrees}} degres)',
         timelineAria: '{{time}}. {{description}}. Temperature {{temp}} degres. Risque de pluie {{rain}}%. Vent {{wind}} {{windUnit}}.',
         currentCircuitWeather: 'Meteo actuelle du circuit', temperature: 'Temperature', rainChance: 'Risque de pluie', humidity: 'Humidite', windSpeed: 'Vitesse du vent',
     },
