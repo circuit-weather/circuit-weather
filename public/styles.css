@@ -1389,6 +1389,7 @@ body {
     text-transform: uppercase;
     letter-spacing: 0.05em;
     color: var(--color-text-secondary);
+    margin: 0;
 }
 
 .race-info-name {
@@ -1405,6 +1406,7 @@ body {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    margin: 0;
 }
 
 /* Mobile Race Info Overlay */
@@ -1494,12 +1496,13 @@ body {
         margin: 0;
     }
 
-    .mobile-race-info-text span:last-child {
+    .mobile-race-info-text p:last-child {
         font-size: 0.7rem;
         color: var(--color-text-secondary);
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+        margin: 0;
     }
 }
 

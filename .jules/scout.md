@@ -26,3 +26,7 @@
 
 **Learning:** The application uses Cloudflare Pages/Workers (`wrangler.toml`) where `src/worker.js` is configured to only intercept API routes (`run_worker_first = ["/api/*"]`). It cannot be used for Edge HTML rewriting (e.g., dynamically injecting specific Open Graph meta tags for Facebook crawlers) because the main SPA HTML is served directly as a static asset.
 **Action:** When attempting to improve static metadata that requires crawler visibility without executing JS (like `og:image`), do not attempt to write Edge handlers in `src/worker.js`.
+## 2025-05-02 - Semantic Tags and Default Browser Margins
+
+**Learning:** Upgrading generic HTML containers (`<div>`, `<span>`) to semantic text tags (like `<p>`) for better SEO document outline introduces default browser user-agent styles (specifically, block-level display and top/bottom margins). This can unexpectedly break the visual layout if the elements were originally designed without margins.
+**Action:** When replacing generic wrappers with semantic text tags, always inspect the corresponding CSS selectors and explicitly add CSS resets (e.g., `margin: 0`) to prevent visual regressions while maintaining semantic value for crawlers.
