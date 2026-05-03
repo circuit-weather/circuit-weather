@@ -75,6 +75,12 @@ const VENDOR_ASSETS = new Map([
   }],
 
   // Mapbox GL JS Assets
+  // NOTE: We only proxy and cache the software libraries (JS/CSS) here for strict CSP compliance.
+  // This is completely acceptable under Mapbox's Terms of Service. Mapbox's strict anti-caching ToS
+  // only applies to "Licensed Map Content" (tiles, styles, geocoding API responses), which our app
+  // fetches directly client-side, bypassing this worker.
+  // Because these static files are heavily cached by Cloudflare, it will cause `api.mapbox.com` to show
+  // a very high cache rate in Cloudflare analytics. This is expected and is NOT a ToS violation.
   ['mapbox-gl.js', {
     upstream: 'https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.js',
     contentTypes: ['application/javascript', 'text/javascript'],
