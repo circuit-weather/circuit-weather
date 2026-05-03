@@ -7,3 +7,6 @@
 ## 2024-05-19 - Screen reader visibility of disabled inputs
 **Learning:** Screen readers might not consistently announce elements with only the `disabled` property. Adding `aria-disabled="true"` to inputs like `select` gives screen reader users explicit information that an element is present but currently inactive, which provides better context than skipping it entirely.
 **Action:** When adding or dynamically toggling the `disabled` property on form elements or buttons, also update the `aria-disabled` attribute to maintain synchronization for assistive technologies.
+## 2026-05-03 - Redundant labels for screen readers
+**Learning:** Adding an internal visually hidden span (e.g., `<span class="sr-only">`) inside an interactive element like a button that already has an explicit `aria-label` causes screen readers to redundantly announce the label twice.
+**Action:** Always avoid using an internal `.sr-only` span for text if the parent interactive element already provides the exact same information via an `aria-label` attribute.
