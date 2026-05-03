@@ -468,6 +468,56 @@ describe('CircuitWeatherApp Pure Methods', () => {
     });
 
     // ---------------------------------------------------------------
+
+    // ---------------------------------------------------------------
+    // populateSessionSelect
+    // ---------------------------------------------------------------
+    describe('populateSessionSelect', () => {
+        beforeEach(() => {
+            app.ui.sessionSelect = createMockElement('sessionSelect');
+            app.getGloballyNextSession = vi.fn().mockReturnValue(null);
+            app.selectedRace = { round: '1' };
+        });
+
+        it('disables select and returns early if sessionSelect UI element does not exist', () => {
+            app.ui.sessionSelect = null;
+            expect(() => app.populateSessionSelect([])).not.toThrow();
+        });
+
+        it('populates session select options properly', () => {
+            const sessions = [
+                { id: 'fp1', name: 'Practice 1', date: '2024-03-01', time: '12:00:00Z' },
+                { id: 'race', name: 'Race', date: '2024-03-03', time: '14:00:00Z' }
+            ];
+
+            app.populateSessionSelect(sessions);
+
+            expect(app.ui.sessionSelect.disabled).toBe(false);
+            expect(app.ui.sessionSelect.setAttribute).toHaveBeenCalledWith('aria-disabled', 'false');
+            expect(app.ui.sessionSelect.removeAttribute).toHaveBeenCalledWith('title');
+
+            expect(documentMock.createDocumentFragment).toHaveBeenCalled();
+            expect(app.ui.sessionSelect.innerHTML).toContain('Select session...');
+        });
+
+        it('marks the session as (Next) if it matches the globally next session', () => {
+            const sessions = [
+                { id: 'race', name: 'Race', date: '2024-03-03', time: '14:00:00Z' }
+            ];
+            app.getGloballyNextSession.mockReturnValue({ round: '1', sessionId: 'race' });
+
+            let createdOption = null;
+            documentMock.createElement.mockImplementationOnce((tag) => {
+                createdOption = { value: '', textContent: '' };
+                return createdOption;
+            });
+
+            app.populateSessionSelect(sessions);
+
+            expect(createdOption.textContent).toContain('(Next)');
+        });
+    });
+
     // ---------------------------------------------------------------
     // selectSession — outcome: session set, radar loaded, countdown started
     // ---------------------------------------------------------------
