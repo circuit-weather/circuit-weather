@@ -10,3 +10,6 @@
 ## 2026-05-03 - Redundant labels for screen readers
 **Learning:** Adding an internal visually hidden span (e.g., `<span class="sr-only">`) inside an interactive element like a button that already has an explicit `aria-label` causes screen readers to redundantly announce the label twice.
 **Action:** Always avoid using an internal `.sr-only` span for text if the parent interactive element already provides the exact same information via an `aria-label` attribute.
+## 2024-05-04 - Sidebar Links Focus Visibility
+**Learning:** External links and link-buttons used in the sidebar footer (Language, Privacy, GitHub) were visually indistinguishable from non-focused states when navigated via keyboard, despite having hover states. Relying only on hover states degrades accessibility for non-pointer users.
+**Action:** When adding or reviewing interactive footer links, ensure they include `:focus-visible` CSS rules that match the application's primary focus ring pattern (e.g., `outline: 2px solid var(--color-primary); outline-offset: 2px;`) to meet WCAG focus visibility requirements without compromising mouse user experience.
