@@ -157,6 +157,23 @@ describe('Worker Security: Strict Content-Type Validation', () => {
     });
   });
 
+  describe('Track Proxy (/api/track/*)', () => {
+    it('blocks deceptive type: text/html', async () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      mockFetch.mockResolvedValueOnce(new Response('<html></html>', {
+        status: 200,
+        headers: { 'Content-Type': 'text/html' }
+      }));
+
+      const req = createRequest('/api/track/monaco');
+      const res = await worker.fetch(req, global.env, global.ctx);
+
+      expect(res.status).toBe(502);
+      expect(errorSpy).toHaveBeenCalled();
+      errorSpy.mockRestore();
+    });
+  });
+
   describe('Vendor Assets Proxy (/api/assets/*)', () => {
     it('allows text/css; charset=utf-8', async () => {
         // Valid hash for leaflet.css
