@@ -6,7 +6,8 @@ import { i18n } from '../i18n/index.js';
  */
 class MapWeatherWidgetClass {
     constructor() {
-        this._div = document.createElement('div');
+        // Scout: Upgraded generic div to semantic section to improve document outline and explicitly signal this standalone widget region to search engines.
+        this._div = document.createElement('section');
         this._div.className = 'leaflet-control-weather mapboxgl-ctrl mapboxgl-ctrl-group';
         this._div.setAttribute('role', 'region');
         this._div.setAttribute('aria-label', i18n.t('weather.currentCircuitWeather'));
