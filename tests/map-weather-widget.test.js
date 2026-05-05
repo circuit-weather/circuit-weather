@@ -80,7 +80,7 @@ describe('MapWeatherWidget', () => {
     });
 
     it('should initialize with correct DOM structure', () => {
-        expect(document.createElement).toHaveBeenCalledWith('div');
+        expect(document.createElement).toHaveBeenCalledWith('section');
         expect(widget._div).toBeDefined();
         expect(widget._div.setAttribute).toHaveBeenCalledWith('data-i18n-attr', 'aria-label:weather.currentCircuitWeather');
 

@@ -30,3 +30,7 @@
 
 **Learning:** Upgrading generic HTML containers (`<div>`, `<span>`) to semantic text tags (like `<p>`) for better SEO document outline introduces default browser user-agent styles (specifically, block-level display and top/bottom margins). This can unexpectedly break the visual layout if the elements were originally designed without margins.
 **Action:** When replacing generic wrappers with semantic text tags, always inspect the corresponding CSS selectors and explicitly add CSS resets (e.g., `margin: 0`) to prevent visual regressions while maintaining semantic value for crawlers.
+## 2025-05-02 - Upgrading DOM elements requires test updates
+
+**Learning:** Upgrading generic root container tags (like changing `document.createElement('div')` to `'section'`) for better semantic meaning directly breaks rigid Vitest spies, such as `expect(document.createElement).toHaveBeenCalledWith('div')`.
+**Action:** When upgrading or modifying the root HTML tags of UI components, always `grep` for and update corresponding strict DOM creation assertions in the Vitest test files to prevent test suite regressions.
