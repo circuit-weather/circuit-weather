@@ -599,6 +599,11 @@ body {
     color: var(--color-primary);
 }
 
+.link-button:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
 .sidebar-footer span {
     color: var(--color-border);
 }
@@ -1833,6 +1838,11 @@ button:disabled,
     display: inline-flex;
     align-items: center;
     gap: 4px;
+}
+
+.external-link:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
 }
 
 .icon-external {
