@@ -163,7 +163,7 @@ export class CircuitWeatherApp {
                     btn.disabled = true;
                     btn.setAttribute('aria-disabled', 'true');
                     // Palette UX: Add loading spinner to async submit button
-                    btn.innerHTML = `<svg style="width: 1rem; height: 1rem; margin-right: 0.5rem; animation: spin 1s linear infinite;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"></path></svg>${escapeHtml(i18n.t('common.retrying'))}`;
+                    btn.innerHTML = `<svg aria-hidden="true" style="width: 1rem; height: 1rem; margin-right: 0.5rem; animation: spin 1s linear infinite;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"></path></svg>${escapeHtml(i18n.t('common.retrying'))}`;
                     btn.setAttribute('aria-label', i18n.t('errors.retryingConnection'));
                     window.location.reload();
                 });

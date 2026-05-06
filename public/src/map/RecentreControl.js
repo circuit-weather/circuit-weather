@@ -32,7 +32,7 @@ export class RecentreControl {
         this.button.setAttribute('aria-label', recenterLabel);
         this.button.setAttribute('aria-keyshortcuts', 'c');
         this.button.innerHTML = `
-            <svg class="recentre-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 20px; height: 20px;">
+            <svg class="recentre-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 20px; height: 20px;">
                 <circle cx="12" cy="12" r="3"/>
                 <path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>
             </svg>
