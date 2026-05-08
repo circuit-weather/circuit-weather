@@ -710,6 +710,15 @@ body {
     background: var(--color-surface-elevated) !important;
 }
 
+.leaflet-control-zoom a:focus-visible,
+.leaflet-control-zoom-in:focus-visible,
+.leaflet-control-zoom-out:focus-visible,
+.leaflet-control-zoom-recentre:focus-visible {
+    outline: 2px solid var(--color-primary) !important;
+    outline-offset: 2px;
+    z-index: 10;
+}
+
 /* Range Circle Labels */
 .range-label {
     background: transparent !important;
