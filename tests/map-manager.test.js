@@ -632,3 +632,54 @@ describe("MapManager", () => {
     });
   });
 });
+
+
+
+describe("MapManager coverage test", () => {
+    let mapManager;
+    let mapboxMapMock;
+
+    beforeEach(() => {
+        mapboxMapMock = {
+            getStyle: vi.fn(),
+            getLayoutProperty: vi.fn(),
+            setLayoutProperty: vi.fn(),
+            on: vi.fn(),
+        };
+        mapManager = new MapManager();
+        mapManager.isMapbox = true;
+        mapManager.map = mapboxMapMock;
+    });
+
+    it('should ignore layers without text-field property', () => {
+        mapboxMapMock.getStyle.mockReturnValue({
+            layers: [{ id: 'layer1', type: 'symbol' }]
+        });
+        mapboxMapMock.getLayoutProperty.mockReturnValue(undefined);
+
+        mapManager.applyMapLanguage('fr');
+
+        expect(mapboxMapMock.setLayoutProperty).not.toHaveBeenCalled();
+    });
+
+    it('should ignore layers without name field in text-field expression', () => {
+        mapboxMapMock.getStyle.mockReturnValue({
+            layers: [{ id: 'layer1', type: 'symbol' }]
+        });
+        mapboxMapMock.getLayoutProperty.mockReturnValue(['get', 'highway']); // No "name" or 'name'
+
+        mapManager.applyMapLanguage('fr');
+
+        expect(mapboxMapMock.setLayoutProperty).not.toHaveBeenCalled();
+    });
+
+    it('should ignore layers that are not symbol type', () => {
+        mapboxMapMock.getStyle.mockReturnValue({
+            layers: [{ id: 'layer1', type: 'fill' }]
+        });
+
+        mapManager.applyMapLanguage('fr');
+
+        expect(mapboxMapMock.setLayoutProperty).not.toHaveBeenCalled();
+    });
+});
