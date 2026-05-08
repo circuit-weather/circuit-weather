@@ -22,12 +22,14 @@ Key features include:
 - **Distance Markers:** Toggle range circles to gauge how far the rain is from the track (in km or miles).
 - **Theme Support:** Automatically adapts to your system's dark or light mode, or you can toggle it manually.
 - **Deep Linking:** Navigate directly to a specific race or session via the URL.
+- **Weather Forecast:** View detailed, session-specific weather forecasts.
+- **Multi-language Support:** Use the app in your preferred language.
 - **Responsive Design:** Works great on your phone, tablet, or desktop.
 - **Installable PWA:** Add to your home screen on mobile for a native app-like experience — no app store required.
 
 ## How it works
 
-The application is built with vanilla HTML, CSS, and native ES modules, keeping it lightweight and fast. It uses Mapbox GL JS as the primary map renderer, falling back to Leaflet.js for interesting interactive maps.
+The application is built with vanilla HTML, CSS, and native ES modules, keeping it lightweight and fast. It uses Mapbox GL JS as the primary map renderer, falling back to Leaflet.js for interactive maps.
 
 The frontend is organised into small, maintainable modules located in `public/src/`. It uses native browser support for ES modules (`import`/`export`), which means there is **no build step** required. The files are served directly as-is, making the development workflow extremely simple.
 
