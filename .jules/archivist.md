@@ -228,3 +228,6 @@ Prevention: Avoid duplicating configuration values in documentation; reference t
 
 **Learning:** When using Node.js scripts to inject text into markdown files (like `PRIVACY.*.md`), using template literals with indentation can inadvertently inject whitespace, breaking markdown formatting by converting text into code blocks. Also, relying on complex `RegExp` for trailing lines with various localized characters can fail (e.g., throwing `SyntaxError: Invalid regular expression... Nothing to repeat`) if the regex string is not properly escaped for all possible localized punctuation.
 **Action:** Always left-align script contents and template literals in heredocs (e.g., `cat << 'EOF' > script.cjs`). Use exact string replacements or highly simplified regexes (like `targetAfter: 'Leaflet'`) to bypass character encoding and regex escaping errors in localized files.
+## 2024-05-09 - Missing Caching Durations in Privacy Policy
+**Learning:** The privacy policy only documented caching durations for one out of five proxied data sources, leaving the data retention times for the others ambiguous despite them being explicitly defined in the worker cache headers.
+**Action:** Always verify that documentation of data retention and caching covers all relevant services consistently.
