@@ -1,5 +1,5 @@
 export const en = {
-    common: {
+    common: { github: 'View Source Code on GitHub',
         loading: 'Loading...',
         retry: 'Retry',
         retrying: 'Retrying...',
