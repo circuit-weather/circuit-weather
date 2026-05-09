@@ -1,5 +1,5 @@
 export const hu = {
-    common: {
+    common: { github: 'Forráskód megtekintése a GitHubon',
         loading: 'Betöltés...',
         retry: 'Újrapróbálkozás',
         retrying: 'Újrapróbálkozás folyamatban...',

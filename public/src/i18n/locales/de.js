@@ -1,5 +1,5 @@
 export const de = {
-    common: { loading: 'Wird geladen...', retry: 'Erneut versuchen', retrying: 'Versuche erneut...', selectLanguage: 'Sprache', openMenu: 'Menu offnen', closeMenu: 'Menu schliessen', skipToContent: 'Zum Hauptinhalt springen' },
+    common: { github: 'Quellcode auf GitHub ansehen', loading: 'Wird geladen...', retry: 'Erneut versuchen', retrying: 'Versuche erneut...', selectLanguage: 'Sprache', openMenu: 'Menu offnen', closeMenu: 'Menu schliessen', skipToContent: 'Zum Hauptinhalt springen' },
     theme: { toggle: 'Hell/Dunkelmodus umschalten', switchToLight: 'Zu hellem Modus wechseln', switchToDark: 'Zu dunklem Modus wechseln' },
     loading: { schedule: 'Lade Rennkalender...', session: 'Lade Sessiondaten...' },
     controls: {
