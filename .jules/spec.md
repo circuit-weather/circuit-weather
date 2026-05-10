@@ -4,3 +4,6 @@
 ## 2026-04-30 - Coverage Fractional Over-tuning Danger
 **Learning:** Bumping coverage thresholds to exact fractional values (like 98.78%) makes the CI build extremely brittle, as a tiny code change can drop coverage by 0.01% and fail. Also, threshold increases should stop after hitting healthy standards (~80%) to avoid chasing vanity metrics.
 **Action:** Reverted a fractional threshold bump in `vitest.config.js` while keeping the new test logic intact.
+## 2024-05-15 - Worker Test Environment Mocking
+**Learning:** In Vitest, when testing Cloudflare Worker logic (e.g., `worker.js`), `env` and `ctx` are standard function arguments passed to the `fetch` handler, not global variables. Stubbing them globally with `vi.stubGlobal()` is incorrect and leads to ReferenceErrors in test environments that strictly enforce module boundaries (like `workerd`). Also, applying `vi.stubGlobal('fetch', mockFetch)` without eventually calling `vi.unstubAllGlobals()` causes permanent test pollution that breaks downstream tests sharing the same thread.
+**Action:** When testing worker `fetch` logic, created local `mockEnv` and `mockCtx` objects and passed them directly into the method. Additionally, ensured `vi.unstubAllGlobals()` is called in the test block's `afterEach` (while being mindful of top-level mocks) to prevent leaking global overrides.
