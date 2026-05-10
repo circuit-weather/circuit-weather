@@ -1060,6 +1060,7 @@ export class WeatherRadar {
         this.isPlaying = true;
         if (this.ui.playBtn) {
             this.ui.playBtn.classList.add('playing');
+            this.ui.playBtn.setAttribute('aria-pressed', 'true');
             this.ui.playBtn.setAttribute('aria-label', i18n.t('radar.pause'));
             this.ui.playBtn.setAttribute('title', i18n.t('radar.pauseTitle'));
         }
@@ -1091,6 +1092,7 @@ export class WeatherRadar {
         this.isPlaying = false;
         if (this.ui.playBtn) {
             this.ui.playBtn.classList.remove('playing');
+            this.ui.playBtn.setAttribute('aria-pressed', 'false');
             this.ui.playBtn.setAttribute('aria-label', i18n.t('radar.play'));
             this.ui.playBtn.setAttribute('title', i18n.t('radar.playTitle'));
         }
