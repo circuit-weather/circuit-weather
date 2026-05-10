@@ -34,3 +34,7 @@
 
 **Learning:** Upgrading generic root container tags (like changing `document.createElement('div')` to `'section'`) for better semantic meaning directly breaks rigid Vitest spies, such as `expect(document.createElement).toHaveBeenCalledWith('div')`.
 **Action:** When upgrading or modifying the root HTML tags of UI components, always `grep` for and update corresponding strict DOM creation assertions in the Vitest test files to prevent test suite regressions.
+## 2025-05-10 - Semantic Tags for Third-Party Widgets
+
+**Learning:** Replacing generic wrapper `<div>` elements around third-party scripts (like "Buy me a coffee" sponsorship buttons) with semantic `<aside>` elements explicitly signals to search engine crawlers that the content is secondary or tangentially related, properly pulling it out of the primary document outline without breaking the third-party widget's rendering.
+**Action:** Always consider the structural implication of wrapper tags for external embeds. Use `<aside>` for sponsorships or ads, but ensure existing CSS class names (e.g., `.bmc-container`) are preserved exactly so visual styling remains intact.
