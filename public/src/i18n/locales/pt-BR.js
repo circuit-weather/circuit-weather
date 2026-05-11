@@ -28,7 +28,7 @@ export const ptBR = {
         serviceError: 'Erro de servico', highTraffic: 'Trafego elevado', rateLimitExceeded: 'Limite de pedidos excedido. Pausa momentanea.',
         retryingFailedTiles: 'A tentar novamente {{count}} bloco{{suffix}} com falha...', radarStatus: 'Estado do radar: {{status}}',
     },
-    countdown: { startsIn: 'Comeca em', day: 'dia', dayPlural: 'dias', hour: 'hora', hourPlural: 'horas', minute: 'minuto', minutePlural: 'minutos', second: 'segundo', secondPlural: 'segundos' , dayShort: 'd', hourShort: 'h'},
+    countdown: { startsIn: 'Comeca em', day: 'dia', dayPlural: 'dias', hour: 'hora', hourPlural: 'horas', minute: 'minuto', minutePlural: 'minutos', second: 'segundo', secondPlural: 'segundos' , secondShort: 's', dayShort: 'd', hourShort: 'h'},
     map: { recenterOnCircuit: 'Recentrar no circuito', zoomIn: 'Aproximar', zoomOut: 'Afastar' },
     privacy: {
         link: 'Privacidade',

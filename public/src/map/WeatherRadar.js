@@ -644,7 +644,7 @@ export class WeatherRadar {
 
             const remaining = Math.ceil((endTime - Date.now()) / 1000);
             if (remaining > 0) {
-                this.ui.errorTimer.textContent = `${remaining}s`;
+                this.ui.errorTimer.textContent = `${remaining}${i18n.t('countdown.secondShort')}`;
                 this.toastAnimationFrame = requestAnimationFrame(updateTimer);
             } else {
                 this.ui.errorTimer.textContent = '';

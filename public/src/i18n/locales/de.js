@@ -27,7 +27,7 @@ export const de = {
         serviceError: 'Dienstfehler', highTraffic: 'Hohe Auslastung', rateLimitExceeded: 'Ratenlimit uberschritten. Kurz pausiert.',
         retryingFailedTiles: 'Versuche {{count}} fehlgeschlagene Kachel{{suffix}} erneut...', radarStatus: 'Radarstatus: {{status}}',
     },
-    countdown: { startsIn: 'Startet in', day: 'Tag', dayPlural: 'Tage', hour: 'Stunde', hourPlural: 'Stunden', minute: 'Minute', minutePlural: 'Minuten', second: 'Sekunde', secondPlural: 'Sekunden' , dayShort: 'T', hourShort: 'Std'},
+    countdown: { startsIn: 'Startet in', day: 'Tag', dayPlural: 'Tage', hour: 'Stunde', hourPlural: 'Stunden', minute: 'Minute', minutePlural: 'Minuten', second: 'Sekunde', secondPlural: 'Sekunden' , secondShort: 's', dayShort: 'T', hourShort: 'Std'},
     map: { recenterOnCircuit: 'Auf Strecke zentrieren', zoomIn: 'Vergrößern', zoomOut: 'Verkleinern' },
     privacy: {
         link: 'Datenschutz',

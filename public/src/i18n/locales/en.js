@@ -83,7 +83,7 @@ export const en = {
         minute: 'minute',
         minutePlural: 'minutes',
         second: 'second',
-        secondPlural: 'seconds', dayShort: 'd', hourShort: 'h'},
+        secondPlural: 'seconds', secondShort: 's', dayShort: 'd', hourShort: 'h'},
     map: {
         recenterOnCircuit: 'Recentre on circuit',
         zoomIn: 'Zoom in',

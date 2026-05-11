@@ -29,7 +29,7 @@ export const es = {
         retryingFailedTiles: 'Reintentando {{count}} tesela{{suffix}} fallida{{suffix}}...', radarStatus: 'Estado del radar: {{status}}',
     },
     countdown: {
-        startsIn: 'Empieza en', day: 'dia', dayPlural: 'dias', hour: 'hora', hourPlural: 'horas', minute: 'minuto', minutePlural: 'minutos', second: 'segundo', secondPlural: 'segundos', dayShort: 'd', hourShort: 'h'},
+        startsIn: 'Empieza en', day: 'dia', dayPlural: 'dias', hour: 'hora', hourPlural: 'horas', minute: 'minuto', minutePlural: 'minutos', second: 'segundo', secondPlural: 'segundos', secondShort: 's', dayShort: 'd', hourShort: 'h'},
     map: { recenterOnCircuit: 'Recentrar en circuito', zoomIn: 'Acercar', zoomOut: 'Alejar' },
     privacy: {
         link: 'Privacidad',
