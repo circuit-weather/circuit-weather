@@ -38,3 +38,7 @@
 
 **Learning:** Replacing generic wrapper `<div>` elements around third-party scripts (like "Buy me a coffee" sponsorship buttons) with semantic `<aside>` elements explicitly signals to search engine crawlers that the content is secondary or tangentially related, properly pulling it out of the primary document outline without breaking the third-party widget's rendering.
 **Action:** Always consider the structural implication of wrapper tags for external embeds. Use `<aside>` for sponsorships or ads, but ensure existing CSS class names (e.g., `.bmc-container`) are preserved exactly so visual styling remains intact.
+## 2025-05-13 - Semantic grouping of titles and metadata
+
+**Learning:** When a generic container `<div>` is used to group an `<h2>` (or any `h1-h6`) with contextual paragraphs (like subheadings or metadata, e.g., Country, Circuit Name), crawlers may parse them as disjointed elements. Upgrading the wrapper to an `<hgroup>` explicitly signals to search engines that the paragraphs function as subheadings for the primary heading entity.
+**Action:** Always look for opportunities to upgrade `<div>` wrappers to `<hgroup>` when grouping headings with `<p>` tags, ensuring to apply `margin: 0` CSS resets since `<hgroup>` is a block-level element that may carry different browser default styles than a generic `div`.
