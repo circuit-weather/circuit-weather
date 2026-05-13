@@ -11,7 +11,7 @@ export const de = {
     forecast: {
         heading: 'Session-Prognose', hourlyForecast: 'Stundenprognose', availableFrom: 'Prognose verfugbar ab {{date}}', availableSoon: 'Prognose bald verfugbar',
         availableCloser: 'Prognose naher an der Session verfugbar', unavailable: 'Prognose konnte nicht geladen werden',
-        failedTryAgain: 'Prognose konnte nicht geladen werden. Bitte erneut versuchen.', selectSessionPrompt: 'Wahlen Sie eine Session, um die Prognose zu sehen',
+        failedTryAgain: 'Prognose konnte nicht geladen werden. Bitte erneut versuchen.', selectSessionPrompt: 'Wahlen Sie eine Session, um die Prognose zu sehen', emptyStateAria: 'Wählen Sie eine Session, um die Prognose zu sehen',
     },
     weather: {
         currentConditions: 'Aktuelle Bedingungen',

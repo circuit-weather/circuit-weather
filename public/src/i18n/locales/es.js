@@ -12,7 +12,7 @@ export const es = {
         heading: 'Pronostico de sesion', hourlyForecast: 'Pronostico por hora',
         availableFrom: 'Pronostico disponible desde {{date}}', availableSoon: 'Pronostico disponible pronto',
         availableCloser: 'Pronostico disponible mas cerca de la sesion', unavailable: 'No se pudo cargar el pronostico',
-        failedTryAgain: 'No se pudo cargar el pronostico. Intentalo de nuevo.', selectSessionPrompt: 'Selecciona una sesion para ver el pronostico',
+        failedTryAgain: 'No se pudo cargar el pronostico. Intentalo de nuevo.', selectSessionPrompt: 'Selecciona una sesion para ver el pronostico', emptyStateAria: 'Selecciona una sesión para ver el pronóstico',
     },
     weather: {
         currentConditions: 'Condiciones actuales',

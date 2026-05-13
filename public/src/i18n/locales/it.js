@@ -12,7 +12,7 @@ export const it = {
         heading: 'Previsioni sessione', hourlyForecast: 'Previsioni orarie', availableFrom: 'Previsioni disponibili da {{date}}',
         availableSoon: 'Previsioni disponibili a breve', availableCloser: 'Previsioni disponibili piu vicino alla sessione',
         unavailable: 'Impossibile caricare le previsioni', failedTryAgain: 'Impossibile caricare le previsioni. Riprova.',
-        selectSessionPrompt: 'Seleziona una sessione per vedere le previsioni',
+        selectSessionPrompt: 'Seleziona una sessione per vedere le previsioni', emptyStateAria: 'Seleziona una sessione per vedere le previsioni',
     },
     weather: {
         currentConditions: 'Condizioni attuali',
