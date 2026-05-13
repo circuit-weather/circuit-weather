@@ -37,7 +37,7 @@ export const en = {
         availableCloser: 'Forecast available closer to session',
         unavailable: 'Unable to load forecast data',
         failedTryAgain: 'Failed to load forecast data. Please try again.',
-        selectSessionPrompt: 'Select a session to view forecast',
+        selectSessionPrompt: 'Select a session to view forecast', emptyStateAria: 'Select a session to view the forecast',
     },
     weather: {
         currentConditions: 'Current Conditions',

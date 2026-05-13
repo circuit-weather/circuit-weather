@@ -11,7 +11,7 @@ export const zhCN = {
     forecast: {
         heading: '赛段天气预报', hourlyForecast: '逐小时预报', availableFrom: '{{date}} 起可查看预报', availableSoon: '预报即将可用',
         availableCloser: '临近赛段开始时可查看预报', unavailable: '无法加载预报',
-        failedTryAgain: '加载预报失败。请重试。', selectSessionPrompt: '请选择赛段以查看预报',
+        failedTryAgain: '加载预报失败。请重试。', selectSessionPrompt: '请选择赛段以查看预报', emptyStateAria: '请选择赛段以查看预报',
     },
     weather: {
         currentConditions: '当前状况',

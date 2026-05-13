@@ -37,7 +37,7 @@ export const hu = {
         availableCloser: 'Előrejelzés az eseményhez közeledve lesz elérhető',
         unavailable: 'Nem sikerült betölteni az előrejelzést',
         failedTryAgain: 'Nem sikerült betölteni az előrejelzést. Kérjük, próbálja újra.',
-        selectSessionPrompt: 'Válasszon egy eseményt az előrejelzés megtekintéséhez',
+        selectSessionPrompt: 'Válasszon egy eseményt az előrejelzés megtekintéséhez', emptyStateAria: 'Válasszon egy eseményt az előrejelzés megtekintéséhez',
     },
     weather: {
         currentConditions: 'Jelenlegi körülmények',

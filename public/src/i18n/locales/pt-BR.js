@@ -12,7 +12,7 @@ export const ptBR = {
         heading: 'Previsao da sessao', hourlyForecast: 'Previsao horaria', availableFrom: 'Previsao disponivel a partir de {{date}}',
         availableSoon: 'Previsao disponivel em breve', availableCloser: 'Previsao disponivel mais perto da sessao',
         unavailable: 'Nao foi possivel carregar a previsao', failedTryAgain: 'Falha ao carregar a previsao. Tente novamente.',
-        selectSessionPrompt: 'Selecione uma sessao para ver a previsao',
+        selectSessionPrompt: 'Selecione uma sessao para ver a previsao', emptyStateAria: 'Selecione uma sessão para ver a previsão',
     },
     weather: {
         currentConditions: 'Condições atuais',

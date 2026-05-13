@@ -11,7 +11,7 @@ export const ja = {
     forecast: {
         heading: 'セッション予報', hourlyForecast: '時間別予報', availableFrom: '{{date}} から予報を表示できます', availableSoon: 'まもなく予報を表示できます',
         availableCloser: 'セッション開始が近づくと予報を表示できます', unavailable: '予報を読み込めませんでした',
-        failedTryAgain: '予報の読み込みに失敗しました。もう一度お試しください。', selectSessionPrompt: '予報を見るにはセッションを選択してください',
+        failedTryAgain: '予報の読み込みに失敗しました。もう一度お試しください。', selectSessionPrompt: '予報を見るにはセッションを選択してください', emptyStateAria: '予報を見るにはセッションを選択してください',
     },
     weather: {
         currentConditions: '現在の状況',
