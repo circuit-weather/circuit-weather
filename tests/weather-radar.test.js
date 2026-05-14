@@ -262,3 +262,70 @@ describe('waitForTilesToLoad', () => {
         vi.useRealTimers();
     });
 });
+
+
+describe('WeatherRadar Tile Error Handling', () => {
+    let radar;
+    let mockMapManager;
+
+    beforeEach(() => {
+        vi.stubGlobal('document', {
+            getElementById: vi.fn().mockReturnValue({
+                addEventListener: vi.fn(),
+                classList: { add: vi.fn(), remove: vi.fn() },
+                setAttribute: vi.fn(),
+                style: {}
+            }),
+            addEventListener: vi.fn(),
+            removeEventListener: vi.fn()
+        });
+        vi.stubGlobal('CONFIG', { rainViewerTheme: 1, rainViewerSmooth: 1, rainViewerSnow: 1 });
+        vi.stubGlobal('i18n', { t: vi.fn() });
+        vi.stubGlobal('statusManager', { showWarning: vi.fn(), hideWarning: vi.fn() });
+        mockMapManager = { map: {} };
+        radar = new WeatherRadar(mockMapManager);
+        // Mock L.tileLayer
+        vi.stubGlobal('L', {
+            tileLayer: vi.fn().mockReturnValue({
+                on: vi.fn(),
+                setOpacity: vi.fn(),
+                addTo: vi.fn(),
+                remove: vi.fn()
+            })
+        });
+    });
+
+    afterEach(() => {
+        vi.unstubAllGlobals();
+    });
+
+    it('should delete from failedTiles and updateErrorUI on tileunload if it was failed', () => {
+        vi.spyOn(radar, 'updateErrorUI').mockImplementation(() => {});
+        const layer = radar.createLayer({ path: 'test', time: 100 });
+        const onTileUnload = layer.on.mock.calls.find(call => call[0] === 'tileunload')[1];
+
+        const mockTile = {};
+        radar.failedTiles.add(mockTile);
+
+        onTileUnload({ tile: mockTile });
+
+        expect(radar.failedTiles.has(mockTile)).toBe(false);
+        expect(radar.updateErrorUI).toHaveBeenCalled();
+    });
+
+
+    it('should delete from failedTiles and updateErrorUI on tileload if it was failed', () => {
+        vi.spyOn(radar, 'updateErrorUI').mockImplementation(() => {});
+        const layer = radar.createLayer({ path: 'test', time: 100 });
+        const onTileLoad = layer.on.mock.calls.find(call => call[0] === 'tileload')[1];
+
+        const mockTile = {};
+        radar.failedTiles.add(mockTile);
+
+        onTileLoad({ tile: mockTile });
+
+        expect(radar.failedTiles.has(mockTile)).toBe(false);
+        expect(radar.updateErrorUI).toHaveBeenCalled();
+    });
+
+});
