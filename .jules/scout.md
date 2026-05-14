@@ -42,3 +42,7 @@
 
 **Learning:** When a generic container `<div>` is used to group an `<h2>` (or any `h1-h6`) with contextual paragraphs (like subheadings or metadata, e.g., Country, Circuit Name), crawlers may parse them as disjointed elements. Upgrading the wrapper to an `<hgroup>` explicitly signals to search engines that the paragraphs function as subheadings for the primary heading entity.
 **Action:** Always look for opportunities to upgrade `<div>` wrappers to `<hgroup>` when grouping headings with `<p>` tags, ensuring to apply `margin: 0` CSS resets since `<hgroup>` is a block-level element that may carry different browser default styles than a generic `div`.
+
+## 2025-05-14 - Expanding JSON-LD WebApplication Schema with Publisher Entity
+**Learning:** Expanding the existing `WebApplication` JSON-LD schema to explicitly include a `publisher` `Organization` entity (linking to the project repository via `sameAs`) is a highly effective, invisible SEO win. It establishes explicit brand identity and authoritativeness for Google Knowledge Graph integration.
+**Action:** When acting as Scout, identify existing generic JSON-LD schemas and look for opportunities to nest organizational or author entities to provide search engines with richer semantic context.
