@@ -22,6 +22,9 @@ const mockMapLeaflet = {
     on: vi.fn(),
     getBounds: vi.fn(() => ({
         getNorth: vi.fn(() => 51.52),
+        getSouth: vi.fn(() => 51.48),
+        getEast: vi.fn(() => -0.08),
+        getWest: vi.fn(() => -0.12),
     })),
     distance: vi.fn(() => 5000),
     hasLayer: vi.fn(() => false),
@@ -41,6 +44,9 @@ const mockMapbox = {
     hasLayer: undefined,
     getBounds: vi.fn(() => ({
         getNorth: vi.fn(() => 51.52),
+        getSouth: vi.fn(() => 51.48),
+        getEast: vi.fn(() => -0.08),
+        getWest: vi.fn(() => -0.12),
     })),
     getSource: vi.fn(),
     addSource: vi.fn(),
