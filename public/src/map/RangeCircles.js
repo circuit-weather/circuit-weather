@@ -299,23 +299,42 @@ export class RangeCircles {
         return coords;
     }
 
+    getDistance(lat1, lon1, lat2, lon2) {
+        const R = 6371000; // metres
+        const φ1 = lat1 * Math.PI / 180;
+        const φ2 = lat2 * Math.PI / 180;
+        const Δφ = (lat2 - lat1) * Math.PI / 180;
+        const Δλ = (lon2 - lon1) * Math.PI / 180;
+
+        const a = Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+            Math.cos(φ1) * Math.cos(φ2) *
+            Math.sin(Δλ / 2) * Math.sin(Δλ / 2);
+        const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
+        return R * c;
+    }
+
     calculateSteps(center) {
         const isMapbox = !this.map.hasLayer;
         let visibleRadiusMeters;
 
+        const bounds = this.map.getBounds();
+        const north = bounds.getNorth();
+        const south = bounds.getSouth();
+        const east = bounds.getEast();
+        const west = bounds.getWest();
+
+        const corners = [
+            [north, west],
+            [north, east],
+            [south, west],
+            [south, east]
+        ];
+
         if (isMapbox) {
-            const bounds = this.map.getBounds();
-            // Mapbox bounds: ne, sw
-            const north = bounds.getNorth();
-            // Haversine formula roughly equivalent
-            const R = 6371e3; // metres
-            const deltaLat = Math.abs(north - center[0]) * Math.PI/180;
-            visibleRadiusMeters = R * deltaLat;
+            visibleRadiusMeters = Math.max(...corners.map(c => this.getDistance(center[0], center[1], c[0], c[1])));
         } else {
-            const bounds = this.map.getBounds();
-            const north = bounds.getNorth();
-            const topLatLng = L.latLng(north, center[1]);
-            visibleRadiusMeters = this.map.distance(center, topLatLng);
+            visibleRadiusMeters = Math.max(...corners.map(c => this.map.distance(center, L.latLng(c[0], c[1]))));
         }
 
         // Convert to current unit
@@ -339,13 +358,13 @@ export class RangeCircles {
         // Ensure strictly positive
         niceStep = Math.max(niceStep, 1);
 
-        // Generate steps: 1x, 2x, 3x until out of view (or max 5 rings)
+        // Generate steps: 1x, 2x, 3x until out of view (or max 12 rings)
         const steps = [];
-        for (let i = 1; i <= 5; i++) {
+        for (let i = 1; i <= 12; i++) {
             const step = niceStep * i;
-            // Only add if it's somewhat visible (radius < visibleRadius * 1.5 to allow corners)
-            if (step > visibleRadius * 1.5) break;
             steps.push(step);
+            // Ensure we cover the furthest corner
+            if (step > visibleRadius) break;
         }
 
         return steps;
