@@ -97,6 +97,58 @@ describe('Worker Logic - Tile Errors', () => {
     expect(data.error.status).toBe(500);
   });
 
+  it('sets CORS headers on error response when valid Origin is provided', async () => {
+    mockFetch.mockResolvedValueOnce(new Response(JSON.stringify({ error: 'Rate Limit' }), {
+      status: 429,
+      headers: {
+        'Content-Type': 'application/json',
+        'Retry-After': '120'
+      }
+    }));
+
+    const req = createRequest('/api/tiles/v2/radar/1/2/3/512/1/1_1.png', {
+      headers: { Origin: 'http://localhost:8787' }
+    });
+    const res = await worker.fetch(req, global.env, global.ctx);
+
+    expect(res.status).toBe(429);
+    expect(res.headers.get('Access-Control-Allow-Origin')).toBe('http://localhost:8787');
+    expect(res.headers.get('Vary')).toBe('Origin');
+  });
+
+  it('removes CORS headers on error response when invalid Origin is provided', async () => {
+    mockFetch.mockResolvedValueOnce(new Response(JSON.stringify({ error: 'Rate Limit' }), {
+      status: 429,
+      headers: {
+        'Content-Type': 'application/json',
+        'Retry-After': '120'
+      }
+    }));
+
+    const req = createRequest('/api/tiles/v2/radar/1/2/3/512/1/1_1.png', {
+      headers: { Origin: 'https://evil.com' }
+    });
+    const res = await worker.fetch(req, global.env, global.ctx);
+
+    expect(res.status).toBe(429);
+    expect(res.headers.has('Access-Control-Allow-Origin')).toBe(false);
+  });
+
+  it('removes CORS headers on error response via cacheAndReturnError when invalid Origin is provided', async () => {
+    mockFetch.mockResolvedValueOnce(new Response('Upstream Server Error', {
+      status: 500,
+      headers: { 'Content-Type': 'text/html' }
+    }));
+
+    const req = createRequest('/api/tiles/v2/radar/1/2/3/512/1/1_1.png', {
+      headers: { Origin: 'https://evil.com' }
+    });
+    const res = await worker.fetch(req, global.env, global.ctx);
+
+    expect(res.status).toBe(500);
+    expect(res.headers.has('Access-Control-Allow-Origin')).toBe(false);
+  });
+
   it('handles network exception for tiles', async () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     mockFetch.mockRejectedValueOnce(new Error('Network error'));

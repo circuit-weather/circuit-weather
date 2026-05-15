@@ -639,6 +639,23 @@ describe("Worker Logic", () => {
       expect(mockCache.put).toHaveBeenCalled();
     });
 
+    it("removes CORS headers for safe 404 tile response when invalid Origin is provided", async () => {
+      mockFetch.mockResolvedValueOnce(
+        new Response("<html>Not Found</html>", {
+          status: 404,
+          headers: { "Content-Type": "text/html" },
+        }),
+      );
+
+      const req = createRequest("/api/tiles/v2/radar/missing.png", {
+        headers: { Origin: "https://evil.com" }
+      });
+      const res = await worker.fetch(req, global.env, global.ctx);
+
+      expect(res.status).toBe(404);
+      expect(res.headers.has("Access-Control-Allow-Origin")).toBe(false);
+    });
+
     it("sets CORS headers for safe 404 tile response when valid Origin is provided", async () => {
       mockFetch.mockResolvedValueOnce(
         new Response("<html>Not Found</html>", {
