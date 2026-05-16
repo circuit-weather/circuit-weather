@@ -10,3 +10,7 @@
 ## 2024-05-18 - Mapbox runtime error and tileload/unload tests
 **Learning:** Adding test coverage for Mapbox requires fully stubbing `document.createElement` when DOM injection is complex (like map zoom controls). It's also critical to mock event listeners on `document.getElementById` appropriately for `WeatherRadar` which attaches to global keyboard events and updates DOM elements based on translations during map state events.
 **Action:** Added new tests in `map-manager.test.js` and `weather-radar.test.js` covering error handling and branch paths, while keeping coverage thresholds strictly within the 98% business standard without incrementally ratcheting them up for vanity metrics.
+
+## 2024-05-18 - Safe time mocking and stub cleanup
+**Learning:** In Vitest, when mocking `Date.now()` globally or `globalThis.fetch`, always prefer `vi.useFakeTimers()` to strictly control time limits across tests. Also, explicitly restoring or managing `fetch` via `vi.stubGlobal('fetch', ...)` avoids pollution compared to patching `globalThis` locally.
+**Action:** Replaced `vi.spyOn(Date, 'now')` with `vi.useFakeTimers()` to fix time pollution flags. Removed workspace scratch artifacts (`*.txt` dumps) before commit.

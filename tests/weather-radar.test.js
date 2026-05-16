@@ -328,4 +328,83 @@ describe('WeatherRadar Tile Error Handling', () => {
         expect(radar.updateErrorUI).toHaveBeenCalled();
     });
 
+    it('should trigger rate limit cooldown when API check returns 429', async () => {
+        vi.spyOn(radar, 'triggerRateLimitCooldown').mockImplementation(() => {});
+        vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce({ status: 429 }));
+
+        radar.handleTileError({ tile: {} });
+
+        // Wait for fetch promise to resolve
+        await new Promise(process.nextTick);
+
+        expect(radar.triggerRateLimitCooldown).toHaveBeenCalledWith();
+        expect(radar.isCheckingStatus).toBe(false);
+    });
+
+    it('should trigger rate limit cooldown as transient failure when API check returns ok (200)', async () => {
+        vi.spyOn(radar, 'triggerRateLimitCooldown').mockImplementation(() => {});
+        vi.spyOn(radar, 'retryingTilesMessage').mockReturnValue('Retrying');
+        vi.stubGlobal('i18n', { t: vi.fn().mockReturnValue('Connection Instability') });
+        vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce({ ok: true, status: 200 }));
+
+        radar.handleTileError({ tile: {} });
+
+        await new Promise(process.nextTick);
+
+        expect(radar.triggerRateLimitCooldown).toHaveBeenCalledWith(15000, 'Connection Instability', 'Retrying');
+        expect(radar.isCheckingStatus).toBe(false);
+    });
+
+    it('should show error toast on generic service error (e.g. 500)', async () => {
+        radar.lastTileErrorTime = 0; // Ensure 2000ms have passed
+        const now = 10000;
+        vi.useFakeTimers();
+        vi.setSystemTime(now);
+
+        vi.spyOn(radar, 'showErrorToast').mockImplementation(() => {});
+        vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce({ ok: false, status: 500 }));
+
+        radar.handleTileError({ tile: {} });
+
+        await new Promise(process.nextTick);
+
+        expect(radar.showErrorToast).toHaveBeenCalled();
+        expect(radar.lastTileErrorTime).toBe(now);
+        expect(radar.isCheckingStatus).toBe(false);
+        vi.useRealTimers();
+    });
+
+    it('should not show error toast on generic service error if within 2000ms threshold', async () => {
+        radar.lastTileErrorTime = 9000; // Only 1000ms passed
+        const now = 10000;
+        vi.useFakeTimers();
+        vi.setSystemTime(now);
+
+        vi.spyOn(radar, 'showErrorToast').mockImplementation(() => {});
+        vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce({ ok: false, status: 500 }));
+
+        radar.handleTileError({ tile: {} });
+
+        await new Promise(process.nextTick);
+
+        expect(radar.showErrorToast).not.toHaveBeenCalled();
+        expect(radar.lastTileErrorTime).toBe(9000);
+        vi.useRealTimers();
+    });
+
+    it('should handle network error (catch block) and call updateErrorUI', async () => {
+        vi.spyOn(radar, 'updateErrorUI').mockImplementation(() => {});
+        const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+        vi.stubGlobal('fetch', vi.fn().mockRejectedValueOnce(new Error('Network error')));
+
+        radar.handleTileError({ tile: {} });
+
+        await new Promise(process.nextTick);
+
+        expect(consoleSpy).toHaveBeenCalledWith('Network error during API status check:', expect.any(Error));
+        expect(radar.updateErrorUI).toHaveBeenCalled();
+        expect(radar.isCheckingStatus).toBe(false);
+    });
+
 });
