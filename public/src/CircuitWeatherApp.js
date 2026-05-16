@@ -613,6 +613,12 @@ export class CircuitWeatherApp {
                 "eventStatus": "https://schema.org/EventScheduled",
                 "url": window.location.href,
                 "image": "https://circuit-weather.racing/icon-512.png",
+                // Scout: Added organizer entity to explicitly link the event to Formula 1 for knowledge graph integration.
+                "organizer": {
+                    "@type": "Organization",
+                    "name": "Formula 1",
+                    "url": "https://www.formula1.com"
+                },
                 "location": {
                     "@type": "Place",
                     "name": this.selectedRace.circuit ? this.selectedRace.circuit.circuitName : (this.selectedRace.location ? this.selectedRace.location.country : ""),
