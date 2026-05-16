@@ -227,6 +227,7 @@ describe('SEO Title Updates', () => {
         expect(schema.name).toBe('Bahrain Grand Prix - Qualifying');
         expect(schema.startDate).toBe('2024-03-01T14:00:00.000Z');
         expect(schema.location.address.addressCountry).toBe('Bahrain');
+        expect(schema.organizer.name).toBe('Formula 1');
     });
 
     it('should update existing JSON-LD schema when switching sessions', async () => {

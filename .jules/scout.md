@@ -46,3 +46,7 @@
 ## 2025-05-14 - Expanding JSON-LD WebApplication Schema with Publisher Entity
 **Learning:** Expanding the existing `WebApplication` JSON-LD schema to explicitly include a `publisher` `Organization` entity (linking to the project repository via `sameAs`) is a highly effective, invisible SEO win. It establishes explicit brand identity and authoritativeness for Google Knowledge Graph integration.
 **Action:** When acting as Scout, identify existing generic JSON-LD schemas and look for opportunities to nest organizational or author entities to provide search engines with richer semantic context.
+## 2025-05-15 - Injecting Organizer into SportsEvent JSON-LD Schema
+
+**Learning:** Enhancing the dynamic `SportsEvent` JSON-LD schema with an `organizer` entity explicitly links the localized event to a wider organization (e.g., Formula 1). Since this schema is dynamically constructed and injected as a JavaScript object before serialization in `CircuitWeatherApp.js`, any comments regarding its SEO value must be standard JavaScript comments (`//`), not HTML comments (`<!-- -->`), to avoid syntax errors before the string is injected into the DOM.
+**Action:** When adding SEO documentation comments directly inside JavaScript files (including when building JSON objects for JSON-LD), always use JavaScript comments. Only use HTML comments when modifying actual `.html` template files.
