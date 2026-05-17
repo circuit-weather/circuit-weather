@@ -13,3 +13,6 @@
 ## 2024-05-04 - Sidebar Links Focus Visibility
 **Learning:** External links and link-buttons used in the sidebar footer (Language, Privacy, GitHub) were visually indistinguishable from non-focused states when navigated via keyboard, despite having hover states. Relying only on hover states degrades accessibility for non-pointer users.
 **Action:** When adding or reviewing interactive footer links, ensure they include `:focus-visible` CSS rules that match the application's primary focus ring pattern (e.g., `outline: 2px solid var(--color-primary); outline-offset: 2px;`) to meet WCAG focus visibility requirements without compromising mouse user experience.
+## 2024-05-18 - Single-choice Menu Accessibility
+**Learning:** For single-choice options within a dropdown menu (like a language selector), using `role="menuitem"` combined with `aria-current` is invalid ARIA. `aria-current` is specifically meant for navigation contexts.
+**Action:** When creating menus with selectable options, use `role="menuitemradio"` (or `menuitemcheckbox`) and manage state with `aria-checked` to properly communicate selection to screen readers.

@@ -218,10 +218,10 @@ describe('LanguageManager', () => {
         manager.updateActiveLanguage();
 
         expect(item1.classList.toggle).toHaveBeenCalledWith('active', false);
-        expect(item1.setAttribute).toHaveBeenCalledWith('aria-current', 'false');
+        expect(item1.setAttribute).toHaveBeenCalledWith('aria-checked', 'false');
 
         expect(item2.classList.toggle).toHaveBeenCalledWith('active', true);
-        expect(item2.setAttribute).toHaveBeenCalledWith('aria-current', 'true');
+        expect(item2.setAttribute).toHaveBeenCalledWith('aria-checked', 'true');
     });
 
     it('responds to i18n:change event', () => {
