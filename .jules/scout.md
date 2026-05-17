@@ -50,3 +50,7 @@
 
 **Learning:** Enhancing the dynamic `SportsEvent` JSON-LD schema with an `organizer` entity explicitly links the localized event to a wider organization (e.g., Formula 1). Since this schema is dynamically constructed and injected as a JavaScript object before serialization in `CircuitWeatherApp.js`, any comments regarding its SEO value must be standard JavaScript comments (`//`), not HTML comments (`<!-- -->`), to avoid syntax errors before the string is injected into the DOM.
 **Action:** When adding SEO documentation comments directly inside JavaScript files (including when building JSON objects for JSON-LD), always use JavaScript comments. Only use HTML comments when modifying actual `.html` template files.
+## 2025-05-17 - Temporal Data and Duration Semantics
+
+**Learning:** When displaying durations (such as countdown timers), replacing generic `<div>` wrappers with the semantic `<time>` tag enhances semantic precision for search engines mapping event timelines. However, simply wrapping the duration in `<time>` is insufficient; search engines expect a valid, machine-readable `datetime` attribute.
+**Action:** When implementing a semantic `<time>` tag for durations, construct and inject a valid ISO 8601 duration string (e.g., `PT2H30M15S` or `P3DT5H`) into the `datetime` attribute. Ensure any corresponding test suites asserting DOM structures (e.g., `setAttribute` calls) are updated to reflect the new attribute injection logic.

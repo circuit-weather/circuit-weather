@@ -56,9 +56,20 @@ export class CountdownTimer {
 
         const accessibleText = this.getAccessibleDuration(diff);
 
+        // Scout: Generate ISO 8601 duration format for the datetime attribute
+        let isoDuration = 'PT';
+        if (hours > 24) {
+            const days = Math.floor(hours / 24);
+            const remHours = hours % 24;
+            isoDuration = `P${days}DT${remHours}H`;
+        } else {
+            isoDuration += `${hours}H${mins}M${secs}S`;
+        }
+
         if (this.ui.timer) {
             this.ui.timer.textContent = timeText;
             this.ui.timer.setAttribute('aria-label', accessibleText);
+            this.ui.timer.setAttribute('datetime', isoDuration);
         }
         if (this.ui.session) this.ui.session.textContent = this.sessionName;
     }
