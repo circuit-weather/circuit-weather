@@ -172,6 +172,20 @@ describe('CountdownTimer', () => {
             );
         });
 
+        it('sets datetime attribute with ISO 8601 duration format', () => {
+            // 2 hours, 30 minutes, 15 seconds
+            const diff = (2 * 3600 + 30 * 60 + 15) * 1000;
+            timer.targetTime = new Date(Date.now() + diff);
+            timer.update();
+            expect(timer.ui.timer.setAttribute).toHaveBeenCalledWith('datetime', 'PT2H30M15S');
+
+            // Over 24 hours (e.g. 3 days and 5 hours)
+            const diffDays = (3 * 24 + 5) * 3600000;
+            timer.targetTime = new Date(Date.now() + diffDays);
+            timer.update();
+            expect(timer.ui.timer.setAttribute).toHaveBeenCalledWith('datetime', 'P3DT5H');
+        });
+
     });
 
     describe('stop', () => {
