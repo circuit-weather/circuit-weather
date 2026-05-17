@@ -34,7 +34,7 @@ export class LanguageManager {
             button.dataset.locale = locale;
             button.textContent = name;
             button.type = 'button';
-            button.setAttribute('role', 'menuitem');
+            button.setAttribute('role', 'menuitemradio');
 
             button.addEventListener('click', () => {
                 i18n.setLocale(locale);
@@ -147,7 +147,7 @@ export class LanguageManager {
         this.menu.querySelectorAll('.language-item').forEach(item => {
             const isActive = item.dataset.locale === currentLocale;
             item.classList.toggle('active', isActive);
-            item.setAttribute('aria-current', isActive ? 'true' : 'false');
+            item.setAttribute('aria-checked', isActive ? 'true' : 'false');
         });
     }
 }
