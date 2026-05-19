@@ -24,7 +24,7 @@ export const zhCN = {
         changePlaybackSpeed: '更改播放速度', playbackSpeed: '播放速度: {{speed}}', sessionStart: '赛段开始', beforeSession: '距赛段开始前 {{duration}}', afterSession: '赛段开始后 {{duration}}',
         forecast: '预报', live: '实时', liveAria: '实时雷达', minutesAgo: '{{count}} 分钟前', minutesAgoPlural: '{{count}} 分钟前',
         connectionInstability: '连接不稳定', serviceError: '服务错误', highTraffic: '访问量高',
-        rateLimitExceeded: '请求过于频繁，已暂时暂停。', retryingFailedTiles: '正在重试 {{count}} 个失败瓦片...', radarStatus: '雷达状态: {{status}}',
+        rateLimitExceeded: '请求过于频繁，已暂时暂停。', retryingFailedTiles: '正在重试 {{count}} 个失败瓦片...', retryingFailedTilesPlural: '正在重试 {{count}} 个失败瓦片...', radarStatus: '雷达状态: {{status}}',
     },
     countdown: { startsIn: '开始倒计时', day: '天', dayPlural: '天', hour: '小时', hourPlural: '小时', minute: '分钟', minutePlural: '分钟', second: '秒', secondPlural: '秒' , secondShort: '秒', dayShort: '天', hourShort: '小时' },
     map: { recenterOnCircuit: '回到赛道中心', zoomIn: '放大', zoomOut: '缩小' },

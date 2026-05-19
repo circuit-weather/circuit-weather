@@ -24,7 +24,7 @@ export const ja = {
         changePlaybackSpeed: '再生速度を変更', playbackSpeed: '再生速度: {{speed}}', sessionStart: 'セッション開始', beforeSession: 'セッション {{duration}} 前', afterSession: 'セッション {{duration}} 後',
         forecast: '予報', live: 'ライブ', liveAria: 'ライブレーダー', minutesAgo: '{{count}} 分前', minutesAgoPlural: '{{count}} 分前',
         connectionInstability: '接続が不安定です', serviceError: 'サービスエラー', highTraffic: 'アクセス集中',
-        rateLimitExceeded: 'リクエスト上限を超えました。しばらく待機します。', retryingFailedTiles: '失敗したタイル {{count}} 件を再試行中...', radarStatus: 'レーダー状態: {{status}}',
+        rateLimitExceeded: 'リクエスト上限を超えました。しばらく待機します。', retryingFailedTiles: '失敗したタイル {{count}} 件を再試行中...', retryingFailedTilesPlural: '失敗したタイル {{count}} 件を再試行中...', radarStatus: 'レーダー状態: {{status}}',
     },
     countdown: { startsIn: '開始まで', day: '日', dayPlural: '日', hour: '時間', hourPlural: '時間', minute: '分', minutePlural: '分', second: '秒', secondPlural: '秒' , secondShort: '秒', dayShort: '日', hourShort: '時間' },
     map: { recenterOnCircuit: 'サーキットに再センタリング', zoomIn: '拡大', zoomOut: '縮小' },
