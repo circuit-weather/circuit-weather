@@ -71,6 +71,7 @@ export const hu = {
         highTraffic: 'Nagy forgalom',
         rateLimitExceeded: 'A kérések korlátját túllépte. Rövid szünet.',
         retryingFailedTiles: '{{count}} sikertelen csempe újrapróbálása...',
+        retryingFailedTilesPlural: '{{count}} sikertelen csempe újrapróbálása...',
         radarStatus: 'Radar státusza: {{status}}',
     },
     countdown: {

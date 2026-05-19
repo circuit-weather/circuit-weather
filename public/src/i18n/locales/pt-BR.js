@@ -26,7 +26,7 @@ export const ptBR = {
         afterSession: '{{duration}} depois da sessao', forecast: 'Previsao', live: 'Ao vivo', liveAria: 'Radar ao vivo',
         minutesAgo: '{{count}} min atras', minutesAgoPlural: '{{count}} mins atras', connectionInstability: 'Instabilidade de ligacao',
         serviceError: 'Erro de servico', highTraffic: 'Trafego elevado', rateLimitExceeded: 'Limite de pedidos excedido. Pausa momentanea.',
-        retryingFailedTiles: 'A tentar novamente {{count}} bloco{{suffix}} com falha...', radarStatus: 'Estado do radar: {{status}}',
+        retryingFailedTiles: 'A tentar novamente {{count}} bloco com falha...', retryingFailedTilesPlural: 'A tentar novamente {{count}} blocos com falha...', radarStatus: 'Estado do radar: {{status}}',
     },
     countdown: { startsIn: 'Comeca em', day: 'dia', dayPlural: 'dias', hour: 'hora', hourPlural: 'horas', minute: 'minuto', minutePlural: 'minutos', second: 'segundo', secondPlural: 'segundos' , secondShort: 's', dayShort: 'd', hourShort: 'h'},
     map: { recenterOnCircuit: 'Recentrar no circuito', zoomIn: 'Aproximar', zoomOut: 'Afastar' },

@@ -4,3 +4,6 @@
 ## 2024-05-11 - Error Toast Countdown String Extracted
 **Learning:** Hardcoded short suffixes like `s` in `${remaining}s` bypass localization.
 **Action:** Always extract single-character or very short suffixes, taking care to adapt appropriately for languages like Japanese ('秒') or Hungarian ('mp').
+## 2024-05-19 - Hardcoded Suffix Logic Causes Pluralization Bugs
+**Learning:** Using an English-centric hardcoded suffix placeholder like `{{suffix}}` (e.g. `suffix: count > 1 ? 's' : ''`) for pluralization causes severe grammatical errors in target languages. For example, German requires "Kacheln" instead of "Kachels", and Italian requires "riuscite" instead of "riuscitass".
+**Action:** Never use string concatenation or single-character suffix injections to handle plurals. Always create explicit singular and plural translation keys (e.g., `retryingFailedTiles` and `retryingFailedTilesPlural`) in the base dictionary and duplicate them in languages without plural forms if necessary.

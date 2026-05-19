@@ -26,7 +26,7 @@ export const fr = {
         afterSession: '{{duration}} apres la session', forecast: 'Previsions', live: 'En direct', liveAria: 'Radar en direct',
         minutesAgo: 'Il y a {{count}} min', minutesAgoPlural: 'Il y a {{count}} mins', connectionInstability: 'Connexion instable',
         serviceError: 'Erreur du service', highTraffic: 'Trafic eleve', rateLimitExceeded: 'Limite de requetes depassee. Pause momentanee.',
-        retryingFailedTiles: 'Nouvelle tentative pour {{count}} tuile{{suffix}} en echec...', radarStatus: 'Statut radar : {{status}}',
+        retryingFailedTiles: 'Nouvelle tentative pour {{count}} tuile en echec...', retryingFailedTilesPlural: 'Nouvelle tentative pour {{count}} tuiles en echec...', radarStatus: 'Statut radar : {{status}}',
     },
     countdown: { startsIn: 'Debute dans', day: 'jour', dayPlural: 'jours', hour: 'heure', hourPlural: 'heures', minute: 'minute', minutePlural: 'minutes', second: 'seconde', secondPlural: 'secondes' , secondShort: 's', dayShort: 'j', hourShort: 'h'},
     map: { recenterOnCircuit: 'Recentrer sur le circuit', zoomIn: 'Zoomer', zoomOut: 'Dézoomer' },
