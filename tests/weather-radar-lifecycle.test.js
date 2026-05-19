@@ -25,6 +25,7 @@ const createMockElement = (id) => ({
 const documentMock = {
     getElementById: vi.fn((id) => createMockElement(id)),
     addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
     activeElement: { tagName: 'BODY' },
     createElement: vi.fn(() => createMockElement('created')),
 };
@@ -594,6 +595,17 @@ describe('WeatherRadar Lifecycle & Playback', () => {
             expect(radar.showFrame).toHaveBeenCalledWith(1);
             // 150 - (150 % 100) = 150 - 50 = 100
             expect(radar.lastFrameTime).toBe(100);
+        });
+    });
+
+    describe('destroy', () => {
+        it('removes event listeners', () => {
+            const removeEventListenerSpy = vi.spyOn(document, 'removeEventListener');
+
+            radar.destroy();
+
+            expect(removeEventListenerSpy).toHaveBeenCalledWith('keydown', radar.handleSpaceKey);
+            expect(removeEventListenerSpy).toHaveBeenCalledWith('i18n:change', radar.handleLanguageChange);
         });
     });
 
