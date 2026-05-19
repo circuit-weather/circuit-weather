@@ -152,6 +152,24 @@ describe('WeatherRadar Timer Logic', () => {
 
         vi.useRealTimers();
     });
+
+    it('should call hideErrorToast from within hideErrorTimer', () => {
+        vi.useFakeTimers();
+
+        radar.failedTiles = new Set();
+        const hideErrorToastSpy = vi.spyOn(radar, 'hideErrorToast').mockImplementation(() => {});
+
+        radar.updateErrorUI();
+
+        expect(radar.hideErrorTimer).not.toBeNull();
+
+        vi.advanceTimersByTime(1000);
+
+        expect(hideErrorToastSpy).toHaveBeenCalled();
+        expect(radar.hideErrorTimer).toBeNull();
+
+        vi.useRealTimers();
+    });
 });
 
 describe('waitForTilesToLoad', () => {
@@ -328,4 +346,14 @@ describe('WeatherRadar Tile Error Handling', () => {
         expect(radar.updateErrorUI).toHaveBeenCalled();
     });
 
+    it('should call handleTileError on tileerror', () => {
+        const handleTileErrorSpy = vi.spyOn(radar, 'handleTileError').mockImplementation(() => {});
+        const layer = radar.createLayer({ path: 'test', time: 100 });
+        const onTileError = layer.on.mock.calls.find(call => call[0] === 'tileerror')[1];
+
+        const mockEvent = { tile: {} };
+        onTileError(mockEvent);
+
+        expect(handleTileErrorSpy).toHaveBeenCalledWith(mockEvent);
+    });
 });
