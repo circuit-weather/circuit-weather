@@ -100,4 +100,24 @@ describe("Worker API Proxy CORS and Error Cases", () => {
     expect(errorSpy).toHaveBeenCalledWith("API Fetch Error:", expect.any(Error));
     errorSpy.mockRestore();
   });
+
+  it("applies strict CORS headers on error response via cacheAndReturnError when valid Origin is provided", async () => {
+    // Simulating an upstream error (e.g. invalid content type or 500) that triggers cacheAndReturnError in handleApiRequest
+    mockFetch.mockResolvedValueOnce(new Response("Internal Server Error", {
+      status: 500,
+      headers: { "Content-Type": "text/html" }
+    }));
+
+    const req = createRequest("/api/f1/current", {
+      Origin: "https://circuit-weather.racing"
+    });
+    const res = await worker.fetch(req, global.env, global.ctx);
+
+    expect(res.status).toBe(500);
+    expect(res.headers.get("Access-Control-Allow-Origin")).toBe("https://circuit-weather.racing");
+    expect(res.headers.get("Vary")).toBe("Origin");
+
+    // Ensure cacheAndReturnError cached it
+    expect(mockCache.put).toHaveBeenCalled();
+  });
 });
