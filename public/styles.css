@@ -1560,6 +1560,7 @@ body {
 }
 
 .map-countdown-session {
+    margin: 0;
     font-size: 0.7rem;
     color: var(--color-text-secondary);
     white-space: nowrap;
