@@ -496,7 +496,7 @@ describe('CircuitWeatherApp Pure Methods', () => {
             expect(app.ui.sessionSelect.setAttribute).toHaveBeenCalledWith('aria-disabled', 'false');
             expect(app.ui.sessionSelect.removeAttribute).toHaveBeenCalledWith('title');
 
-            expect(documentMock.createDocumentFragment).toHaveBeenCalled();
+            expect(app.ui.sessionSelect.appendChild).toHaveBeenCalled();
             expect(app.ui.sessionSelect.innerHTML).toContain('Select session...');
         });
 
