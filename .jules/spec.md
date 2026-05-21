@@ -10,3 +10,14 @@
 ## 2024-05-18 - Mapbox runtime error and tileload/unload tests
 **Learning:** Adding test coverage for Mapbox requires fully stubbing `document.createElement` when DOM injection is complex (like map zoom controls). It's also critical to mock event listeners on `document.getElementById` appropriately for `WeatherRadar` which attaches to global keyboard events and updates DOM elements based on translations during map state events.
 **Action:** Added new tests in `map-manager.test.js` and `weather-radar.test.js` covering error handling and branch paths, while keeping coverage thresholds strictly within the 98% business standard without incrementally ratcheting them up for vanity metrics.
+## 2026-05-20 - Vitest Fake Timers Flakiness Trap
+**Learning:** Fixing a "flaky" `setTimeout` test by removing it entirely and calling a mocked callback synchronously violates the requirement to preserve asynchronous testing intent. If `vi.useFakeTimers()` is active, `setTimeout` is already deterministically mocked and advancing the timers is the correct pattern. Replacing it with a synchronous call can falsely mask asynchronous bugs.
+**Action:** Always verify if `vi.useFakeTimers()` is active before modifying `setTimeout` patterns. Do not convert async assertions to sync to avoid flakiness; instead, advance the fake system clock.
+
+## 2026-05-20 - Vanity Coverage Guardrail
+**Learning:** Automatically bumping vitest branch coverage thresholds beyond 80% (e.g. from 95% to 96%) violates the core constraint against chasing "100% coverage vanity metrics".
+**Action:** Check global coverage thresholds in `vitest.config.js` before writing tests. If thresholds are already >= 80%, do not intentionally write trivial edge-case tests solely to ratchet the threshold up. Focus on logic gaps instead.
+
+## 2026-05-20 - Brittle Generic DOM Assertions
+**Learning:** Asserting on native DOM creation methods like `documentMock.createDocumentFragment()` without verifying where those fragments end up creates falsely passing tests that don't verify underlying behavior.
+**Action:** Replace generic native DOM spy assertions with behavioral assertions, such as verifying `.appendChild()` on the specific target element.
