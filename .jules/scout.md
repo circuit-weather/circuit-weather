@@ -54,3 +54,11 @@
 
 **Learning:** When displaying durations (such as countdown timers), replacing generic `<div>` wrappers with the semantic `<time>` tag enhances semantic precision for search engines mapping event timelines. However, simply wrapping the duration in `<time>` is insufficient; search engines expect a valid, machine-readable `datetime` attribute.
 **Action:** When implementing a semantic `<time>` tag for durations, construct and inject a valid ISO 8601 duration string (e.g., `PT2H30M15S` or `P3DT5H`) into the `datetime` attribute. Ensure any corresponding test suites asserting DOM structures (e.g., `setAttribute` calls) are updated to reflect the new attribute injection logic.
+
+## 2025-02-14 - Avoid Error States in Document Outline
+**Learning:** Upgrading generic div wrappers in error toasts to `<hgroup>` and heading tags (`<h3>`) is an SEO anti-pattern. While technically semantic, injecting temporary error states into the permanent document hierarchy confuses crawlers about the actual content outline of the page.
+**Action:** Do not optimize error states, toasts, or temporary UI elements with headings or outline-altering structural tags. Focus semantic upgrades on permanent page content.
+
+## 2025-02-14 - Dialog Content Deprioritization
+**Learning:** Upgrading `<div>` wrappers inside `<dialog>` modals to `<header>` and `<section>` tags is technically correct HTML5, but has negligible SEO impact because search engines deprioritize hidden modal content.
+**Action:** Prioritize structural SEO improvements within the `<main>`, `<article>`, or core visible components of the page before optimizing hidden modal structures.

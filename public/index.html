@@ -432,7 +432,8 @@
 
     <!-- Privacy Policy Modal -->
     <dialog id="privacyModal" class="privacy-modal" aria-labelledby="privacyTitle">
-        <div class="privacy-modal-header">
+        <!-- Scout: Upgraded generic div wrapper to semantic header for explicit modal sectioning -->
+        <header class="privacy-modal-header">
             <h2 id="privacyTitle" data-i18n="privacy.title">Privacy Policy</h2>
             <button class="privacy-modal-close" id="privacyModalClose" aria-label="Close privacy policy"
                 title="Close privacy policy (Esc)" aria-keyshortcuts="Escape" data-i18n-attr="aria-label:privacy.closePolicy,title:privacy.closePolicy">
@@ -441,10 +442,11 @@
                     <line x1="6" y1="6" x2="18" y2="18"></line>
                 </svg>
             </button>
-        </div>
-        <div class="privacy-modal-content" id="privacyModalContent" tabindex="0" role="region" aria-label="Privacy Policy content" data-i18n-attr="aria-label:privacy.contentAria">
+        </header>
+        <!-- Scout: Upgraded generic div wrapper to semantic section for explicit content structure -->
+        <section class="privacy-modal-content" id="privacyModalContent" tabindex="0" role="region" aria-label="Privacy Policy content" data-i18n-attr="aria-label:privacy.contentAria">
             <!-- Privacy content loaded here -->
-        </div>
+        </section>
     </dialog>
 
     <!-- Mapbox GL JS (Proxied to bypass strict adblockers) -->
