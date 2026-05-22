@@ -659,9 +659,8 @@ export class WeatherRadar {
     }
 
     retryingTilesMessage(count) {
-        return i18n.t('radar.retryingFailedTiles', {
+        return i18n.t(count > 1 ? 'radar.retryingFailedTilesPlural' : 'radar.retryingFailedTiles', {
             count,
-            suffix: count > 1 ? 's' : '',
         });
     }
 
