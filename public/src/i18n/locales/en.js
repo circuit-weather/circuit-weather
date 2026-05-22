@@ -71,7 +71,8 @@ export const en = {
         serviceError: 'Service Error',
         highTraffic: 'High Traffic',
         rateLimitExceeded: 'Rate limit exceeded. Pausing momentarily.',
-        retryingFailedTiles: 'Retrying {{count}} failed tile{{suffix}}...',
+        retryingFailedTiles: 'Retrying {{count}} failed tile...',
+        retryingFailedTilesPlural: 'Retrying {{count}} failed tiles...',
         radarStatus: 'Radar status: {{status}}',
     },
     countdown: {
