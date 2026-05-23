@@ -282,7 +282,7 @@ async function handleApiRequest(request, env, ctx, url) {
 
   // Extract path parameters after /api/f1/
   // e.g. /api/f1/current -> current
-  const apiPath = url.pathname.replace('/api/f1/', '');
+  const apiPath = url.pathname.slice('/api/f1/'.length);
 
   // Validate apiPath: Strict whitelist + structure check
   // Allows: alphanumeric, dot, hyphen, underscore, slash
@@ -416,7 +416,7 @@ async function handleTrackRequest(request, env, ctx, url) {
 
 
   // Extract geoJsonId from /api/track/:id
-  const trackId = url.pathname.replace('/api/track/', '');
+  const trackId = url.pathname.slice('/api/track/'.length);
 
   // Validation
   // SEC: Check length (50 chars max) and format
@@ -536,7 +536,7 @@ async function handleTrackRequest(request, env, ctx, url) {
  */
 async function handleAssetRequest(request, env, ctx, url) {
 
-  const path = url.pathname.replace('/api/assets/', '');
+  const path = url.pathname.slice('/api/assets/'.length);
 
   const config = VENDOR_ASSETS.get(path);
   if (!config) {
@@ -754,7 +754,7 @@ async function handleHealthRequest(request, env, ctx, url) {
 async function handleTileRequest(request, env, ctx, url) {
 
   // Extract path suffix: /api/tiles/v2/radar/... -> /v2/radar/...
-  const tilePath = url.pathname.replace('/api/tiles', '');
+  const tilePath = url.pathname.slice('/api/tiles'.length);
 
   // SEC: Validate tilePath (length and content) to prevent traversal/SSRF
   // SEC: Prevent access to hidden files/directories (dotfiles)
