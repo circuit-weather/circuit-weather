@@ -28,6 +28,7 @@ export const hu = {
         selectSession: 'Esemény kiválasztása...',
         metricLabel: 'Kilométer',
         imperialLabel: 'Mérföld',
+        windOverlay: 'Szélréteg',
     },
     forecast: {
         heading: 'Esemény előrejelzése',
