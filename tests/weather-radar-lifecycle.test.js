@@ -87,10 +87,10 @@ describe('WeatherRadar Lifecycle & Playback', () => {
         radar.ui.playBtn = createMockElement('radarPlayBtn');
         radar.ui.speedLabel = createMockElement('radarSpeedLabel');
         radar.ui.speedBtn = createMockElement('radarSpeedBtn');
-        radar.ui.errorToast = createMockElement('errorToast');
-        radar.ui.errorTimer = createMockElement('errorTimer');
-        radar.ui.errorTitle = createMockElement('errorTitle');
-        radar.ui.errorMessage = createMockElement('errorMessage');
+        radar.errorToast.ui.errorToast = createMockElement('errorToast');
+        radar.errorToast.ui.errorTimer = createMockElement('errorTimer');
+        radar.errorToast.ui.errorTitle = createMockElement('errorTitle');
+        radar.errorToast.ui.errorMessage = createMockElement('errorMessage');
     });
 
     afterEach(() => {
@@ -168,10 +168,10 @@ describe('WeatherRadar Lifecycle & Playback', () => {
         });
 
         it('clears failed tiles on rebuild', () => {
-            radar.failedTiles.add('tile1');
+            radar.errorToast.failedTiles.add('tile1');
             radar.frames = [{ time: 100, path: '/p1', url: '/u1' }];
             radar.createLayers();
-            expect(radar.failedTiles.size).toBe(0);
+            expect(radar.errorToast.failedTiles.size).toBe(0);
         });
     });
 
@@ -375,29 +375,29 @@ describe('WeatherRadar Lifecycle & Playback', () => {
     describe('triggerRateLimitCooldown', () => {
         it('sets rateLimitResetTime and shows toast', () => {
             vi.setSystemTime(1000000);
-            const toastSpy = vi.spyOn(radar, 'showErrorToast').mockImplementation(() => { });
+            const toastSpy = vi.spyOn(radar.errorToast, 'showErrorToast').mockImplementation(() => { });
 
-            radar.triggerRateLimitCooldown(30000, 'Rate Limited', 'Wait 30s');
+            radar.errorToast.triggerRateLimitCooldown(30000, 'Rate Limited', 'Wait 30s');
 
-            expect(radar.rateLimitResetTime).toBe(1000000 + 30000);
+            expect(radar.errorToast.rateLimitResetTime).toBe(1000000 + 30000);
             expect(toastSpy).toHaveBeenCalledWith('Rate Limited', 'Wait 30s', 30);
         });
 
         it('does not re-trigger if already in cooldown', () => {
             vi.setSystemTime(1000000);
-            radar.rateLimitResetTime = 2000000; // Already set in future
+            radar.errorToast.rateLimitResetTime = 2000000; // Already set in future
 
-            const toastSpy = vi.spyOn(radar, 'showErrorToast').mockImplementation(() => { });
-            radar.triggerRateLimitCooldown();
+            const toastSpy = vi.spyOn(radar.errorToast, 'showErrorToast').mockImplementation(() => { });
+            radar.errorToast.triggerRateLimitCooldown();
 
             expect(toastSpy).not.toHaveBeenCalled();
         });
 
         it('schedules tile retry after cooldown', () => {
-            const retrySpy = vi.spyOn(radar, 'retryTiles').mockImplementation(() => { });
+            const retrySpy = vi.spyOn(radar.errorToast, 'retryTiles').mockImplementation(() => { });
             vi.setSystemTime(1000000);
 
-            radar.triggerRateLimitCooldown(5000);
+            radar.errorToast.triggerRateLimitCooldown(5000);
 
             vi.advanceTimersByTime(5000);
             expect(retrySpy).toHaveBeenCalled();
@@ -409,28 +409,28 @@ describe('WeatherRadar Lifecycle & Playback', () => {
     // ---------------------------------------------------------------
     describe('retryTiles', () => {
         it('clears failed tiles and resets rate limit time', () => {
-            radar.failedTiles.add('t1');
-            radar.failedTiles.add('t2');
-            radar.rateLimitResetTime = 999999;
-            radar.activeErrorTitle = 'Rate Limited';
+            radar.errorToast.failedTiles.add('t1');
+            radar.errorToast.failedTiles.add('t2');
+            radar.errorToast.rateLimitResetTime = 999999;
+            radar.errorToast.activeErrorTitle = 'Rate Limited';
 
             // Mock to prevent error from missing debounce
-            vi.spyOn(radar, 'updateErrorUI').mockImplementation(() => { });
+            vi.spyOn(radar.errorToast, 'updateErrorUI').mockImplementation(() => { });
 
-            radar.retryTiles();
+            radar.errorToast.retryTiles();
 
-            expect(radar.failedTiles.size).toBe(0);
-            expect(radar.rateLimitResetTime).toBe(0);
-            expect(radar.activeErrorTitle).toBeNull();
+            expect(radar.errorToast.failedTiles.size).toBe(0);
+            expect(radar.errorToast.rateLimitResetTime).toBe(0);
+            expect(radar.errorToast.activeErrorTitle).toBeNull();
         });
 
         it('redraws active layers on the map', () => {
             const layer = createMockLayer();
             radar.layers = [layer];
             mockMap.hasLayer.mockReturnValue(true);
-            vi.spyOn(radar, 'updateErrorUI').mockImplementation(() => { });
+            vi.spyOn(radar.errorToast, 'updateErrorUI').mockImplementation(() => { });
 
-            radar.retryTiles();
+            radar.errorToast.retryTiles();
 
             expect(layer.redraw).toHaveBeenCalled();
         });
