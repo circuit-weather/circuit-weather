@@ -18,6 +18,9 @@ import { i18n } from './i18n/index.js';
 /**
  * Main application orchestrator for Circuit Weather.
  */
+// TODO: Refactor — this orchestrator is large (~1100 lines). Consider extracting
+// cohesive responsibilities (session/forecast handling, selection + routing glue,
+// live-weather refresh loops) into smaller collaborators to ease testing.
 export class CircuitWeatherApp {
     constructor() {
         this.mapManager = new MapManager();
@@ -849,6 +852,11 @@ export class CircuitWeatherApp {
             return;
         }
 
+        // TODO: Known Limitation #4 — this fires an Open-Meteo request on every
+        // circuit change and can hit 429 rate limits under load. The `new Date()`
+        // argument changes the WeatherClient cache key each call, so current-weather
+        // responses are never reused. Debounce rapid circuit changes and round the
+        // timestamp (e.g. to the current minute/hour) so the cache can serve repeats.
         const [lat, lng] = this.currentCircuitCenter;
         const weather = await this.weatherClient.getForecast(lat, lng, new Date());
         this.mapWeatherWidget.update(weather);
@@ -1081,6 +1089,9 @@ export class CircuitWeatherApp {
     }
 
     async handleRoute({ series, round, session }) {
+        // TODO: Feature — only 'f1' is supported today although the UI is built
+        // around a series dropdown. F2/F3 share circuits and the Jolpica API, so
+        // generalise selection/routing here (and the F1API client) to add them.
         if (series !== 'f1') return;
 
         if (round) {

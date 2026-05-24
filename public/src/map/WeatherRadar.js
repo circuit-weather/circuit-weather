@@ -1,6 +1,14 @@
 import { CONFIG } from '../config.js';
 import { i18n } from '../i18n/index.js';
 
+// TODO: Refactor — this class is large (~1200 lines) and mixes several concerns:
+// frame management, playback animation, polling/reconciliation, and the error/toast
+// UI. Consider splitting these into separate units (the existing test files already
+// hint at these seams: frames, playback, polling, reconcile, toast-timer).
+//
+// TODO: Feature — rain alerts. We already retain ~2h of radar frames; derive an
+// "approaching precipitation" signal relative to the selected circuit centre and
+// surface a "rain incoming" indicator for race strategy.
 export class WeatherRadar {
     constructor(map) {
         this.map = map;
