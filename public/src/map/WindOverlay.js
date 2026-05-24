@@ -23,6 +23,7 @@ export class WindOverlay {
         this.height = 0;
         this.color = this._resolveColor();
         this.enabled = SafeStorage.getItem('windOverlay') === 'true';
+        this._interacting = false;
 
         this.container = (map && typeof map.getContainer === 'function') ? map.getContainer() : null;
         this.canvas = (typeof document !== 'undefined' && document.createElement)
@@ -40,8 +41,17 @@ export class WindOverlay {
         }
 
         this._onResize = () => this._resize();
+        // Pause + clear the canvas while the map is animating. Trails are painted
+        // in screen space, so leaving them up while the projection changes during a
+        // zoom/pan smears them against the map — resume once the view settles.
+        this._onInteractStart = () => this._suspend();
+        this._onInteractEnd = () => this._resume();
         if (map && typeof map.on === 'function') {
             map.on('resize', this._onResize);
+            map.on('movestart', this._onInteractStart);
+            map.on('zoomstart', this._onInteractStart);
+            map.on('moveend', this._onInteractEnd);
+            map.on('zoomend', this._onInteractEnd);
         }
 
         this._toggle = (typeof document !== 'undefined' && document.getElementById)
@@ -91,6 +101,10 @@ export class WindOverlay {
         this._stop();
         if (this.map && typeof this.map.off === 'function') {
             this.map.off('resize', this._onResize);
+            this.map.off('movestart', this._onInteractStart);
+            this.map.off('zoomstart', this._onInteractStart);
+            this.map.off('moveend', this._onInteractEnd);
+            this.map.off('zoomend', this._onInteractEnd);
         }
         if (this.canvas && this.canvas.parentNode) {
             this.canvas.parentNode.removeChild(this.canvas);
@@ -165,8 +179,22 @@ export class WindOverlay {
         };
     }
 
+    _suspend() {
+        this._interacting = true;
+        this._stop();
+        this._clear();
+    }
+
+    _resume() {
+        this._interacting = false;
+        if (!this.enabled) return;
+        this._resize();
+        this._clear();
+        if (this.field) this._start();
+    }
+
     _start() {
-        if (this.rafId || !this.ctx || !this.enabled || !this.field) return;
+        if (this.rafId || !this.ctx || !this.enabled || !this.field || this._interacting) return;
         if (typeof requestAnimationFrame !== 'function') return;
         this.lastTime = (typeof performance !== 'undefined' ? performance.now() : Date.now());
         const loop = (now) => {
