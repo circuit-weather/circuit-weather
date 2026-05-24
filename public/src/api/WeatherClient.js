@@ -1,5 +1,6 @@
 import { CONFIG } from '../config.js';
 import { i18n } from '../i18n/index.js';
+import { getWindDirection as resolveWindDirection } from '../utils/wind.js';
 
 export class WeatherClient {
     constructor() {
@@ -187,13 +188,6 @@ export class WeatherClient {
     }
 
     getWindDirection(degrees) {
-        const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
-        const index = Math.round(degrees / 45) % 8;
-        return {
-            text: directions[index],
-            // Arrow points UP by default. Wind direction is "coming from".
-            // 0 deg (N) -> Blows South -> Rotate 180 to point Down.
-            rotation: degrees + 180
-        };
+        return resolveWindDirection(degrees);
     }
 }

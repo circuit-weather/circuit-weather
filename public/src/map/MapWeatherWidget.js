@@ -1,13 +1,10 @@
 import { i18n } from '../i18n/index.js';
+import { getWindDirection } from '../utils/wind.js';
 
 /**
  * Custom Control for showing weather data on the map.
  * Compatible with both Leaflet and Mapbox GL JS interfaces.
  */
-// TODO: Feature — wind overlay. The forecast already includes wind speed and
-// direction (see WeatherClient.getWindDirection), but it is only shown as a number.
-// Render a directional arrow / vector here (and optionally a map layer) so wind is
-// visualised for race strategy.
 class MapWeatherWidgetClass {
     constructor() {
         // Scout: Upgraded generic div to semantic section to improve document outline and explicitly signal this standalone widget region to search engines.
@@ -35,6 +32,10 @@ class MapWeatherWidgetClass {
             <div class="weather-widget-metric" role="group" aria-label="${i18n.t('weather.windSpeed')}" title="${i18n.t('weather.wind')}" data-i18n-attr="aria-label:weather.windSpeed,title:weather.wind">
                  <svg class="icon-weather icon-wind" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2" /></svg>
                 <span class="wind-value">--</span>
+                <span class="wind-dir">
+                    <span class="wind-dir-text"></span>
+                    <svg class="icon-wind-arrow" aria-hidden="true" style="visibility: hidden;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
+                </span>
             </div>
         `;
 
@@ -42,7 +43,9 @@ class MapWeatherWidgetClass {
             temp: this._div.querySelector('.temp-value'),
             rain: this._div.querySelector('.rain-value'),
             humid: this._div.querySelector('.humid-value'),
-            wind: this._div.querySelector('.wind-value')
+            wind: this._div.querySelector('.wind-value'),
+            windDirText: this._div.querySelector('.wind-dir-text'),
+            windArrow: this._div.querySelector('.icon-wind-arrow')
         };
     }
 
@@ -72,6 +75,7 @@ class MapWeatherWidgetClass {
             this._ui.rain.textContent = '--%';
             this._ui.humid.textContent = '--%';
             this._ui.wind.textContent = '--';
+            this.setWindDirection(null);
             return;
         }
 
@@ -84,6 +88,23 @@ class MapWeatherWidgetClass {
         this._ui.rain.textContent = `${rain}%`;
         this._ui.humid.textContent = `${humidity}%`;
         this._ui.wind.textContent = `${wind} ${weather.units.wind_speed_10m}`;
+        this.setWindDirection(weather.current.wind_direction_10m);
+    }
+
+    setWindDirection(degrees) {
+        if (!this._ui || !this._ui.windDirText || !this._ui.windArrow) return;
+
+        if (!Number.isFinite(degrees)) {
+            this._ui.windDirText.textContent = '';
+            this._ui.windArrow.style.transform = '';
+            this._ui.windArrow.style.visibility = 'hidden';
+            return;
+        }
+
+        const { text, rotation } = getWindDirection(degrees);
+        this._ui.windDirText.textContent = text;
+        this._ui.windArrow.style.transform = `rotate(${rotation}deg)`;
+        this._ui.windArrow.style.visibility = '';
     }
 }
 
