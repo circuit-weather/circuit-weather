@@ -172,6 +172,78 @@ describe('WeatherRadar Timer Logic', () => {
     });
 });
 
+describe('createMapboxLayer Proxy Methods', () => {
+    let radar;
+    let mockMap;
+
+    beforeEach(() => {
+        mockMap = {
+            getSource: vi.fn(),
+            getLayer: vi.fn(),
+            addSource: vi.fn(),
+            addLayer: vi.fn(),
+            setPaintProperty: vi.fn(),
+            once: vi.fn()
+        };
+        // Mock mapbox by explicitly omitting hasLayer per .jules/spec.md
+        radar = new WeatherRadar(mockMap);
+    });
+
+    it('should register and unregister events using on/off', () => {
+        const frame = { url: 'http://test.url', time: 1000, path: '/test' };
+        const layerProxy = radar.createMapboxLayer(frame, 0);
+
+        const mockCallback = vi.fn();
+        layerProxy.on('load', mockCallback);
+
+        // Assert behavior: the callback should be invoked when the idle event fires after layer is added
+        layerProxy.addTo(mockMap);
+
+        // Simulate mapbox idle event firing
+        const idleCallback = mockMap.once.mock.calls.find(call => call[0] === 'idle')[1];
+        idleCallback();
+
+        expect(mockCallback).toHaveBeenCalled();
+
+        // Test off behavior
+        layerProxy.off('load');
+        const mockCallback2 = vi.fn();
+
+        // Mock map.once again to reset
+        mockMap.once.mockClear();
+        layerProxy.addTo(mockMap);
+
+        // Simulate mapbox idle event firing again
+        const idleCallback2 = mockMap.once.mock.calls.find(call => call[0] === 'idle')[1];
+        idleCallback2();
+
+        // Verify the original callback was unregistered and not called again
+        expect(mockCallback).toHaveBeenCalledTimes(1);
+    });
+
+    it('should redraw by setting tiles if source exists', () => {
+        const frame = { url: 'http://test.url/tile.png', time: 1000, path: '/test' };
+        const layerProxy = radar.createMapboxLayer(frame, 0);
+
+        const mockSource = { setTiles: vi.fn() };
+        mockMap.getSource.mockReturnValue(mockSource);
+
+        layerProxy.redraw();
+
+        expect(mockMap.getSource).toHaveBeenCalledWith('radar-source-0');
+        expect(mockSource.setTiles).toHaveBeenCalledWith(['http://test.url/tile.png']);
+    });
+
+    it('should not throw on redraw if source does not exist', () => {
+        const frame = { url: 'http://test.url/tile.png', time: 1000, path: '/test' };
+        const layerProxy = radar.createMapboxLayer(frame, 0);
+
+        mockMap.getSource.mockReturnValue(null);
+
+        expect(() => layerProxy.redraw()).not.toThrow();
+    });
+});
+
 describe('waitForTilesToLoad', () => {
     let radar;
     let mockMap;

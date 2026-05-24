@@ -21,3 +21,6 @@
 ## 2026-05-20 - Brittle Generic DOM Assertions
 **Learning:** Asserting on native DOM creation methods like `documentMock.createDocumentFragment()` without verifying where those fragments end up creates falsely passing tests that don't verify underlying behavior.
 **Action:** Replace generic native DOM spy assertions with behavioral assertions, such as verifying `.appendChild()` on the specific target element.
+## 2024-05-25 - Mocking Mapbox Proxy Methods
+**Learning:** In Map-related unit tests (e.g., `WeatherRadar`), the component infers a Mapbox map instance (versus Leaflet) by checking `!this.map.hasLayer`. To test Mapbox-specific logic correctly, mock map objects must explicitly omit the `hasLayer` function. The proxy object returned by `createMapboxLayer` has its own simulated `on`/`off` events and a `redraw` mechanism manipulating Mapbox specific `addSource`/`setTiles` that need dedicated test blocks since they diverge significantly from Leaflet's standard `TileLayer`.
+**Action:** Created dedicated test block for Mapbox proxy methods by passing a mocked map omitting `hasLayer` and explicitly simulated `mockMap.once` callbacks to trigger the registered proxy load events.
