@@ -8,7 +8,7 @@
  * - Network-first with cache fallback for navigation
  */
 
-const CACHE_VERSION = '1.1.3';
+const CACHE_VERSION = '1.1.6';
 const CACHE_NAME = `circuit-weather-v${CACHE_VERSION}`;
 
 // App shell resources to pre-cache on install
@@ -24,6 +24,7 @@ const APP_SHELL = [
     '/src/map/MapManager.js',
     '/src/map/MapWeatherWidget.js',
     '/src/map/RangeCircles.js',
+    '/src/map/WindOverlay.js',
     '/src/map/RecentreControl.js',
     '/src/map/TrackLayer.js',
     '/src/map/WeatherRadar.js',
@@ -34,6 +35,7 @@ const APP_SHELL = [
     '/src/ui/ThemeManager.js',
     '/src/utils/escapeHtml.js',
     '/src/utils/storage.js',
+    '/src/utils/wind.js',
     '/favicon.svg',
     '/manifest.json',
     '/icon-192.png',

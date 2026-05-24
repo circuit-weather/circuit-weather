@@ -5,6 +5,7 @@ import { WeatherClient } from './api/WeatherClient.js';
 import { TrackLayer } from './map/TrackLayer.js';
 import { WeatherRadar } from './map/WeatherRadar.js';
 import { RangeCircles } from './map/RangeCircles.js';
+import { WindOverlay } from './map/WindOverlay.js';
 import { MapWeatherWidget } from './map/MapWeatherWidget.js';
 import { RecentreControl } from './map/RecentreControl.js';
 import { CountdownTimer } from './ui/CountdownTimer.js';
@@ -31,6 +32,7 @@ export class CircuitWeatherApp {
         this.radar = null;
         this.trackLayer = null;
         this.rangeCircles = null;
+        this.windOverlay = null;
         this.countdown = new CountdownTimer();
         this.recentreControl = null;
         this.currentCircuitCenter = null;
@@ -90,6 +92,9 @@ export class CircuitWeatherApp {
             this.rangeCircles = new RangeCircles(map);
             this.trackLayer = new TrackLayer(map);
             this.radar = new WeatherRadar(map);
+            this.windOverlay = new WindOverlay(map, {
+                onToggle: (enabled) => { if (enabled) this.updateWindField(); }
+            });
 
             // Theme manager with callback to update map tiles and overlays
             // Bolt Optimization: Initialized after overlays so they can respond to the initial theme apply
@@ -388,6 +393,9 @@ export class CircuitWeatherApp {
             if (typeof this.radar.updateTheme === 'function') {
                 this.radar.updateTheme();
             }
+        }
+        if (this.windOverlay) {
+            this.windOverlay.updateTheme();
         }
     }
 
@@ -701,6 +709,9 @@ export class CircuitWeatherApp {
         // switching does not fire an Open-Meteo request per change).
         this.scheduleLiveWeatherUpdate();
 
+        // Refresh the wind overlay grid for the new circuit (no-op if disabled).
+        this.updateWindField();
+
         this.updateMobileVisibility();
 
         // Clear the forecast update since no session is active yet for this round
@@ -845,6 +856,19 @@ export class CircuitWeatherApp {
             }
         } finally {
             this.showLoading(false);
+        }
+    }
+
+    async updateWindField() {
+        if (!this.windOverlay || !this.windOverlay.enabled || !this.currentCircuitCenter) {
+            return;
+        }
+        const [lat, lng] = this.currentCircuitCenter;
+        try {
+            const field = await this.weatherClient.getWindField(lat, lng);
+            this.windOverlay.setField(field);
+        } catch (error) {
+            console.error('Wind field fetch failed:', error);
         }
     }
 

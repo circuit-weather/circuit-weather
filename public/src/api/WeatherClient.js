@@ -1,12 +1,81 @@
 import { CONFIG } from '../config.js';
 import { i18n } from '../i18n/index.js';
+import { getWindDirection as resolveWindDirection, windToVector } from '../utils/wind.js';
 
 export class WeatherClient {
     constructor() {
         this.baseUrl = CONFIG.weatherApi;
         this.cache = new Map();
+        this.windFieldCache = new Map();
         this.maxCacheSize = CONFIG.WEATHER_CACHE_MAX_ENTRIES;
         this.cacheTTL = CONFIG.SESSION_FORECAST_REFRESH_INTERVAL_MS;
+    }
+
+    /**
+     * Fetch a gridded snapshot of current wind over a bounded box around a
+     * circuit, in a single Open-Meteo request (it accepts comma-separated
+     * coordinate lists). Returns u/v vector components for the wind overlay.
+     */
+    async getWindField(lat, lon) {
+        const cLat = Number(lat);
+        const cLon = Number(lon);
+        const cacheKey = `${cLat.toFixed(2)},${cLon.toFixed(2)}`;
+
+        const cached = this.windFieldCache.get(cacheKey);
+        if (cached && Date.now() - cached.timestamp < this.cacheTTL) {
+            return cached.field;
+        }
+
+        const n = CONFIG.WIND_FIELD_GRID;
+        const halfLat = CONFIG.WIND_FIELD_RADIUS_KM / 110.574;
+        const halfLon = CONFIG.WIND_FIELD_RADIUS_KM / (111.320 * Math.cos(cLat * Math.PI / 180));
+        const minLat = cLat - halfLat;
+        const maxLat = cLat + halfLat;
+        const minLon = cLon - halfLon;
+        const maxLon = cLon + halfLon;
+
+        const lats = [];
+        const lons = [];
+        for (let r = 0; r < n; r++) {
+            const glat = minLat + (maxLat - minLat) * (r / (n - 1));
+            for (let c = 0; c < n; c++) {
+                const glon = minLon + (maxLon - minLon) * (c / (n - 1));
+                lats.push(glat.toFixed(4));
+                lons.push(glon.toFixed(4));
+            }
+        }
+
+        const params = new URLSearchParams({
+            latitude: lats.join(','),
+            longitude: lons.join(','),
+            current: 'wind_speed_10m,wind_direction_10m',
+            timeformat: 'unixtime',
+        });
+
+        const response = await fetch(`${this.baseUrl}?${params.toString()}`, {
+            signal: AbortSignal.timeout(5000)
+        });
+        if (!response.ok) throw new Error('Wind field API error');
+
+        const data = await response.json();
+        const list = Array.isArray(data) ? data : [data];
+
+        const u = new Array(n * n).fill(0);
+        const v = new Array(n * n).fill(0);
+        for (let i = 0; i < list.length && i < n * n; i++) {
+            const current = list[i] && list[i].current;
+            if (!current) continue;
+            const vec = windToVector(current.wind_speed_10m, current.wind_direction_10m);
+            u[i] = vec.u;
+            v[i] = vec.v;
+        }
+
+        const field = { minLat, maxLat, minLon, maxLon, rows: n, cols: n, u, v };
+        this.windFieldCache.set(cacheKey, { timestamp: Date.now(), field });
+        if (this.windFieldCache.size > this.maxCacheSize) {
+            this.windFieldCache.delete(this.windFieldCache.keys().next().value);
+        }
+        return field;
     }
 
     async getForecast(lat, lon, sessionTime) {
@@ -187,13 +256,6 @@ export class WeatherClient {
     }
 
     getWindDirection(degrees) {
-        const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
-        const index = Math.round(degrees / 45) % 8;
-        return {
-            text: directions[index],
-            // Arrow points UP by default. Wind direction is "coming from".
-            // 0 deg (N) -> Blows South -> Rotate 180 to point Down.
-            rotation: degrees + 180
-        };
+        return resolveWindDirection(degrees);
     }
 }

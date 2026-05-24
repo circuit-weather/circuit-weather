@@ -6,7 +6,7 @@ export const es = {
         onlyF1Supported: 'Actualmente solo se admite Formula 1', f1: 'Formula 1',
         series: 'Serie', round: 'Ronda', session: 'Sesion', units: 'Unidades',
         selectRound: 'Selecciona ronda...', selectRoundFirst: 'Selecciona una ronda primero', selectSession: 'Selecciona sesion...',
-        metricLabel: 'Kilometros', imperialLabel: 'Millas',
+        metricLabel: 'Kilometros', imperialLabel: 'Millas', windOverlay: 'Capa de viento',
     },
     forecast: {
         heading: 'Pronostico de sesion', hourlyForecast: 'Pronostico por hora',

@@ -27,6 +27,7 @@ const createMockElement = (tag, className) => {
         }),
         setAttribute: vi.fn(),
         getAttribute: vi.fn(),
+        addEventListener: vi.fn(),
         classList: {
             add: vi.fn(),
             remove: vi.fn()
@@ -38,6 +39,7 @@ const createMockElement = (tag, className) => {
 // Mock Document
 vi.stubGlobal('document', {
     createElement: vi.fn((tag) => createMockElement(tag, '')),
+    getElementById: vi.fn((id) => createMockElement(id, '')),
 });
 
 // Setup global mocks
@@ -167,6 +169,36 @@ describe('MapWeatherWidget', () => {
         expect(widget._ui.rain.textContent).toBe('0%');
         expect(widget._ui.humid.textContent).toBe('0%');
         expect(widget._ui.temp.textContent).toBe('20°C');
+    });
+
+    it('should render wind direction text and rotate the arrow', () => {
+        widget.update({
+            current: { temperature_2m: 20, wind_speed_10m: 12, wind_direction_10m: 90 },
+            units: { temperature_2m: '°C', wind_speed_10m: 'km/h' }
+        });
+
+        // 90° (E), arrow rotates 90 + 180 = 270deg to point where wind blows toward
+        expect(widget._ui.windDirText.textContent).toBe('E');
+        expect(widget._ui.windArrow.style.transform).toBe('rotate(270deg)');
+        expect(widget._ui.windArrow.style.visibility).toBe('');
+    });
+
+    it('should clear wind direction when bearing is missing', () => {
+        widget.update({
+            current: { temperature_2m: 20, wind_speed_10m: 12 },
+            units: { temperature_2m: '°C', wind_speed_10m: 'km/h' }
+        });
+
+        expect(widget._ui.windDirText.textContent).toBe('');
+        expect(widget._ui.windArrow.style.visibility).toBe('hidden');
+    });
+
+    it('should clear wind direction on null weather', () => {
+        widget._ui.windDirText.textContent = 'NE';
+        widget.update(null);
+
+        expect(widget._ui.windDirText.textContent).toBe('');
+        expect(widget._ui.windArrow.style.visibility).toBe('hidden');
     });
 
     it('should clean up references on remove', () => {

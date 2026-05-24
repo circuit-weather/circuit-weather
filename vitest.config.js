@@ -13,6 +13,9 @@ export default defineConfig({
       exclude: [
         'public/src/main.js',
         'public/src/config.js',
+        // Canvas/animation overlay — verified in-browser; its pure maths are
+        // covered via utils/wind.js tests.
+        'public/src/map/WindOverlay.js',
       ],
       // Coverage thresholds — CI will fail if coverage drops below these
       // Note: Branch coverage may vary slightly between local and CI environments

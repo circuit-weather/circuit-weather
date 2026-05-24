@@ -8,7 +8,9 @@ vi.mock('../public/src/config.js', () => ({
         ONE_MINUTE_MS: 60000,
         TILE_LOAD_TIMEOUT_MS: 3000,
         MIN_POLL_DELAY_MS: 30000,
-        WEATHER_CACHE_MAX_ENTRIES: 50
+        WEATHER_CACHE_MAX_ENTRIES: 50,
+        WIND_FIELD_GRID: 3,
+        WIND_FIELD_RADIUS_KM: 50
     }
 }));
 
@@ -442,5 +444,83 @@ describe('WeatherClient cache edge cases', () => {
         client.cache.set(cacheKey, { timestamp: past, data: {} });
 
         await client.getForecast(51.5, -0.1, sessionTime);
+    });
+
+    describe('getWindField', () => {
+        const makeGridResponse = (n, speed, dir) => {
+            const list = [];
+            for (let i = 0; i < n * n; i++) {
+                list.push({ current: { wind_speed_10m: speed, wind_direction_10m: dir } });
+            }
+            return { ok: true, json: async () => list };
+        };
+
+        it('fetches a 3x3 grid in a single request and parses u/v vectors', async () => {
+            const mockFetch = vi.fn().mockResolvedValue(makeGridResponse(3, 10, 0));
+            vi.stubGlobal('fetch', mockFetch);
+
+            const field = await client.getWindField(45, 9);
+
+            expect(mockFetch).toHaveBeenCalledOnce();
+            expect(field.rows).toBe(3);
+            expect(field.cols).toBe(3);
+            expect(field.u).toHaveLength(9);
+            expect(field.v).toHaveLength(9);
+            // Wind from north (0°) blows south: u≈0, v≈-10
+            expect(field.u[0]).toBeCloseTo(0, 6);
+            expect(field.v[0]).toBeCloseTo(-10, 6);
+            expect(field.maxLat).toBeGreaterThan(field.minLat);
+            expect(field.maxLon).toBeGreaterThan(field.minLon);
+
+            const url = mockFetch.mock.calls[0][0];
+            const params = new URLSearchParams(url.split('?')[1]);
+            expect(params.get('current')).toBe('wind_speed_10m,wind_direction_10m');
+            expect(params.get('latitude').split(',')).toHaveLength(9);
+            expect(params.get('longitude').split(',')).toHaveLength(9);
+        });
+
+        it('serves a cached field within the TTL without refetching', async () => {
+            const mockFetch = vi.fn().mockResolvedValue(makeGridResponse(3, 5, 90));
+            vi.stubGlobal('fetch', mockFetch);
+
+            await client.getWindField(45, 9);
+            await client.getWindField(45, 9);
+
+            expect(mockFetch).toHaveBeenCalledOnce();
+        });
+
+        it('wraps a single-object response and leaves other cells at zero', async () => {
+            const mockFetch = vi.fn().mockResolvedValue({
+                ok: true,
+                json: async () => ({ current: { wind_speed_10m: 12, wind_direction_10m: 270 } })
+            });
+            vi.stubGlobal('fetch', mockFetch);
+
+            const field = await client.getWindField(45, 9);
+
+            // From west (270°) blows east: u≈+12
+            expect(field.u[0]).toBeCloseTo(12, 6);
+            expect(field.u[1]).toBe(0);
+            expect(field.v[1]).toBe(0);
+        });
+
+        it('skips entries without current data', async () => {
+            const mockFetch = vi.fn().mockResolvedValue({
+                ok: true,
+                json: async () => [{ current: { wind_speed_10m: 10, wind_direction_10m: 180 } }, {}, null]
+            });
+            vi.stubGlobal('fetch', mockFetch);
+
+            const field = await client.getWindField(45, 9);
+
+            expect(field.v[0]).toBeCloseTo(10, 6); // from south -> +v
+            expect(field.u[1]).toBe(0);
+            expect(field.u[2]).toBe(0);
+        });
+
+        it('throws when the upstream response is not ok', async () => {
+            vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 500 }));
+            await expect(client.getWindField(45, 9)).rejects.toThrow('Wind field API error');
+        });
     });
 });
