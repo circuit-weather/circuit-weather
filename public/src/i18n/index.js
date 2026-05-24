@@ -13,6 +13,10 @@ import { ja } from './locales/ja.js';
 import { ptBR } from './locales/pt-BR.js';
 import { zhCN } from './locales/zh-CN.js';
 
+// TODO: Localisation roadmap (see AGENTS.md) — keep translations complete and
+// consistent against en.js as the source of truth, and add widely used languages
+// over time. The i18n-locales-completeness test guards key parity; prioritise
+// quality and consistency when extending coverage.
 const TRANSLATIONS = {
     en,
     'en-GB': enGB,

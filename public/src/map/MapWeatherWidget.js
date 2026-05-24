@@ -4,6 +4,10 @@ import { i18n } from '../i18n/index.js';
  * Custom Control for showing weather data on the map.
  * Compatible with both Leaflet and Mapbox GL JS interfaces.
  */
+// TODO: Feature — wind overlay. The forecast already includes wind speed and
+// direction (see WeatherClient.getWindDirection), but it is only shown as a number.
+// Render a directional arrow / vector here (and optionally a map layer) so wind is
+// visualised for race strategy.
 class MapWeatherWidgetClass {
     constructor() {
         // Scout: Upgraded generic div to semantic section to improve document outline and explicitly signal this standalone widget region to search engines.
