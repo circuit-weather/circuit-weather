@@ -1081,6 +1081,57 @@ describe('CircuitWeatherApp Pure Methods', () => {
     });
 
     // ---------------------------------------------------------------
+    // Wind Overlay Field Logic
+    // ---------------------------------------------------------------
+    describe('updateWindField', () => {
+        const field = { rows: 6, cols: 6, u: [], v: [], minLat: 0, maxLat: 1, minLon: 0, maxLon: 1 };
+
+        beforeEach(() => {
+            app.currentCircuitCenter = [45, 9];
+            app.windOverlay = { enabled: true, setField: vi.fn() };
+            app.weatherClient.getWindField = vi.fn().mockResolvedValue(field);
+        });
+
+        it('fetches the grid and passes it to the overlay when enabled', async () => {
+            await app.updateWindField();
+
+            expect(app.weatherClient.getWindField).toHaveBeenCalledWith(45, 9);
+            expect(app.windOverlay.setField).toHaveBeenCalledWith(field);
+        });
+
+        it('does nothing when the overlay is disabled', async () => {
+            app.windOverlay.enabled = false;
+            await app.updateWindField();
+
+            expect(app.weatherClient.getWindField).not.toHaveBeenCalled();
+            expect(app.windOverlay.setField).not.toHaveBeenCalled();
+        });
+
+        it('does nothing when no circuit is selected', async () => {
+            app.currentCircuitCenter = null;
+            await app.updateWindField();
+
+            expect(app.weatherClient.getWindField).not.toHaveBeenCalled();
+        });
+
+        it('does nothing when there is no wind overlay', async () => {
+            app.windOverlay = null;
+            await app.updateWindField();
+
+            expect(app.weatherClient.getWindField).not.toHaveBeenCalled();
+        });
+
+        it('swallows fetch errors without throwing', async () => {
+            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+            app.weatherClient.getWindField = vi.fn().mockRejectedValue(new Error('network'));
+
+            await expect(app.updateWindField()).resolves.toBeUndefined();
+            expect(app.windOverlay.setField).not.toHaveBeenCalled();
+            consoleSpy.mockRestore();
+        });
+    });
+
+    // ---------------------------------------------------------------
     // Session Forecast Interval Logic
     // ---------------------------------------------------------------
     describe('Session Forecast Interval Logic', () => {

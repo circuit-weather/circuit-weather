@@ -6,7 +6,7 @@ export const ja = {
         onlyF1Supported: '現在はF1のみサポートされています', f1: 'F1',
         series: 'シリーズ', round: 'ラウンド', session: 'セッション', units: '単位',
         selectRound: 'ラウンドを選択...', selectRoundFirst: '先にラウンドを選択してください', selectSession: 'セッションを選択...',
-        metricLabel: 'キロメートル', imperialLabel: 'マイル', windDirection: '風向',
+        metricLabel: 'キロメートル', imperialLabel: 'マイル', windOverlay: '風の表示',
     },
     forecast: {
         heading: 'セッション予報', hourlyForecast: '時間別予報', availableFrom: '{{date}} から予報を表示できます', availableSoon: 'まもなく予報を表示できます',

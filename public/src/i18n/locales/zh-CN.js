@@ -6,7 +6,7 @@ export const zhCN = {
         onlyF1Supported: '目前仅支持 F1', f1: 'F1',
         series: '系列赛', round: '分站', session: '赛段', units: '单位',
         selectRound: '选择分站...', selectRoundFirst: '请先选择分站', selectSession: '选择赛段...',
-        metricLabel: '公里', imperialLabel: '英里', windDirection: '风向',
+        metricLabel: '公里', imperialLabel: '英里', windOverlay: '风场图层',
     },
     forecast: {
         heading: '赛段天气预报', hourlyForecast: '逐小时预报', availableFrom: '{{date}} 起可查看预报', availableSoon: '预报即将可用',

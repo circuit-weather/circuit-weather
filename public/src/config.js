@@ -37,6 +37,14 @@ export const CONFIG = {
     TILE_LOAD_TIMEOUT_MS: 3000, // 3 seconds
     MIN_POLL_DELAY_MS: 30000, // 30 seconds
     WEATHER_CACHE_MAX_ENTRIES: 50,
+
+    // Wind overlay (animated flow particles over the map)
+    WIND_FIELD_RADIUS_KM: 50, // Half-extent of the sampled grid box around the circuit
+    WIND_FIELD_GRID: 6, // Grid is N x N points (one batched Open-Meteo request)
+    WIND_FIELD_PARTICLES: 400,
+    WIND_FIELD_PARTICLE_LIFE: 4, // Seconds before a particle respawns
+    WIND_FIELD_FADE: 0.06, // Trail fade per frame (higher = shorter trails)
+    WIND_FIELD_SPEED_GAIN: 1000, // Visual speed-up factor for advection
 };
 // SEC: Prevent runtime tampering with configuration
 Object.freeze(CONFIG);

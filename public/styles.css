@@ -16,6 +16,7 @@
     --color-primary: #e10600;
     --color-primary-hover: #b30500;
     --color-range-circle: #e10600;
+    --color-wind-flow: rgba(2, 132, 199, 0.7);
 
     /* Sidebar */
     --sidebar-width: 300px;
@@ -67,6 +68,7 @@
     --sidebar-bg: rgba(30, 41, 59, 0.92);
     --color-range-circle: #ff6b5b;
     /* Brighter coral for visibility on dark maps */
+    --color-wind-flow: rgba(125, 211, 252, 0.85);
 }
 
 /* ===================================
@@ -351,6 +353,17 @@ body {
 .pref-switch:focus-visible {
     outline: 2px solid var(--color-primary);
     outline-offset: 2px;
+}
+
+/* Animated wind overlay canvas (sits above the basemap/radar, below controls) */
+.wind-flow-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 450;
 }
 
 .unit-toggle {

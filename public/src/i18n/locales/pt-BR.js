@@ -6,7 +6,7 @@ export const ptBR = {
         onlyF1Supported: 'Atualmente, apenas a Formula 1 e suportada', f1: 'Formula 1',
         series: 'Serie', round: 'Ronda', session: 'Sessao', units: 'Unidades',
         selectRound: 'Selecionar ronda...', selectRoundFirst: 'Selecione primeiro uma ronda', selectSession: 'Selecionar sessao...',
-        metricLabel: 'Quilometros', imperialLabel: 'Milhas', windDirection: 'Direcao do vento',
+        metricLabel: 'Quilometros', imperialLabel: 'Milhas', windOverlay: 'Camada de vento',
     },
     forecast: {
         heading: 'Previsao da sessao', hourlyForecast: 'Previsao horaria', availableFrom: 'Previsao disponivel a partir de {{date}}',

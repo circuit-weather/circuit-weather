@@ -28,7 +28,7 @@ export const en = {
         selectSession: 'Select session...',
         metricLabel: 'Kilometres',
         imperialLabel: 'Miles',
-        windDirection: 'Wind direction',
+        windOverlay: 'Wind overlay',
     },
     forecast: {
         heading: 'Session Forecast',

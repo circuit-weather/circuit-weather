@@ -1,6 +1,5 @@
 import { i18n } from '../i18n/index.js';
 import { getWindDirection } from '../utils/wind.js';
-import { SafeStorage } from '../utils/storage.js';
 
 /**
  * Custom Control for showing weather data on the map.
@@ -48,18 +47,6 @@ class MapWeatherWidgetClass {
             windDirText: this._div.querySelector('.wind-dir-text'),
             windArrow: this._div.querySelector('.icon-wind-arrow')
         };
-
-        // Wind direction is opt-in; persisted preference defaults to off.
-        this.showWindDirection = SafeStorage.getItem('windDirection') === 'true';
-        this._lastWindDir = null;
-
-        this._toggle = document.getElementById('windDirectionToggle');
-        if (this._toggle) {
-            this._toggle.addEventListener('click', () => {
-                this.setShowWindDirection(!this.showWindDirection);
-            });
-        }
-        this.updateWindToggleUI();
     }
 
     // Leaflet interface
@@ -105,37 +92,19 @@ class MapWeatherWidgetClass {
     }
 
     setWindDirection(degrees) {
-        this._lastWindDir = Number.isFinite(degrees) ? degrees : null;
-        this.renderWindDirection();
-    }
-
-    renderWindDirection() {
         if (!this._ui || !this._ui.windDirText || !this._ui.windArrow) return;
 
-        if (!this.showWindDirection || !Number.isFinite(this._lastWindDir)) {
+        if (!Number.isFinite(degrees)) {
             this._ui.windDirText.textContent = '';
             this._ui.windArrow.style.transform = '';
             this._ui.windArrow.style.visibility = 'hidden';
             return;
         }
 
-        const { text, rotation } = getWindDirection(this._lastWindDir);
+        const { text, rotation } = getWindDirection(degrees);
         this._ui.windDirText.textContent = text;
         this._ui.windArrow.style.transform = `rotate(${rotation}deg)`;
         this._ui.windArrow.style.visibility = '';
-    }
-
-    setShowWindDirection(show) {
-        this.showWindDirection = show;
-        SafeStorage.setItem('windDirection', show ? 'true' : 'false');
-        this.updateWindToggleUI();
-        this.renderWindDirection();
-    }
-
-    updateWindToggleUI() {
-        if (this._toggle) {
-            this._toggle.setAttribute('aria-checked', this.showWindDirection ? 'true' : 'false');
-        }
     }
 }
 
