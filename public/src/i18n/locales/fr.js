@@ -6,7 +6,7 @@ export const fr = {
         onlyF1Supported: 'Seule la Formule 1 est actuellement prise en charge', f1: 'Formule 1',
         series: 'Serie', round: 'Manche', session: 'Session', units: 'Unites',
         selectRound: 'Selectionner une manche...', selectRoundFirst: 'Selectionnez d\'abord une manche', selectSession: 'Selectionner une session...',
-        metricLabel: 'Kilometres', imperialLabel: 'Miles',
+        metricLabel: 'Kilometres', imperialLabel: 'Miles', windDirection: 'Direction du vent',
     },
     forecast: {
         heading: 'Previsions de session', hourlyForecast: 'Previsions horaires', availableFrom: 'Previsions disponibles a partir de {{date}}',

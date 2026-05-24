@@ -305,6 +305,54 @@ body {
     margin-top: var(--spacing-sm);
 }
 
+.control-group--toggle {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: var(--spacing-sm);
+}
+
+.pref-switch {
+    position: relative;
+    flex-shrink: 0;
+    width: 40px;
+    height: 22px;
+    padding: 0;
+    border: 1px solid var(--color-border);
+    border-radius: 999px;
+    background: var(--color-surface);
+    cursor: pointer;
+    transition: background var(--transition-fast), border-color var(--transition-fast);
+}
+
+.pref-switch::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--color-text-secondary);
+    transform: translateY(-50%);
+    transition: transform var(--transition-fast), background var(--transition-fast);
+}
+
+.pref-switch[aria-checked="true"] {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+}
+
+.pref-switch[aria-checked="true"]::after {
+    background: white;
+    transform: translateY(-50%) translateX(18px);
+}
+
+.pref-switch:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+}
+
 .unit-toggle {
     display: flex;
     background: var(--color-surface);

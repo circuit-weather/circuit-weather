@@ -27,6 +27,7 @@ const createMockElement = (tag, className) => {
         }),
         setAttribute: vi.fn(),
         getAttribute: vi.fn(),
+        addEventListener: vi.fn(),
         classList: {
             add: vi.fn(),
             remove: vi.fn()
@@ -38,6 +39,7 @@ const createMockElement = (tag, className) => {
 // Mock Document
 vi.stubGlobal('document', {
     createElement: vi.fn((tag) => createMockElement(tag, '')),
+    getElementById: vi.fn((id) => createMockElement(id, '')),
 });
 
 // Setup global mocks
@@ -169,15 +171,22 @@ describe('MapWeatherWidget', () => {
         expect(widget._ui.temp.textContent).toBe('20°C');
     });
 
-    it('should render wind direction text and rotate the arrow', () => {
-        widget.update({
-            current: {
-                temperature_2m: 20,
-                wind_speed_10m: 12,
-                wind_direction_10m: 90
-            },
-            units: { temperature_2m: '°C', wind_speed_10m: 'km/h' }
-        });
+    const windData = {
+        current: { temperature_2m: 20, wind_speed_10m: 12, wind_direction_10m: 90 },
+        units: { temperature_2m: '°C', wind_speed_10m: 'km/h' }
+    };
+
+    it('should hide wind direction by default (toggle off)', () => {
+        widget.update(windData);
+
+        expect(widget.showWindDirection).toBe(false);
+        expect(widget._ui.windDirText.textContent).toBe('');
+        expect(widget._ui.windArrow.style.visibility).toBe('hidden');
+    });
+
+    it('should render wind direction text and rotate the arrow when enabled', () => {
+        widget.setShowWindDirection(true);
+        widget.update(windData);
 
         // 90° (E), arrow rotates 90 + 180 = 270deg to point where wind blows toward
         expect(widget._ui.windDirText.textContent).toBe('E');
@@ -185,7 +194,18 @@ describe('MapWeatherWidget', () => {
         expect(widget._ui.windArrow.style.visibility).toBe('');
     });
 
-    it('should clear wind direction when bearing is missing', () => {
+    it('should re-render the last bearing when toggled on without new data', () => {
+        widget.update(windData);
+        expect(widget._ui.windArrow.style.visibility).toBe('hidden');
+
+        widget.setShowWindDirection(true);
+
+        expect(widget._ui.windDirText.textContent).toBe('E');
+        expect(widget._ui.windArrow.style.visibility).toBe('');
+    });
+
+    it('should clear wind direction when bearing is missing (enabled)', () => {
+        widget.setShowWindDirection(true);
         widget.update({
             current: { temperature_2m: 20, wind_speed_10m: 12 },
             units: { temperature_2m: '°C', wind_speed_10m: 'km/h' }
@@ -195,12 +215,21 @@ describe('MapWeatherWidget', () => {
         expect(widget._ui.windArrow.style.visibility).toBe('hidden');
     });
 
-    it('should clear wind direction on null weather', () => {
+    it('should clear wind direction on null weather (enabled)', () => {
+        widget.setShowWindDirection(true);
         widget._ui.windDirText.textContent = 'NE';
         widget.update(null);
 
         expect(widget._ui.windDirText.textContent).toBe('');
         expect(widget._ui.windArrow.style.visibility).toBe('hidden');
+    });
+
+    it('should reflect the toggle state via aria-checked', () => {
+        widget.setShowWindDirection(true);
+        expect(widget._toggle.setAttribute).toHaveBeenCalledWith('aria-checked', 'true');
+
+        widget.setShowWindDirection(false);
+        expect(widget._toggle.setAttribute).toHaveBeenCalledWith('aria-checked', 'false');
     });
 
     it('should clean up references on remove', () => {
