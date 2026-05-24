@@ -39,6 +39,7 @@ export class CircuitWeatherApp {
         this.selectedSession = null;
         this.router = new Router(params => this.handleRoute(params));
         this.mobileQuery = window.matchMedia('(max-width: 768px)');
+        this.liveWeatherDebounceTimer = null;
 
         this.ui = {};
         this.handleLanguageChange = this.handleLanguageChange.bind(this);
@@ -696,8 +697,9 @@ export class CircuitWeatherApp {
             this.ui.sessionEmptyState.style.display = 'flex';
         }
 
-        // Fetch current "Live" weather for the widgets
-        this.updateLiveWeatherForCircuit();
+        // Fetch current "Live" weather for the widgets (debounced so rapid round
+        // switching does not fire an Open-Meteo request per change).
+        this.scheduleLiveWeatherUpdate();
 
         this.updateMobileVisibility();
 
@@ -846,19 +848,31 @@ export class CircuitWeatherApp {
         }
     }
 
+    scheduleLiveWeatherUpdate() {
+        if (this.liveWeatherDebounceTimer) {
+            clearTimeout(this.liveWeatherDebounceTimer);
+        }
+        this.liveWeatherDebounceTimer = setTimeout(() => {
+            this.liveWeatherDebounceTimer = null;
+            this.updateLiveWeatherForCircuit();
+        }, CONFIG.LIVE_WEATHER_DEBOUNCE_MS);
+    }
+
     async updateLiveWeatherForCircuit() {
         // Only fetch weather if a circuit is selected
         if (!this.currentCircuitCenter) {
             return;
         }
 
-        // TODO: Known Limitation #4 — this fires an Open-Meteo request on every
-        // circuit change and can hit 429 rate limits under load. The `new Date()`
-        // argument changes the WeatherClient cache key each call, so current-weather
-        // responses are never reused. Debounce rapid circuit changes and round the
-        // timestamp (e.g. to the current minute/hour) so the cache can serve repeats.
         const [lat, lng] = this.currentCircuitCenter;
-        const weather = await this.weatherClient.getForecast(lat, lng, new Date());
+        // Bucket "now" to the refresh window so repeated fetches for the same circuit
+        // (re-selection, theme re-renders, switching away and back) reuse the
+        // WeatherClient cache instead of hitting Open-Meteo each time (Known
+        // Limitation #4 — avoids 429s). A fresh `new Date()` would change the cache
+        // key on every call, defeating the cache.
+        const bucketMs = CONFIG.WEATHER_REFRESH_INTERVAL_MS;
+        const bucketedNow = new Date(Math.floor(Date.now() / bucketMs) * bucketMs);
+        const weather = await this.weatherClient.getForecast(lat, lng, bucketedNow);
         this.mapWeatherWidget.update(weather);
     }
 

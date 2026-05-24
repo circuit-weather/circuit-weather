@@ -33,6 +33,7 @@ export const CONFIG = {
     RACE_DAY_END_HOUR: 23, // Fallback to end of day if session time is missing
     WEATHER_REFRESH_INTERVAL_MS: 300000, // 5 minutes
     SESSION_FORECAST_REFRESH_INTERVAL_MS: 900000, // 15 minutes
+    LIVE_WEATHER_DEBOUNCE_MS: 400, // Collapse rapid circuit changes into one Open-Meteo request
     TILE_LOAD_TIMEOUT_MS: 3000, // 3 seconds
     MIN_POLL_DELAY_MS: 30000, // 30 seconds
     WEATHER_CACHE_MAX_ENTRIES: 50,

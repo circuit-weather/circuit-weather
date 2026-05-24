@@ -222,6 +222,15 @@ describe('CircuitWeatherApp Pure Methods', () => {
         app.mapWeatherWidget = new MapWeatherWidget();
     });
 
+    afterEach(() => {
+        // Clear any pending live-weather debounce timer so real timers don't leak
+        // between tests that exercise selectRound/handleRoute.
+        if (app && app.liveWeatherDebounceTimer) {
+            clearTimeout(app.liveWeatherDebounceTimer);
+            app.liveWeatherDebounceTimer = null;
+        }
+    });
+
     // ---------------------------------------------------------------
     // getRaceEndTime
     // ---------------------------------------------------------------
@@ -1038,6 +1047,36 @@ describe('CircuitWeatherApp Pure Methods', () => {
 
             expect(app.weatherClient.getForecast).not.toHaveBeenCalled();
             expect(app.mapWeatherWidget.update).not.toHaveBeenCalled();
+        });
+
+        it('scheduleLiveWeatherUpdate debounces rapid calls into a single update', () => {
+            // updateLiveWeatherForCircuit is mocked in beforeEach
+            app.scheduleLiveWeatherUpdate();
+            app.scheduleLiveWeatherUpdate();
+            app.scheduleLiveWeatherUpdate();
+
+            expect(app.updateLiveWeatherForCircuit).not.toHaveBeenCalled();
+
+            vi.advanceTimersByTime(400);
+
+            expect(app.updateLiveWeatherForCircuit).toHaveBeenCalledTimes(1);
+        });
+
+        it('updateLiveWeatherForCircuit buckets the timestamp so repeats reuse the cache', async () => {
+            app.updateLiveWeatherForCircuit = CircuitWeatherApp.prototype.updateLiveWeatherForCircuit.bind(app);
+            app.currentCircuitCenter = [26.0, 50.0];
+
+            // Two calls within the same 5-minute window must use an identical,
+            // floored timestamp so the WeatherClient cache key is stable.
+            vi.setSystemTime(new Date('2026-05-24T12:01:30Z'));
+            await app.updateLiveWeatherForCircuit();
+            vi.setSystemTime(new Date('2026-05-24T12:03:45Z'));
+            await app.updateLiveWeatherForCircuit();
+
+            const firstTime = app.weatherClient.getForecast.mock.calls[0][2];
+            const secondTime = app.weatherClient.getForecast.mock.calls[1][2];
+            expect(firstTime.getTime()).toBe(new Date('2026-05-24T12:00:00Z').getTime());
+            expect(secondTime.getTime()).toBe(firstTime.getTime());
         });
     });
 
