@@ -70,13 +70,13 @@ describe('WeatherRadar Timer Logic', () => {
 
     it('should cancel previous timer loop when showErrorToast is called again', async () => {
         // Setup
-        radar.ui.errorToast = createMockElement('errorToast');
-        radar.ui.errorTimer = createMockElement('errorTimer');
-        radar.ui.errorTitle = createMockElement('errorTitle');
-        radar.ui.errorMessage = createMockElement('errorMessage');
+        radar.errorToast.ui.errorToast = createMockElement('errorToast');
+        radar.errorToast.ui.errorTimer = createMockElement('errorTimer');
+        radar.errorToast.ui.errorTitle = createMockElement('errorTitle');
+        radar.errorToast.ui.errorMessage = createMockElement('errorMessage');
 
         // Initial call
-        radar.showErrorToast('Title 1', 'Message 1', 60);
+        radar.errorToast.showErrorToast('Title 1', 'Message 1', 60);
 
         expect(requestAnimationFrameMock).toHaveBeenCalledTimes(1);
         // We know the ID is likely 1 because we reset nextRafId in beforeEach
@@ -84,10 +84,10 @@ describe('WeatherRadar Timer Logic', () => {
         const firstLoopId = 1;
 
         expect(rafCallbacks.has(firstLoopId)).toBe(true);
-        expect(radar.toastAnimationFrame).toBe(firstLoopId);
+        expect(radar.errorToast.toastAnimationFrame).toBe(firstLoopId);
 
         // Second call - simulates updateErrorUI being called again
-        radar.showErrorToast('Title 2', 'Message 2', 60);
+        radar.errorToast.showErrorToast('Title 2', 'Message 2', 60);
 
         expect(requestAnimationFrameMock).toHaveBeenCalledTimes(2);
         const secondLoopId = 2;
@@ -95,21 +95,21 @@ describe('WeatherRadar Timer Logic', () => {
         // CRITICAL ASSERTION: The first loop MUST be cancelled.
         expect(rafCallbacks.has(firstLoopId)).toBe(false);
         expect(rafCallbacks.has(secondLoopId)).toBe(true);
-        expect(radar.toastAnimationFrame).toBe(secondLoopId);
+        expect(radar.errorToast.toastAnimationFrame).toBe(secondLoopId);
     });
 
     it('should cancel timer loop when hiding error toast', () => {
-        radar.ui.errorToast = createMockElement('errorToast');
-        radar.ui.errorTimer = createMockElement('errorTimer');
+        radar.errorToast.ui.errorToast = createMockElement('errorToast');
+        radar.errorToast.ui.errorTimer = createMockElement('errorTimer');
 
-        radar.showErrorToast('Title', 'Msg', 60);
+        radar.errorToast.showErrorToast('Title', 'Msg', 60);
         const loopId = 1;
         expect(rafCallbacks.has(loopId)).toBe(true);
 
-        radar.hideErrorToast();
+        radar.errorToast.hideErrorToast();
 
         expect(rafCallbacks.has(loopId)).toBe(false);
-        expect(radar.toastAnimationFrame).toBe(null);
+        expect(radar.errorToast.toastAnimationFrame).toBe(null);
     });
 
     it('should correctly calculate duration in updateErrorUI', () => {
@@ -117,13 +117,13 @@ describe('WeatherRadar Timer Logic', () => {
         const now = 1000000;
         vi.setSystemTime(now);
 
-        radar.rateLimitResetTime = now + 45000; // 45s in future
-        radar.failedTiles = new Set(['tile1']);
+        radar.errorToast.rateLimitResetTime = now + 45000; // 45s in future
+        radar.errorToast.failedTiles = new Set(['tile1']);
 
         // Spy on showErrorToast
-        const toastSpy = vi.spyOn(radar, 'showErrorToast');
+        const toastSpy = vi.spyOn(radar.errorToast, 'showErrorToast');
 
-        radar.updateErrorUI();
+        radar.errorToast.updateErrorUI();
 
         expect(toastSpy).toHaveBeenCalledWith(
             expect.any(String),
@@ -138,17 +138,17 @@ describe('WeatherRadar Timer Logic', () => {
         vi.useFakeTimers();
 
         // Start with no errors to create the timer
-        radar.failedTiles = new Set();
-        radar.updateErrorUI();
+        radar.errorToast.failedTiles = new Set();
+        radar.errorToast.updateErrorUI();
 
-        expect(radar.hideErrorTimer).not.toBeNull();
+        expect(radar.errorToast.hideErrorTimer).not.toBeNull();
 
         // Introduce errors
-        radar.failedTiles = new Set(['tile1']);
-        radar.updateErrorUI();
+        radar.errorToast.failedTiles = new Set(['tile1']);
+        radar.errorToast.updateErrorUI();
 
         // The timer should be cleared
-        expect(radar.hideErrorTimer).toBeNull();
+        expect(radar.errorToast.hideErrorTimer).toBeNull();
 
         vi.useRealTimers();
     });
@@ -156,17 +156,17 @@ describe('WeatherRadar Timer Logic', () => {
     it('should call hideErrorToast from within hideErrorTimer', () => {
         vi.useFakeTimers();
 
-        radar.failedTiles = new Set();
-        const hideErrorToastSpy = vi.spyOn(radar, 'hideErrorToast').mockImplementation(() => {});
+        radar.errorToast.failedTiles = new Set();
+        const hideErrorToastSpy = vi.spyOn(radar.errorToast, 'hideErrorToast').mockImplementation(() => {});
 
-        radar.updateErrorUI();
+        radar.errorToast.updateErrorUI();
 
-        expect(radar.hideErrorTimer).not.toBeNull();
+        expect(radar.errorToast.hideErrorTimer).not.toBeNull();
 
         vi.advanceTimersByTime(1000);
 
         expect(hideErrorToastSpy).toHaveBeenCalled();
-        expect(radar.hideErrorTimer).toBeNull();
+        expect(radar.errorToast.hideErrorTimer).toBeNull();
 
         vi.useRealTimers();
     });
@@ -318,36 +318,36 @@ describe('WeatherRadar Tile Error Handling', () => {
     });
 
     it('should delete from failedTiles and updateErrorUI on tileunload if it was failed', () => {
-        vi.spyOn(radar, 'updateErrorUI').mockImplementation(() => {});
+        vi.spyOn(radar.errorToast, 'updateErrorUI').mockImplementation(() => {});
         const layer = radar.createLayer({ path: 'test', time: 100 });
         const onTileUnload = layer.on.mock.calls.find(call => call[0] === 'tileunload')[1];
 
         const mockTile = {};
-        radar.failedTiles.add(mockTile);
+        radar.errorToast.failedTiles.add(mockTile);
 
         onTileUnload({ tile: mockTile });
 
-        expect(radar.failedTiles.has(mockTile)).toBe(false);
-        expect(radar.updateErrorUI).toHaveBeenCalled();
+        expect(radar.errorToast.failedTiles.has(mockTile)).toBe(false);
+        expect(radar.errorToast.updateErrorUI).toHaveBeenCalled();
     });
 
 
     it('should delete from failedTiles and updateErrorUI on tileload if it was failed', () => {
-        vi.spyOn(radar, 'updateErrorUI').mockImplementation(() => {});
+        vi.spyOn(radar.errorToast, 'updateErrorUI').mockImplementation(() => {});
         const layer = radar.createLayer({ path: 'test', time: 100 });
         const onTileLoad = layer.on.mock.calls.find(call => call[0] === 'tileload')[1];
 
         const mockTile = {};
-        radar.failedTiles.add(mockTile);
+        radar.errorToast.failedTiles.add(mockTile);
 
         onTileLoad({ tile: mockTile });
 
-        expect(radar.failedTiles.has(mockTile)).toBe(false);
-        expect(radar.updateErrorUI).toHaveBeenCalled();
+        expect(radar.errorToast.failedTiles.has(mockTile)).toBe(false);
+        expect(radar.errorToast.updateErrorUI).toHaveBeenCalled();
     });
 
     it('should call handleTileError on tileerror', () => {
-        const handleTileErrorSpy = vi.spyOn(radar, 'handleTileError').mockImplementation(() => {});
+        const handleTileErrorSpy = vi.spyOn(radar.errorToast, 'handleTileError').mockImplementation(() => {});
         const layer = radar.createLayer({ path: 'test', time: 100 });
         const onTileError = layer.on.mock.calls.find(call => call[0] === 'tileerror')[1];
 

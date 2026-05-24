@@ -217,25 +217,25 @@ describe('WeatherRadar Frame & Speed Logic', () => {
             const tile = { src: 'http://example.com/tile.png' };
             // Provide a fetch mock so the HEAD check inside handleTileError doesn't fail
             global.fetch.mockResolvedValueOnce({ status: 200, ok: true });
-            radar.handleTileError({ tile });
-            expect(radar.failedTiles.has(tile)).toBe(true);
+            radar.errorToast.handleTileError({ tile });
+            expect(radar.errorToast.failedTiles.has(tile)).toBe(true);
         });
 
         it('triggers rate limit cooldown on HTTP 429', async () => {
-            const cooldownSpy = vi.spyOn(radar, 'triggerRateLimitCooldown').mockImplementation(() => { });
+            const cooldownSpy = vi.spyOn(radar.errorToast, 'triggerRateLimitCooldown').mockImplementation(() => { });
             global.fetch.mockResolvedValueOnce({ status: 429, ok: false });
 
-            radar.handleTileError({ tile: {} });
+            radar.errorToast.handleTileError({ tile: {} });
 
             // Wait for the fetch promise chain
             await vi.waitFor(() => expect(cooldownSpy).toHaveBeenCalled());
         });
 
         it('shows connection instability toast on 200 (API ok but tile failed)', async () => {
-            const cooldownSpy = vi.spyOn(radar, 'triggerRateLimitCooldown').mockImplementation(() => { });
+            const cooldownSpy = vi.spyOn(radar.errorToast, 'triggerRateLimitCooldown').mockImplementation(() => { });
             global.fetch.mockResolvedValueOnce({ status: 200, ok: true });
 
-            radar.handleTileError({ tile: {} });
+            radar.errorToast.handleTileError({ tile: {} });
 
             await vi.waitFor(() => {
                 expect(cooldownSpy).toHaveBeenCalledWith(
@@ -247,10 +247,10 @@ describe('WeatherRadar Frame & Speed Logic', () => {
         });
 
         it('shows service error toast on non-429 error status', async () => {
-            const toastSpy = vi.spyOn(radar, 'showErrorToast').mockImplementation(() => { });
+            const toastSpy = vi.spyOn(radar.errorToast, 'showErrorToast').mockImplementation(() => { });
             global.fetch.mockResolvedValueOnce({ status: 503, ok: false });
 
-            radar.handleTileError({ tile: {} });
+            radar.errorToast.handleTileError({ tile: {} });
 
             await vi.waitFor(() => {
                 expect(toastSpy).toHaveBeenCalledWith(
@@ -262,23 +262,23 @@ describe('WeatherRadar Frame & Speed Logic', () => {
         });
 
         it('skips status check if one is already in progress', () => {
-            radar.isCheckingStatus = true;
+            radar.errorToast.isCheckingStatus = true;
             const tile = { src: 'test' };
 
-            radar.handleTileError({ tile });
+            radar.errorToast.handleTileError({ tile });
 
             // Tile should still be tracked
-            expect(radar.failedTiles.has(tile)).toBe(true);
+            expect(radar.errorToast.failedTiles.has(tile)).toBe(true);
             // But no fetch should be made
             expect(global.fetch).not.toHaveBeenCalled();
         });
 
         it('calls updateErrorUI on network error', async () => {
-            const uiSpy = vi.spyOn(radar, 'updateErrorUI').mockImplementation(() => { });
+            const uiSpy = vi.spyOn(radar.errorToast, 'updateErrorUI').mockImplementation(() => { });
             const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
             global.fetch.mockRejectedValueOnce(new Error('offline'));
 
-            radar.handleTileError({ tile: {} });
+            radar.errorToast.handleTileError({ tile: {} });
 
             try {
                 await vi.waitFor(() => {
