@@ -163,7 +163,7 @@ describe('WeatherRadar Polling Logic', () => {
             radar.frames = [
                 { time: 100, path: '/path1' }
             ];
-            radar.isPlaying = true;
+            radar.playback.isPlaying = true;
 
             // Mock API returning new frames
             global.fetch.mockResolvedValueOnce({ ok: true,
@@ -184,7 +184,7 @@ describe('WeatherRadar Polling Logic', () => {
 
         it('should defer update if not playing', async () => {
             radar.frames = [{ time: 100, path: '/path1' }];
-            radar.isPlaying = false;
+            radar.playback.isPlaying = false;
 
             global.fetch.mockResolvedValueOnce({ ok: true,
                 json: () => Promise.resolve({

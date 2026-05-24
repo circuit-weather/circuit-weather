@@ -74,9 +74,9 @@ describe('WeatherRadar Playback & Speed Control', () => {
         radar = new WeatherRadar(mockMap);
 
         // Mock UI elements involved in speed control
-        radar.ui.speedBtn = createMockElement('radarSpeedBtn');
-        radar.ui.speedLabel = createMockElement('radarSpeedLabel');
-        radar.ui.playBtn = createMockElement('radarPlayBtn');
+        radar.playback.ui.speedBtn = createMockElement('radarSpeedBtn');
+        radar.playback.ui.speedLabel = createMockElement('radarSpeedLabel');
+        radar.playback.ui.playBtn = createMockElement('radarPlayBtn');
     });
 
     // ---------------------------------------------------------------
@@ -85,55 +85,55 @@ describe('WeatherRadar Playback & Speed Control', () => {
     describe('Speed Control', () => {
         it('should cycle through available speeds', () => {
             // Initial state (default index 1: 1x)
-            expect(radar.speedIndex).toBe(CONFIG.defaultSpeedIndex);
+            expect(radar.playback.speedIndex).toBe(CONFIG.defaultSpeedIndex);
 
             // Cycle 1 -> 2 (2x)
-            radar.cycleSpeed();
-            expect(radar.speedIndex).toBe(2);
-            expect(radar.ui.speedLabel.textContent).toBe('2x');
-            expect(radar.getCurrentSpeed()).toBe(500);
+            radar.playback.cycleSpeed();
+            expect(radar.playback.speedIndex).toBe(2);
+            expect(radar.playback.ui.speedLabel.textContent).toBe('2x');
+            expect(radar.playback.getCurrentSpeed()).toBe(500);
 
             // Cycle 2 -> 0 (0.5x)
-            radar.cycleSpeed();
-            expect(radar.speedIndex).toBe(0);
-            expect(radar.ui.speedLabel.textContent).toBe('0.5x');
-            expect(radar.getCurrentSpeed()).toBe(2000);
+            radar.playback.cycleSpeed();
+            expect(radar.playback.speedIndex).toBe(0);
+            expect(radar.playback.ui.speedLabel.textContent).toBe('0.5x');
+            expect(radar.playback.getCurrentSpeed()).toBe(2000);
 
             // Cycle 0 -> 1 (1x)
-            radar.cycleSpeed();
-            expect(radar.speedIndex).toBe(1);
-            expect(radar.ui.speedLabel.textContent).toBe('1x');
-            expect(radar.getCurrentSpeed()).toBe(1000);
+            radar.playback.cycleSpeed();
+            expect(radar.playback.speedIndex).toBe(1);
+            expect(radar.playback.ui.speedLabel.textContent).toBe('1x');
+            expect(radar.playback.getCurrentSpeed()).toBe(1000);
         });
 
         it('should restart playback if currently playing when speed changes', () => {
-            radar.isPlaying = true;
-            const pauseSpy = vi.spyOn(radar, 'pause');
-            const playSpy = vi.spyOn(radar, 'play');
+            radar.playback.isPlaying = true;
+            const pauseSpy = vi.spyOn(radar.playback, 'pause');
+            const playSpy = vi.spyOn(radar.playback, 'play');
 
-            radar.cycleSpeed();
+            radar.playback.cycleSpeed();
 
             expect(pauseSpy).toHaveBeenCalled();
             expect(playSpy).toHaveBeenCalled();
             // speedIndex should have updated
-            expect(radar.speedIndex).not.toBe(CONFIG.defaultSpeedIndex);
+            expect(radar.playback.speedIndex).not.toBe(CONFIG.defaultSpeedIndex);
         });
 
         it('should NOT restart playback if paused when speed changes', () => {
-            radar.isPlaying = false;
-            const pauseSpy = vi.spyOn(radar, 'pause');
-            const playSpy = vi.spyOn(radar, 'play');
+            radar.playback.isPlaying = false;
+            const pauseSpy = vi.spyOn(radar.playback, 'pause');
+            const playSpy = vi.spyOn(radar.playback, 'play');
 
-            radar.cycleSpeed();
+            radar.playback.cycleSpeed();
 
             expect(pauseSpy).not.toHaveBeenCalled();
             expect(playSpy).not.toHaveBeenCalled();
         });
 
         it('should update ARIA label on speed button', () => {
-            radar.cycleSpeed();
-            const label = CONFIG.radarSpeeds[radar.speedIndex].label;
-            expect(radar.ui.speedBtn.setAttribute).toHaveBeenCalledWith('aria-label', `Playback speed: ${label}`);
+            radar.playback.cycleSpeed();
+            const label = CONFIG.radarSpeeds[radar.playback.speedIndex].label;
+            expect(radar.playback.ui.speedBtn.setAttribute).toHaveBeenCalledWith('aria-label', `Playback speed: ${label}`);
         });
     });
 
@@ -165,7 +165,7 @@ describe('WeatherRadar Playback & Speed Control', () => {
 
             // Mock active element as body
             documentMock.activeElement = { tagName: 'BODY' };
-            const toggleSpy = vi.spyOn(radar, 'togglePlay');
+            const toggleSpy = vi.spyOn(radar.playback, 'togglePlay');
             const preventDefault = vi.fn();
 
             // Trigger event
@@ -177,7 +177,7 @@ describe('WeatherRadar Playback & Speed Control', () => {
 
         it('should NOT toggle when focus is on an input', () => {
             documentMock.activeElement = { tagName: 'INPUT' };
-            const toggleSpy = vi.spyOn(radar, 'togglePlay');
+            const toggleSpy = vi.spyOn(radar.playback, 'togglePlay');
             const preventDefault = vi.fn();
 
             keydownHandler({ code: 'Space', preventDefault });
@@ -188,7 +188,7 @@ describe('WeatherRadar Playback & Speed Control', () => {
 
         it('should NOT toggle when focus is on a button', () => {
             documentMock.activeElement = { tagName: 'BUTTON' };
-            const toggleSpy = vi.spyOn(radar, 'togglePlay');
+            const toggleSpy = vi.spyOn(radar.playback, 'togglePlay');
 
             keydownHandler({ code: 'Space', preventDefault: vi.fn() });
 
@@ -197,7 +197,7 @@ describe('WeatherRadar Playback & Speed Control', () => {
 
         it('should ignore other keys', () => {
             documentMock.activeElement = { tagName: 'BODY' };
-            const toggleSpy = vi.spyOn(radar, 'togglePlay');
+            const toggleSpy = vi.spyOn(radar.playback, 'togglePlay');
 
             keydownHandler({ code: 'Enter', preventDefault: vi.fn() });
 

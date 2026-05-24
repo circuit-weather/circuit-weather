@@ -1,12 +1,13 @@
 import { CONFIG } from '../config.js';
 import { i18n } from '../i18n/index.js';
 import { RadarErrorToast } from './RadarErrorToast.js';
+import { RadarPlayback } from './RadarPlayback.js';
 
 // TODO: Refactor (in progress) — this class is large and mixes several concerns:
 // frame management, playback animation, polling/reconciliation, and the error/toast
-// UI. The error/toast subsystem has been extracted to RadarErrorToast.js; continue
-// splitting the remaining concerns into separate units (the existing test files
-// hint at these seams: frames, playback, polling, reconcile).
+// UI. The error/toast subsystem (RadarErrorToast.js) and playback (RadarPlayback.js)
+// have been extracted; continue splitting the remaining concerns into separate units
+// (the existing test files hint at these seams: frames, polling, reconcile).
 //
 // TODO: Feature — rain alerts. We already retain ~2h of radar frames; derive an
 // "approaching precipitation" signal relative to the selected circuit centre and
@@ -18,14 +19,10 @@ export class WeatherRadar {
         this.layers = [];
         this.visibleLayerIndex = -1;
         this.currentFrame = 0;
-        this.isPlaying = false;
-        this.animationFrameId = null;
-        this.lastFrameTime = 0;
         this.pollingTimeout = null;
         this.sessionTime = null;
         this.pastFrameCount = 0;
         this.pendingFrames = null;
-        this.speedIndex = CONFIG.defaultSpeedIndex;
 
         // Shared time formatter (O(1) creation, reuse in loops)
         this.timeFormatter = new Intl.DateTimeFormat(i18n.locale, {
@@ -37,24 +34,34 @@ export class WeatherRadar {
         // Tile-error tracking + "connection instability" toast
         this.errorToast = new RadarErrorToast({ onRetry: () => this.redrawLayers() });
 
+        // Animation playback + speed control. Frame state stays here and is
+        // accessed via callbacks.
+        this.playback = new RadarPlayback({
+            getFrameCount: () => this.frames.length,
+            getCurrentFrame: () => this.currentFrame,
+            setCurrentFrame: (i) => { this.currentFrame = i; },
+            showFrame: (i) => this.showFrame(i),
+            beforePlay: () => {
+                if (this.pendingFrames) {
+                    this.applyFrameUpdate(this.pendingFrames);
+                    this.pendingFrames = null;
+                }
+            }
+        });
+
         // Bolt Optimization: Cache UI elements
         this.ui = {
             slider: document.getElementById('radarSlider'),
-            playBtn: document.getElementById('radarPlayBtn'),
             time: document.getElementById('radarTime'),
             relative: document.getElementById('radarRelative'),
             timeStart: document.getElementById('radarTimeStart'),
             timeEnd: document.getElementById('radarTimeEnd'),
-            controls: document.getElementById('radarControls'),
-            speedBtn: document.getElementById('radarSpeedBtn'),
-            speedLabel: document.getElementById('radarSpeedLabel')
+            controls: document.getElementById('radarControls')
         };
 
-        this.boundLoop = this.loop.bind(this);
         this.handleSpaceKey = this.handleSpaceKey.bind(this);
         this.handleLanguageChange = this.handleLanguageChange.bind(this);
         this.bindEvents();
-        this.updateSpeedLabel();
 
         // Palette UX: Start a 1-minute timer to keep the relative time updated
         this.relativeTimeInterval = setInterval(() => {
@@ -65,18 +72,12 @@ export class WeatherRadar {
     }
 
     bindEvents() {
-        if (this.ui.playBtn) {
-            this.ui.playBtn.addEventListener('click', () => this.togglePlay());
-        }
         if (this.ui.slider) {
             this.ui.slider.addEventListener('input', (e) => {
                 this.currentFrame = parseInt(e.target.value, 10);
                 this.showFrame(this.currentFrame);
-                this.pause();
+                this.playback.pause();
             });
-        }
-        if (this.ui.speedBtn) {
-            this.ui.speedBtn.addEventListener('click', () => this.cycleSpeed());
         }
 
         // Global shortcut: Space to toggle play/pause
@@ -97,7 +98,7 @@ export class WeatherRadar {
             }
 
             e.preventDefault();
-            this.togglePlay();
+            this.playback.togglePlay();
         }
     }
 
@@ -105,36 +106,7 @@ export class WeatherRadar {
         document.removeEventListener('keydown', this.handleSpaceKey);
         document.removeEventListener('i18n:change', this.handleLanguageChange);
         this.errorToast.destroy();
-    }
-
-    cycleSpeed() {
-        // Cycle to the next speed
-        this.speedIndex = (this.speedIndex + 1) % CONFIG.radarSpeeds.length;
-        this.updateSpeedLabel();
-
-        // If playing, restart with the new speed
-        if (this.isPlaying) {
-            this.pause();
-            this.play();
-        }
-    }
-
-    updateSpeedLabel() {
-        if (this.ui.speedLabel) {
-            const label = CONFIG.radarSpeeds[this.speedIndex].label;
-            this.ui.speedLabel.textContent = label;
-
-            // Palette Accessibility: Update ARIA label with current state
-            if (this.ui.speedBtn) {
-                const speedLabel = i18n.t('radar.playbackSpeed', { speed: label });
-                this.ui.speedBtn.setAttribute('aria-label', speedLabel);
-                this.ui.speedBtn.setAttribute('title', speedLabel);
-            }
-        }
-    }
-
-    getCurrentSpeed() {
-        return CONFIG.radarSpeeds[this.speedIndex].speed;
+        this.playback.destroy();
     }
 
     setSessionTime(sessionTime) {
@@ -194,7 +166,7 @@ export class WeatherRadar {
             // This prevents "hammering" by loading one frame at a time in the background
             this.preloadSequence();
 
-            this.play();
+            this.playback.play();
         } catch (error) {
             console.error('Radar load failed:', error);
         } finally {
@@ -276,7 +248,7 @@ export class WeatherRadar {
             }
 
             // Always attempt update - rebuild logic is cheap and robust
-            if (this.isPlaying) {
+            if (this.playback.isPlaying) {
                 this.applyFrameUpdate(newFrames);
             } else {
                 // Defer update until played
@@ -869,67 +841,6 @@ export class WeatherRadar {
         }
     }
 
-    play() {
-        // Clear any existing timer/loop first to prevent double animations
-        this.pause();
-
-        // Apply any pending updates before starting
-        if (this.pendingFrames) {
-            this.applyFrameUpdate(this.pendingFrames);
-            this.pendingFrames = null;
-        }
-
-        this.isPlaying = true;
-        if (this.ui.playBtn) {
-            this.ui.playBtn.classList.add('playing');
-            this.ui.playBtn.setAttribute('aria-pressed', 'true');
-            this.ui.playBtn.setAttribute('aria-label', i18n.t('radar.pause'));
-            this.ui.playBtn.setAttribute('title', i18n.t('radar.pauseTitle'));
-        }
-
-        // Bolt Optimization: Use requestAnimationFrame instead of setInterval
-        // Prevents drift and saves battery in background tabs
-        this.lastFrameTime = performance.now();
-        this.loop();
-    }
-
-    loop() {
-        if (!this.isPlaying) return;
-
-        const now = performance.now();
-        const elapsed = now - this.lastFrameTime;
-        const speed = this.getCurrentSpeed();
-
-        if (elapsed >= speed) {
-            this.currentFrame = (this.currentFrame + 1) % this.frames.length;
-            this.showFrame(this.currentFrame);
-            // Adjust for drift while preserving the interval grid
-            this.lastFrameTime = now - (elapsed % speed);
-        }
-
-        this.animationFrameId = requestAnimationFrame(this.boundLoop);
-    }
-
-    pause() {
-        this.isPlaying = false;
-        if (this.ui.playBtn) {
-            this.ui.playBtn.classList.remove('playing');
-            this.ui.playBtn.setAttribute('aria-pressed', 'false');
-            this.ui.playBtn.setAttribute('aria-label', i18n.t('radar.play'));
-            this.ui.playBtn.setAttribute('title', i18n.t('radar.playTitle'));
-        }
-
-        if (this.animationFrameId) {
-            cancelAnimationFrame(this.animationFrameId);
-            this.animationFrameId = null;
-        }
-    }
-
-    togglePlay() {
-        if (this.isPlaying) this.pause();
-        else this.play();
-    }
-
     showControls(visible) {
         if (this.ui.controls) {
             this.ui.controls.style.display = visible ? 'flex' : 'none';
@@ -952,7 +863,7 @@ export class WeatherRadar {
             hour12: false
         });
 
-        this.updateSpeedLabel();
+        this.playback.updateSpeedLabel();
         this.updateSlider();
 
         // Update current frame time display
