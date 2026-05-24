@@ -84,9 +84,9 @@ describe('WeatherRadar Lifecycle & Playback', () => {
         radar.ui.timeStart = createMockElement('radarTimeStart');
         radar.ui.timeEnd = createMockElement('radarTimeEnd');
         radar.ui.controls = createMockElement('radarControls');
-        radar.ui.playBtn = createMockElement('radarPlayBtn');
-        radar.ui.speedLabel = createMockElement('radarSpeedLabel');
-        radar.ui.speedBtn = createMockElement('radarSpeedBtn');
+        radar.playback.ui.playBtn = createMockElement('radarPlayBtn');
+        radar.playback.ui.speedLabel = createMockElement('radarSpeedLabel');
+        radar.playback.ui.speedBtn = createMockElement('radarSpeedBtn');
         radar.errorToast.ui.errorToast = createMockElement('errorToast');
         radar.errorToast.ui.errorTimer = createMockElement('errorTimer');
         radar.errorToast.ui.errorTitle = createMockElement('errorTitle');
@@ -214,17 +214,17 @@ describe('WeatherRadar Lifecycle & Playback', () => {
     describe('play', () => {
         it('sets isPlaying to true and starts animation loop', () => {
             radar.frames = [{ time: 100 }];
-            radar.play();
+            radar.playback.play();
 
-            expect(radar.isPlaying).toBe(true);
+            expect(radar.playback.isPlaying).toBe(true);
             expect(requestAnimationFrame).toHaveBeenCalled();
         });
 
         it('adds playing class and updates ARIA on play button', () => {
-            radar.play();
+            radar.playback.play();
 
-            expect(radar.ui.playBtn.classList.add).toHaveBeenCalledWith('playing');
-            expect(radar.ui.playBtn.setAttribute).toHaveBeenCalledWith('aria-label', 'Pause radar animation');
+            expect(radar.playback.ui.playBtn.classList.add).toHaveBeenCalledWith('playing');
+            expect(radar.playback.ui.playBtn.setAttribute).toHaveBeenCalledWith('aria-label', 'Pause radar animation');
         });
 
         it('applies pending frames before starting', () => {
@@ -232,7 +232,7 @@ describe('WeatherRadar Lifecycle & Playback', () => {
             const pendingFrames = [{ time: 300, path: '/p3' }];
             radar.pendingFrames = pendingFrames;
 
-            radar.play();
+            radar.playback.play();
 
             expect(applyUpdateSpy).toHaveBeenCalledWith(pendingFrames);
             expect(radar.pendingFrames).toBeNull();
@@ -241,31 +241,31 @@ describe('WeatherRadar Lifecycle & Playback', () => {
 
     describe('pause', () => {
         it('stops animation and updates button state', () => {
-            radar.isPlaying = true;
-            radar.animationFrameId = 42;
+            radar.playback.isPlaying = true;
+            radar.playback.animationFrameId = 42;
 
-            radar.pause();
+            radar.playback.pause();
 
-            expect(radar.isPlaying).toBe(false);
+            expect(radar.playback.isPlaying).toBe(false);
             expect(cancelAnimationFrame).toHaveBeenCalledWith(42);
-            expect(radar.animationFrameId).toBeNull();
-            expect(radar.ui.playBtn.classList.remove).toHaveBeenCalledWith('playing');
-            expect(radar.ui.playBtn.setAttribute).toHaveBeenCalledWith('aria-label', 'Play radar animation');
+            expect(radar.playback.animationFrameId).toBeNull();
+            expect(radar.playback.ui.playBtn.classList.remove).toHaveBeenCalledWith('playing');
+            expect(radar.playback.ui.playBtn.setAttribute).toHaveBeenCalledWith('aria-label', 'Play radar animation');
         });
     });
 
     describe('togglePlay', () => {
         it('plays when paused', () => {
-            radar.isPlaying = false;
-            const playSpy = vi.spyOn(radar, 'play').mockImplementation(() => { });
-            radar.togglePlay();
+            radar.playback.isPlaying = false;
+            const playSpy = vi.spyOn(radar.playback, 'play').mockImplementation(() => { });
+            radar.playback.togglePlay();
             expect(playSpy).toHaveBeenCalled();
         });
 
         it('pauses when playing', () => {
-            radar.isPlaying = true;
-            const pauseSpy = vi.spyOn(radar, 'pause').mockImplementation(() => { });
-            radar.togglePlay();
+            radar.playback.isPlaying = true;
+            const pauseSpy = vi.spyOn(radar.playback, 'pause').mockImplementation(() => { });
+            radar.playback.togglePlay();
             expect(pauseSpy).toHaveBeenCalled();
         });
     });
@@ -291,7 +291,7 @@ describe('WeatherRadar Lifecycle & Playback', () => {
             await radar.load();
 
             expect(radar.frames).toHaveLength(2);
-            expect(radar.isPlaying).toBe(true);
+            expect(radar.playback.isPlaying).toBe(true);
         });
 
         it('handles empty API response gracefully', async () => {
@@ -302,7 +302,7 @@ describe('WeatherRadar Lifecycle & Playback', () => {
             await radar.load();
 
             expect(radar.frames).toHaveLength(0);
-            expect(radar.isPlaying).toBe(false);
+            expect(radar.playback.isPlaying).toBe(false);
         });
 
         it('always starts polling even if load fails', async () => {
@@ -574,27 +574,27 @@ describe('WeatherRadar Lifecycle & Playback', () => {
         });
 
         it('loop does nothing if not playing', () => {
-            radar.isPlaying = false;
-            radar.loop();
-            expect(radar.animationFrameId).toBeNull();
+            radar.playback.isPlaying = false;
+            radar.playback.loop();
+            expect(radar.playback.animationFrameId).toBeNull();
         });
 
         it('loop advances frame when enough time elapsed', () => {
-            radar.isPlaying = true;
+            radar.playback.isPlaying = true;
             radar.frames = [{ time: 1000 }, { time: 2000 }];
             radar.currentFrame = 0;
-            radar.lastFrameTime = 0;
+            radar.playback.lastFrameTime = 0;
 
-            vi.spyOn(radar, 'getCurrentSpeed').mockReturnValue(100);
+            vi.spyOn(radar.playback, 'getCurrentSpeed').mockReturnValue(100);
             vi.spyOn(performance, 'now').mockReturnValue(150); // > 100
             vi.spyOn(radar, 'showFrame').mockImplementation(() => {});
 
-            radar.loop();
+            radar.playback.loop();
 
             expect(radar.currentFrame).toBe(1);
             expect(radar.showFrame).toHaveBeenCalledWith(1);
             // 150 - (150 % 100) = 150 - 50 = 100
-            expect(radar.lastFrameTime).toBe(100);
+            expect(radar.playback.lastFrameTime).toBe(100);
         });
     });
 
@@ -665,15 +665,15 @@ describe('WeatherRadar Lifecycle & Playback', () => {
         });
 
         it('togglePlay pauses if playing, plays if not playing', () => {
-            const playSpy = vi.spyOn(radar, 'play').mockImplementation(() => {});
-            const pauseSpy = vi.spyOn(radar, 'pause').mockImplementation(() => {});
+            const playSpy = vi.spyOn(radar.playback, 'play').mockImplementation(() => {});
+            const pauseSpy = vi.spyOn(radar.playback, 'pause').mockImplementation(() => {});
 
-            radar.isPlaying = true;
-            radar.togglePlay();
+            radar.playback.isPlaying = true;
+            radar.playback.togglePlay();
             expect(pauseSpy).toHaveBeenCalled();
 
-            radar.isPlaying = false;
-            radar.togglePlay();
+            radar.playback.isPlaying = false;
+            radar.playback.togglePlay();
             expect(playSpy).toHaveBeenCalled();
         });
 
@@ -736,7 +736,7 @@ describe('WeatherRadar Lifecycle & Playback', () => {
 
     describe('handleLanguageChange Coverage', () => {
         it('updates formatters and UI components', () => {
-            const updateSpeedLabelSpy = vi.spyOn(radar, 'updateSpeedLabel').mockImplementation(() => {});
+            const updateSpeedLabelSpy = vi.spyOn(radar.playback, 'updateSpeedLabel').mockImplementation(() => {});
             const updateSliderSpy = vi.spyOn(radar, 'updateSlider').mockImplementation(() => {});
             const updateTimeDisplaySpy = vi.spyOn(radar, 'updateTimeDisplay').mockImplementation(() => {});
 

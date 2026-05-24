@@ -160,9 +160,9 @@ describe('WeatherRadar Frame & Speed Logic', () => {
     // ---------------------------------------------------------------
     describe('cycleSpeed', () => {
         it('increments speedIndex', () => {
-            const initialIndex = radar.speedIndex;
-            radar.cycleSpeed();
-            expect(radar.speedIndex).toBe(initialIndex + 1);
+            const initialIndex = radar.playback.speedIndex;
+            radar.playback.cycleSpeed();
+            expect(radar.playback.speedIndex).toBe(initialIndex + 1);
         });
 
         it('wraps around to 0 when at the last speed', () => {
@@ -173,36 +173,36 @@ describe('WeatherRadar Frame & Speed Logic', () => {
 
             // Cycle until we wrap back to 0
             do {
-                radar.cycleSpeed();
+                radar.playback.cycleSpeed();
                 cycleCount++;
                 if (cycleCount > 20) break; // Safety limit
-            } while (radar.speedIndex !== 0);
+            } while (radar.playback.speedIndex !== 0);
 
-            expect(radar.speedIndex).toBe(0);
+            expect(radar.playback.speedIndex).toBe(0);
             expect(cycleCount).toBeGreaterThan(1); // Proves there were multiple speeds
         });
 
         it('restarts playback if currently playing', () => {
-            const pauseSpy = vi.spyOn(radar, 'pause').mockImplementation(() => {
-                radar.isPlaying = false;
+            const pauseSpy = vi.spyOn(radar.playback, 'pause').mockImplementation(() => {
+                radar.playback.isPlaying = false;
             });
-            const playSpy = vi.spyOn(radar, 'play').mockImplementation(() => {
-                radar.isPlaying = true;
+            const playSpy = vi.spyOn(radar.playback, 'play').mockImplementation(() => {
+                radar.playback.isPlaying = true;
             });
 
-            radar.isPlaying = true;
-            radar.cycleSpeed();
+            radar.playback.isPlaying = true;
+            radar.playback.cycleSpeed();
 
             expect(pauseSpy).toHaveBeenCalled();
             expect(playSpy).toHaveBeenCalled();
         });
 
         it('does not restart playback if not playing', () => {
-            const pauseSpy = vi.spyOn(radar, 'pause').mockImplementation(() => { });
-            const playSpy = vi.spyOn(radar, 'play').mockImplementation(() => { });
+            const pauseSpy = vi.spyOn(radar.playback, 'pause').mockImplementation(() => { });
+            const playSpy = vi.spyOn(radar.playback, 'play').mockImplementation(() => { });
 
-            radar.isPlaying = false;
-            radar.cycleSpeed();
+            radar.playback.isPlaying = false;
+            radar.playback.cycleSpeed();
 
             expect(pauseSpy).not.toHaveBeenCalled();
             expect(playSpy).not.toHaveBeenCalled();

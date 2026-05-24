@@ -254,14 +254,14 @@ describe('WeatherRadar Live Countdown', () => {
     it('animates frames in a loop', () => {
         radar.frames = [{ time: 1000 }, { time: 2000 }];
         radar.currentFrame = 0;
-        radar.isPlaying = true;
-        vi.spyOn(radar, 'getCurrentSpeed').mockReturnValue(100);
+        radar.playback.isPlaying = true;
+        vi.spyOn(radar.playback, 'getCurrentSpeed').mockReturnValue(100);
         vi.spyOn(radar, 'showFrame');
 
-        radar.lastFrameTime = 0;
+        radar.playback.lastFrameTime = 0;
         vi.spyOn(performance, 'now').mockReturnValue(100);
 
-        radar.loop();
+        radar.playback.loop();
 
         expect(radar.showFrame).toHaveBeenCalledWith(1);
     });
