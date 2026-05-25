@@ -87,6 +87,7 @@ Preferencias guardadas localmente no navegador:
 - **theme:** `light` ou `dark`
 - **unit:** `metric` ou `imperial`
 - **language:** o seu idioma selecionado (ex. `pt-BR`, `en-US`)
+- **windOverlay:** `true` ou `false` (lembra se a camada de animação de vento está habilitada)
 - **f1_schedule_cache:** faz cache dos dados do calendário da F1 (cache de 24 horas)
 
 ## Open source

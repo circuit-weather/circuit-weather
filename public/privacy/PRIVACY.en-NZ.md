@@ -87,6 +87,7 @@ Preference settings are stored locally in your browser:
 - **theme:** `light` or `dark`
 - **unit:** `metric` or `imperial`
 - **language:** your selected locale (e.g., `en-NZ`, `fr`)
+- **windOverlay:** `true` or `false` (remembers if the wind animation layer is enabled)
 - **f1_schedule_cache:** caches the F1 schedule data (24-hour cache)
 
 This data remains on your device and is not sent to our servers.
