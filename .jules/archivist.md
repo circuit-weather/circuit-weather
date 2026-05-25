@@ -231,3 +231,7 @@ Prevention: Avoid duplicating configuration values in documentation; reference t
 ## 2024-05-09 - Missing Caching Durations in Privacy Policy
 **Learning:** The privacy policy only documented caching durations for one out of five proxied data sources, leaving the data retention times for the others ambiguous despite them being explicitly defined in the worker cache headers.
 **Action:** Always verify that documentation of data retention and caching covers all relevant services consistently.
+
+## 2026-05-25 - Documenting Wind Overlay Preference Storage
+**Learning:** When introducing new UI toggles that persist state via `SafeStorage` (like the `windOverlay` feature), the documentation in `PRIVACY.md` and its localized variants often drifts, omitting the new storage key. Developers must ensure all user-facing preferences are documented to maintain privacy transparency.
+**Action:** When adding or modifying `SafeStorage` keys, always grep across the entire codebase and update the Local Storage section in `public/PRIVACY.md` and all `public/privacy/PRIVACY.*.md` variants.

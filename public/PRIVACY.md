@@ -90,6 +90,7 @@ The application stores preference settings locally in your browser to remember y
 - **theme:** `light` or `dark`
 - **unit:** `metric` or `imperial`
 - **language:** your selected locale (e.g., `en-NZ`, `fr`)
+- **windOverlay:** `true` or `false` (remembers if the wind animation layer is enabled)
 - **f1_schedule_cache:** caches the F1 schedule data (24-hour cache)
 
 This data resides solely on your device and is never transmitted to our servers.
