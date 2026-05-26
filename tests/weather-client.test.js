@@ -455,6 +455,27 @@ describe('WeatherClient cache edge cases', () => {
             return { ok: true, json: async () => list };
         };
 
+        it('evicts the oldest wind field cache entry when exceeding maxCacheSize', async () => {
+            const mockFetch = vi.fn().mockResolvedValue(makeGridResponse(3, 10, 0));
+            vi.stubGlobal('fetch', mockFetch);
+
+            for (let i = 0; i < client.maxCacheSize; i++) {
+                client.windFieldCache.set(`old-key-${i}`, { timestamp: Date.now(), field: {} });
+            }
+
+            expect(client.windFieldCache.size).toBe(client.maxCacheSize);
+
+            await client.getWindField(45, 9);
+
+            expect(client.windFieldCache.size).toBe(client.maxCacheSize);
+            expect(client.windFieldCache.has('old-key-0')).toBe(false);
+
+            const rLat = Number(45).toFixed(2);
+            const rLon = Number(9).toFixed(2);
+            const cacheKey = `${rLat},${rLon}`;
+            expect(client.windFieldCache.has(cacheKey)).toBe(true);
+        });
+
         it('fetches a 3x3 grid in a single request and parses u/v vectors', async () => {
             const mockFetch = vi.fn().mockResolvedValue(makeGridResponse(3, 10, 0));
             vi.stubGlobal('fetch', mockFetch);
