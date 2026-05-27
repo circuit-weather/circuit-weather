@@ -446,6 +446,23 @@ describe('WeatherClient cache edge cases', () => {
         await client.getForecast(51.5, -0.1, sessionTime);
     });
 
+    it('evicts the oldest wind field cache entry when exceeding maxCacheSize', async () => {
+        global.fetch = vi.fn().mockResolvedValue({
+            ok: true,
+            json: async () => [{ current: { wind_speed_10m: 10, wind_direction_10m: 180 } }]
+        });
+
+        // Fill cache
+        for (let i = 0; i < client.maxCacheSize; i++) {
+            client.windFieldCache.set(`old-key-${i}`, { timestamp: Date.now(), field: {} });
+        }
+
+        await client.getWindField(45, 9);
+
+        expect(client.windFieldCache.size).toBe(client.maxCacheSize);
+        expect(client.windFieldCache.has('old-key-0')).toBe(false);
+    });
+
     describe('getWindField', () => {
         const makeGridResponse = (n, speed, dir) => {
             const list = [];
