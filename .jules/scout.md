@@ -62,3 +62,6 @@
 ## 2025-02-14 - Dialog Content Deprioritization
 **Learning:** Upgrading `<div>` wrappers inside `<dialog>` modals to `<header>` and `<section>` tags is technically correct HTML5, but has negligible SEO impact because search engines deprioritize hidden modal content.
 **Action:** Prioritize structural SEO improvements within the `<main>`, `<article>`, or core visible components of the page before optimizing hidden modal structures.
+## 2025-02-14 - Semantic List Upgrades
+**Learning:** Upgrading loosely grouped generic `<div>` wrappers into semantic HTML lists (`<dl>`, `<dt>`, `<dd>`) can break visual layout depending on global browser defaults and parent CSS rules for list elements, as they often introduce default margins/paddings.
+**Action:** When converting elements to `<dl>` or `<dd>` for SEO/a11y improvements without changing stylesheets, immediately apply inline CSS resets (e.g., `margin: 0`, `padding: 0`, `display: flex`) to strictly preserve the visual design constraints mandated by the SEO prompt guidelines.
