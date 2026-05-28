@@ -1097,7 +1097,7 @@ export class CircuitWeatherApp {
                             <div class="weather-timeline-wind">${escapeHtml(hour.windSpeed)} ${escapeHtml(weather.units.wind_speed_10m)}</div>
                         </div>
                         <div class="weather-timeline-temp" aria-hidden="true">
-                            <div>${escapeHtml(temp)}°</div>
+                            <div>${escapeHtml(temp)}${escapeHtml(weather.units.temperature_2m)}</div>
                             <div class="weather-timeline-precip">${escapeHtml(hour.precipProb)}%</div>
                         </div>
                     </li>

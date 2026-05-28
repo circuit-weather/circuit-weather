@@ -7,3 +7,6 @@
 ## 2024-05-19 - Hardcoded Suffix Logic Causes Pluralization Bugs
 **Learning:** Using an English-centric hardcoded suffix placeholder like `{{suffix}}` (e.g. `suffix: count > 1 ? 's' : ''`) for pluralization causes severe grammatical errors in target languages. For example, German requires "Kacheln" instead of "Kachels", and Italian requires "riuscite" instead of "riuscitass".
 **Action:** Never use string concatenation or single-character suffix injections to handle plurals. Always create explicit singular and plural translation keys (e.g., `retryingFailedTiles` and `retryingFailedTilesPlural`) in the base dictionary and duplicate them in languages without plural forms if necessary.
+## 2024-05-24 - Dynamic Unit Suffixes over Hardcoded Symbols
+**Learning:** Do not hardcode unit symbols like the degree symbol (`°`) in the UI components (like the hourly weather timeline). The API response provides proper dynamic localized and unit-aware strings (e.g., `weather.units.temperature_2m`).
+**Action:** Always prefer the dynamic API-provided unit string variables over injecting explicit unit characters to respect user preference and locale correctly.
