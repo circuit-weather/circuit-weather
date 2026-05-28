@@ -37,6 +37,11 @@ External API and asset requests (Jolpica F1, RainViewer, GitHub for track layout
 
 The primary map tiles and rendering are provided by Mapbox. When falling back to Leaflet, map tiles are provided by Carto (based on OpenStreetMap data), ensuring a clean look that works well with the weather overlays.
 
+## Environment
+
+- `MAPBOX_ACCESS_TOKEN` (optional): Required to use the primary Mapbox GL JS renderer. If omitted, the app falls back to Leaflet.js.
+- `ENVIRONMENT` (optional): Defaults to 'production'.
+
 ## Credits
 
 Huge thanks to the free APIs and data sources that make this possible:
