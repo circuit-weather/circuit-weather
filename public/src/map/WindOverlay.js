@@ -1,6 +1,6 @@
 import { CONFIG } from '../config.js';
 import { SafeStorage } from '../utils/storage.js';
-import { sampleWindField } from '../utils/wind.js';
+import { sampleWindField, windDisplacement, isWithinField } from '../utils/wind.js';
 
 /**
  * Animated wind overlay: draws flowing particles advected by a gridded wind
@@ -237,18 +237,14 @@ export class WindOverlay {
         const gain = CONFIG.WIND_FIELD_SPEED_GAIN;
         for (const p of this.particles) {
             const { u, v } = sampleWindField(f, p.lat, p.lon);
-            const latRad = p.lat * Math.PI / 180;
-            const dLat = (v / 110.574) * (dt / 3600) * gain;
-            const dLon = (u / (111.320 * Math.cos(latRad))) * (dt / 3600) * gain;
+            const { dLat, dLon } = windDisplacement(p.lat, u, v, dt, gain);
 
             const from = this._project(p.lat, p.lon);
             p.lat += dLat;
             p.lon += dLon;
             p.age += dt;
 
-            if (p.age > CONFIG.WIND_FIELD_PARTICLE_LIFE
-                || p.lat < f.minLat || p.lat > f.maxLat
-                || p.lon < f.minLon || p.lon > f.maxLon) {
+            if (p.age > CONFIG.WIND_FIELD_PARTICLE_LIFE || !isWithinField(p.lat, p.lon, f)) {
                 Object.assign(p, this._spawn(false));
                 continue;
             }
