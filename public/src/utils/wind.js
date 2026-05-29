@@ -27,6 +27,31 @@ export function windToVector(speed, direction) {
 }
 
 /**
+ * Per-step geographic displacement (in degrees) for a particle advected by a
+ * wind vector. `u`/`v` are the eastward/northward speed components (km/h),
+ * `dtSeconds` is the elapsed time for the step, and `gain` is a dimensionless
+ * exaggeration factor applied for visual effect. Uses the standard ~110.574 km
+ * per degree of latitude and ~111.320·cos(lat) km per degree of longitude.
+ */
+export function windDisplacement(lat, u, v, dtSeconds, gain) {
+    const latRad = lat * Math.PI / 180;
+    const hours = dtSeconds / 3600;
+    return {
+        dLat: (v / 110.574) * hours * gain,
+        dLon: (u / (111.320 * Math.cos(latRad))) * hours * gain,
+    };
+}
+
+/**
+ * Whether a point lies within a field's geographic bounds (inclusive). Used to
+ * recycle wind particles once they drift outside the sampled region.
+ */
+export function isWithinField(lat, lon, field) {
+    return lat >= field.minLat && lat <= field.maxLat
+        && lon >= field.minLon && lon <= field.maxLon;
+}
+
+/**
  * Bilinearly interpolate the wind vector at (lat, lon) from a gridded field.
  * The field stores u/v as flat row-major arrays (lat ascending, lon ascending).
  * Coordinates outside the field bounds are clamped to the edge.

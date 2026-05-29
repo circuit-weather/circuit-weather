@@ -1,5 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { getWindDirection, windToVector, sampleWindField } from '../public/src/utils/wind.js';
+import {
+    getWindDirection,
+    windToVector,
+    sampleWindField,
+    windDisplacement,
+    isWithinField,
+} from '../public/src/utils/wind.js';
 
 describe('getWindDirection', () => {
     const cases = [
@@ -79,5 +85,77 @@ describe('sampleWindField', () => {
             rows: 1, cols: 1, u: [7], v: [3],
         };
         expect(sampleWindField(point, 5, 5)).toEqual({ u: 7, v: 3 });
+    });
+});
+
+describe('windDisplacement', () => {
+    // Chosen so a 1-hour step at the equator with gain 1 yields exactly 1° each:
+    // 110.574 km/°lat and 111.320 km/°lon (cos 0 = 1).
+    const U_EQ = 111.320;
+    const V_EQ = 110.574;
+
+    it('moves one degree per hour at the equator for the reference speeds', () => {
+        const { dLat, dLon } = windDisplacement(0, U_EQ, V_EQ, 3600, 1);
+        expect(dLat).toBeCloseTo(1, 6);
+        expect(dLon).toBeCloseTo(1, 6);
+    });
+
+    it('produces no displacement for zero wind', () => {
+        const { dLat, dLon } = windDisplacement(45, 0, 0, 3600, 1);
+        expect(dLat).toBe(0);
+        expect(dLon).toBe(0);
+    });
+
+    it('scales linearly with elapsed time', () => {
+        const half = windDisplacement(0, U_EQ, V_EQ, 1800, 1);
+        expect(half.dLat).toBeCloseTo(0.5, 6);
+        expect(half.dLon).toBeCloseTo(0.5, 6);
+    });
+
+    it('scales linearly with gain', () => {
+        const { dLat, dLon } = windDisplacement(0, U_EQ, V_EQ, 3600, 3);
+        expect(dLat).toBeCloseTo(3, 6);
+        expect(dLon).toBeCloseTo(3, 6);
+    });
+
+    it('stretches longitude by 1/cos(lat) away from the equator', () => {
+        // cos(60°) = 0.5, so the same eastward speed covers twice the longitude.
+        const { dLon } = windDisplacement(60, U_EQ, 0, 3600, 1);
+        expect(dLon).toBeCloseTo(2, 6);
+    });
+
+    it('latitude displacement is independent of latitude', () => {
+        const atEquator = windDisplacement(0, 0, V_EQ, 3600, 1).dLat;
+        const atSixty = windDisplacement(60, 0, V_EQ, 3600, 1).dLat;
+        expect(atSixty).toBeCloseTo(atEquator, 6);
+    });
+
+    it('preserves direction signs (north/east positive, south/west negative)', () => {
+        const north = windDisplacement(0, 0, V_EQ, 3600, 1);
+        expect(north.dLat).toBeGreaterThan(0);
+        const south = windDisplacement(0, 0, -V_EQ, 3600, 1);
+        expect(south.dLat).toBeLessThan(0);
+        const west = windDisplacement(0, -U_EQ, 0, 3600, 1);
+        expect(west.dLon).toBeLessThan(0);
+    });
+});
+
+describe('isWithinField', () => {
+    const field = { minLat: -10, maxLat: 10, minLon: 20, maxLon: 40 };
+
+    it('returns true for an interior point', () => {
+        expect(isWithinField(0, 30, field)).toBe(true);
+    });
+
+    it('is inclusive of the boundary corners', () => {
+        expect(isWithinField(-10, 20, field)).toBe(true);
+        expect(isWithinField(10, 40, field)).toBe(true);
+    });
+
+    it('returns false past each edge', () => {
+        expect(isWithinField(-11, 30, field)).toBe(false); // south of minLat
+        expect(isWithinField(11, 30, field)).toBe(false);  // north of maxLat
+        expect(isWithinField(0, 19, field)).toBe(false);   // west of minLon
+        expect(isWithinField(0, 41, field)).toBe(false);   // east of maxLon
     });
 });
