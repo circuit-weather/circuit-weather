@@ -87,6 +87,71 @@ describe('Worker Security Utils', () => {
       const req = createRequest({}); // No Origin, Referer, or Sec-Fetch-Site
       expect(checkRequestSource(req, PROD_URL)).toBe(false);
     });
+
+    // --- Referer-specific branches (no Sec-Fetch-Site, so it falls through) ---
+
+    it('allows a Referer on the production domain that carries a path', () => {
+      // Exercises the `startsWith(PRODUCTION_DOMAIN + '/')` fast path, distinct
+      // from an exact bare-domain match.
+      const req = createRequest({ Referer: `${PRODUCTION_DOMAIN}/f1/3/race` });
+      expect(checkRequestSource(req, PROD_URL)).toBe(true);
+    });
+
+    it('allows a same-origin Referer on a self-hosted/custom worker domain', () => {
+      // Not production and not a known preview/localhost host, but the Referer
+      // matches the request URL's own origin (self-hosted deployment).
+      const selfHosted = 'https://circuit-weather.example.workers.dev';
+      const url = new URL(`${selfHosted}/api/test`);
+      const req = createRequest({ Referer: `${selfHosted}/dashboard` });
+      expect(checkRequestSource(req, url)).toBe(true);
+    });
+
+    it('allows requests from 127.0.0.1 (Origin)', () => {
+      const req = createRequest({ Origin: 'http://127.0.0.1:8787' });
+      expect(checkRequestSource(req, PROD_URL)).toBe(true);
+    });
+
+    it('allows requests from 127.0.0.1 (Referer)', () => {
+      const req = createRequest({ Referer: 'http://127.0.0.1:8787/' });
+      expect(checkRequestSource(req, PROD_URL)).toBe(true);
+    });
+
+    it('allows a Referer on a legitimate preview domain', () => {
+      const req = createRequest({ Referer: 'https://feature-branch.circuit-weather.pages.dev/app' });
+      expect(checkRequestSource(req, PROD_URL)).toBe(true);
+    });
+
+    // --- Origin + Referer combinations (both checks must agree) ---
+
+    it('allows when both Origin and Referer are valid', () => {
+      const req = createRequest({ Origin: PRODUCTION_DOMAIN, Referer: `${PRODUCTION_DOMAIN}/` });
+      expect(checkRequestSource(req, PROD_URL)).toBe(true);
+    });
+
+    it('blocks when the Origin is valid but the Referer is hostile', () => {
+      // A valid Origin must not whitelist a request that also carries a
+      // disallowed Referer — both headers are checked when present.
+      const req = createRequest({ Origin: PRODUCTION_DOMAIN, Referer: 'https://evil.com/hack' });
+      expect(checkRequestSource(req, PROD_URL)).toBe(false);
+    });
+
+    it('blocks when the Origin is hostile even if the Referer is valid', () => {
+      // The Origin check short-circuits before the Referer is ever consulted.
+      const req = createRequest({ Origin: 'https://evil.com', Referer: PRODUCTION_DOMAIN });
+      expect(checkRequestSource(req, PROD_URL)).toBe(false);
+    });
+
+    // --- Sec-Fetch-Site: cross-site (not auto-allowed; falls through to checks) ---
+
+    it('allows cross-site requests that carry a whitelisted Origin', () => {
+      const req = createRequest({ 'Sec-Fetch-Site': 'cross-site', Origin: PRODUCTION_DOMAIN });
+      expect(checkRequestSource(req, PROD_URL)).toBe(true);
+    });
+
+    it('blocks cross-site requests carrying a hostile Origin', () => {
+      const req = createRequest({ 'Sec-Fetch-Site': 'cross-site', Origin: 'https://evil.com' });
+      expect(checkRequestSource(req, PROD_URL)).toBe(false);
+    });
   });
 
   describe('checkFetchDest (XSSI Protection)', () => {
