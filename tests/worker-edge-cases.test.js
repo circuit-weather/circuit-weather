@@ -86,9 +86,23 @@ describe('Worker Edge Cases', () => {
             const request = createRequest('/api/f1/current', { method: 'OPTIONS' });
             const response = await workerModule.fetch(request, env, ctx);
 
-            // Should have an origin header set
+            // Must echo the exact request origin, not a wildcard or arbitrary
+            // truthy value — a `*` regression would weaken CORS and still pass
+            // a toBeTruthy() check.
             const origin = response.headers.get('Access-Control-Allow-Origin');
-            expect(origin).toBeTruthy();
+            expect(origin).toBe('https://circuit-weather.pages.dev');
+            expect(response.headers.get('Vary')).toContain('Origin');
+        });
+
+        it('does not reflect a disallowed origin', async () => {
+            const request = createRequest('/api/f1/current', {
+                method: 'OPTIONS',
+                headers: { Origin: 'https://evil.example' },
+            });
+            const response = await workerModule.fetch(request, env, ctx);
+
+            expect(response.headers.get('Access-Control-Allow-Origin')).not.toBe('https://evil.example');
+            expect(response.headers.get('Access-Control-Allow-Origin')).not.toBe('*');
         });
     });
 

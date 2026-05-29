@@ -557,6 +557,47 @@ describe("Worker Logic", () => {
       expect(mockCache.put).toHaveBeenCalled();
     });
 
+    it("allowlists upstream headers, stripping sensitive ones while preserving cache validators", async () => {
+      const mockImage = new ArrayBuffer(10);
+      mockFetch.mockResolvedValueOnce(
+        new Response(mockImage, {
+          status: 200,
+          headers: {
+            "Content-Type": "image/png",
+            // Allowlisted cache-validation headers — must survive.
+            ETag: '"abc123"',
+            "Last-Modified": "Wed, 21 Oct 2025 07:28:00 GMT",
+            // Sensitive / non-allowlisted upstream headers — must be stripped
+            // so they never leak to the client or into the shared cache.
+            "Set-Cookie": "session=secret; HttpOnly",
+            "X-Powered-By": "RainViewer-Internal",
+            "Server": "nginx/1.2.3",
+          },
+        }),
+      );
+
+      const req = createRequest("/api/tiles/v2/radar/1/2/3/512/1/1_1.png");
+      const res = await worker.fetch(req, global.env, global.ctx);
+
+      expect(res.status).toBe(200);
+      // Preserved validators.
+      expect(res.headers.get("ETag")).toBe('"abc123"');
+      expect(res.headers.get("Last-Modified")).toBe(
+        "Wed, 21 Oct 2025 07:28:00 GMT",
+      );
+      // Stripped sensitive headers.
+      expect(res.headers.get("Set-Cookie")).toBeNull();
+      expect(res.headers.get("X-Powered-By")).toBeNull();
+      expect(res.headers.get("Server")).toBeNull();
+
+      // The cached copy must be sanitised too, not just the client response.
+      // Exactly one entry is written, keyed by the upstream URL.
+      expect(mockCache.put).toHaveBeenCalledTimes(1);
+      const cached = [...cacheStore.values()].at(-1);
+      expect(cached.headers.get("Set-Cookie")).toBeNull();
+      expect(cached.headers.get("ETag")).toBe('"abc123"');
+    });
+
     it("sets CORS headers for tile response when valid Origin is provided", async () => {
       const mockImage = new ArrayBuffer(10);
       mockFetch.mockResolvedValueOnce(
