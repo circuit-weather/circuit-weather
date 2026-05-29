@@ -464,8 +464,11 @@ export class WeatherRadar {
 
     // Force redraw of all active layers (used by the error toast's retry cooldown)
     redrawLayers() {
+        const isMapbox = !this.map.hasLayer;
         Object.values(this.layers).forEach(layer => {
-            if (layer && this.map.hasLayer(layer)) {
+            if (!layer) return;
+            const isOnMap = isMapbox ? !!this.map.getLayer(layer.id) : this.map.hasLayer(layer);
+            if (isOnMap) {
                 layer.redraw();
             }
         });

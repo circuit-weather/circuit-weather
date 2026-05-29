@@ -172,6 +172,44 @@ describe('WeatherRadar Timer Logic', () => {
     });
 });
 
+describe('redrawLayers Method', () => {
+    it('should redraw layers correctly for Mapbox', () => {
+        const mockMapboxMap = {
+            getLayer: vi.fn(id => id === 'layer1' ? {} : null),
+            hasLayer: undefined
+        };
+        const radar = new WeatherRadar(mockMapboxMap);
+
+        radar.layers = [
+            { id: 'layer1', redraw: vi.fn() },
+            { id: 'layer2', redraw: vi.fn() }
+        ];
+
+        radar.redrawLayers();
+
+        expect(radar.layers[0].redraw).toHaveBeenCalled();
+        expect(radar.layers[1].redraw).not.toHaveBeenCalled();
+    });
+
+    it('should redraw layers correctly for Leaflet', () => {
+        const radar = new WeatherRadar({});
+        radar.layers = [
+            { redraw: vi.fn() },
+            { redraw: vi.fn() }
+        ];
+
+        const mockLeafletMap = {
+            hasLayer: vi.fn(layer => layer === radar.layers[1])
+        };
+        radar.map = mockLeafletMap;
+
+        radar.redrawLayers();
+
+        expect(radar.layers[0].redraw).not.toHaveBeenCalled();
+        expect(radar.layers[1].redraw).toHaveBeenCalled();
+    });
+});
+
 describe('createMapboxLayer Proxy Methods', () => {
     let radar;
     let mockMap;
