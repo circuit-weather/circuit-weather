@@ -134,7 +134,7 @@ describe('Worker Logic - Tile Errors', () => {
     expect(res.headers.has('Access-Control-Allow-Origin')).toBe(false);
   });
 
-  it('removes CORS headers on error response via cacheAndReturnError when invalid Origin is provided', async () => {
+  it('removes CORS headers on a non-cacheable 500 error response when invalid Origin is provided', async () => {
     mockFetch.mockResolvedValueOnce(new Response('Upstream Server Error', {
       status: 500,
       headers: { 'Content-Type': 'text/html' }
