@@ -17,7 +17,7 @@ import { zhCN } from './locales/zh-CN.js';
 // consistent against en.js as the source of truth, and add widely used languages
 // over time. The i18n-locales-completeness test guards key parity; prioritise
 // quality and consistency when extending coverage.
-const TRANSLATIONS = {
+export const TRANSLATIONS = {
     en,
     'en-GB': enGB,
     'en-NZ': enNZ,

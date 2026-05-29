@@ -221,14 +221,21 @@ describe('WeatherRadar Live Countdown', () => {
     it('handles negative or invalid visibleLayerIndex gracefully', () => {
         radar.sessionTime = null;
         radar.visibleLayerIndex = -1;
+        radar.frames = [];
+        radar.pastFrameCount = 0;
         const frameTime = 1000 * 60;
 
-        radar.updateTimeDisplay(frameTime);
+        vi.setSystemTime(new Date(0));
 
-        // Should not crash and should show default relative text if possible
-        // In this case, it might show "Live" or similar if logic allows,
-        // but primarily we check for no exceptions.
-        expect(radar.ui.time.textContent).toBeDefined();
+        expect(() => radar.updateTimeDisplay(frameTime)).not.toThrow();
+
+        // Still produces a formatted absolute time and a machine-readable
+        // datetime attribute rather than crashing or emitting an empty string.
+        expect(radar.ui.time.textContent).not.toBe('');
+        expect(radar.ui.time.setAttribute).toHaveBeenCalledWith(
+            'datetime',
+            new Date(frameTime * 1000).toISOString(),
+        );
     });
 
     it('preloads frames correctly', async () => {
