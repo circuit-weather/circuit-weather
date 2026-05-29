@@ -93,12 +93,8 @@ describe('Worker Security: Strict Content-Type Validation', () => {
       const req = createRequest('/api/f1/current');
       const res = await worker.fetch(req, global.env, global.ctx);
 
-      // Should fail if loose matching is used (includes 'application/json')
-      // Currently fails (returns 200) because validation is loose.
-      // After fix, should return 502.
-      if (res.status === 200) {
-        throw new Error('FAILED: Accepted application/jsonp');
-      }
+      // A loose `includes('application/json')` check would accept this; the
+      // strict MIME comparison must reject it as an upstream error.
       expect(res.status).toBe(502);
       expect(errorSpy).toHaveBeenCalled();
       errorSpy.mockRestore();
@@ -114,9 +110,6 @@ describe('Worker Security: Strict Content-Type Validation', () => {
         const req = createRequest('/api/f1/current');
         const res = await worker.fetch(req, global.env, global.ctx);
 
-        if (res.status === 200) {
-            throw new Error('FAILED: Accepted application/json-evil');
-        }
         expect(res.status).toBe(502);
         expect(errorSpy).toHaveBeenCalled();
         errorSpy.mockRestore();
@@ -124,9 +117,31 @@ describe('Worker Security: Strict Content-Type Validation', () => {
   });
 
   describe('Radar API Proxy (/api/radar)', () => {
+    it('allows application/json; charset=utf-8 and proxies the upstream payload', async () => {
+      // Distinctive payload so we can tell the proxied data apart from the
+      // empty-radar fallback (which has past: []). Exercises the charset
+      // normalization (split(';')[0]) on the radar handler.
+      const upstream = { radar: { past: [{ time: 111 }], nowcast: [] }, host: 'up' };
+      mockFetch.mockResolvedValueOnce(new Response(JSON.stringify(upstream), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json; charset=utf-8' }
+      }));
+
+      const req = createRequest('/api/radar');
+      const res = await worker.fetch(req, global.env, global.ctx);
+
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.radar.past).toHaveLength(1);
+      expect(data.radar.past[0].time).toBe(111);
+    });
+
     it('blocks deceptive type: application/json-evil', async () => {
       const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-      mockFetch.mockResolvedValueOnce(new Response('{}', {
+      // Non-empty upstream payload: if validation wrongly accepted the type the
+      // proxied data (past length 1) would surface instead of the empty fallback.
+      const upstream = { radar: { past: [{ time: 999 }], nowcast: [] }, host: 'up' };
+      mockFetch.mockResolvedValueOnce(new Response(JSON.stringify(upstream), {
         status: 200,
         headers: { 'Content-Type': 'application/json-evil' }
       }));
@@ -134,24 +149,10 @@ describe('Worker Security: Strict Content-Type Validation', () => {
       const req = createRequest('/api/radar');
       const res = await worker.fetch(req, global.env, global.ctx);
 
-      // Check if it returned the "empty radar" response which is used for errors
-      // The current implementation returns getEmptyRadarResponse() on error.
-      // So status is 200, but content is empty radar.
+      // Rejected → safe empty-radar fallback, NOT the upstream payload.
       const data = await res.json();
-
-      // If validation fails, it should return empty radar.
-      // If validation passes (bug), it returns the upstream data ({}).
-      // Wait, handleRadarRequest:
-      // if (!contentType || !contentType.includes('application/json')) { return getEmptyRadarResponse(request); }
-      // So if it accepts json-evil, it returns the upstream data.
-
-      // Our mock returns {}, empty radar has radar: { past: [], ... }
-      if (!data.radar) { // Upstream mocked data
-          throw new Error('FAILED: Accepted application/json-evil (returned upstream data)');
-      }
-
-      // Correct behavior: returns empty radar structure
-      expect(data.radar).toBeDefined();
+      expect(data.radar.past).toEqual([]);
+      expect(data.radar.nowcast).toEqual([]);
       expect(errorSpy).toHaveBeenCalled();
       errorSpy.mockRestore();
     });
@@ -214,9 +215,6 @@ describe('Worker Security: Strict Content-Type Validation', () => {
         const req = createRequest('/api/assets/leaflet.js');
         const res = await worker.fetch(req, global.env, global.ctx);
 
-        if (res.status === 200) {
-            throw new Error('FAILED: Accepted text/javascript-evil');
-        }
         expect(res.status).toBe(502);
         expect(errorSpy).toHaveBeenCalled();
         errorSpy.mockRestore();
@@ -245,11 +243,8 @@ describe('Worker Security: Strict Content-Type Validation', () => {
         const req = createRequest('/api/tiles/test.png');
         const res = await worker.fetch(req, global.env, global.ctx);
 
-        // handleTileRequest uses startsWith('image/png')
-        // So image/png-evil passes!
-        if (res.status === 200) {
-            throw new Error('FAILED: Accepted image/png-evil');
-        }
+        // Strict comparison must reject image/png-evil (a startsWith check would
+        // wrongly accept it).
         expect(res.status).toBe(502);
         expect(errorSpy).toHaveBeenCalled();
         errorSpy.mockRestore();

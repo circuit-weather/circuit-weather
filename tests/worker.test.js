@@ -82,6 +82,21 @@ describe("Worker Logic", () => {
       expect(res.status).toBe(404);
     });
 
+    it("allows HEAD requests (not rejected as a disallowed method)", async () => {
+      mockFetch.mockResolvedValue({
+        status: 200,
+        ok: true,
+        text: async () => "ok",
+      });
+
+      const req = createRequest("/api/health", { method: "HEAD" });
+      const res = await worker.fetch(req, global.env, global.ctx);
+
+      // HEAD is explicitly allowed alongside GET/OPTIONS — must not 405.
+      expect(res.status).not.toBe(405);
+      expect(res.status).toBe(200);
+    });
+
     it("blocks hotlinking (invalid Origin/Referer)", async () => {
       const req = new Request("https://circuit-weather.racing/api/health", {
         headers: {},
@@ -157,6 +172,29 @@ describe("Worker Logic", () => {
       const data = await res.json();
       expect(data.error.message).toBe("Upstream API error");
       expect(data.error.status).toBe(404);
+    });
+
+    it("caches an upstream 429 with a longer max-age=300 TTL", async () => {
+      // cacheAndReturnError uses a 300s TTL for 429 (vs 60s otherwise) to back
+      // off harder when the upstream is rate-limiting us.
+      mockFetch.mockResolvedValueOnce(
+        new Response("Too Many Requests", {
+          status: 429,
+          headers: { "Content-Type": "text/plain" },
+        }),
+      );
+
+      const req = createRequest("/api/f1/current");
+      const res = await worker.fetch(req, global.env, global.ctx);
+
+      expect(res.status).toBe(429);
+      expect(res.headers.get("Cache-Control")).toBe("public, max-age=300");
+      expect(res.headers.get("X-Cache")).toBe("ERROR-CACHED");
+
+      // The error must be written to cache so we don't re-hammer the upstream.
+      expect(mockCache.put).toHaveBeenCalled();
+      const cached = [...cacheStore.values()].at(-1);
+      expect(cached.headers.get("Cache-Control")).toBe("public, max-age=300");
     });
 
     it("sets CORS headers for cache miss when valid Origin is provided", async () => {

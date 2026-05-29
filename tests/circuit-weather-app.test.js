@@ -505,7 +505,12 @@ describe('CircuitWeatherApp Pure Methods', () => {
             expect(app.ui.sessionSelect.setAttribute).toHaveBeenCalledWith('aria-disabled', 'false');
             expect(app.ui.sessionSelect.removeAttribute).toHaveBeenCalledWith('title');
 
-            expect(app.ui.sessionSelect.appendChild).toHaveBeenCalled();
+            // One <option> built per session, then the batched fragment appended.
+            const optionCreations = documentMock.createElement.mock.calls.filter(
+                ([tag]) => tag === 'option'
+            );
+            expect(optionCreations).toHaveLength(sessions.length);
+            expect(app.ui.sessionSelect.appendChild).toHaveBeenCalledTimes(1);
             expect(app.ui.sessionSelect.innerHTML).toContain('Select session...');
         });
 
@@ -766,7 +771,8 @@ describe('CircuitWeatherApp Pure Methods', () => {
         it('renders the skeleton loader correctly', () => {
             const mockTemplate = createMockElement('forecast-skeleton-template');
             mockTemplate.cloneNode = vi.fn();
-            mockTemplate.content = { cloneNode: vi.fn(() => createMockElement('clonedContent')) };
+            const clonedSkeleton = createMockElement('clonedContent');
+            mockTemplate.content = { cloneNode: vi.fn(() => clonedSkeleton) };
 
             // Temporarily replace document.getElementById to return our mock template
             const originalGetElementById = document.getElementById;
@@ -778,7 +784,8 @@ describe('CircuitWeatherApp Pure Methods', () => {
             expect(app.ui.forecastContent.setAttribute).toHaveBeenCalledWith('aria-busy', 'true');
             expect(app.ui.forecastContent.style.display).toBe('block');
             expect(app.ui.forecastContent.innerHTML).toBe('');
-            expect(app.ui.forecastContent.appendChild).toHaveBeenCalled();
+            // The cloned template content (not some other node) is what's mounted.
+            expect(app.ui.forecastContent.appendChild).toHaveBeenCalledWith(clonedSkeleton);
 
             document.getElementById = originalGetElementById;
         });
