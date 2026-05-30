@@ -246,13 +246,15 @@ describe('WeatherRadar Live Countdown', () => {
             setOpacity: vi.fn(),
             addTo: vi.fn(),
             on: vi.fn((event, cb) => {
-                if (event === 'load') cb();
+                if (event === 'load') setTimeout(cb, 10);
             }),
             off: vi.fn(),
         };
         vi.spyOn(radar, 'getLayer').mockReturnValue(mockLayer);
 
-        await radar.preloadFrame(1);
+        const promise = radar.preloadFrame(1);
+        vi.advanceTimersByTime(10);
+        await promise;
 
         expect(mockLayer.addTo).toHaveBeenCalledWith(mockMap);
         expect(mockLayer.setOpacity).toHaveBeenCalledWith(0);
