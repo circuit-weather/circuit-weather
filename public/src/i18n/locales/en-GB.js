@@ -1,5 +1,5 @@
-import { enNZ } from './en-NZ.js';
+import { enNZ } from "./en-NZ.js";
 
 export const enGB = {
-    ...enNZ,
+  ...enNZ,
 };
