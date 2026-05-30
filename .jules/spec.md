@@ -24,3 +24,6 @@
 ## 2024-05-25 - Mocking Mapbox Proxy Methods
 **Learning:** In Map-related unit tests (e.g., `WeatherRadar`), the component infers a Mapbox map instance (versus Leaflet) by checking `!this.map.hasLayer`. To test Mapbox-specific logic correctly, mock map objects must explicitly omit the `hasLayer` function. The proxy object returned by `createMapboxLayer` has its own simulated `on`/`off` events and a `redraw` mechanism manipulating Mapbox specific `addSource`/`setTiles` that need dedicated test blocks since they diverge significantly from Leaflet's standard `TileLayer`.
 **Action:** Created dedicated test block for Mapbox proxy methods by passing a mocked map omitting `hasLayer` and explicitly simulated `mockMap.once` callbacks to trigger the registered proxy load events.
+## 2024-05-25 - Fixing synchronous test callback violation
+**Learning:** Fixing a "flaky" `setTimeout` test by removing it entirely and calling a mocked callback synchronously violates the requirement to preserve asynchronous testing intent.
+**Action:** When fixing async event handlers (like `on('load', ...)`), retain the `setTimeout` simulation if `vi.useFakeTimers()` is active, and ensure `vi.advanceTimersByTime` is correctly paired with `await promise` to assert the final state.
