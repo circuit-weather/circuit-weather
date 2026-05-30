@@ -78,6 +78,7 @@ export const nl = {
         retryingFailedTiles: '{{count}} mislukte tegel opnieuw proberen...',
         retryingFailedTilesPlural: '{{count}} mislukte tegels opnieuw proberen...',
         radarStatus: 'Radarstatus: {{status}}',
+        playbackPosition: 'Radar afspeelpositie',
     },
     countdown: {
         startsIn: 'Begint over',
