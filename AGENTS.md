@@ -210,6 +210,11 @@ mode = "smart"
    - Fetched directly from Open-Meteo API
    - Hourly forecast timeline
 
+10. **Wind Overlay**
+    - Animated wind flow particles over the map
+    - Can be toggled on or off via UI
+    - Persists in localStorage
+
 ### API Endpoints
 
 | Endpoint        | Purpose                                                                                          |
