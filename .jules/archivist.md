@@ -218,9 +218,11 @@ Prevention: Avoid duplicating configuration values in documentation; reference t
 
 **Learning:** `AGENTS.md` omitted "Language Toggle" from its "Core Features" section, even though the feature is fully implemented, documented in `PRIVACY.md`, and is an active feature.
 **Action:** Added the "Language Toggle" feature to `AGENTS.md` to ensure a single source of truth for application capabilities.
-## 2026-04-25 - Fixing Privacy Policy Drift across Localized Versions\n**Learning:** When updating  to reflect new local storage keys (like `language` and `f1_schedule_cache`), it's crucial to also update all localized versions in `public/privacy/` to maintain consistency and compliance. Python or JS scripts can be used to safely append new items while matching surrounding formatting.\n**Action:** Always write a script or manually ensure that any modifications to the root `PRIVACY.md` list of local storage items are faithfully replicated across all `public/privacy/PRIVACY.*.md` variants.
+
+## 2026-04-25 - Fixing Privacy Policy Drift across Localized Versions\n**Learning:** When updating to reflect new local storage keys (like `language` and `f1_schedule_cache`), it's crucial to also update all localized versions in `public/privacy/` to maintain consistency and compliance. Python or JS scripts can be used to safely append new items while matching surrounding formatting.\n**Action:** Always write a script or manually ensure that any modifications to the root `PRIVACY.md` list of local storage items are faithfully replicated across all `public/privacy/PRIVACY.*.md` variants.
 
 ## 2026-04-25 - Fixing Privacy Policy Drift across Localized Versions
+
 **Learning:** When updating `PRIVACY.md` to reflect new local storage keys (like `language` and `f1_schedule_cache`), it's crucial to also update all localized versions in `public/privacy/` to maintain consistency and compliance. Scripts can be used to safely append new items while matching surrounding formatting.
 **Action:** Always write a script or manually ensure that any modifications to the root `PRIVACY.md` list of local storage items are faithfully replicated across all `public/privacy/PRIVACY.*.md` variants.
 
@@ -228,10 +230,18 @@ Prevention: Avoid duplicating configuration values in documentation; reference t
 
 **Learning:** When using Node.js scripts to inject text into markdown files (like `PRIVACY.*.md`), using template literals with indentation can inadvertently inject whitespace, breaking markdown formatting by converting text into code blocks. Also, relying on complex `RegExp` for trailing lines with various localized characters can fail (e.g., throwing `SyntaxError: Invalid regular expression... Nothing to repeat`) if the regex string is not properly escaped for all possible localized punctuation.
 **Action:** Always left-align script contents and template literals in heredocs (e.g., `cat << 'EOF' > script.cjs`). Use exact string replacements or highly simplified regexes (like `targetAfter: 'Leaflet'`) to bypass character encoding and regex escaping errors in localized files.
+
 ## 2024-05-09 - Missing Caching Durations in Privacy Policy
+
 **Learning:** The privacy policy only documented caching durations for one out of five proxied data sources, leaving the data retention times for the others ambiguous despite them being explicitly defined in the worker cache headers.
 **Action:** Always verify that documentation of data retention and caching covers all relevant services consistently.
 
 ## 2026-05-25 - Documenting Wind Overlay Preference Storage
+
 **Learning:** When introducing new UI toggles that persist state via `SafeStorage` (like the `windOverlay` feature), the documentation in `PRIVACY.md` and its localized variants often drifts, omitting the new storage key. Developers must ensure all user-facing preferences are documented to maintain privacy transparency.
 **Action:** When adding or modifying `SafeStorage` keys, always grep across the entire codebase and update the Local Storage section in `public/PRIVACY.md` and all `public/privacy/PRIVACY.*.md` variants.
+
+## 2026-06-01 - Omitted major feature in Core Features
+
+**Learning:** `AGENTS.md` omitted "Wind Overlay" from its "Core Features" section, even though the feature is fully implemented, documented in `PRIVACY.md`, and is an active feature that persists user preference in `localStorage`.
+**Action:** Added the "Wind Overlay" feature to `AGENTS.md` to ensure a single source of truth for application capabilities.
