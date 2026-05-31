@@ -1,5 +1,7 @@
 export const zhCN = {
   common: {
+    countryFlagFallback: "国旗",
+    countryFlag: "{{country}} 国旗",
     github: "在 GitHub 上查看源代码",
     loading: "加载中...",
     retry: "重试",

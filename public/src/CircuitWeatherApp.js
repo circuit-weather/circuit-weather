@@ -734,7 +734,7 @@ export class CircuitWeatherApp {
         }
         if (this.ui.countryFlag && flagUrl) {
             this.ui.countryFlag.src = flagUrl;
-            this.ui.countryFlag.alt = `${country} flag`;
+            this.ui.countryFlag.alt = i18n.t('common.countryFlag', { country });
         }
         if (this.ui.raceInfoCountry) this.ui.raceInfoCountry.textContent = country || '';
         if (this.ui.raceInfoName) this.ui.raceInfoName.textContent = race.name || '';
@@ -748,7 +748,7 @@ export class CircuitWeatherApp {
         }
         if (this.ui.mobileCountryFlag && flagUrl) {
             this.ui.mobileCountryFlag.src = flagUrl;
-            this.ui.mobileCountryFlag.alt = `${country} flag`;
+            this.ui.mobileCountryFlag.alt = i18n.t('common.countryFlag', { country });
         }
         if (this.ui.mobileRaceInfoName) this.ui.mobileRaceInfoName.textContent = race.name || '';
         if (this.ui.mobileRaceInfoCircuit) this.ui.mobileRaceInfoCircuit.textContent = race.circuit?.circuitName || '';

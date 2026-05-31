@@ -1,5 +1,7 @@
 export const hu = {
   common: {
+    countryFlagFallback: "Országzászló",
+    countryFlag: "{{country}} zászlaja",
     github: "Forráskód megtekintése a GitHubon",
     loading: "Betöltés...",
     retry: "Újrapróbálkozás",

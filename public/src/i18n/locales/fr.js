@@ -1,5 +1,7 @@
 export const fr = {
   common: {
+    countryFlagFallback: "Drapeau du pays",
+    countryFlag: "Drapeau : {{country}}",
     github: "Voir le code source sur GitHub",
     loading: "Chargement...",
     retry: "Reessayer",
