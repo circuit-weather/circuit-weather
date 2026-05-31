@@ -245,3 +245,11 @@ Prevention: Avoid duplicating configuration values in documentation; reference t
 
 **Learning:** `AGENTS.md` omitted "Wind Overlay" from its "Core Features" section, even though the feature is fully implemented, documented in `PRIVACY.md`, and is an active feature that persists user preference in `localStorage`.
 **Action:** Added the "Wind Overlay" feature to `AGENTS.md` to ensure a single source of truth for application capabilities.
+## 2026-06-02 - Documentation Drift for Proxied Assets in API Endpoints Table
+
+**Learning:** While `src/worker.js` and `PRIVACY.md` correctly identified that `VENDOR_ASSETS` (handling `/api/assets/*`) proxies both Unpkg and Mapbox CDNs, the "API Endpoints" table in `AGENTS.md` was slightly ambiguous and didn't mention Unpkg or CDNs explicitly.
+**Action:** Updated the "API Endpoints" table in `AGENTS.md` to explicitly state that `/api/assets/*` proxies to Unpkg (Leaflet) and Mapbox CDNs for map library assets, maintaining alignment with `worker.js` and `PRIVACY.md`.
+## 2026-06-02 - Unpkg and Mapbox CDN Proxy Drift
+
+**Learning:** When updating API endpoint documentation, it is critical to reflect exact details from the worker file (e.g., `VENDOR_ASSETS`) such as which specific CDNs (like Unpkg or Mapbox CDNs) are proxied by a wildcard endpoint like `/api/assets/*`. Generic descriptions can mislead human or automated analysis about the architecture.
+**Action:** When updating proxy endpoint documentation in `AGENTS.md`, always cross-reference the exact configurations in `src/worker.js` (like `VENDOR_ASSETS`) and list the actual upstream domains/services involved.

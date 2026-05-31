@@ -217,15 +217,15 @@ mode = "smart"
 
 ### API Endpoints
 
-| Endpoint        | Purpose                                                                                          |
-| --------------- | ------------------------------------------------------------------------------------------------ |
-| `/api/f1/*`     | Proxies to Jolpica F1 API with 1-hour edge caching                                               |
-| `/api/radar`    | Proxies to RainViewer Maps API with 1-minute caching (initializes animation)                     |
-| `/api/tiles/*`  | Proxies to RainViewer tile API with 2-hour edge caching (512px optimized)                        |
-| `/api/track/*`  | Proxies to GitHub for GeoJSON track data with 24-hour caching                                    |
-| `/api/assets/*` | Proxies to Leaflet and Mapbox assets with 1-year immutable caching (strict CSP)                  |
-| `/api/health`   | System status check (connectivity to upstreams, version, env) with 60-second caching             |
-| `/api/config`   | Securely provides client configuration (e.g., Mapbox token) to the frontend with 24-hour caching |
+| Endpoint        | Purpose                                                                                                      |
+| --------------- | ------------------------------------------------------------------------------------------------------------ |
+| `/api/f1/*`     | Proxies to Jolpica F1 API with 1-hour edge caching                                                           |
+| `/api/radar`    | Proxies to RainViewer Maps API with 1-minute caching (initializes animation)                                 |
+| `/api/tiles/*`  | Proxies to RainViewer tile API with 2-hour edge caching (512px optimized)                                    |
+| `/api/track/*`  | Proxies to GitHub for GeoJSON track data with 24-hour caching                                                |
+| `/api/assets/*` | Proxies to Unpkg (Leaflet) and Mapbox CDNs for map library assets with 1-year immutable caching (strict CSP) |
+| `/api/health`   | System status check (connectivity to upstreams, version, env) with 60-second caching                         |
+| `/api/config`   | Securely provides client configuration (e.g., Mapbox token) to the frontend with 24-hour caching             |
 
 ---
 
