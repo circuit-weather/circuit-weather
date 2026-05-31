@@ -1,5 +1,7 @@
 export const es = {
   common: {
+    countryFlagFallback: "Bandera del país",
+    countryFlag: "Bandera de {{country}}",
     github: "Ver código fuente en GitHub",
     loading: "Cargando...",
     retry: "Reintentar",

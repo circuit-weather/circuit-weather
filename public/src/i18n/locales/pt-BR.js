@@ -1,5 +1,7 @@
 export const ptBR = {
   common: {
+    countryFlagFallback: "Bandeira do país",
+    countryFlag: "Bandeira de {{country}}",
     github: "Ver código-fonte no GitHub",
     loading: "A carregar...",
     retry: "Tentar novamente",

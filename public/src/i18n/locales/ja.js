@@ -1,5 +1,7 @@
 export const ja = {
   common: {
+    countryFlagFallback: "国旗",
+    countryFlag: "{{country}}の国旗",
     github: "GitHubでソースコードを表示",
     loading: "読み込み中...",
     retry: "再試行",
