@@ -128,6 +128,21 @@ describe('openf1', () => {
             expect(races[0].date).toBe('2026-05-03');
         });
 
+        it('populates circuit coordinates from the static lookup', () => {
+            const races = transformOpenF1(meetings, sessions);
+            // Bahrain → bahrain circuitId → known coords
+            expect(races[0].Circuit.Location.lat).toBe('26.0325');
+            expect(races[0].Circuit.Location.long).toBe('50.5106');
+        });
+
+        it('leaves coordinates empty for an unknown circuit', () => {
+            const unknown = [{ meeting_key: 5, meeting_name: 'Mystery GP', circuit_short_name: 'Atlantis', date_start: '2026-05-01T12:00:00+00:00' }];
+            const unknownSessions = [{ meeting_key: 5, session_type: 'Race', date_start: '2026-05-01T12:00:00+00:00', gmt_offset: '00:00:00' }];
+            const races = transformOpenF1(unknown, unknownSessions);
+            expect(races[0].Circuit.Location.lat).toBe('');
+            expect(races[0].Circuit.Location.long).toBe('');
+        });
+
         it('leaves circuitId null for an unknown circuit', () => {
             const unknown = [{ meeting_key: 5, meeting_name: 'Mystery GP', circuit_short_name: 'Atlantis', date_start: '2026-05-01T12:00:00' }];
             const unknownSessions = [{ meeting_key: 5, session_type: 'Race', date_start: '2026-05-01T12:00:00', gmt_offset: '00:00:00' }];

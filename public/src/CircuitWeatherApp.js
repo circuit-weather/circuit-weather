@@ -675,7 +675,7 @@ export class CircuitWeatherApp {
         this.updatePageMetadata();
         this.populateSessionSelect(race.sessions);
 
-        if (race.location) {
+        if (race.location && Number.isFinite(parseFloat(race.location.lat)) && Number.isFinite(parseFloat(race.location.long))) {
             const lat = parseFloat(race.location.lat);
             const lng = parseFloat(race.location.long);
             this.currentCircuitCenter = [lat, lng];

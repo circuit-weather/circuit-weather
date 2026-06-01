@@ -35,6 +35,36 @@ export const OPENF1_CIRCUIT_MAP = {
     'abu dhabi': 'yas_marina',
 };
 
+// OpenF1 does not return circuit coordinates, but the map needs a lat/long to
+// centre on. These are the Ergast circuit coordinates keyed by circuitId, so the
+// fallback schedule still places the map correctly.
+export const CIRCUIT_COORDS = {
+    bahrain:       { lat: '26.0325',  long: '50.5106' },
+    jeddah:        { lat: '21.6319',  long: '39.1044' },
+    albert_park:   { lat: '-37.8497', long: '144.968' },
+    suzuka:        { lat: '34.8431',  long: '136.541' },
+    shanghai:      { lat: '31.3389',  long: '121.22' },
+    miami:         { lat: '25.9581',  long: '-80.2389' },
+    imola:         { lat: '44.3439',  long: '11.7167' },
+    monaco:        { lat: '43.7347',  long: '7.42056' },
+    catalunya:     { lat: '41.57',    long: '2.26111' },
+    villeneuve:    { lat: '45.5',     long: '-73.5228' },
+    red_bull_ring: { lat: '47.2197',  long: '14.7647' },
+    silverstone:   { lat: '52.0786',  long: '-1.01694' },
+    hungaroring:   { lat: '47.5789',  long: '19.2486' },
+    spa:           { lat: '50.4372',  long: '5.97139' },
+    zandvoort:     { lat: '52.3888',  long: '4.54092' },
+    monza:         { lat: '45.6156',  long: '9.28111' },
+    baku:          { lat: '40.3725',  long: '49.8533' },
+    marina_bay:    { lat: '1.2914',   long: '103.864' },
+    americas:      { lat: '30.1328',  long: '-97.6411' },
+    rodriguez:     { lat: '19.4042',  long: '-99.0907' },
+    interlagos:    { lat: '-23.7036', long: '-46.6997' },
+    las_vegas:     { lat: '36.1147',  long: '-115.173' },
+    losail:        { lat: '25.49',    long: '51.4542' },
+    yas_marina:    { lat: '24.4672',  long: '54.6031' },
+};
+
 const OPENF1_BASE = 'https://api.openf1.org/v1';
 const OPENF1_TIMEOUT_MS = 8000;
 
@@ -91,6 +121,7 @@ export function transformOpenF1(meetings, sessions) {
     return raceMeetings.map((meeting, i) => {
         const msessions = sessionsByMeeting[meeting.meeting_key] ?? [];
         const circuitId = OPENF1_CIRCUIT_MAP[meeting.circuit_short_name?.toLowerCase()] ?? null;
+        const coords = (circuitId && CIRCUIT_COORDS[circuitId]) || { lat: '', long: '' };
 
         const race = {
             round: String(i + 1),
@@ -98,7 +129,7 @@ export function transformOpenF1(meetings, sessions) {
             Circuit: {
                 circuitId,
                 circuitName: meeting.circuit_short_name,
-                Location: { lat: '', long: '', locality: meeting.location, country: meeting.country_name },
+                Location: { lat: coords.lat, long: coords.long, locality: meeting.location, country: meeting.country_name },
             },
         };
 
