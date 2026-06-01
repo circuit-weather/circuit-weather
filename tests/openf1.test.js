@@ -90,6 +90,20 @@ describe('openf1', () => {
             expect(bahrain.time).toBe('12:00:00Z');
         });
 
+        it('skips sessions with null date_start or gmt_offset', () => {
+            const mtgs = [{ meeting_key: 3, meeting_name: 'Test GP', circuit_short_name: 'Sakhir', location: 'Sakhir', country_name: 'Bahrain', date_start: '2026-05-01T12:00:00' }];
+            const sess = [
+                { meeting_key: 3, session_type: 'Practice 1', date_start: null, gmt_offset: '03:00:00' },
+                { meeting_key: 3, session_type: 'Qualifying', date_start: '2026-05-02T15:00:00', gmt_offset: null },
+                { meeting_key: 3, session_type: 'Race', date_start: '2026-05-03T15:00:00', gmt_offset: '03:00:00' },
+            ];
+            const races = transformOpenF1(mtgs, sess);
+            expect(races).toHaveLength(1);
+            expect(races[0].FirstPractice).toBeUndefined();
+            expect(races[0].Qualifying).toBeUndefined();
+            expect(races[0].date).toBe('2026-05-03');
+        });
+
         it('leaves circuitId null for an unknown circuit', () => {
             const unknown = [{ meeting_key: 5, meeting_name: 'Mystery GP', circuit_short_name: 'Atlantis', date_start: '2026-05-01T12:00:00' }];
             const unknownSessions = [{ meeting_key: 5, session_type: 'Race', date_start: '2026-05-01T12:00:00', gmt_offset: '00:00:00' }];

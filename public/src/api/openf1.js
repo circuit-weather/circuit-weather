@@ -40,14 +40,17 @@ const OPENF1_TIMEOUT_MS = 8000;
 
 /**
  * Convert an OpenF1 local datetime string + GMT offset to Ergast date/time fields.
+ * Returns null if either value is absent (some future sessions are not yet scheduled).
  * dateStr: "2024-03-02T15:00:00" (local time, no tz suffix)
  * gmtOffset: "03:00:00" or "-05:00:00"
  */
 export function openF1ToErgastDateTime(dateStr, gmtOffset) {
+    if (!dateStr || !gmtOffset) return null;
     const negative = gmtOffset.startsWith('-');
     const [h, m] = gmtOffset.replace(/^[-+]/, '').split(':').map(Number);
     const offsetMs = (negative ? -1 : 1) * (h * 60 + m) * 60000;
     const utcMs = new Date(dateStr + 'Z').getTime() - offsetMs;
+    if (isNaN(utcMs)) return null;
     const utcDate = new Date(utcMs);
     return {
         date: utcDate.toISOString().slice(0, 10),
@@ -86,6 +89,7 @@ export function transformOpenF1(meetings, sessions) {
 
         for (const s of msessions) {
             const dt = openF1ToErgastDateTime(s.date_start, s.gmt_offset);
+            if (!dt) continue;
             switch (s.session_type) {
                 case 'Practice 1':        race.FirstPractice    = dt; break;
                 case 'Practice 2':        race.SecondPractice   = dt; break;
