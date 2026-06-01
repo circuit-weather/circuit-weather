@@ -1054,7 +1054,7 @@ export class CircuitWeatherApp {
                     <div class="weather-metric">
                         <dt class="weather-label" data-i18n="weather.wind">${escapeHtml(i18n.t('weather.wind'))}</dt>
                         <dd class="weather-value" id="weatherWind">${escapeHtml(wind)} ${escapeHtml(weather.units.wind_speed_10m)}</dd>
-                        <dd class="weather-sub" id="weatherWindDir" title="${escapeHtml(dir)}°" aria-label="${escapeHtml(i18n.t('weather.windDirection', { direction: windInfo.text, degrees: dir }))}">
+                        <dd class="weather-sub" id="weatherWindDir" title="${escapeHtml(dir)}${escapeHtml(weather.units.wind_direction_10m)}" aria-label="${escapeHtml(i18n.t('weather.windDirection', { direction: windInfo.text, degrees: dir }))}">
                             ${escapeHtml(windInfo.text)}
                             <svg class="icon-wind-arrow" style="transform: rotate(${escapeHtml(rotation)}deg); width: 14px; height: 14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                                 <line x1="12" y1="19" x2="12" y2="5"></line>
