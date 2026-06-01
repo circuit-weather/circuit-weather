@@ -208,10 +208,20 @@ export class MapManager {
     if (!this.map) return;
 
     if (this.isMapbox) {
-      this.map.flyTo({
+      const fly = () => this.map.flyTo({
         center: [lng, lat],
-        zoom: zoom - 1 // Adjust zoom level
+        zoom: zoom - 1, // Adjust zoom level
+        essential: true // Don't skip the move under prefers-reduced-motion
       });
+
+      // Mapbox silently drops camera commands issued while a style is still
+      // loading (e.g. the initial theme apply). If the style isn't ready yet,
+      // defer the move until the map next goes idle.
+      if (this.map.isStyleLoaded()) {
+        fly();
+      } else {
+        this.map.once('idle', fly);
+      }
     } else {
       this.map.setView([lat, lng], zoom);
     }
