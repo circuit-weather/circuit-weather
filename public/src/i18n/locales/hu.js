@@ -120,6 +120,7 @@ export const hu = {
     initFailed: "Nem sikerült inicializálni az alkalmazást.",
     scheduleUnavailable: "Az F1-es versenynaptár nem tölthető be. Az adatforrás (api.jolpi.ca) jelenleg nem érhető el – kérjük, próbálja újra később.",
     scheduleAllUnavailable: "Az F1-es versenynaptár nem tölthető be. Mindkét adatforrás (api.jolpi.ca és api.openf1.org) jelenleg nem érhető el – kérjük, próbálja újra később.",
+    usingFallbackSource: "Az elsődleges adatforrás (api.jolpi.ca) nem érhető el – az adatok a tartalék forrásból (api.openf1.org) származnak.",
     sessionError: "Esemény hiba",
     sessionLoadFailed:
       "Nem sikerült betölteni az esemény előrejelzését vagy a radart.",

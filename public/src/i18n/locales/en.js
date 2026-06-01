@@ -117,6 +117,7 @@ export const en = {
     initFailed: "Failed to initialize application.",
     scheduleUnavailable: "The F1 race schedule could not be loaded. The data source (api.jolpi.ca) is currently unavailable — please try again later.",
     scheduleAllUnavailable: "The F1 race schedule could not be loaded. Both data sources (api.jolpi.ca and api.openf1.org) appear to be unavailable — please try again later.",
+    usingFallbackSource: "Primary schedule source (api.jolpi.ca) is unavailable — showing data from the backup source (api.openf1.org).",
     sessionError: "Session Error",
     sessionLoadFailed: "Failed to load session forecast or radar data.",
   },

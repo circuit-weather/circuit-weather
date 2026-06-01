@@ -120,6 +120,7 @@ export const de = {
     initFailed: "Initialisierung der Anwendung fehlgeschlagen.",
     scheduleUnavailable: "Der F1-Rennkalender konnte nicht geladen werden. Die Datenquelle (api.jolpi.ca) ist derzeit nicht verfügbar – bitte versuchen Sie es später erneut.",
     scheduleAllUnavailable: "Der F1-Rennkalender konnte nicht geladen werden. Beide Datenquellen (api.jolpi.ca und api.openf1.org) sind derzeit nicht verfügbar – bitte versuchen Sie es später erneut.",
+    usingFallbackSource: "Primäre Datenquelle (api.jolpi.ca) nicht verfügbar – Daten werden von der Backup-Quelle (api.openf1.org) angezeigt.",
     sessionError: "Session-Fehler",
     sessionLoadFailed:
       "Session-Prognose oder Radar konnte nicht geladen werden.",

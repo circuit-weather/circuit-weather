@@ -7,6 +7,9 @@ export class F1API {
         this.cache = new Map();
         this.LOCAL_STORAGE_KEY = 'f1_schedule_cache';
         this.CACHE_DURATION_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+        // Which source supplied the current schedule: 'jolpica' (primary),
+        // 'openf1' (fallback), or null before the first successful fetch.
+        this.scheduleSource = null;
     }
 
     async getSchedule() {
@@ -22,6 +25,10 @@ export class F1API {
                 // SEC: Validate that cachedData.races is an Array to prevent application logic bypass/errors from poisoned localStorage
                 if (cachedData.timestamp && (now - cachedData.timestamp < this.CACHE_DURATION_MS) && Array.isArray(cachedData.races)) {
                     this.cache.set(cacheKey, cachedData.races);
+                    // Preserve the originating source so the fallback notice stays
+                    // accurate while serving cached data (default to primary for
+                    // caches written before sources were tracked).
+                    this.scheduleSource = cachedData.source ?? 'jolpica';
                     return cachedData.races;
                 }
             } catch (e) {
@@ -33,7 +40,7 @@ export class F1API {
         // Primary source: Jolpica (via the Worker proxy for caching/privacy).
         try {
             const races = await this.fetchFromJolpica();
-            return this.cacheSchedule(cacheKey, races);
+            return this.cacheSchedule(cacheKey, races, 'jolpica');
         } catch (jolpicaError) {
             console.warn('Jolpica schedule fetch failed, trying OpenF1 fallback:', jolpicaError);
         }
@@ -42,7 +49,7 @@ export class F1API {
         // the Worker's datacenter IPs, so this fetch must originate client-side.
         try {
             const races = await fetchOpenF1Schedule();
-            return this.cacheSchedule(cacheKey, races);
+            return this.cacheSchedule(cacheKey, races, 'openf1');
         } catch (openF1Error) {
             console.error('OpenF1 fallback also failed:', openF1Error);
             throw new Error('F1_SCHEDULE_UNAVAILABLE:jolpica,openf1:ALL_SOURCES_FAILED');
@@ -59,11 +66,13 @@ export class F1API {
         return data.MRData?.RaceTable?.Races || [];
     }
 
-    cacheSchedule(cacheKey, races) {
+    cacheSchedule(cacheKey, races, source) {
         this.cache.set(cacheKey, races);
+        this.scheduleSource = source;
         SafeStorage.setItem(this.LOCAL_STORAGE_KEY, JSON.stringify({
             timestamp: Date.now(),
-            races: races
+            races: races,
+            source: source
         }));
         return races;
     }

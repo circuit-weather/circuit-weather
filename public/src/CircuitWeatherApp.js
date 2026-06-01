@@ -72,6 +72,7 @@ export class CircuitWeatherApp {
             mobileHeader: document.querySelector('.mobile-header'),
             radarControls: document.getElementById('radarControls'),
             mapContainer: document.getElementById('map'),
+            dataSourceNotice: document.getElementById('dataSourceNotice'),
         };
 
         this.showLoading(true, i18n.t('loading.schedule'));
@@ -122,6 +123,7 @@ export class CircuitWeatherApp {
             const schedule = await this.f1Api.getSchedule();
             this.races = schedule.map(r => this.f1Api.parseRace(r));
 
+            this.updateDataSourceNotice();
             this.populateRoundSelect();
 
             document.addEventListener('i18n:change', this.handleLanguageChange);
@@ -151,6 +153,13 @@ export class CircuitWeatherApp {
         } finally {
             this.showLoading(false);
         }
+    }
+
+    // Show a small sidebar notice when the schedule came from the OpenF1 fallback,
+    // so it's obvious when the primary source (Jolpica) is degraded vs. recovered.
+    updateDataSourceNotice() {
+        if (!this.ui.dataSourceNotice) return;
+        this.ui.dataSourceNotice.hidden = this.f1Api.scheduleSource !== 'openf1';
     }
 
     renderError(message) {

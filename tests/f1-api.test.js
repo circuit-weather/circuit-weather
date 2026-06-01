@@ -189,6 +189,38 @@ describe('F1API', () => {
             expect(result[0].raceName).toBe('Bahrain Grand Prix');
         });
 
+        it('records scheduleSource as jolpica on the primary path', async () => {
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: () => Promise.resolve({ MRData: { RaceTable: { Races: [] } } }),
+            });
+            await api.getSchedule();
+            expect(api.scheduleSource).toBe('jolpica');
+        });
+
+        it('records scheduleSource as openf1 when the fallback is used', async () => {
+            mockFetch.mockResolvedValueOnce({ ok: false, status: 500 }); // Jolpica
+            mockOpenF1Success();
+            await api.getSchedule();
+            expect(api.scheduleSource).toBe('openf1');
+        });
+
+        it('persists the source to localStorage and restores it from cache', async () => {
+            mockFetch.mockResolvedValueOnce({ ok: false, status: 500 }); // Jolpica
+            mockOpenF1Success();
+            await api.getSchedule();
+
+            // The persisted cache payload should carry the originating source
+            const persisted = JSON.parse(SafeStorage.setItem.mock.calls.at(-1)[1]);
+            expect(persisted.source).toBe('openf1');
+
+            // A fresh instance reading that cache should report the same source
+            const fresh = new F1API();
+            SafeStorage.getItem.mockReturnValueOnce(JSON.stringify(persisted));
+            await fresh.getSchedule();
+            expect(fresh.scheduleSource).toBe('openf1');
+        });
+
         it('throws a tagged schedule error when both Jolpica and OpenF1 fail', async () => {
             mockFetch
                 .mockResolvedValueOnce({ ok: false, status: 500 }) // Jolpica

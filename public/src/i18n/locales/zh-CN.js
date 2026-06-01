@@ -110,6 +110,7 @@ export const zhCN = {
     initFailed: "应用初始化失败。",
     scheduleUnavailable: "无法加载F1赛程。数据源 (api.jolpi.ca) 目前不可用，请稍后重试。",
     scheduleAllUnavailable: "无法加载F1赛程。两个数据源 (api.jolpi.ca 和 api.openf1.org) 目前均不可用，请稍后重试。",
+    usingFallbackSource: "主数据源 (api.jolpi.ca) 不可用 — 正在显示备用数据源 (api.openf1.org) 的数据。",
     sessionError: "赛段错误",
     sessionLoadFailed: "加载赛段预报或雷达失败。",
   },

@@ -446,6 +446,29 @@ describe('CircuitWeatherApp Pure Methods', () => {
     });
 
 
+    describe('updateDataSourceNotice', () => {
+        beforeEach(() => {
+            app.ui.dataSourceNotice = createMockElement('dataSourceNotice');
+        });
+
+        it('shows the notice when the schedule came from the OpenF1 fallback', () => {
+            app.f1Api.scheduleSource = 'openf1';
+            app.updateDataSourceNotice();
+            expect(app.ui.dataSourceNotice.hidden).toBe(false);
+        });
+
+        it('hides the notice when the schedule came from the primary source', () => {
+            app.f1Api.scheduleSource = 'jolpica';
+            app.updateDataSourceNotice();
+            expect(app.ui.dataSourceNotice.hidden).toBe(true);
+        });
+
+        it('does nothing when the notice element is absent', () => {
+            app.ui.dataSourceNotice = null;
+            expect(() => app.updateDataSourceNotice()).not.toThrow();
+        });
+    });
+
     describe('updateRaceInfo', () => {
         beforeEach(() => {
             app.ui.raceInfoBanner = createMockElement('raceInfoBanner');
