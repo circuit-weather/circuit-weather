@@ -27,3 +27,9 @@
 ## 2024-05-25 - Fixing synchronous test callback violation
 **Learning:** Fixing a "flaky" `setTimeout` test by removing it entirely and calling a mocked callback synchronously violates the requirement to preserve asynchronous testing intent.
 **Action:** When fixing async event handlers (like `on('load', ...)`), retain the `setTimeout` simulation if `vi.useFakeTimers()` is active, and ensure `vi.advanceTimersByTime` is correctly paired with `await promise` to assert the final state.
+## 2026-05-20 - Global Mocks in Vitest
+**Learning:** Using `vi.stubGlobal('document', ...)` at the module level overwrites the entire DOM for all tests running in that thread, completely breaking JSDOM/Happy-DOM environments and causing internal library crashes when they attempt to use standard DOM methods like `document.createElement`.
+**Action:** When mocking specific DOM properties (like `getElementById`), wrap them within existing DOM objects or strictly isolate `vi.stubGlobal` to specific test blocks (using `beforeEach` and `afterEach` with `vi.unstubAllGlobals()`) to avoid test pollution, or better yet, inject mocks cleanly via `vi.spyOn(document, 'getElementById')` which allows simple `.mockRestore()`.
+## 2026-05-20 - Testing Constructor Bound Event Listeners
+**Learning:** Testing event listeners by replacing instance methods with mocks *after* the class has been instantiated (e.g., `const pb = new RadarPlayback(); pb.togglePlay = vi.fn();`) fails if the constructor binds those methods during attachment (e.g., via arrow functions `() => this.togglePlay()`). The listener executes the original bound function, not the newly assigned mock.
+**Action:** When testing listeners set up in a constructor, either mock the original class prototype before instantiation, or mock the underlying external dependencies (like `document.getElementById`) to intercept the listener attachment directly, verifying the callback executes the expected internal logic.
