@@ -143,6 +143,7 @@ describe('F1API', () => {
         // Minimal OpenF1 payload: one Bahrain race weekend
         const openF1Meetings = [{
             meeting_key: 1,
+            circuit_key: 63,
             meeting_name: 'Bahrain Grand Prix',
             circuit_short_name: 'Sakhir',
             location: 'Sakhir',

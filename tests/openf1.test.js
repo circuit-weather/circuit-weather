@@ -56,6 +56,7 @@ describe('openf1', () => {
         const meetings = [
             {
                 meeting_key: 2,
+                circuit_key: 149,
                 meeting_name: 'Saudi Arabian Grand Prix',
                 circuit_short_name: 'Jeddah',
                 location: 'Jeddah',
@@ -64,6 +65,7 @@ describe('openf1', () => {
             },
             {
                 meeting_key: 1,
+                circuit_key: 63,
                 meeting_name: 'Bahrain Grand Prix',
                 circuit_short_name: 'Sakhir',
                 location: 'Sakhir',
@@ -73,6 +75,7 @@ describe('openf1', () => {
             {
                 // Pre-season testing — no Race session, must be filtered out
                 meeting_key: 99,
+                circuit_key: 63,
                 meeting_name: 'Pre-Season Testing',
                 circuit_short_name: 'Sakhir',
                 location: 'Sakhir',
@@ -99,7 +102,7 @@ describe('openf1', () => {
             expect(races[1].round).toBe('2');
         });
 
-        it('maps circuit_short_name to the Ergast circuitId', () => {
+        it('maps circuit_key to the Ergast circuitId', () => {
             const races = transformOpenF1(meetings, sessions);
             expect(races[0].Circuit.circuitId).toBe('bahrain');
             expect(races[1].Circuit.circuitId).toBe('jeddah');
@@ -155,7 +158,7 @@ describe('openf1', () => {
         });
 
         it('fetches meetings + sessions and returns transformed races', async () => {
-            const meetings = [{ meeting_key: 1, meeting_name: 'Bahrain Grand Prix', circuit_short_name: 'Sakhir', location: 'Sakhir', country_name: 'Bahrain', date_start: '2026-03-20T11:30:00' }];
+            const meetings = [{ meeting_key: 1, circuit_key: 63, meeting_name: 'Bahrain Grand Prix', circuit_short_name: 'Sakhir', location: 'Sakhir', country_name: 'Bahrain', date_start: '2026-03-20T11:30:00' }];
             const sessions = [{ meeting_key: 1, session_type: 'Race', date_start: '2026-03-22T15:00:00', gmt_offset: '03:00:00' }];
 
             mockFetch

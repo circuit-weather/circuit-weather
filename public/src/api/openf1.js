@@ -5,34 +5,39 @@
 // 403s, but a user's browser on a residential connection does not. This mirrors
 // how Open-Meteo weather data is fetched directly client-side.
 
-// Maps OpenF1 circuit_short_name (lowercase) → Ergast circuitId so that track
+// Maps OpenF1 circuit_key (a stable integer ID) → Ergast circuitId so that track
 // layers keep working when the schedule is served from the OpenF1 fallback.
+//
+// We deliberately key on circuit_key rather than circuit_short_name: OpenF1's names
+// don't match what you'd expect (Monaco is "Monte Carlo", Spain is "Catalunya",
+// Abu Dhabi is "Yas Marina Circuit", Brazil is "Interlagos"), so the numeric key is
+// the reliable join. Values map to the Ergast circuitId used by CIRCUIT_MAP for the
+// track GeoJSON overlays.
 export const OPENF1_CIRCUIT_MAP = {
-    'sakhir': 'bahrain',
-    'jeddah': 'jeddah',
-    'melbourne': 'albert_park',
-    'suzuka': 'suzuka',
-    'shanghai': 'shanghai',
-    'miami': 'miami',
-    'imola': 'imola',
-    'monaco': 'monaco',
-    'barcelona': 'catalunya',
-    'montreal': 'villeneuve',
-    'montréal': 'villeneuve',
-    'spielberg': 'red_bull_ring',
-    'silverstone': 'silverstone',
-    'budapest': 'hungaroring',
-    'spa-francorchamps': 'spa',
-    'zandvoort': 'zandvoort',
-    'monza': 'monza',
-    'baku': 'baku',
-    'singapore': 'marina_bay',
-    'austin': 'americas',
-    'mexico city': 'rodriguez',
-    'são paulo': 'interlagos',
-    'las vegas': 'las_vegas',
-    'lusail': 'losail',
-    'abu dhabi': 'yas_marina',
+    63: 'bahrain',
+    149: 'jeddah',
+    10: 'albert_park',
+    46: 'suzuka',
+    49: 'shanghai',
+    151: 'miami',
+    6: 'imola',
+    22: 'monaco',
+    23: 'villeneuve',
+    15: 'catalunya',
+    19: 'red_bull_ring',
+    2: 'silverstone',
+    7: 'spa',
+    4: 'hungaroring',
+    55: 'zandvoort',
+    39: 'monza',
+    144: 'baku',
+    61: 'marina_bay',
+    9: 'americas',
+    65: 'rodriguez',
+    14: 'interlagos',
+    152: 'las_vegas',
+    150: 'losail',
+    70: 'yas_marina',
 };
 
 const OPENF1_BASE = 'https://api.openf1.org/v1';
@@ -90,7 +95,7 @@ export function transformOpenF1(meetings, sessions) {
 
     return raceMeetings.map((meeting, i) => {
         const msessions = sessionsByMeeting[meeting.meeting_key] ?? [];
-        const circuitId = OPENF1_CIRCUIT_MAP[meeting.circuit_short_name?.toLowerCase()] ?? null;
+        const circuitId = OPENF1_CIRCUIT_MAP[meeting.circuit_key] ?? null;
 
         const race = {
             round: String(i + 1),
