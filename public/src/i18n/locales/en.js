@@ -115,6 +115,7 @@ export const en = {
     retryConnection: "Retry connection",
     retryingConnection: "Retrying connection",
     initFailed: "Failed to initialize application.",
+    scheduleUnavailable: "The F1 race schedule could not be loaded. The data source may be temporarily unavailable — please try again later.",
     sessionError: "Session Error",
     sessionLoadFailed: "Failed to load session forecast or radar data.",
   },

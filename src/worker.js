@@ -367,7 +367,7 @@ async function handleApiRequest(request, env, ctx, url) {
     // We store '*' in cache as a fallback, but we always override on delivery
     const cacheHeaders = new Headers({
       'Content-Type': 'application/json',
-      'Cache-Control': 'public, max-age=3600',
+      'Cache-Control': 'public, max-age=86400',
       'X-Cache': 'MISS',
       'X-Upstream-Status': status.toString(),
       'Access-Control-Allow-Origin': '*', // Store permissive, override on delivery
