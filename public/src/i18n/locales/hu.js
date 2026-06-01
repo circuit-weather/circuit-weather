@@ -118,7 +118,8 @@ export const hu = {
     retryConnection: "Csatlakozás újrapróbálása",
     retryingConnection: "Csatlakozás újrapróbálása folyamatban",
     initFailed: "Nem sikerült inicializálni az alkalmazást.",
-    scheduleUnavailable: "Az F1-es versenynaptár nem tölthető be. Az adatforrás ideiglenesen nem érhető el – kérjük, próbálja újra később.",
+    scheduleUnavailable: "Az F1-es versenynaptár nem tölthető be. Az adatforrás (api.jolpi.ca) jelenleg nem érhető el – kérjük, próbálja újra később.",
+    scheduleAllUnavailable: "Az F1-es versenynaptár nem tölthető be. Mindkét adatforrás (api.jolpi.ca és api.openf1.org) jelenleg nem érhető el – kérjük, próbálja újra később.",
     sessionError: "Esemény hiba",
     sessionLoadFailed:
       "Nem sikerült betölteni az esemény előrejelzését vagy a radart.",

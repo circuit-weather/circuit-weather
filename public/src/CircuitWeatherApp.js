@@ -142,8 +142,12 @@ export class CircuitWeatherApp {
 
         } catch (error) {
             console.error('Initialization failed:', error);
-            const isScheduleError = error.message?.startsWith('F1_SCHEDULE_UNAVAILABLE');
-            this.renderError(i18n.t(isScheduleError ? 'errors.scheduleUnavailable' : 'errors.initFailed'));
+            const scheduleMatch = error.message?.match(/^F1_SCHEDULE_UNAVAILABLE:([^:]+):/);
+            const sourcesTried = scheduleMatch?.[1] ?? '';
+            const msgKey = sourcesTried === 'jolpica,openf1' ? 'errors.scheduleAllUnavailable'
+                : scheduleMatch ? 'errors.scheduleUnavailable'
+                : 'errors.initFailed';
+            this.renderError(i18n.t(msgKey));
         } finally {
             this.showLoading(false);
         }

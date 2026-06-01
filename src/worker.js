@@ -224,7 +224,7 @@ function handleOptions(request) {
 /**
  * Helper to cache and return an error response
  */
-function cacheAndReturnError(request, cache, cacheKey, status, message, extraDetails, ctx) {
+function cacheAndReturnError(request, cache, cacheKey, status, message, extraDetails, ctx, extraHeaders = {}) {
   // Cache error response to prevent hammering upstream
   const errorCacheTTL = status === 429 ? 300 : 60;
 
@@ -242,7 +242,8 @@ function cacheAndReturnError(request, cache, cacheKey, status, message, extraDet
     'X-Cache': 'ERROR-CACHED',
     'X-Upstream-Status': status.toString(),
     'Access-Control-Allow-Origin': '*', // Store permissive, override on delivery
-    ...API_SECURITY_HEADERS
+    ...API_SECURITY_HEADERS,
+    ...extraHeaders
   });
 
   const errorResponse = new Response(errorBody, {
@@ -501,6 +502,8 @@ async function handleApiRequest(request, env, ctx, url) {
       if (apiPath === 'current.json') {
         const fallback = await tryOpenF1Fallback(request, ctx, cache, cacheKey);
         if (fallback) return fallback;
+        return cacheAndReturnError(request, cache, cacheKey, status, 'Upstream API error', {}, ctx,
+          { 'X-Schedule-Sources-Tried': 'jolpica,openf1' });
       }
       return cacheAndReturnError(request, cache, cacheKey, status, 'Upstream API error', {}, ctx);
     }
@@ -514,6 +517,12 @@ async function handleApiRequest(request, env, ctx, url) {
     if (mime !== 'application/json') {
       if (env.ENVIRONMENT !== 'production') {
         console.error(`Upstream Invalid Content-Type: ${contentType} (parsed: ${mime})`);
+      }
+      if (apiPath === 'current.json') {
+        const fallback = await tryOpenF1Fallback(request, ctx, cache, cacheKey);
+        if (fallback) return fallback;
+        return cacheAndReturnError(request, cache, cacheKey, 502, 'Invalid upstream content type', {}, ctx,
+          { 'X-Schedule-Sources-Tried': 'jolpica,openf1' });
       }
       return cacheAndReturnError(request, cache, cacheKey, 502, 'Invalid upstream content type', {}, ctx);
     }
@@ -562,6 +571,9 @@ async function handleApiRequest(request, env, ctx, url) {
     if (apiPath === 'current.json') {
       const fallback = await tryOpenF1Fallback(request, ctx, cache, cacheKey);
       if (fallback) return fallback;
+      return createErrorResponse(request, 502, 'Failed to fetch from upstream', {
+        'X-Schedule-Sources-Tried': 'jolpica,openf1'
+      });
     }
     return createErrorResponse(request, 502, 'Failed to fetch from upstream');
   }

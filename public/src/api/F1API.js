@@ -33,7 +33,10 @@ export class F1API {
         const response = await fetch(`${CONFIG.f1ApiBase}/current.json`, {
             signal: AbortSignal.timeout(5000)
         });
-        if (!response.ok) throw new Error(`F1_SCHEDULE_UNAVAILABLE: HTTP ${response.status}`);
+        if (!response.ok) {
+            const sources = response.headers.get('X-Schedule-Sources-Tried') || 'jolpica';
+            throw new Error(`F1_SCHEDULE_UNAVAILABLE:${sources}:HTTP ${response.status}`);
+        }
 
         const data = await response.json();
         const races = data.MRData?.RaceTable?.Races || [];

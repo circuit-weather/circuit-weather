@@ -144,6 +144,7 @@ describe('F1API', () => {
             mockFetch.mockResolvedValueOnce({
                 ok: false,
                 status: 500,
+                headers: { get: () => null },
             });
 
             await expect(api.getSchedule()).rejects.toThrow('HTTP 500');

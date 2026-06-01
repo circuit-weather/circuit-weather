@@ -117,7 +117,8 @@ export const fr = {
     retryConnection: "Reessayer la connexion",
     retryingConnection: "Nouvelle tentative de connexion",
     initFailed: "Echec de l'initialisation de l'application.",
-    scheduleUnavailable: "Le calendrier F1 n'a pas pu être chargé. La source de données est peut-être temporairement indisponible. Veuillez réessayer plus tard.",
+    scheduleUnavailable: "Le calendrier F1 n'a pas pu être chargé. La source de données (api.jolpi.ca) est actuellement indisponible. Veuillez réessayer plus tard.",
+    scheduleAllUnavailable: "Le calendrier F1 n'a pas pu être chargé. Les deux sources de données (api.jolpi.ca et api.openf1.org) semblent indisponibles. Veuillez réessayer plus tard.",
     sessionError: "Erreur de session",
     sessionLoadFailed:
       "Echec du chargement des previsions ou du radar de session.",
