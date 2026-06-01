@@ -78,6 +78,40 @@ describe('TrackLayer', () => {
         trackLayer = new TrackLayer(mapMock);
     });
 
+    describe('computeCenter', () => {
+        it('returns the [lat, lng] centre of a LineString bounding box', () => {
+            const geojson = {
+                type: 'FeatureCollection',
+                features: [{
+                    type: 'Feature',
+                    geometry: {
+                        type: 'LineString',
+                        // GeoJSON order is [lng, lat]
+                        coordinates: [[10, 20], [30, 40], [20, 30]],
+                    },
+                }],
+            };
+            // lng 10..30 → 20, lat 20..40 → 30
+            expect(TrackLayer.computeCenter(geojson)).toEqual([30, 20]);
+        });
+
+        it('handles a bare Feature with nested Polygon coordinates', () => {
+            const geojson = {
+                type: 'Feature',
+                geometry: {
+                    type: 'Polygon',
+                    coordinates: [[[0, 0], [0, 10], [10, 10], [10, 0], [0, 0]]],
+                },
+            };
+            expect(TrackLayer.computeCenter(geojson)).toEqual([5, 5]);
+        });
+
+        it('returns null when there are no coordinates', () => {
+            expect(TrackLayer.computeCenter({ type: 'FeatureCollection', features: [] })).toBeNull();
+            expect(TrackLayer.computeCenter(null)).toBeNull();
+        });
+    });
+
     it('should initialize and bind events', () => {
         expect(mapMock.on).toHaveBeenCalledWith('moveend', expect.any(Function));
         // Check initial color resolution
