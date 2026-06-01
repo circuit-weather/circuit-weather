@@ -142,7 +142,8 @@ export class CircuitWeatherApp {
 
         } catch (error) {
             console.error('Initialization failed:', error);
-            this.renderError(i18n.t('errors.initFailed'));
+            const isScheduleError = error.message?.startsWith('F1_SCHEDULE_UNAVAILABLE');
+            this.renderError(i18n.t(isScheduleError ? 'errors.scheduleUnavailable' : 'errors.initFailed'));
         } finally {
             this.showLoading(false);
         }
