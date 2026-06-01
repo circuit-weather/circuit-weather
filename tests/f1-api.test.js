@@ -140,20 +140,61 @@ describe('F1API', () => {
             expect(mockFetch).toHaveBeenCalledTimes(1);
         });
 
-        it('throws on non-OK HTTP response', async () => {
-            mockFetch.mockResolvedValueOnce({
-                ok: false,
-                status: 500,
-                headers: { get: () => null },
-            });
+        // Minimal OpenF1 payload: one Bahrain race weekend
+        const openF1Meetings = [{
+            meeting_key: 1,
+            meeting_name: 'Bahrain Grand Prix',
+            circuit_short_name: 'Sakhir',
+            location: 'Sakhir',
+            country_name: 'Bahrain',
+            date_start: '2026-03-20T11:30:00',
+            year: 2026,
+        }];
+        const openF1Sessions = [
+            { meeting_key: 1, session_type: 'Practice 1', date_start: '2026-03-20T11:30:00', gmt_offset: '03:00:00' },
+            { meeting_key: 1, session_type: 'Qualifying', date_start: '2026-03-21T15:00:00', gmt_offset: '03:00:00' },
+            { meeting_key: 1, session_type: 'Race',       date_start: '2026-03-22T15:00:00', gmt_offset: '03:00:00' },
+        ];
+        const mockOpenF1Success = () => {
+            mockFetch
+                .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(openF1Meetings) })
+                .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(openF1Sessions) });
+        };
 
-            await expect(api.getSchedule()).rejects.toThrow('HTTP 500');
+        it('falls back to OpenF1 when Jolpica returns a non-OK response', async () => {
+            mockFetch.mockResolvedValueOnce({ ok: false, status: 500 }); // Jolpica
+            mockOpenF1Success();
+
+            const result = await api.getSchedule();
+
+            expect(result).toHaveLength(1);
+            expect(result[0].raceName).toBe('Bahrain Grand Prix');
+            expect(result[0].Circuit.circuitId).toBe('bahrain');
+            expect(result[0].date).toBe('2026-03-22');
+            expect(result[0].time).toBe('12:00:00Z'); // 15:00 local UTC+3 → 12:00 UTC
+            // 1 Jolpica + 2 OpenF1 (meetings + sessions)
+            expect(mockFetch).toHaveBeenCalledTimes(3);
+            // Result persisted to localStorage
+            expect(SafeStorage.setItem).toHaveBeenCalledWith('f1_schedule_cache', expect.any(String));
         });
 
-        it('throws a tagged schedule error on network failure', async () => {
-            mockFetch.mockRejectedValueOnce(new TypeError('Failed to fetch'));
+        it('falls back to OpenF1 when the Jolpica fetch throws (network error)', async () => {
+            mockFetch.mockRejectedValueOnce(new TypeError('Failed to fetch')); // Jolpica
+            mockOpenF1Success();
 
-            await expect(api.getSchedule()).rejects.toThrow('F1_SCHEDULE_UNAVAILABLE:jolpica:NETWORK');
+            const result = await api.getSchedule();
+
+            expect(result).toHaveLength(1);
+            expect(result[0].raceName).toBe('Bahrain Grand Prix');
+        });
+
+        it('throws a tagged schedule error when both Jolpica and OpenF1 fail', async () => {
+            mockFetch
+                .mockResolvedValueOnce({ ok: false, status: 500 }) // Jolpica
+                .mockResolvedValueOnce({ ok: false, status: 403 }) // OpenF1 meetings
+                .mockResolvedValueOnce({ ok: false, status: 403 }); // OpenF1 sessions
+
+            await expect(api.getSchedule()).rejects.toThrow('F1_SCHEDULE_UNAVAILABLE:jolpica,openf1');
         });
 
         it('returns empty array when RaceTable has no Races', async () => {

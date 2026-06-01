@@ -277,71 +277,20 @@ describe("Worker Logic", () => {
       expect(mockFetch).not.toHaveBeenCalled();
     });
 
-    it("falls back to OpenF1 when Jolpica returns non-ok for current.json", async () => {
-      const meetings = [
-        {
-          meeting_key: 1,
-          meeting_name: "Bahrain Grand Prix",
-          circuit_short_name: "Sakhir",
-          location: "Sakhir",
-          country_name: "Bahrain",
-          date_start: "2026-03-20T11:30:00",
-          gmt_offset: "03:00:00",
-          year: 2026,
-        },
-      ];
-      const sessions = [
-        { meeting_key: 1, session_type: "Practice 1", date_start: "2026-03-20T11:30:00", gmt_offset: "03:00:00" },
-        { meeting_key: 1, session_type: "Practice 2", date_start: "2026-03-20T15:00:00", gmt_offset: "03:00:00" },
-        { meeting_key: 1, session_type: "Practice 3", date_start: "2026-03-21T11:30:00", gmt_offset: "03:00:00" },
-        { meeting_key: 1, session_type: "Qualifying", date_start: "2026-03-21T15:00:00", gmt_offset: "03:00:00" },
-        { meeting_key: 1, session_type: "Race",       date_start: "2026-03-22T15:00:00", gmt_offset: "03:00:00" },
-      ];
-
-      // Jolpica fails, then OpenF1 meetings + sessions succeed
-      mockFetch
-        .mockResolvedValueOnce(new Response("Service Unavailable", { status: 503 }))
-        .mockResolvedValueOnce(new Response(JSON.stringify(meetings), { status: 200, headers: { "Content-Type": "application/json" } }))
-        .mockResolvedValueOnce(new Response(JSON.stringify(sessions), { status: 200, headers: { "Content-Type": "application/json" } }));
-
-      const req = createRequest("/api/f1/current.json");
-      const res = await worker.fetch(req, global.env, global.ctx);
-
-      expect(res.status).toBe(200);
-      expect(res.headers.get("X-Fallback")).toBe("openf1");
-
-      const data = await res.json();
-      const race = data.MRData.RaceTable.Races[0];
-      expect(race.round).toBe("1");
-      expect(race.raceName).toBe("Bahrain Grand Prix");
-      expect(race.Circuit.circuitId).toBe("bahrain");
-      expect(race.date).toBe("2026-03-22");
-      expect(race.time).toBe("12:00:00Z"); // 15:00 local UTC+3 → 12:00 UTC
-      expect(race.Qualifying).toEqual({ date: "2026-03-21", time: "12:00:00Z" });
-      expect(mockCache.put).toHaveBeenCalled();
-    });
-
-    it("returns error when both Jolpica and OpenF1 fail for current.json", async () => {
-      mockFetch
-        .mockResolvedValueOnce(new Response("Service Unavailable", { status: 503 }))
-        .mockResolvedValueOnce(new Response("Service Unavailable", { status: 503 }))
-        .mockResolvedValueOnce(new Response("Service Unavailable", { status: 503 }));
+    it("returns the upstream error for current.json without any worker-side fallback", async () => {
+      // The OpenF1 fallback lives in the browser (it blocks Cloudflare IPs), so
+      // the worker must surface Jolpica's failure directly and make only one call.
+      mockFetch.mockResolvedValueOnce(new Response("Service Unavailable", { status: 503 }));
 
       const req = createRequest("/api/f1/current.json");
       const res = await worker.fetch(req, global.env, global.ctx);
 
       expect(res.status).toBe(503);
-    });
-
-    it("does not trigger OpenF1 fallback for non-schedule paths", async () => {
-      mockFetch.mockResolvedValueOnce(new Response("Not Found", { status: 404 }));
-
-      const req = createRequest("/api/f1/nonexistent");
-      const res = await worker.fetch(req, global.env, global.ctx);
-
-      expect(res.status).toBe(404);
-      // Only one fetch call (to Jolpica) — no OpenF1 fallback attempted
       expect(mockFetch).toHaveBeenCalledTimes(1);
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining("api.jolpi.ca/ergast/f1/current.json"),
+        expect.any(Object),
+      );
     });
 
     it("validates API path (blocks injection/traversal)", async () => {

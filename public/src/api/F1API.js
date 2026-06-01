@@ -1,5 +1,6 @@
 import { CONFIG } from '../config.js';
 import { SafeStorage } from '../utils/storage.js';
+import { fetchOpenF1Schedule } from './openf1.js';
 
 export class F1API {
     constructor() {
@@ -29,34 +30,41 @@ export class F1API {
             }
         }
 
-        // SEC: Timeout is generous (15 s) because the worker may need to try two upstreams
-        // (Jolpica then OpenF1) before responding.
-        let response;
+        // Primary source: Jolpica (via the Worker proxy for caching/privacy).
         try {
-            response = await fetch(`${CONFIG.f1ApiBase}/current.json`, {
-                signal: AbortSignal.timeout(15000)
-            });
-        } catch {
-            // Network error or timeout — tag as a schedule error so the app shows
-            // a useful message rather than the generic init failure.
-            throw new Error('F1_SCHEDULE_UNAVAILABLE:jolpica:NETWORK');
-        }
-        if (!response.ok) {
-            const sources = response.headers.get('X-Schedule-Sources-Tried') || 'jolpica';
-            throw new Error(`F1_SCHEDULE_UNAVAILABLE:${sources}:HTTP ${response.status}`);
+            const races = await this.fetchFromJolpica();
+            return this.cacheSchedule(cacheKey, races);
+        } catch (jolpicaError) {
+            console.warn('Jolpica schedule fetch failed, trying OpenF1 fallback:', jolpicaError);
         }
 
+        // Fallback source: OpenF1, called directly from the browser. OpenF1 blocks
+        // the Worker's datacenter IPs, so this fetch must originate client-side.
+        try {
+            const races = await fetchOpenF1Schedule();
+            return this.cacheSchedule(cacheKey, races);
+        } catch (openF1Error) {
+            console.error('OpenF1 fallback also failed:', openF1Error);
+            throw new Error('F1_SCHEDULE_UNAVAILABLE:jolpica,openf1:ALL_SOURCES_FAILED');
+        }
+    }
+
+    async fetchFromJolpica() {
+        const response = await fetch(`${CONFIG.f1ApiBase}/current.json`, {
+            // SEC: Add timeout to prevent hanging connections if the proxy is unresponsive
+            signal: AbortSignal.timeout(6000)
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
-        const races = data.MRData?.RaceTable?.Races || [];
+        return data.MRData?.RaceTable?.Races || [];
+    }
 
+    cacheSchedule(cacheKey, races) {
         this.cache.set(cacheKey, races);
-
-        // Save to localStorage
         SafeStorage.setItem(this.LOCAL_STORAGE_KEY, JSON.stringify({
             timestamp: Date.now(),
             races: races
         }));
-
         return races;
     }
 
