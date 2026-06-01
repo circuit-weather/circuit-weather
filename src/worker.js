@@ -31,10 +31,41 @@ import {
 
 // Per-upstream timeouts to prevent resource exhaustion while allowing for slow upstreams
 const TIMEOUT_API_F1 = 5000;
+const TIMEOUT_API_OPENF1 = 8000;
 const TIMEOUT_API_RADAR = 8000;
 const TIMEOUT_API_TILES = 5000;
 const TIMEOUT_API_TRACKS = 10000;
 const TIMEOUT_API_ASSETS = 10000;
+
+// Maps OpenF1 circuit_short_name (lowercase) → Ergast circuitId so that track
+// layers keep working when the schedule is served from the OpenF1 fallback.
+const OPENF1_CIRCUIT_MAP = {
+  'sakhir': 'bahrain',
+  'jeddah': 'jeddah',
+  'melbourne': 'albert_park',
+  'suzuka': 'suzuka',
+  'shanghai': 'shanghai',
+  'miami': 'miami',
+  'imola': 'imola',
+  'monaco': 'monaco',
+  'barcelona': 'catalunya',
+  'montreal': 'villeneuve',
+  'montréal': 'villeneuve',
+  'spielberg': 'red_bull_ring',
+  'silverstone': 'silverstone',
+  'budapest': 'hungaroring',
+  'spa-francorchamps': 'spa',
+  'zandvoort': 'zandvoort',
+  'monza': 'monza',
+  'baku': 'baku',
+  'singapore': 'marina_bay',
+  'austin': 'americas',
+  'mexico city': 'rodriguez',
+  'são paulo': 'interlagos',
+  'las vegas': 'las_vegas',
+  'lusail': 'losail',
+  'abu dhabi': 'yas_marina',
+};
 
 const VENDOR_ASSETS = new Map([
   // Leaflet Assets
@@ -273,6 +304,129 @@ function handleConfigRequest(request, env) {
 /**
  * Handle F1 API requests with caching
  */
+/**
+ * Convert an OpenF1 local datetime string + GMT offset to Ergast date/time fields.
+ * dateStr: "2024-03-02T15:00:00" (local time, no tz suffix)
+ * gmtOffset: "03:00:00" or "-05:00:00"
+ */
+function openF1ToErgastDateTime(dateStr, gmtOffset) {
+  const negative = gmtOffset.startsWith('-');
+  const [h, m] = gmtOffset.replace(/^[-+]/, '').split(':').map(Number);
+  const offsetMs = (negative ? -1 : 1) * (h * 60 + m) * 60000;
+  const utcMs = new Date(dateStr + 'Z').getTime() - offsetMs;
+  const utcDate = new Date(utcMs);
+  return {
+    date: utcDate.toISOString().slice(0, 10),
+    time: utcDate.toISOString().slice(11, 19) + 'Z',
+  };
+}
+
+/**
+ * Fetch the current F1 season schedule from OpenF1 and return it in the
+ * Ergast MRData.RaceTable.Races shape the client already expects.
+ */
+async function fetchOpenF1Schedule() {
+  const year = new Date().getFullYear();
+  const [meetingsRes, sessionsRes] = await Promise.all([
+    fetch(`https://api.openf1.org/v1/meetings?year=${year}`, {
+      headers: { Accept: 'application/json', 'User-Agent': 'CircuitWeather/1.0' },
+      signal: AbortSignal.timeout(TIMEOUT_API_OPENF1),
+    }),
+    fetch(`https://api.openf1.org/v1/sessions?year=${year}`, {
+      headers: { Accept: 'application/json', 'User-Agent': 'CircuitWeather/1.0' },
+      signal: AbortSignal.timeout(TIMEOUT_API_OPENF1),
+    }),
+  ]);
+
+  if (!meetingsRes.ok || !sessionsRes.ok) {
+    throw new Error(`OpenF1 error: meetings=${meetingsRes.status} sessions=${sessionsRes.status}`);
+  }
+
+  const [meetings, sessions] = await Promise.all([meetingsRes.json(), sessionsRes.json()]);
+
+  const sessionsByMeeting = {};
+  for (const s of sessions) {
+    (sessionsByMeeting[s.meeting_key] ??= []).push(s);
+  }
+
+  // Filter out pre-season testing (meetings with no Race session) and sort by date
+  const raceMeetings = meetings
+    .filter(m => (sessionsByMeeting[m.meeting_key] ?? []).some(s => s.session_type === 'Race'))
+    .sort((a, b) => new Date(a.date_start) - new Date(b.date_start));
+
+  const races = raceMeetings.map((meeting, i) => {
+    const msessions = sessionsByMeeting[meeting.meeting_key] ?? [];
+    const circuitId = OPENF1_CIRCUIT_MAP[meeting.circuit_short_name?.toLowerCase()] ?? null;
+
+    const race = {
+      round: String(i + 1),
+      raceName: meeting.meeting_name,
+      Circuit: {
+        circuitId,
+        circuitName: meeting.circuit_short_name,
+        Location: { lat: '', long: '', locality: meeting.location, country: meeting.country_name },
+      },
+    };
+
+    for (const s of msessions) {
+      const dt = openF1ToErgastDateTime(s.date_start, s.gmt_offset);
+      switch (s.session_type) {
+        case 'Practice 1':        race.FirstPractice    = dt; break;
+        case 'Practice 2':        race.SecondPractice   = dt; break;
+        case 'Practice 3':        race.ThirdPractice    = dt; break;
+        case 'Sprint Shootout':
+        case 'Sprint Qualifying': race.SprintQualifying = dt; break;
+        case 'Sprint':            race.Sprint           = dt; break;
+        case 'Qualifying':        race.Qualifying       = dt; break;
+        case 'Race':
+          race.date = dt.date;
+          race.time = dt.time;
+          break;
+      }
+    }
+
+    return race;
+  });
+
+  return { MRData: { RaceTable: { Races: races } } };
+}
+
+/**
+ * Attempt to serve the F1 schedule from OpenF1 when Jolpica is unavailable.
+ * Caches a successful response for 24 h. Returns null if OpenF1 also fails.
+ */
+async function tryOpenF1Fallback(request, ctx, cache, cacheKey) {
+  try {
+    const data = await fetchOpenF1Schedule();
+    const json = JSON.stringify(data);
+
+    const cacheHeaders = new Headers({
+      'Content-Type': 'application/json',
+      'Cache-Control': 'public, max-age=86400',
+      'X-Cache': 'MISS',
+      'X-Upstream-Status': '200',
+      'X-Fallback': 'openf1',
+      'Access-Control-Allow-Origin': '*',
+      ...API_SECURITY_HEADERS,
+    });
+
+    ctx.waitUntil(cache.put(cacheKey, new Response(json, { status: 200, headers: cacheHeaders })));
+
+    const clientHeaders = new Headers(cacheHeaders);
+    const allowedOrigin = getAllowedOrigin(request);
+    if (allowedOrigin) {
+      clientHeaders.set('Access-Control-Allow-Origin', allowedOrigin);
+      clientHeaders.set('Vary', 'Origin');
+    } else {
+      clientHeaders.delete('Access-Control-Allow-Origin');
+    }
+
+    return new Response(json, { status: 200, headers: clientHeaders });
+  } catch {
+    return null;
+  }
+}
+
 async function handleApiRequest(request, env, ctx, url) {
   // SEC: Ensure request is not from a script tag (XSSI protection)
   if (!checkFetchDest(request)) {
@@ -344,6 +498,10 @@ async function handleApiRequest(request, env, ctx, url) {
     const status = upstreamResponse.status;
 
     if (!upstreamResponse.ok) {
+      if (apiPath === 'current.json') {
+        const fallback = await tryOpenF1Fallback(request, ctx, cache, cacheKey);
+        if (fallback) return fallback;
+      }
       return cacheAndReturnError(request, cache, cacheKey, status, 'Upstream API error', {}, ctx);
     }
 
@@ -400,6 +558,10 @@ async function handleApiRequest(request, env, ctx, url) {
   } catch (error) {
     if (env.ENVIRONMENT !== 'production') {
       console.error('API Fetch Error:', error); // Log internal details
+    }
+    if (apiPath === 'current.json') {
+      const fallback = await tryOpenF1Fallback(request, ctx, cache, cacheKey);
+      if (fallback) return fallback;
     }
     return createErrorResponse(request, 502, 'Failed to fetch from upstream');
   }
