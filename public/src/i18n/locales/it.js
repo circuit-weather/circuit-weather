@@ -116,7 +116,9 @@ export const it = {
     retryConnection: "Riprova connessione",
     retryingConnection: "Nuovo tentativo di connessione",
     initFailed: "Inizializzazione applicazione non riuscita.",
-    scheduleUnavailable: "Impossibile caricare il calendario F1. La fonte dei dati potrebbe essere temporaneamente non disponibile. Riprova più tardi.",
+    scheduleUnavailable: "Impossibile caricare il calendario F1. La fonte dei dati (api.jolpi.ca) è attualmente non disponibile. Riprova più tardi.",
+    scheduleAllUnavailable: "Impossibile caricare il calendario F1. Entrambe le fonti di dati (api.jolpi.ca e api.openf1.org) risultano non disponibili. Riprova più tardi.",
+    usingFallbackSource: "La fonte primaria (api.jolpi.ca) non è disponibile: dati mostrati dalla fonte di backup (api.openf1.org).",
     sessionError: "Errore sessione",
     sessionLoadFailed:
       "Impossibile caricare previsioni o radar della sessione.",

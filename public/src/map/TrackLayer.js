@@ -6,6 +6,9 @@ export class TrackLayer {
         this.layer = null;
         this.currentCircuitId = null;
         this.cache = new Map();
+        // circuitId → [lat, lng] centre derived from the track geometry's bounds.
+        // Used to place the map when the schedule has no coordinates (OpenF1 fallback).
+        this.centerCache = new Map();
         // Bolt Optimization: Cache track color to avoid getComputedStyle thrashing
         this.trackColor = this.resolveTrackColor();
         this.currentWeight = null;
@@ -83,13 +86,45 @@ export class TrackLayer {
         }
     }
 
+    /**
+     * Compute the centre of a track GeoJSON from its coordinate bounds.
+     * Returns [lat, lng] (GeoJSON stores [lng, lat]) or null if it has no coords.
+     */
+    static computeCenter(geojson) {
+        let minLat = Infinity, maxLat = -Infinity, minLng = Infinity, maxLng = -Infinity;
+        const visit = (coords) => {
+            if (typeof coords[0] === 'number') {
+                const [lng, lat] = coords;
+                if (lat < minLat) minLat = lat;
+                if (lat > maxLat) maxLat = lat;
+                if (lng < minLng) minLng = lng;
+                if (lng > maxLng) maxLng = lng;
+            } else {
+                for (const c of coords) visit(c);
+            }
+        };
+        const features = geojson?.type === 'FeatureCollection' ? geojson.features
+            : geojson?.type === 'Feature' ? [geojson]
+            : [];
+        for (const f of features) {
+            if (f?.geometry?.coordinates) visit(f.geometry.coordinates);
+        }
+        if (minLat === Infinity) return null;
+        return [(minLat + maxLat) / 2, (minLng + maxLng) / 2];
+    }
+
+    /**
+     * Load a circuit's track overlay.
+     * Returns the geometry's [lat, lng] centre (or null) so callers can place the
+     * map when the schedule itself carries no coordinates.
+     */
     async loadTrack(circuitId) {
         this.clear();
         this.currentCircuitId = circuitId;
 
         const geoJsonId = CIRCUIT_MAP[circuitId];
         if (!geoJsonId) {
-            return;
+            return null;
         }
 
         try {
@@ -98,7 +133,7 @@ export class TrackLayer {
             // Check cache first
             if (this.cache.has(circuitId)) {
                 // Check if this is still the requested circuit
-                if (this.currentCircuitId !== circuitId) return;
+                if (this.currentCircuitId !== circuitId) return null;
 
                 if (isMapbox) {
                     const sourceId = `track-source-${circuitId}`;
@@ -136,7 +171,7 @@ export class TrackLayer {
                 }
 
                 this.updateStyle();
-                return;
+                return this.centerCache.get(circuitId) ?? null;
             }
 
             let url;
@@ -155,12 +190,15 @@ export class TrackLayer {
             if (!response.ok) throw new Error(`Track fetch failed: ${response.status}`);
 
             // Check if this is still the requested circuit
-            if (this.currentCircuitId !== circuitId) return;
+            if (this.currentCircuitId !== circuitId) return null;
 
             const data = await response.json();
 
             // Double check before rendering
-            if (this.currentCircuitId !== circuitId) return;
+            if (this.currentCircuitId !== circuitId) return null;
+
+            const center = TrackLayer.computeCenter(data);
+            if (center) this.centerCache.set(circuitId, center);
 
             const trackColor = this.trackColor;
 
@@ -218,8 +256,11 @@ export class TrackLayer {
             // Apply correct weight for current zoom
             this.updateStyle();
 
+            return center;
+
         } catch (error) {
             console.warn('Failed to load track layout:', error);
+            return null;
         }
     }
 

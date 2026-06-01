@@ -72,6 +72,7 @@ export class CircuitWeatherApp {
             mobileHeader: document.querySelector('.mobile-header'),
             radarControls: document.getElementById('radarControls'),
             mapContainer: document.getElementById('map'),
+            dataSourceNotice: document.getElementById('dataSourceNotice'),
         };
 
         this.showLoading(true, i18n.t('loading.schedule'));
@@ -122,6 +123,7 @@ export class CircuitWeatherApp {
             const schedule = await this.f1Api.getSchedule();
             this.races = schedule.map(r => this.f1Api.parseRace(r));
 
+            this.updateDataSourceNotice();
             this.populateRoundSelect();
 
             document.addEventListener('i18n:change', this.handleLanguageChange);
@@ -142,11 +144,22 @@ export class CircuitWeatherApp {
 
         } catch (error) {
             console.error('Initialization failed:', error);
-            const isScheduleError = error.message?.startsWith('F1_SCHEDULE_UNAVAILABLE');
-            this.renderError(i18n.t(isScheduleError ? 'errors.scheduleUnavailable' : 'errors.initFailed'));
+            const scheduleMatch = error.message?.match(/^F1_SCHEDULE_UNAVAILABLE:([^:]+):/);
+            const sourcesTried = scheduleMatch?.[1] ?? '';
+            const msgKey = sourcesTried === 'jolpica,openf1' ? 'errors.scheduleAllUnavailable'
+                : scheduleMatch ? 'errors.scheduleUnavailable'
+                : 'errors.initFailed';
+            this.renderError(i18n.t(msgKey));
         } finally {
             this.showLoading(false);
         }
+    }
+
+    // Show a small sidebar notice when the schedule came from the OpenF1 fallback,
+    // so it's obvious when the primary source (Jolpica) is degraded vs. recovered.
+    updateDataSourceNotice() {
+        if (!this.ui.dataSourceNotice) return;
+        this.ui.dataSourceNotice.hidden = this.f1Api.scheduleSource !== 'openf1';
     }
 
     renderError(message) {
@@ -662,6 +675,15 @@ export class CircuitWeatherApp {
         }
     }
 
+    centreOnCircuit(lat, lng) {
+        this.currentCircuitCenter = [lat, lng];
+        this.mapManager.setView(lat, lng);
+        this.rangeCircles.draw([lat, lng]);
+        if (this.recentreControl) {
+            this.recentreControl.setCircuit([lat, lng]);
+        }
+    }
+
     selectRound(round) {
         const race = this.races.find(r => r.round === round);
         if (!race) return;
@@ -671,23 +693,31 @@ export class CircuitWeatherApp {
         this.updatePageMetadata();
         this.populateSessionSelect(race.sessions);
 
-        if (race.location) {
-            const lat = parseFloat(race.location.lat);
-            const lng = parseFloat(race.location.long);
-            this.currentCircuitCenter = [lat, lng];
-            this.mapManager.setView(lat, lng);
+        // The map centre is derived from the track GeoJSON bounding box for every
+        // data source, so it stays consistent regardless of where the schedule came
+        // from. Schedule coordinates (when present) are only a fallback for circuits
+        // that have no track overlay.
+        const schedLat = race.location ? parseFloat(race.location.lat) : NaN;
+        const schedLng = race.location ? parseFloat(race.location.long) : NaN;
+        const hasSchedCoords = Number.isFinite(schedLat) && Number.isFinite(schedLng);
 
-            // Load track layout
-            if (race.circuit && race.circuit.circuitId) {
-                this.trackLayer.loadTrack(race.circuit.circuitId);
+        const applyCenter = (trackCenter) => {
+            // A newer round may have been selected while the track was loading.
+            if (this.selectedRace !== race) return;
+            if (trackCenter) {
+                this.centreOnCircuit(trackCenter[0], trackCenter[1]);
+            } else if (hasSchedCoords) {
+                this.centreOnCircuit(schedLat, schedLng);
             }
+            // Centre is resolved — refresh weather widgets and the wind field.
+            this.scheduleLiveWeatherUpdate();
+            this.updateWindField();
+        };
 
-            this.rangeCircles.draw([lat, lng]);
-
-            // Update recentre control
-            if (this.recentreControl) {
-                this.recentreControl.setCircuit([lat, lng]);
-            }
+        if (race.circuit && race.circuit.circuitId) {
+            this.trackLayer.loadTrack(race.circuit.circuitId).then(applyCenter);
+        } else {
+            applyCenter(null);
         }
 
         // Update race info banner
@@ -706,12 +736,8 @@ export class CircuitWeatherApp {
             this.ui.sessionEmptyState.style.display = 'flex';
         }
 
-        // Fetch current "Live" weather for the widgets (debounced so rapid round
-        // switching does not fire an Open-Meteo request per change).
-        this.scheduleLiveWeatherUpdate();
-
-        // Refresh the wind overlay grid for the new circuit (no-op if disabled).
-        this.updateWindField();
+        // Note: live weather (debounced) and the wind overlay are refreshed by
+        // applyCenter() above, once the circuit centre is resolved from the track.
 
         this.updateMobileVisibility();
 

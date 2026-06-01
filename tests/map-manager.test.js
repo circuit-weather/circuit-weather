@@ -7,6 +7,7 @@ const mapboxMapMock = {
   once: vi.fn(),
   setStyle: vi.fn(),
   flyTo: vi.fn(),
+  isStyleLoaded: vi.fn(() => true),
   resize: vi.fn(),
   zoomIn: vi.fn(),
   zoomOut: vi.fn(),
@@ -558,11 +559,38 @@ describe("MapManager", () => {
       const lng = -0.09;
       const zoom = 13;
 
+      mapboxMapMock.isStyleLoaded.mockReturnValue(true);
       mapManager.setView(lat, lng, zoom);
 
       expect(mapboxMapMock.flyTo).toHaveBeenCalledWith({
         center: [lng, lat],
-        zoom: zoom - 1
+        zoom: zoom - 1,
+        essential: true
+      });
+    });
+
+    it("defers the Mapbox fly until idle when the style is still loading", async () => {
+      mapManager.isMapbox = true;
+      mapManager.map = mapboxMapMock;
+      mapboxMapMock.isStyleLoaded.mockReturnValue(false);
+
+      let idleCb;
+      mapboxMapMock.once.mockImplementation((event, cb) => {
+        if (event === 'idle') idleCb = cb;
+      });
+
+      mapManager.setView(10, 20, 13);
+
+      // Not flown yet — deferred to the idle event
+      expect(mapboxMapMock.flyTo).not.toHaveBeenCalled();
+      expect(mapboxMapMock.once).toHaveBeenCalledWith('idle', expect.any(Function));
+
+      // Once the map goes idle, the deferred fly runs
+      idleCb();
+      expect(mapboxMapMock.flyTo).toHaveBeenCalledWith({
+        center: [20, 10],
+        zoom: 12,
+        essential: true
       });
     });
 

@@ -277,6 +277,22 @@ describe("Worker Logic", () => {
       expect(mockFetch).not.toHaveBeenCalled();
     });
 
+    it("returns the upstream error for current.json without any worker-side fallback", async () => {
+      // The OpenF1 fallback lives in the browser (it blocks Cloudflare IPs), so
+      // the worker must surface Jolpica's failure directly and make only one call.
+      mockFetch.mockResolvedValueOnce(new Response("Service Unavailable", { status: 503 }));
+
+      const req = createRequest("/api/f1/current.json");
+      const res = await worker.fetch(req, global.env, global.ctx);
+
+      expect(res.status).toBe(503);
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining("api.jolpi.ca/ergast/f1/current.json"),
+        expect.any(Object),
+      );
+    });
+
     it("validates API path (blocks injection/traversal)", async () => {
       // Note: URL parsing normalizes path segments like /../ automatically.
       // We test a non-segment ".." to ensure the explicit check works.

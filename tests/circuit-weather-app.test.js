@@ -125,7 +125,7 @@ vi.mock('../public/src/api/WeatherClient.js', () => ({
 vi.mock('../public/src/map/TrackLayer.js', () => ({
     TrackLayer: vi.fn().mockImplementation(function () {
         return {
-            loadTrack: vi.fn(),
+            loadTrack: vi.fn().mockResolvedValue(null),
             clear: vi.fn(),
             updateTheme: vi.fn()
         }
@@ -390,14 +390,18 @@ describe('CircuitWeatherApp Pure Methods', () => {
             expect(app.selectedRace.name).toBe('Bahrain Grand Prix');
         });
 
-        it('moves the map to the circuit location', () => {
+        it('moves the map to the track geometry centre', async () => {
+            app.trackLayer.loadTrack = vi.fn().mockResolvedValue([26.05, 50.52]);
             app.selectRound('1');
-            expect(app.mapManager.setView).toHaveBeenCalledWith(26.0325, 50.5106);
+            await new Promise(resolve => setTimeout(resolve, 0));
+            expect(app.mapManager.setView).toHaveBeenCalledWith(26.05, 50.52);
         });
 
-        it('draws range circles at circuit location', () => {
+        it('draws range circles at the track geometry centre', async () => {
+            app.trackLayer.loadTrack = vi.fn().mockResolvedValue([26.05, 50.52]);
             app.selectRound('1');
-            expect(app.rangeCircles.draw).toHaveBeenCalledWith([26.0325, 50.5106]);
+            await new Promise(resolve => setTimeout(resolve, 0));
+            expect(app.rangeCircles.draw).toHaveBeenCalledWith([26.05, 50.52]);
         });
 
         it('loads the track layout', () => {
@@ -405,9 +409,18 @@ describe('CircuitWeatherApp Pure Methods', () => {
             expect(app.trackLayer.loadTrack).toHaveBeenCalledWith('bahrain');
         });
 
-        it('updates the recentre control', () => {
+        it('updates the recentre control with the track geometry centre', async () => {
+            app.trackLayer.loadTrack = vi.fn().mockResolvedValue([26.05, 50.52]);
             app.selectRound('1');
-            expect(app.recentreControl.setCircuit).toHaveBeenCalledWith([26.0325, 50.5106]);
+            await new Promise(resolve => setTimeout(resolve, 0));
+            expect(app.recentreControl.setCircuit).toHaveBeenCalledWith([26.05, 50.52]);
+        });
+
+        it('falls back to schedule coordinates when the track has no centre', async () => {
+            app.trackLayer.loadTrack = vi.fn().mockResolvedValue(null);
+            app.selectRound('1');
+            await new Promise(resolve => setTimeout(resolve, 0));
+            expect(app.mapManager.setView).toHaveBeenCalledWith(26.0325, 50.5106);
         });
 
         it('updates page title to race name', () => {
@@ -432,6 +445,29 @@ describe('CircuitWeatherApp Pure Methods', () => {
         });
     });
 
+
+    describe('updateDataSourceNotice', () => {
+        beforeEach(() => {
+            app.ui.dataSourceNotice = createMockElement('dataSourceNotice');
+        });
+
+        it('shows the notice when the schedule came from the OpenF1 fallback', () => {
+            app.f1Api.scheduleSource = 'openf1';
+            app.updateDataSourceNotice();
+            expect(app.ui.dataSourceNotice.hidden).toBe(false);
+        });
+
+        it('hides the notice when the schedule came from the primary source', () => {
+            app.f1Api.scheduleSource = 'jolpica';
+            app.updateDataSourceNotice();
+            expect(app.ui.dataSourceNotice.hidden).toBe(true);
+        });
+
+        it('does nothing when the notice element is absent', () => {
+            app.ui.dataSourceNotice = null;
+            expect(() => app.updateDataSourceNotice()).not.toThrow();
+        });
+    });
 
     describe('updateRaceInfo', () => {
         beforeEach(() => {

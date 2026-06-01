@@ -1,11 +1,15 @@
 import { CONFIG } from '../config.js';
 import { SafeStorage } from '../utils/storage.js';
+import { fetchOpenF1Schedule } from './openf1.js';
 
 export class F1API {
     constructor() {
         this.cache = new Map();
         this.LOCAL_STORAGE_KEY = 'f1_schedule_cache';
         this.CACHE_DURATION_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
+        // Which source supplied the current schedule: 'jolpica' (primary),
+        // 'openf1' (fallback), or null before the first successful fetch.
+        this.scheduleSource = null;
     }
 
     async getSchedule() {
@@ -21,6 +25,10 @@ export class F1API {
                 // SEC: Validate that cachedData.races is an Array to prevent application logic bypass/errors from poisoned localStorage
                 if (cachedData.timestamp && (now - cachedData.timestamp < this.CACHE_DURATION_MS) && Array.isArray(cachedData.races)) {
                     this.cache.set(cacheKey, cachedData.races);
+                    // Preserve the originating source so the fallback notice stays
+                    // accurate while serving cached data (default to primary for
+                    // caches written before sources were tracked).
+                    this.scheduleSource = cachedData.source ?? 'jolpica';
                     return cachedData.races;
                 }
             } catch (e) {
@@ -29,23 +37,43 @@ export class F1API {
             }
         }
 
-        // SEC: Add timeout to prevent hanging connections if the API proxy is unresponsive
+        // Primary source: Jolpica (via the Worker proxy for caching/privacy).
+        try {
+            const races = await this.fetchFromJolpica();
+            return this.cacheSchedule(cacheKey, races, 'jolpica');
+        } catch (jolpicaError) {
+            console.warn('Jolpica schedule fetch failed, trying OpenF1 fallback:', jolpicaError);
+        }
+
+        // Fallback source: OpenF1, called directly from the browser. OpenF1 blocks
+        // the Worker's datacenter IPs, so this fetch must originate client-side.
+        try {
+            const races = await fetchOpenF1Schedule();
+            return this.cacheSchedule(cacheKey, races, 'openf1');
+        } catch (openF1Error) {
+            console.error('OpenF1 fallback also failed:', openF1Error);
+            throw new Error('F1_SCHEDULE_UNAVAILABLE:jolpica,openf1:ALL_SOURCES_FAILED');
+        }
+    }
+
+    async fetchFromJolpica() {
         const response = await fetch(`${CONFIG.f1ApiBase}/current.json`, {
-            signal: AbortSignal.timeout(5000)
+            // SEC: Add timeout to prevent hanging connections if the proxy is unresponsive
+            signal: AbortSignal.timeout(6000)
         });
-        if (!response.ok) throw new Error(`F1_SCHEDULE_UNAVAILABLE: HTTP ${response.status}`);
-
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
-        const races = data.MRData?.RaceTable?.Races || [];
+        return data.MRData?.RaceTable?.Races || [];
+    }
 
+    cacheSchedule(cacheKey, races, source) {
         this.cache.set(cacheKey, races);
-
-        // Save to localStorage
+        this.scheduleSource = source;
         SafeStorage.setItem(this.LOCAL_STORAGE_KEY, JSON.stringify({
             timestamp: Date.now(),
-            races: races
+            races: races,
+            source: source
         }));
-
         return races;
     }
 

@@ -116,7 +116,9 @@ export const ja = {
     retryConnection: "接続を再試行",
     retryingConnection: "接続を再試行中",
     initFailed: "アプリの初期化に失敗しました。",
-    scheduleUnavailable: "F1レーススケジュールを読み込めませんでした。データソースが一時的に利用できない可能性があります。後でもう一度お試しください。",
+    scheduleUnavailable: "F1レーススケジュールを読み込めませんでした。データソース (api.jolpi.ca) が現在利用できません。後でもう一度お試しください。",
+    scheduleAllUnavailable: "F1レーススケジュールを読み込めませんでした。両方のデータソース (api.jolpi.ca および api.openf1.org) が現在利用できないようです。後でもう一度お試しください。",
+    usingFallbackSource: "プライマリのデータソース (api.jolpi.ca) が利用できないため、バックアップソース (api.openf1.org) のデータを表示しています。",
     sessionError: "セッションエラー",
     sessionLoadFailed:
       "セッションの予報またはレーダーの読み込みに失敗しました。",

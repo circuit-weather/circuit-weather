@@ -38,7 +38,7 @@
     <link rel="canonical" href="https://circuit-weather.racing">
     <meta name="referrer" content="strict-origin-when-cross-origin">
     <meta http-equiv="Content-Security-Policy"
-        content="upgrade-insecure-requests; default-src 'self'; script-src 'self' https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js https://api.mapbox.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://api.mapbox.com; img-src 'self' data: blob: https://*.basemaps.cartocdn.com https://flagcdn.com https://*.buymeacoffee.com https://api.mapbox.com; font-src https://fonts.gstatic.com https://api.mapbox.com; connect-src 'self' https://api.open-meteo.com https://*.buymeacoffee.com https://api.mapbox.com https://events.mapbox.com; worker-src 'self' blob:; child-src blob:; object-src 'none'; frame-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self';">
+        content="upgrade-insecure-requests; default-src 'self'; script-src 'self' https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js https://api.mapbox.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://api.mapbox.com; img-src 'self' data: blob: https://*.basemaps.cartocdn.com https://flagcdn.com https://*.buymeacoffee.com https://api.mapbox.com; font-src https://fonts.gstatic.com https://api.mapbox.com; connect-src 'self' https://api.open-meteo.com https://api.openf1.org https://*.buymeacoffee.com https://api.mapbox.com https://events.mapbox.com; worker-src 'self' blob:; child-src blob:; object-src 'none'; frame-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self';">
     <title>Circuit Weather — Live F1 Race Weather Radar &amp; Forecasts</title>
 
     <!-- Theme Initialization -->
@@ -261,6 +261,17 @@
             </aside>
 
             <!-- Scout: Upgraded generic div to semantic footer for better structure -->
+            <!-- Shown only when the schedule is served from the OpenF1 fallback source -->
+            <div class="data-source-notice" id="dataSourceNotice" role="status" hidden>
+                <svg class="icon-warning" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                    stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                    <line x1="12" y1="9" x2="12" y2="13"></line>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+                <span data-i18n="errors.usingFallbackSource">Primary schedule source unavailable — showing data from a backup source.</span>
+            </div>
+
             <footer class="sidebar-footer">
                 <div class="language-selector">
                     <button id="languageToggle" class="link-button" aria-haspopup="menu" aria-controls="languageMenu" aria-expanded="false" data-i18n="common.selectLanguage">Language</button>
