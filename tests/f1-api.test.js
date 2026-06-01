@@ -150,6 +150,12 @@ describe('F1API', () => {
             await expect(api.getSchedule()).rejects.toThrow('HTTP 500');
         });
 
+        it('throws a tagged schedule error on network failure', async () => {
+            mockFetch.mockRejectedValueOnce(new TypeError('Failed to fetch'));
+
+            await expect(api.getSchedule()).rejects.toThrow('F1_SCHEDULE_UNAVAILABLE:jolpica:NETWORK');
+        });
+
         it('returns empty array when RaceTable has no Races', async () => {
             mockFetch.mockResolvedValueOnce({
                 ok: true,

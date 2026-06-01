@@ -29,10 +29,18 @@ export class F1API {
             }
         }
 
-        // SEC: Add timeout to prevent hanging connections if the API proxy is unresponsive
-        const response = await fetch(`${CONFIG.f1ApiBase}/current.json`, {
-            signal: AbortSignal.timeout(5000)
-        });
+        // SEC: Timeout is generous (15 s) because the worker may need to try two upstreams
+        // (Jolpica then OpenF1) before responding.
+        let response;
+        try {
+            response = await fetch(`${CONFIG.f1ApiBase}/current.json`, {
+                signal: AbortSignal.timeout(15000)
+            });
+        } catch {
+            // Network error or timeout — tag as a schedule error so the app shows
+            // a useful message rather than the generic init failure.
+            throw new Error('F1_SCHEDULE_UNAVAILABLE:jolpica:NETWORK');
+        }
         if (!response.ok) {
             const sources = response.headers.get('X-Schedule-Sources-Tried') || 'jolpica';
             throw new Error(`F1_SCHEDULE_UNAVAILABLE:${sources}:HTTP ${response.status}`);
