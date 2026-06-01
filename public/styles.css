@@ -1073,7 +1073,12 @@ body {
     background: transparent;
     color: var(--color-text);
     cursor: pointer;
+    transition: background-color var(--transition-fast);
     flex-shrink: 0;
+}
+
+.sidebar-toggle:hover {
+    background: var(--color-surface-elevated);
 }
 
 .sidebar-toggle svg {
