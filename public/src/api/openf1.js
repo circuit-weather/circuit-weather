@@ -40,16 +40,31 @@ const OPENF1_TIMEOUT_MS = 8000;
 
 /**
  * Convert an OpenF1 local datetime string + GMT offset to Ergast date/time fields.
- * Returns null if either value is absent (some future sessions are not yet scheduled).
- * dateStr: "2024-03-02T15:00:00" (local time, no tz suffix)
- * gmtOffset: "03:00:00" or "-05:00:00"
+ * Returns null if the datetime is absent (some future sessions are not yet scheduled).
+ *
+ * OpenF1's date_start is normally a full ISO 8601 string that already carries its
+ * timezone offset, e.g. "2026-03-22T15:00:00+03:00". In that case we parse it
+ * directly and ignore gmtOffset. As a fallback, if date_start has no embedded
+ * timezone (e.g. "2026-03-22T15:00:00"), we apply gmtOffset ("03:00:00" /
+ * "-05:00:00") to derive UTC.
  */
 export function openF1ToErgastDateTime(dateStr, gmtOffset) {
-    if (!dateStr || !gmtOffset) return null;
-    const negative = gmtOffset.startsWith('-');
-    const [h, m] = gmtOffset.replace(/^[-+]/, '').split(':').map(Number);
-    const offsetMs = (negative ? -1 : 1) * (h * 60 + m) * 60000;
-    const utcMs = new Date(dateStr + 'Z').getTime() - offsetMs;
+    if (!dateStr) return null;
+
+    // If date_start already carries a timezone (trailing Z, or ±HH:MM after the time),
+    // let Date parse it directly — it resolves to the correct UTC instant on its own.
+    const hasTz = /(Z|[+-]\d{2}:?\d{2})$/.test(dateStr);
+    let utcMs;
+    if (hasTz) {
+        utcMs = new Date(dateStr).getTime();
+    } else {
+        if (!gmtOffset) return null;
+        const negative = gmtOffset.startsWith('-');
+        const [h, m] = gmtOffset.replace(/^[-+]/, '').split(':').map(Number);
+        const offsetMs = (negative ? -1 : 1) * (h * 60 + m) * 60000;
+        utcMs = new Date(dateStr + 'Z').getTime() - offsetMs;
+    }
+
     if (isNaN(utcMs)) return null;
     const utcDate = new Date(utcMs);
     return {

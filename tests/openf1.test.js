@@ -26,6 +26,30 @@ describe('openf1', () => {
                 time: '04:00:00Z',
             });
         });
+
+        it('parses an ISO string that already carries its timezone offset', () => {
+            // OpenF1 normally returns date_start with an embedded offset; gmt_offset is ignored.
+            // 15:00 at +03:00 → 12:00 UTC
+            expect(openF1ToErgastDateTime('2026-03-22T15:00:00+03:00', '03:00:00')).toEqual({
+                date: '2026-03-22',
+                time: '12:00:00Z',
+            });
+        });
+
+        it('parses an ISO string with a trailing Z', () => {
+            expect(openF1ToErgastDateTime('2026-03-22T12:00:00Z', null)).toEqual({
+                date: '2026-03-22',
+                time: '12:00:00Z',
+            });
+        });
+
+        it('returns null when no timezone is embedded and no gmt_offset is given', () => {
+            expect(openF1ToErgastDateTime('2026-03-22T15:00:00', null)).toBeNull();
+        });
+
+        it('returns null for an absent datetime', () => {
+            expect(openF1ToErgastDateTime(null, '03:00:00')).toBeNull();
+        });
     });
 
     describe('transformOpenF1', () => {
