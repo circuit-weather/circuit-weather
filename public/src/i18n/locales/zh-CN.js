@@ -108,6 +108,7 @@ export const zhCN = {
     retryConnection: "重试连接",
     retryingConnection: "正在重试连接",
     initFailed: "应用初始化失败。",
+    scheduleUnavailable: "无法加载F1赛程。数据源可能暂时不可用，请稍后重试。",
     sessionError: "赛段错误",
     sessionLoadFailed: "加载赛段预报或雷达失败。",
   },

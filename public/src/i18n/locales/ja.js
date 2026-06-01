@@ -116,6 +116,7 @@ export const ja = {
     retryConnection: "接続を再試行",
     retryingConnection: "接続を再試行中",
     initFailed: "アプリの初期化に失敗しました。",
+    scheduleUnavailable: "F1レーススケジュールを読み込めませんでした。データソースが一時的に利用できない可能性があります。後でもう一度お試しください。",
     sessionError: "セッションエラー",
     sessionLoadFailed:
       "セッションの予報またはレーダーの読み込みに失敗しました。",

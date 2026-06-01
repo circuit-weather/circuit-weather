@@ -118,6 +118,7 @@ export const de = {
     retryConnection: "Verbindung erneut versuchen",
     retryingConnection: "Verbindung wird erneut versucht",
     initFailed: "Initialisierung der Anwendung fehlgeschlagen.",
+    scheduleUnavailable: "Der F1-Rennkalender konnte nicht geladen werden. Die Datenquelle ist möglicherweise vorübergehend nicht verfügbar – bitte versuchen Sie es später erneut.",
     sessionError: "Session-Fehler",
     sessionLoadFailed:
       "Session-Prognose oder Radar konnte nicht geladen werden.",

@@ -118,6 +118,7 @@ export const hu = {
     retryConnection: "Csatlakozás újrapróbálása",
     retryingConnection: "Csatlakozás újrapróbálása folyamatban",
     initFailed: "Nem sikerült inicializálni az alkalmazást.",
+    scheduleUnavailable: "Az F1-es versenynaptár nem tölthető be. Az adatforrás ideiglenesen nem érhető el – kérjük, próbálja újra később.",
     sessionError: "Esemény hiba",
     sessionLoadFailed:
       "Nem sikerült betölteni az esemény előrejelzését vagy a radart.",

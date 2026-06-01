@@ -116,6 +116,7 @@ export const nl = {
     retryConnection: "Probeer verbinding opnieuw",
     retryingConnection: "Verbinding opnieuw proberen",
     initFailed: "Applicatie initialiseren mislukt.",
+    scheduleUnavailable: "De F1-racekalender kon niet worden geladen. De gegevensbron is mogelijk tijdelijk niet beschikbaar. Probeer het later opnieuw.",
     sessionError: "Sessiefout",
     sessionLoadFailed: "Sessie voorspelling of radargegevens laden mislukt.",
   },

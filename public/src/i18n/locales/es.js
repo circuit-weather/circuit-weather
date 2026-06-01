@@ -116,6 +116,7 @@ export const es = {
     retryConnection: "Reintentar conexion",
     retryingConnection: "Reintentando conexion",
     initFailed: "No se pudo iniciar la aplicacion.",
+    scheduleUnavailable: "No se pudo cargar el calendario de F1. La fuente de datos puede estar temporalmente no disponible. Por favor, inténtelo más tarde.",
     sessionError: "Error de sesion",
     sessionLoadFailed: "No se pudo cargar el pronostico o radar de la sesion.",
   },

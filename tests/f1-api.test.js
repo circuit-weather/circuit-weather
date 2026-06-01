@@ -188,7 +188,7 @@ describe('F1API', () => {
         it('fetches fresh data if localStorage cache is expired', async () => {
             const mockRaces = [{ round: '4', raceName: 'Fresh GP' }];
             SafeStorage.getItem.mockReturnValueOnce(JSON.stringify({
-                timestamp: Date.now() - (48 * 60 * 60 * 1000), // 48 hours ago
+                timestamp: Date.now() - (8 * 24 * 60 * 60 * 1000), // 8 days ago (past 7-day TTL)
                 races: [{ round: '3', raceName: 'Expired GP' }]
             }));
             mockFetch.mockResolvedValueOnce({

@@ -116,6 +116,7 @@ export const it = {
     retryConnection: "Riprova connessione",
     retryingConnection: "Nuovo tentativo di connessione",
     initFailed: "Inizializzazione applicazione non riuscita.",
+    scheduleUnavailable: "Impossibile caricare il calendario F1. La fonte dei dati potrebbe essere temporaneamente non disponibile. Riprova più tardi.",
     sessionError: "Errore sessione",
     sessionLoadFailed:
       "Impossibile caricare previsioni o radar della sessione.",
