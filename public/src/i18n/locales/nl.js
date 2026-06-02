@@ -33,6 +33,7 @@ export const nl = {
     metricLabel: "Kilometers",
     imperialLabel: "Mijlen",
     windOverlay: "Wind overlay",
+    windZoomDisabled: "Wind overlay gepauzeerd op zoom {{zoom}} — zoom in om wind te zien",
   },
   forecast: {
     heading: "Sessie voorspelling",

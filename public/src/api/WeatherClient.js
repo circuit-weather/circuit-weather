@@ -12,14 +12,18 @@ export class WeatherClient {
     }
 
     /**
-     * Fetch a gridded snapshot of current wind over a bounded box around a
-     * circuit, in a single Open-Meteo request (it accepts comma-separated
-     * coordinate lists). Returns u/v vector components for the wind overlay.
+     * Fetch a gridded snapshot of current wind over an explicit bounding box,
+     * in a single Open-Meteo request (it accepts comma-separated coordinate
+     * lists). Returns u/v vector components for the wind overlay.
+     *
+     * Bounds are snapped to 0.5° increments for the cache key so minor pans
+     * don't trigger a new API call.
      */
-    async getWindField(lat, lon) {
-        const cLat = Number(lat);
-        const cLon = Number(lon);
-        const cacheKey = `${cLat.toFixed(2)},${cLon.toFixed(2)}`;
+    async getWindField(minLat, maxLat, minLon, maxLon) {
+        const snap = 0.5;
+        const cacheKey = [minLat, maxLat, minLon, maxLon]
+            .map(v => (Math.round(v / snap) * snap).toFixed(1))
+            .join(',');
 
         const cached = this.windFieldCache.get(cacheKey);
         if (cached && Date.now() - cached.timestamp < this.cacheTTL) {
@@ -27,19 +31,13 @@ export class WeatherClient {
         }
 
         const n = CONFIG.WIND_FIELD_GRID;
-        const halfLat = CONFIG.WIND_FIELD_RADIUS_KM / 110.574;
-        const halfLon = CONFIG.WIND_FIELD_RADIUS_KM / (111.320 * Math.cos(cLat * Math.PI / 180));
-        const minLat = cLat - halfLat;
-        const maxLat = cLat + halfLat;
-        const minLon = cLon - halfLon;
-        const maxLon = cLon + halfLon;
 
         const lats = [];
         const lons = [];
-        for (let r = 0; r < n; r++) {
-            const glat = minLat + (maxLat - minLat) * (r / (n - 1));
-            for (let c = 0; c < n; c++) {
-                const glon = minLon + (maxLon - minLon) * (c / (n - 1));
+        for (let row = 0; row < n; row++) {
+            const glat = minLat + (maxLat - minLat) * (row / (n - 1));
+            for (let col = 0; col < n; col++) {
+                const glon = minLon + (maxLon - minLon) * (col / (n - 1));
                 lats.push(glat.toFixed(4));
                 lons.push(glon.toFixed(4));
             }

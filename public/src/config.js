@@ -39,8 +39,8 @@ export const CONFIG = {
     WEATHER_CACHE_MAX_ENTRIES: 50,
 
     // Wind overlay (animated flow particles over the map)
-    WIND_FIELD_RADIUS_KM: 100, // Half-extent of the sampled grid box around the circuit
     WIND_FIELD_GRID: 6, // Grid is N x N points (one batched Open-Meteo request)
+    WIND_MIN_ZOOM: 6, // Hide wind overlay below this zoom level (too coarse to be useful)
     WIND_FIELD_PARTICLES: 800,
     WIND_FIELD_PARTICLE_LIFE: 4, // Seconds before a particle respawns
     WIND_FIELD_FADE: 0.06, // Trail fade per frame (higher = shorter trails)

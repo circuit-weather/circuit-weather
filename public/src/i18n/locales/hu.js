@@ -33,6 +33,7 @@ export const hu = {
     metricLabel: "Kilométer",
     imperialLabel: "Mérföld",
     windOverlay: "Szélréteg",
+    windZoomDisabled: "Szélréteg {{zoom}} nagyítási szinten szüneteltetve — közelíts a szél megtekintéséhez",
   },
   forecast: {
     heading: "Esemény előrejelzése",
