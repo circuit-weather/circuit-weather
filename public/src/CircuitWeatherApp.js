@@ -79,6 +79,7 @@ export class CircuitWeatherApp {
 
         try {
             const map = await this.mapManager.init();
+            this.map = map;
 
             // Sidebar manager for mobile
             this.sidebarManager = new SidebarManager();
