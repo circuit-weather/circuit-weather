@@ -88,7 +88,7 @@ Lokale Einstellungen im Browser:
 - **unit:** `metric` oder `imperial`
 - **language:** Ihre ausgewählte Sprache (z. B. `de`, `en-US`)
 - **windOverlay:** `true` oder `false` (speichert, ob die Windanimations-Ebene aktiviert ist)
-- **f1_schedule_cache:** speichert die F1-Kalenderdaten zwischen (24-Stunden-Cache)
+- **f1_schedule_cache:** speichert die F1-Kalenderdaten zwischen (7-Tage-Cache)
 
 ## Open Source
 

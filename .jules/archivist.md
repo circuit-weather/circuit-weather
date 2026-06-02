@@ -253,3 +253,8 @@ Prevention: Avoid duplicating configuration values in documentation; reference t
 
 **Learning:** When updating API endpoint documentation, it is critical to reflect exact details from the worker file (e.g., `VENDOR_ASSETS`) such as which specific CDNs (like Unpkg or Mapbox CDNs) are proxied by a wildcard endpoint like `/api/assets/*`. Generic descriptions can mislead human or automated analysis about the architecture.
 **Action:** When updating proxy endpoint documentation in `AGENTS.md`, always cross-reference the exact configurations in `src/worker.js` (like `VENDOR_ASSETS`) and list the actual upstream domains/services involved.
+
+## 2026-06-02 - Documentation Drift for Local Storage Cache Durations
+
+**Learning:** While the keys for `localStorage` and `SafeStorage` (like `f1_schedule_cache`) were documented in `PRIVACY.md`, the *duration* of the cache (e.g. 7 days vs 24 hours) had drifted from the actual implementation in the codebase (`CACHE_DURATION_MS`). Developers update constants in code but forget to update the corresponding privacy policy entries.
+**Action:** Always cross-reference the documented cache durations in `PRIVACY.md` against their actual TTL/expiry constants in the source code (e.g. `src/worker.js` or `public/src/api/*.js`).

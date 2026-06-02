@@ -88,7 +88,7 @@ A beállításokat a böngészője helyileg tárolja:
 - **unit (mértékegység):** `metric` (metrikus) vagy `imperial` (birodalmi)
 - **language (nyelv):** a kiválasztott nyelv (pl. `hu`, `en-US`)
 - **windOverlay:** `true` vagy `false` (megjegyzi, hogy a szélanimációs réteg be van-e kapcsolva)
-- **f1_schedule_cache:** gyorsítótárazza az F1 naptáradatokat (24 órás gyorsítótár)
+- **f1_schedule_cache:** gyorsítótárazza az F1 naptáradatokat (7 napos gyorsítótár)
 
 Ezek az adatok az Ön eszközén maradnak, és nem kerülnek elküldésre a szervereinkre.
 
