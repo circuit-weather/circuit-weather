@@ -88,7 +88,7 @@ Les preferences sont stockees localement dans le navigateur :
 - **unit:** `metric` ou `imperial`
 - **language:** votre langue sélectionnée (ex: `fr`, `en-US`)
 - **windOverlay:** `true` ou `false` (mémorise si le calque d'animation du vent est activé)
-- **f1_schedule_cache:** met en cache les données du calendrier de la F1 (cache de 24 heures)
+- **f1_schedule_cache:** met en cache les données du calendrier de la F1 (cache de 7 jours)
 
 ## Open source
 

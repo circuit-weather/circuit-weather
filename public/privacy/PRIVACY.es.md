@@ -88,7 +88,7 @@ El navegador guarda preferencias locales:
 - **unit:** `metric` o `imperial`
 - **language:** su idioma seleccionado (ej. `es`, `en-US`)
 - **windOverlay:** `true` o `false` (recuerda si la capa de animación de viento está habilitada)
-- **f1_schedule_cache:** guarda en caché los datos del calendario de F1 (caché de 24 horas)
+- **f1_schedule_cache:** guarda en caché los datos del calendario de F1 (caché de 7 días)
 
 Estos datos permanecen en tu dispositivo.
 
