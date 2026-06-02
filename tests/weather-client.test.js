@@ -457,13 +457,16 @@ describe('WeatherClient cache edge cases', () => {
             client.windFieldCache.set(`old-key-${i}`, { timestamp: Date.now(), field: {} });
         }
 
-        await client.getWindField(45, 9);
+        await client.getWindField(44, 46, 8, 10);
 
         expect(client.windFieldCache.size).toBe(client.maxCacheSize);
         expect(client.windFieldCache.has('old-key-0')).toBe(false);
     });
 
     describe('getWindField', () => {
+        // Convenience bounds used across tests
+        const minLat = 44, maxLat = 46, minLon = 8, maxLon = 10;
+
         const makeGridResponse = (n, speed, dir) => {
             const list = [];
             for (let i = 0; i < n * n; i++) {
@@ -482,14 +485,16 @@ describe('WeatherClient cache edge cases', () => {
 
             expect(client.windFieldCache.size).toBe(client.maxCacheSize);
 
-            await client.getWindField(45, 9);
+            await client.getWindField(minLat, maxLat, minLon, maxLon);
 
             expect(client.windFieldCache.size).toBe(client.maxCacheSize);
             expect(client.windFieldCache.has('old-key-0')).toBe(false);
 
-            const rLat = Number(45).toFixed(2);
-            const rLon = Number(9).toFixed(2);
-            const cacheKey = `${rLat},${rLon}`;
+            // Cache key snaps each bound to the nearest 0.5°
+            const snap = 0.5;
+            const cacheKey = [minLat, maxLat, minLon, maxLon]
+                .map(v => (Math.round(v / snap) * snap).toFixed(1))
+                .join(',');
             expect(client.windFieldCache.has(cacheKey)).toBe(true);
         });
 
@@ -497,7 +502,7 @@ describe('WeatherClient cache edge cases', () => {
             const mockFetch = vi.fn().mockResolvedValue(makeGridResponse(3, 10, 0));
             vi.stubGlobal('fetch', mockFetch);
 
-            const field = await client.getWindField(45, 9);
+            const field = await client.getWindField(minLat, maxLat, minLon, maxLon);
 
             expect(mockFetch).toHaveBeenCalledOnce();
             expect(field.rows).toBe(3);
@@ -521,8 +526,8 @@ describe('WeatherClient cache edge cases', () => {
             const mockFetch = vi.fn().mockResolvedValue(makeGridResponse(3, 5, 90));
             vi.stubGlobal('fetch', mockFetch);
 
-            await client.getWindField(45, 9);
-            await client.getWindField(45, 9);
+            await client.getWindField(minLat, maxLat, minLon, maxLon);
+            await client.getWindField(minLat, maxLat, minLon, maxLon);
 
             expect(mockFetch).toHaveBeenCalledOnce();
         });
@@ -534,7 +539,7 @@ describe('WeatherClient cache edge cases', () => {
             });
             vi.stubGlobal('fetch', mockFetch);
 
-            const field = await client.getWindField(45, 9);
+            const field = await client.getWindField(minLat, maxLat, minLon, maxLon);
 
             // From west (270°) blows east: u≈+12
             expect(field.u[0]).toBeCloseTo(12, 6);
@@ -549,7 +554,7 @@ describe('WeatherClient cache edge cases', () => {
             });
             vi.stubGlobal('fetch', mockFetch);
 
-            const field = await client.getWindField(45, 9);
+            const field = await client.getWindField(minLat, maxLat, minLon, maxLon);
 
             expect(field.v[0]).toBeCloseTo(10, 6); // from south -> +v
             expect(field.u[1]).toBe(0);
@@ -558,7 +563,7 @@ describe('WeatherClient cache edge cases', () => {
 
         it('throws when the upstream response is not ok', async () => {
             vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 500 }));
-            await expect(client.getWindField(45, 9)).rejects.toThrow('Wind field API error');
+            await expect(client.getWindField(minLat, maxLat, minLon, maxLon)).rejects.toThrow('Wind field API error');
         });
     });
 });

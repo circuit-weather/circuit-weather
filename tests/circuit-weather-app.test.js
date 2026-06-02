@@ -1127,18 +1127,22 @@ describe('CircuitWeatherApp Pure Methods', () => {
     // Wind Overlay Field Logic
     // ---------------------------------------------------------------
     describe('updateWindField', () => {
-        const field = { rows: 6, cols: 6, u: [], v: [], minLat: 0, maxLat: 1, minLon: 0, maxLon: 1 };
+        const field = { rows: 6, cols: 6, u: [], v: [], minLat: 44, maxLat: 46, minLon: 8, maxLon: 10 };
+        const mockBounds = {
+            getSouthWest: () => ({ lat: 44, lng: 8 }),
+            getNorthEast: () => ({ lat: 46, lng: 10 }),
+        };
 
         beforeEach(() => {
-            app.currentCircuitCenter = [45, 9];
-            app.windOverlay = { enabled: true, setField: vi.fn() };
+            app.map = { getBounds: vi.fn().mockReturnValue(mockBounds) };
+            app.windOverlay = { enabled: true, _zoomSuppressed: false, setField: vi.fn() };
             app.weatherClient.getWindField = vi.fn().mockResolvedValue(field);
         });
 
-        it('fetches the grid and passes it to the overlay when enabled', async () => {
+        it('fetches the grid for the current viewport and passes it to the overlay when enabled', async () => {
             await app.updateWindField();
 
-            expect(app.weatherClient.getWindField).toHaveBeenCalledWith(45, 9);
+            expect(app.weatherClient.getWindField).toHaveBeenCalledWith(44, 46, 8, 10);
             expect(app.windOverlay.setField).toHaveBeenCalledWith(field);
         });
 
@@ -1150,8 +1154,15 @@ describe('CircuitWeatherApp Pure Methods', () => {
             expect(app.windOverlay.setField).not.toHaveBeenCalled();
         });
 
-        it('does nothing when no circuit is selected', async () => {
-            app.currentCircuitCenter = null;
+        it('does nothing when zoom is suppressed', async () => {
+            app.windOverlay._zoomSuppressed = true;
+            await app.updateWindField();
+
+            expect(app.weatherClient.getWindField).not.toHaveBeenCalled();
+        });
+
+        it('does nothing when the map is unavailable', async () => {
+            app.map = null;
             await app.updateWindField();
 
             expect(app.weatherClient.getWindField).not.toHaveBeenCalled();

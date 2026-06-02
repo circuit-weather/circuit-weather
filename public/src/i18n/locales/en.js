@@ -33,6 +33,7 @@ export const en = {
     metricLabel: "Kilometres",
     imperialLabel: "Miles",
     windOverlay: "Wind overlay",
+    windZoomDisabled: "Wind overlay paused at zoom {{zoom}} — zoom in to see wind",
   },
   forecast: {
     heading: "Session Forecast",

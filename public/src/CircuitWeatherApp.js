@@ -79,6 +79,7 @@ export class CircuitWeatherApp {
 
         try {
             const map = await this.mapManager.init();
+            this.map = map;
 
             // Sidebar manager for mobile
             this.sidebarManager = new SidebarManager();
@@ -94,7 +95,8 @@ export class CircuitWeatherApp {
             this.trackLayer = new TrackLayer(map);
             this.radar = new WeatherRadar(map);
             this.windOverlay = new WindOverlay(map, {
-                onToggle: (enabled) => { if (enabled) this.updateWindField(); }
+                onToggle: (enabled) => { if (enabled) this.updateWindField(); },
+                onViewChange: () => { this.updateWindField(); },
             });
 
             // Theme manager with callback to update map tiles and overlays
@@ -887,12 +889,13 @@ export class CircuitWeatherApp {
     }
 
     async updateWindField() {
-        if (!this.windOverlay || !this.windOverlay.enabled || !this.currentCircuitCenter) {
-            return;
-        }
-        const [lat, lng] = this.currentCircuitCenter;
+        if (!this.windOverlay || !this.windOverlay.enabled || !this.map) return;
+        if (this.windOverlay._zoomSuppressed) return;
         try {
-            const field = await this.weatherClient.getWindField(lat, lng);
+            const bounds = this.map.getBounds();
+            const sw = bounds.getSouthWest();
+            const ne = bounds.getNorthEast();
+            const field = await this.weatherClient.getWindField(sw.lat, ne.lat, sw.lng, ne.lng);
             this.windOverlay.setField(field);
         } catch (error) {
             console.error('Wind field fetch failed:', error);

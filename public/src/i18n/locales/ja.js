@@ -33,6 +33,7 @@ export const ja = {
     metricLabel: "キロメートル",
     imperialLabel: "マイル",
     windOverlay: "風の表示",
+    windZoomDisabled: "ズーム{{zoom}}で風表示を停止中 — 拡大すると風が表示されます",
   },
   forecast: {
     heading: "セッション予報",

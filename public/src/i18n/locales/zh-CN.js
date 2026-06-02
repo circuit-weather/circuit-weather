@@ -30,6 +30,7 @@ export const zhCN = {
     metricLabel: "公里",
     imperialLabel: "英里",
     windOverlay: "风场图层",
+    windZoomDisabled: "缩放{{zoom}}级时风场已暂停 — 放大以查看风向",
   },
   forecast: {
     heading: "赛段天气预报",

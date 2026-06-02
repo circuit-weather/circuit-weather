@@ -366,6 +366,66 @@ body {
     z-index: 450;
 }
 
+/* Mapbox GL JS doesn't set a z-index on its control containers, so they fall
+   below the wind canvas (z-index 450) in DOM stacking order. Leaflet already
+   sets its containers to z-index 1000 via its own stylesheet. */
+.mapboxgl-ctrl-top-right,
+.mapboxgl-ctrl-top-left,
+.mapboxgl-ctrl-bottom-right,
+.mapboxgl-ctrl-bottom-left {
+    z-index: 451;
+}
+
+/* Wind overlay info toast — shown when the overlay is suppressed at low zoom */
+.wind-info-toast {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-12px);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+    background: var(--color-surface);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-lg);
+    z-index: 490;
+    white-space: nowrap;
+    font-size: 0.8125rem;
+    color: var(--color-text-secondary);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.wind-info-toast.visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+    transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+/* Slow fade-out: override the hide transition to be much longer */
+.wind-info-toast:not(.visible) {
+    transition: opacity 2s ease, transform 0.3s ease;
+}
+
+.wind-toast-icon {
+    display: grid;
+    place-items: center;
+    color: var(--color-text-secondary);
+    flex-shrink: 0;
+    width: 16px;
+    height: 16px;
+}
+
+.wind-toast-icon svg {
+    width: 16px;
+    height: 16px;
+}
+
 .unit-toggle {
     display: flex;
     background: var(--color-surface);

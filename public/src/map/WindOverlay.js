@@ -1,4 +1,5 @@
 import { CONFIG } from '../config.js';
+import { i18n } from '../i18n/index.js';
 import { SafeStorage } from '../utils/storage.js';
 import { sampleWindField, windDisplacement, isWithinField } from '../utils/wind.js';
 
@@ -7,6 +8,11 @@ import { sampleWindField, windDisplacement, isWithinField } from '../utils/wind.
  * field on a canvas over the map. Works with both Mapbox GL JS and Leaflet by
  * projecting geo coordinates to container pixels each frame.
  *
+ * The wind field is always fetched for the current viewport (via onViewChange),
+ * so particles fill the screen wherever the user pans or zooms. Below
+ * WIND_MIN_ZOOM the overlay suspends itself and shows an info toast; it
+ * resumes automatically when the user zooms back in.
+ *
  * This module is DOM/canvas/animation heavy and is verified in the browser
  * rather than by unit tests (the pure maths it relies on live in utils/wind.js).
  */
@@ -14,6 +20,7 @@ export class WindOverlay {
     constructor(map, options = {}) {
         this.map = map;
         this.onToggle = options.onToggle || (() => {});
+        this.onViewChange = options.onViewChange || (() => {});
         this.isMapbox = map ? !map.hasLayer : false;
         this.field = null;
         this.particles = [];
@@ -24,6 +31,7 @@ export class WindOverlay {
         this.color = this._resolveColor();
         this.enabled = SafeStorage.getItem('windOverlay') === 'true';
         this._interacting = false;
+        this._zoomSuppressed = false;
 
         this.container = (map && typeof map.getContainer === 'function') ? map.getContainer() : null;
         this.canvas = (typeof document !== 'undefined' && document.createElement)
@@ -39,6 +47,8 @@ export class WindOverlay {
         if (this.container && this.canvas && this.container.appendChild) {
             this.container.appendChild(this.canvas);
         }
+
+        this._infoToast = this._createInfoToast();
 
         this._onResize = () => this._resize();
         // Pause + clear the canvas while the map is animating. Trails are painted
@@ -62,12 +72,15 @@ export class WindOverlay {
         }
         this._updateToggleUI();
         this._resize();
-        if (this.enabled) this._start();
+        if (this.enabled) {
+            this._zoomSuppressed = this._isZoomTooLow();
+            if (!this._zoomSuppressed) this._start();
+        }
     }
 
     setField(field) {
         this.field = field;
-        if (this.enabled && field) {
+        if (this.enabled && field && !this._zoomSuppressed) {
             this._resize();
             this._seedParticles();
             this._start();
@@ -82,13 +95,17 @@ export class WindOverlay {
 
         if (enabled) {
             this._resize();
-            if (this.field) {
+            this._zoomSuppressed = this._isZoomTooLow();
+            if (this._zoomSuppressed) {
+                this._showZoomToast();
+            } else if (this.field) {
                 this._seedParticles();
                 this._start();
             }
         } else {
             this._stop();
             this._clear();
+            this._hideZoomToast();
         }
         this.onToggle(enabled);
     }
@@ -99,6 +116,7 @@ export class WindOverlay {
 
     destroy() {
         this._stop();
+        if (this._toastHideTimer) clearTimeout(this._toastHideTimer);
         if (this.map && typeof this.map.off === 'function') {
             this.map.off('resize', this._onResize);
             this.map.off('movestart', this._onInteractStart);
@@ -108,6 +126,9 @@ export class WindOverlay {
         }
         if (this.canvas && this.canvas.parentNode) {
             this.canvas.parentNode.removeChild(this.canvas);
+        }
+        if (this._infoToast && this._infoToast.parentNode) {
+            this._infoToast.parentNode.removeChild(this._infoToast);
         }
     }
 
@@ -143,6 +164,20 @@ export class WindOverlay {
         } catch (_) {
             return null;
         }
+    }
+
+    _getZoom() {
+        if (!this.map) return null;
+        try {
+            return this.map.getZoom();
+        } catch (_) {
+            return null;
+        }
+    }
+
+    _isZoomTooLow() {
+        const zoom = this._getZoom();
+        return zoom !== null && zoom < CONFIG.WIND_MIN_ZOOM;
     }
 
     _resize() {
@@ -188,13 +223,29 @@ export class WindOverlay {
     _resume() {
         this._interacting = false;
         if (!this.enabled) return;
+
+        const nowSuppressed = this._isZoomTooLow();
+        const wasSuppressed = this._zoomSuppressed;
+        this._zoomSuppressed = nowSuppressed;
+
+        if (nowSuppressed) {
+            if (!wasSuppressed) {
+                this._showZoomToast();
+            }
+            return;
+        }
+
         this._resize();
         this._clear();
+        // Re-fetch wind data for the new viewport (handles both pan and zoom-in resumption).
+        // Also restart immediately with the existing field so particles don't freeze while
+        // waiting for the async fetch to complete.
+        this.onViewChange();
         if (this.field) this._start();
     }
 
     _start() {
-        if (this.rafId || !this.ctx || !this.enabled || !this.field || this._interacting) return;
+        if (this.rafId || !this.ctx || !this.enabled || !this.field || this._interacting || this._zoomSuppressed) return;
         if (typeof requestAnimationFrame !== 'function') return;
         this.lastTime = (typeof performance !== 'undefined' ? performance.now() : Date.now());
         const loop = (now) => {
@@ -256,5 +307,54 @@ export class WindOverlay {
             }
         }
         ctx.stroke();
+    }
+
+    // ── Info toast ────────────────────────────────────────────────────────────
+
+    _createInfoToast() {
+        if (typeof document === 'undefined' || !this.container) return null;
+        const el = document.createElement('div');
+        el.className = 'wind-info-toast';
+        el.setAttribute('role', 'status');
+        el.setAttribute('aria-live', 'polite');
+        el.innerHTML = `
+            <span class="wind-toast-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9.59 4.59A2 2 0 1 1 11 8H2"/><path d="M12.42 19.42A2 2 0 1 0 14 16H2"/><path d="M16.27 7.27A2.5 2.5 0 1 1 18.5 12H2"/>
+                </svg>
+            </span>
+            <span class="wind-toast-message"></span>
+        `;
+        this.container.appendChild(el);
+        return el;
+    }
+
+    _showZoomToast() {
+        if (!this._infoToast) return;
+        const zoom = this._getZoom();
+        const zoomDisplay = zoom !== null ? Math.floor(zoom) : '?';
+        try {
+            this._infoToast.querySelector('.wind-toast-message').textContent =
+                i18n.t('controls.windZoomDisabled', { zoom: zoomDisplay });
+        } catch (_) {
+            this._infoToast.querySelector('.wind-toast-message').textContent =
+                `Wind overlay paused at zoom ${zoomDisplay} — zoom in to see wind`;
+        }
+
+        if (this._toastHideTimer) clearTimeout(this._toastHideTimer);
+        this._infoToast.classList.add('visible');
+
+        this._toastHideTimer = setTimeout(() => {
+            this._hideZoomToast();
+        }, 4500);
+    }
+
+    _hideZoomToast() {
+        if (!this._infoToast) return;
+        this._infoToast.classList.remove('visible');
+        if (this._toastHideTimer) {
+            clearTimeout(this._toastHideTimer);
+            this._toastHideTimer = null;
+        }
     }
 }

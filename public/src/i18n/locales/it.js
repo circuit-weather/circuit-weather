@@ -33,6 +33,7 @@ export const it = {
     metricLabel: "Chilometri",
     imperialLabel: "Miglia",
     windOverlay: "Overlay vento",
+    windZoomDisabled: "Overlay vento in pausa allo zoom {{zoom}} — avvicina per vedere il vento",
   },
   forecast: {
     heading: "Previsioni sessione",

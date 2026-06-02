@@ -33,6 +33,7 @@ export const ptBR = {
     metricLabel: "Quilometros",
     imperialLabel: "Milhas",
     windOverlay: "Camada de vento",
+    windZoomDisabled: "Camada de vento pausada no nivel {{zoom}} — aproxime para ver o vento",
   },
   forecast: {
     heading: "Previsao da sessao",
