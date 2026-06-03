@@ -13,7 +13,7 @@
 // Abu Dhabi is "Yas Marina Circuit", Brazil is "Interlagos"), so the numeric key is
 // the reliable join. Values map to the Ergast circuitId used by CIRCUIT_MAP for the
 // track GeoJSON overlays.
-export const OPENF1_CIRCUIT_MAP = {
+const OPENF1_CIRCUIT_MAP = {
     63: 'bahrain',
     149: 'jeddah',
     10: 'albert_park',

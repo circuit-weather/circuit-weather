@@ -19,3 +19,8 @@ This file tracks critical learnings from Sweep's cleanup operations.
 
 **Learning:** I encountered a `console.log` statement in `src/worker.js` that was dynamically sampling logs (e.g., `if (bucket >= 4 || Math.random() < 0.05)`) and wrapped in an environment check (`if (env.ENVIRONMENT !== 'production')`). This was initially misidentified as a leftover debug artifact. However, the comments and structure explicitly indicated it was a functional observability mechanism for development/staging environments, not dead code.
 **Action:** When evaluating `console.log` statements for removal, carefully analyze the surrounding context. If a log is explicitly conditional based on environments (like non-production), samples requests, or serves a clear monitoring purpose, it is an intentional operational tool, not an orphaned debug artifact. Do not remove such functional observability mechanisms.
+
+## 2024-06-03 - Temporary Artifacts Policy
+
+**Learning:** The project's "Test & Verification File Policy" strictly prohibits committing any temporary scratchpad or verification scripts (e.g., `test_script.js`) created during an investigation.
+**Action:** When acting as 'Sweep', ensure that any ad-hoc scripts used to verify an unused asset are deleted (e.g., `rm test_script.js`) before requesting a code review or submitting the final PR, as leaving them behind contradicts the fundamental goal of reducing codebase bloat.
