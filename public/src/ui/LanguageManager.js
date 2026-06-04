@@ -124,10 +124,10 @@ export class LanguageManager {
         this.menu.classList.add('visible');
         this.toggleBtn.setAttribute('aria-expanded', 'true');
 
-        // Focus first item
-        const firstItem = this.menu.querySelector('.language-item');
-        if (firstItem) {
-            setTimeout(() => firstItem.focus(), 50);
+        // Palette UX: Focus active item instead of first item
+        const activeItem = this.menu.querySelector('.language-item.active') || this.menu.querySelector('.language-item');
+        if (activeItem) {
+            setTimeout(() => activeItem.focus(), 50);
         }
     }
 
