@@ -50,6 +50,10 @@ describe('openf1', () => {
         it('returns null for an absent datetime', () => {
             expect(openF1ToErgastDateTime(null, '03:00:00')).toBeNull();
         });
+
+        it('returns null when the resulting datetime is invalid', () => {
+            expect(openF1ToErgastDateTime('invalid-date', '03:00:00')).toBeNull();
+        });
     });
 
     describe('transformOpenF1', () => {
@@ -117,6 +121,32 @@ describe('openf1', () => {
             expect(bahrain.time).toBe('12:00:00Z');
         });
 
+        it('handles all possible session types correctly', () => {
+            const allSessionsMtg = [{ meeting_key: 10, meeting_name: 'Sprint Weekend GP', date_start: '2026-07-01T10:00:00' }];
+            const allSessions = [
+                { meeting_key: 10, session_type: 'Practice 1', date_start: '2026-07-01T10:00:00Z', gmt_offset: null },
+                { meeting_key: 10, session_type: 'Practice 2', date_start: '2026-07-01T14:00:00Z', gmt_offset: null },
+                { meeting_key: 10, session_type: 'Practice 3', date_start: '2026-07-02T10:00:00Z', gmt_offset: null },
+                { meeting_key: 10, session_type: 'Sprint Shootout', date_start: '2026-07-02T14:00:00Z', gmt_offset: null },
+                { meeting_key: 10, session_type: 'Sprint Qualifying', date_start: '2026-07-02T16:00:00Z', gmt_offset: null },
+                { meeting_key: 10, session_type: 'Sprint', date_start: '2026-07-03T10:00:00Z', gmt_offset: null },
+                { meeting_key: 10, session_type: 'Qualifying', date_start: '2026-07-03T14:00:00Z', gmt_offset: null },
+                { meeting_key: 10, session_type: 'Race', date_start: '2026-07-04T15:00:00Z', gmt_offset: null },
+            ];
+            const races = transformOpenF1(allSessionsMtg, allSessions);
+            const race = races[0];
+
+            expect(race.FirstPractice).toEqual({ date: '2026-07-01', time: '10:00:00Z' });
+            expect(race.SecondPractice).toEqual({ date: '2026-07-01', time: '14:00:00Z' });
+            expect(race.ThirdPractice).toEqual({ date: '2026-07-02', time: '10:00:00Z' });
+            // Sprint Shootout / Sprint Qualifying both map to SprintQualifying
+            expect(race.SprintQualifying).toEqual({ date: '2026-07-02', time: '16:00:00Z' }); // Sprint Qualifying overwrites Shootout
+            expect(race.Sprint).toEqual({ date: '2026-07-03', time: '10:00:00Z' });
+            expect(race.Qualifying).toEqual({ date: '2026-07-03', time: '14:00:00Z' });
+            expect(race.date).toBe('2026-07-04');
+            expect(race.time).toBe('15:00:00Z');
+        });
+
         it('skips sessions with null date_start or gmt_offset', () => {
             const mtgs = [{ meeting_key: 3, meeting_name: 'Test GP', circuit_short_name: 'Sakhir', location: 'Sakhir', country_name: 'Bahrain', date_start: '2026-05-01T12:00:00' }];
             const sess = [
@@ -142,6 +172,13 @@ describe('openf1', () => {
             const unknownSessions = [{ meeting_key: 5, session_type: 'Race', date_start: '2026-05-01T12:00:00', gmt_offset: '00:00:00' }];
             const races = transformOpenF1(unknown, unknownSessions);
             expect(races[0].Circuit.circuitId).toBeNull();
+        });
+
+        it('handles a meeting with no sessions safely', () => {
+            const emptySessionMtg = [{ meeting_key: 6, meeting_name: 'No Sessions GP', date_start: '2026-06-01T12:00:00' }];
+            const emptySessions = [];
+            const races = transformOpenF1(emptySessionMtg, emptySessions);
+            expect(races).toHaveLength(0); // Because we filter out meetings with no "Race" session
         });
     });
 
