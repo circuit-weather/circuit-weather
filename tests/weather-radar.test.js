@@ -207,7 +207,6 @@ describe('createMapboxLayer Proxy Methods', () => {
 
         // Test off behavior
         layerProxy.off('load');
-        const mockCallback2 = vi.fn();
 
         // Mock map.once again to reset
         mockMap.once.mockClear();
