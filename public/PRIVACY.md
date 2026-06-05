@@ -31,6 +31,14 @@ This website is hosted on **Cloudflare Workers** (using Static Assets) which ser
 
 While we proxy some data, your browser connects directly to the following services to render maps, tiles, and widgets. These services receive standard web request data (IP address, User Agent).
 
+### Schedule Data
+
+**OpenF1**
+
+- **Purpose:** Provides fallback F1 schedule data when the primary provider is unavailable.
+- **Data Sent:** Your browser connects directly to the OpenF1 API. Your IP address is visible to OpenF1 as part of this standard web request.
+- **Privacy Policy:** [openf1.org](https://openf1.org/)
+
 ### Weather Data
 
 **Open-Meteo**

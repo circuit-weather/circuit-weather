@@ -31,6 +31,14 @@ Il sito e ospitato su **Cloudflare Workers**.
 
 Il browser puo connettersi direttamente ad alcuni servizi per mappe, tile e widget.
 
+### Dati di pianificazione
+
+**OpenF1**
+
+- **Scopo:** Fornisce dati di fallback sul programma di F1 quando il provider principale non è disponibile.
+- **Dati inviati:** Il tuo browser si connette direttamente all'API di OpenF1. Il tuo indirizzo IP è visibile a OpenF1 come parte di questa richiesta web standard.
+- **Informativa sulla privacy:** [openf1.org](https://openf1.org/)
+
 ### Dati meteo
 
 **Open-Meteo**

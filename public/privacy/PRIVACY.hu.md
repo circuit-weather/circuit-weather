@@ -31,6 +31,14 @@ Ez a weboldal a **Cloudflare Workers** szolgáltatáson (Static Assets használa
 
 A böngészője közvetlenül is csatlakozhat harmadik féltől származó szolgáltatásokhoz térképek, csempék és widgetek betöltéséhez.
 
+### Naptáradatok
+
+**OpenF1**
+
+- **Cél:** Tartalék F1 naptáradatokat biztosít, ha az elsődleges szolgáltató nem elérhető.
+- **Elküldött adatok:** A böngészője közvetlenül csatlakozik az OpenF1 API-hoz. Az Ön IP-címe látható az OpenF1 számára ennek a szabványos webes kérésnek a részeként.
+- **Adatvédelmi irányelvek:** [openf1.org](https://openf1.org/)
+
 ### Időjárási Adatok
 
 **Open-Meteo**
