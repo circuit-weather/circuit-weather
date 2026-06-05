@@ -163,6 +163,7 @@ describe('F1API', () => {
         };
 
         it('falls back to OpenF1 when Jolpica returns a non-OK response', async () => {
+            const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
             mockFetch.mockResolvedValueOnce({ ok: false, status: 500 }); // Jolpica
             mockOpenF1Success();
 
@@ -177,9 +178,11 @@ describe('F1API', () => {
             expect(mockFetch).toHaveBeenCalledTimes(3);
             // Result persisted to localStorage
             expect(SafeStorage.setItem).toHaveBeenCalledWith('f1_schedule_cache', expect.any(String));
+            warnSpy.mockRestore();
         });
 
         it('falls back to OpenF1 when the Jolpica fetch throws (network error)', async () => {
+            const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
             mockFetch.mockRejectedValueOnce(new TypeError('Failed to fetch')); // Jolpica
             mockOpenF1Success();
 
@@ -187,6 +190,7 @@ describe('F1API', () => {
 
             expect(result).toHaveLength(1);
             expect(result[0].raceName).toBe('Bahrain Grand Prix');
+            warnSpy.mockRestore();
         });
 
         it('records scheduleSource as jolpica on the primary path', async () => {
@@ -199,13 +203,16 @@ describe('F1API', () => {
         });
 
         it('records scheduleSource as openf1 when the fallback is used', async () => {
+            const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
             mockFetch.mockResolvedValueOnce({ ok: false, status: 500 }); // Jolpica
             mockOpenF1Success();
             await api.getSchedule();
             expect(api.scheduleSource).toBe('openf1');
+            warnSpy.mockRestore();
         });
 
         it('persists the source to localStorage and restores it from cache', async () => {
+            const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
             mockFetch.mockResolvedValueOnce({ ok: false, status: 500 }); // Jolpica
             mockOpenF1Success();
             await api.getSchedule();
@@ -219,15 +226,20 @@ describe('F1API', () => {
             SafeStorage.getItem.mockReturnValueOnce(JSON.stringify(persisted));
             await fresh.getSchedule();
             expect(fresh.scheduleSource).toBe('openf1');
+            warnSpy.mockRestore();
         });
 
         it('throws a tagged schedule error when both Jolpica and OpenF1 fail', async () => {
+            const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+            const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
             mockFetch
                 .mockResolvedValueOnce({ ok: false, status: 500 }) // Jolpica
                 .mockResolvedValueOnce({ ok: false, status: 403 }) // OpenF1 meetings
                 .mockResolvedValueOnce({ ok: false, status: 403 }); // OpenF1 sessions
 
             await expect(api.getSchedule()).rejects.toThrow('F1_SCHEDULE_UNAVAILABLE:jolpica,openf1');
+            warnSpy.mockRestore();
+            errorSpy.mockRestore();
         });
 
         it('returns empty array when RaceTable has no Races', async () => {
