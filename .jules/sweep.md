@@ -24,3 +24,7 @@ This file tracks critical learnings from Sweep's cleanup operations.
 
 **Learning:** The project's "Test & Verification File Policy" strictly prohibits committing any temporary scratchpad or verification scripts (e.g., `test_script.js`) created during an investigation.
 **Action:** When acting as 'Sweep', ensure that any ad-hoc scripts used to verify an unused asset are deleted (e.g., `rm test_script.js`) before requesting a code review or submitting the final PR, as leaving them behind contradicts the fundamental goal of reducing codebase bloat.
+
+## 2024-10-27 - Knip False Positives for Dynamically Loaded Scripts
+**Learning:** Static analysis tools like `knip` may incorrectly flag dynamically loaded entry-point scripts (e.g., `public/src/main.js`, `public/sw.js`, `public/theme.js`) as unused files because they are loaded directly via HTML script tags rather than standard ES module imports.
+**Action:** Always verify if a seemingly "unused" file reported by `knip` or similar tools is referenced in HTML files (e.g., `index.html`, `manifest.json`) before considering it for removal.
