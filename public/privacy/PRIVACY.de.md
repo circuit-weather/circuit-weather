@@ -31,6 +31,14 @@ Die Website wird auf **Cloudflare Workers** betrieben.
 
 Der Browser kann fur Karten, Tiles und Widgets direkt mit Drittanbietern kommunizieren.
 
+### Zeitplandaten
+
+**OpenF1**
+
+- **Zweck:** Stellt Fallback-F1-Zeitplandaten bereit, wenn der primäre Anbieter nicht verfügbar ist.
+- **Gesendete Daten:** Ihr Browser verbindet sich direkt mit der OpenF1-API. Ihre IP-Adresse ist für OpenF1 als Teil dieser Standard-Webanfrage sichtbar.
+- **Datenschutzerklärung:** [openf1.org](https://openf1.org/)
+
 ### Wetterdaten
 
 **Open-Meteo**

@@ -31,6 +31,14 @@ This website is hosted on **Cloudflare Workers** (using Static Assets), which se
 
 Your browser may connect directly to third-party services for maps, tiles, and widgets.
 
+### Schedule Data
+
+**OpenF1**
+
+- **Purpose:** Provides fallback F1 schedule data when the primary provider is unavailable.
+- **Data Sent:** Your browser connects directly to the OpenF1 API. Your IP address is visible to OpenF1 as part of this standard web request.
+- **Privacy Policy:** [openf1.org](https://openf1.org/)
+
 ### Weather Data
 
 **Open-Meteo**

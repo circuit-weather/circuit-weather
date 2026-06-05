@@ -31,6 +31,14 @@ Le site est heberge sur **Cloudflare Workers**.
 
 Votre navigateur peut se connecter directement a certains services tiers.
 
+### Données de calendrier
+
+**OpenF1**
+
+- **Objectif :** Fournit des données de calendrier F1 de secours lorsque le fournisseur principal est indisponible.
+- **Données envoyées :** Votre navigateur se connecte directement à l'API OpenF1. Votre adresse IP est visible par OpenF1 dans le cadre de cette requête web standard.
+- **Politique de confidentialité :** [openf1.org](https://openf1.org/)
+
 ### Donnees meteo
 
 **Open-Meteo**

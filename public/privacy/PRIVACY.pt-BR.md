@@ -31,6 +31,14 @@ O website esta alojado em **Cloudflare Workers**.
 
 O navegador pode ligar-se diretamente a servicos terceiros para mapas, tiles e widgets.
 
+### Dados de Agendamento
+
+**OpenF1**
+
+- **Propósito:** Fornece dados alternativos do calendário da F1 quando o provedor principal está indisponível.
+- **Dados Enviados:** Seu navegador se conecta diretamente à API do OpenF1. Seu endereço IP é visível para o OpenF1 como parte dessa solicitação da web padrão.
+- **Política de Privacidade:** [openf1.org](https://openf1.org/)
+
 ### Dados meteorologicos
 
 **Open-Meteo**
