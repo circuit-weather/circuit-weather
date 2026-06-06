@@ -492,7 +492,7 @@ export class CircuitWeatherApp {
                 nextFound = true;
             }
 
-            const label = `R${race.round}: ${race.name} (${dateStr})`;
+            const label = i18n.t('controls.roundLabel', { round: race.round, name: race.name, date: dateStr });
             option.textContent = formatStatusLabel(label, status, isNext);
 
             fragment.appendChild(option);

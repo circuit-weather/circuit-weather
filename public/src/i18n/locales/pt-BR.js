@@ -25,6 +25,7 @@ export const ptBR = {
     f1: "Formula 1",
     series: "Serie",
     round: "Ronda",
+    roundLabel: "R{{round}}: {{name}} ({{date}})",
     session: "Sessao",
     units: "Unidades",
     selectRound: "Selecionar ronda...",
@@ -33,7 +34,8 @@ export const ptBR = {
     metricLabel: "Quilometros",
     imperialLabel: "Milhas",
     windOverlay: "Camada de vento",
-    windZoomDisabled: "Camada de vento pausada no nivel {{zoom}} — aproxime para ver o vento",
+    windZoomDisabled:
+      "Camada de vento pausada no nivel {{zoom}} — aproxime para ver o vento",
   },
   forecast: {
     heading: "Previsao da sessao",
@@ -118,9 +120,12 @@ export const ptBR = {
     retryConnection: "Tentar novamente ligacao",
     retryingConnection: "A tentar novamente ligacao",
     initFailed: "Falha ao iniciar a aplicacao.",
-    scheduleUnavailable: "Não foi possível carregar o calendário de F1. A fonte de dados (api.jolpi.ca) está indisponível no momento. Por favor, tente novamente mais tarde.",
-    scheduleAllUnavailable: "Não foi possível carregar o calendário de F1. Ambas as fontes de dados (api.jolpi.ca e api.openf1.org) parecem indisponíveis. Por favor, tente novamente mais tarde.",
-    usingFallbackSource: "A fonte primária (api.jolpi.ca) está indisponível — exibindo dados da fonte de backup (api.openf1.org).",
+    scheduleUnavailable:
+      "Não foi possível carregar o calendário de F1. A fonte de dados (api.jolpi.ca) está indisponível no momento. Por favor, tente novamente mais tarde.",
+    scheduleAllUnavailable:
+      "Não foi possível carregar o calendário de F1. Ambas as fontes de dados (api.jolpi.ca e api.openf1.org) parecem indisponíveis. Por favor, tente novamente mais tarde.",
+    usingFallbackSource:
+      "A fonte primária (api.jolpi.ca) está indisponível — exibindo dados da fonte de backup (api.openf1.org).",
     sessionError: "Erro de sessao",
     sessionLoadFailed: "Falha ao carregar previsao ou radar da sessao.",
   },

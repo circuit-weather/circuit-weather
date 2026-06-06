@@ -10,3 +10,6 @@
 ## 2024-05-24 - Dynamic Unit Suffixes over Hardcoded Symbols
 **Learning:** Do not hardcode unit symbols like the degree symbol (`°`) in the UI components (like the hourly weather timeline). The API response provides proper dynamic localized and unit-aware strings (e.g., `weather.units.temperature_2m`).
 **Action:** Always prefer the dynamic API-provided unit string variables over injecting explicit unit characters to respect user preference and locale correctly.
+## 2024-06-06 - Extracting Hardcoded Concatenations
+**Learning:** Hardcoded strings in UI components often disguise themselves as simple concatenations (e.g. `` `R${race.round}: ${race.name} (${dateStr})` ``). When extracting these, it's crucial to map the raw JavaScript variable names to proper i18n placeholders (like `{{round}}`) to ensure correct interpolation across locales.
+**Action:** Always replace string template literals containing UI text with `i18n.t()` calls passing a context object that maps the local variables to the placeholder keys defined in the dictionary.

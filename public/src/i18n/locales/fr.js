@@ -25,6 +25,7 @@ export const fr = {
     f1: "Formule 1",
     series: "Serie",
     round: "Manche",
+    roundLabel: "R{{round}}: {{name}} ({{date}})",
     session: "Session",
     units: "Unites",
     selectRound: "Selectionner une manche...",
@@ -33,7 +34,8 @@ export const fr = {
     metricLabel: "Kilometres",
     imperialLabel: "Miles",
     windOverlay: "Calque de vent",
-    windZoomDisabled: "Calque de vent pause au zoom {{zoom}} — zoomez pour voir le vent",
+    windZoomDisabled:
+      "Calque de vent pause au zoom {{zoom}} — zoomez pour voir le vent",
   },
   forecast: {
     heading: "Previsions de session",
@@ -118,9 +120,12 @@ export const fr = {
     retryConnection: "Reessayer la connexion",
     retryingConnection: "Nouvelle tentative de connexion",
     initFailed: "Echec de l'initialisation de l'application.",
-    scheduleUnavailable: "Le calendrier F1 n'a pas pu être chargé. La source de données (api.jolpi.ca) est actuellement indisponible. Veuillez réessayer plus tard.",
-    scheduleAllUnavailable: "Le calendrier F1 n'a pas pu être chargé. Les deux sources de données (api.jolpi.ca et api.openf1.org) semblent indisponibles. Veuillez réessayer plus tard.",
-    usingFallbackSource: "La source principale (api.jolpi.ca) est indisponible — affichage des données de la source de secours (api.openf1.org).",
+    scheduleUnavailable:
+      "Le calendrier F1 n'a pas pu être chargé. La source de données (api.jolpi.ca) est actuellement indisponible. Veuillez réessayer plus tard.",
+    scheduleAllUnavailable:
+      "Le calendrier F1 n'a pas pu être chargé. Les deux sources de données (api.jolpi.ca et api.openf1.org) semblent indisponibles. Veuillez réessayer plus tard.",
+    usingFallbackSource:
+      "La source principale (api.jolpi.ca) est indisponible — affichage des données de la source de secours (api.openf1.org).",
     sessionError: "Erreur de session",
     sessionLoadFailed:
       "Echec du chargement des previsions ou du radar de session.",

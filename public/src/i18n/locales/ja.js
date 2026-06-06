@@ -25,6 +25,7 @@ export const ja = {
     f1: "F1",
     series: "シリーズ",
     round: "ラウンド",
+    roundLabel: "R{{round}}: {{name}} ({{date}})",
     session: "セッション",
     units: "単位",
     selectRound: "ラウンドを選択...",
@@ -33,7 +34,8 @@ export const ja = {
     metricLabel: "キロメートル",
     imperialLabel: "マイル",
     windOverlay: "風の表示",
-    windZoomDisabled: "ズーム{{zoom}}で風表示を停止中 — 拡大すると風が表示されます",
+    windZoomDisabled:
+      "ズーム{{zoom}}で風表示を停止中 — 拡大すると風が表示されます",
   },
   forecast: {
     heading: "セッション予報",
@@ -117,9 +119,12 @@ export const ja = {
     retryConnection: "接続を再試行",
     retryingConnection: "接続を再試行中",
     initFailed: "アプリの初期化に失敗しました。",
-    scheduleUnavailable: "F1レーススケジュールを読み込めませんでした。データソース (api.jolpi.ca) が現在利用できません。後でもう一度お試しください。",
-    scheduleAllUnavailable: "F1レーススケジュールを読み込めませんでした。両方のデータソース (api.jolpi.ca および api.openf1.org) が現在利用できないようです。後でもう一度お試しください。",
-    usingFallbackSource: "プライマリのデータソース (api.jolpi.ca) が利用できないため、バックアップソース (api.openf1.org) のデータを表示しています。",
+    scheduleUnavailable:
+      "F1レーススケジュールを読み込めませんでした。データソース (api.jolpi.ca) が現在利用できません。後でもう一度お試しください。",
+    scheduleAllUnavailable:
+      "F1レーススケジュールを読み込めませんでした。両方のデータソース (api.jolpi.ca および api.openf1.org) が現在利用できないようです。後でもう一度お試しください。",
+    usingFallbackSource:
+      "プライマリのデータソース (api.jolpi.ca) が利用できないため、バックアップソース (api.openf1.org) のデータを表示しています。",
     sessionError: "セッションエラー",
     sessionLoadFailed:
       "セッションの予報またはレーダーの読み込みに失敗しました。",

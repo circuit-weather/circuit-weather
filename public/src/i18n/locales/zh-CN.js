@@ -22,6 +22,7 @@ export const zhCN = {
     f1: "F1",
     series: "系列赛",
     round: "分站",
+    roundLabel: "R{{round}}: {{name}} ({{date}})",
     session: "赛段",
     units: "单位",
     selectRound: "选择分站...",
@@ -109,9 +110,12 @@ export const zhCN = {
     retryConnection: "重试连接",
     retryingConnection: "正在重试连接",
     initFailed: "应用初始化失败。",
-    scheduleUnavailable: "无法加载F1赛程。数据源 (api.jolpi.ca) 目前不可用，请稍后重试。",
-    scheduleAllUnavailable: "无法加载F1赛程。两个数据源 (api.jolpi.ca 和 api.openf1.org) 目前均不可用，请稍后重试。",
-    usingFallbackSource: "主数据源 (api.jolpi.ca) 不可用 — 正在显示备用数据源 (api.openf1.org) 的数据。",
+    scheduleUnavailable:
+      "无法加载F1赛程。数据源 (api.jolpi.ca) 目前不可用，请稍后重试。",
+    scheduleAllUnavailable:
+      "无法加载F1赛程。两个数据源 (api.jolpi.ca 和 api.openf1.org) 目前均不可用，请稍后重试。",
+    usingFallbackSource:
+      "主数据源 (api.jolpi.ca) 不可用 — 正在显示备用数据源 (api.openf1.org) 的数据。",
     sessionError: "赛段错误",
     sessionLoadFailed: "加载赛段预报或雷达失败。",
   },

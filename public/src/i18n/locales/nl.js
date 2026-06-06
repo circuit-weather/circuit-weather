@@ -25,6 +25,7 @@ export const nl = {
     f1: "Formule 1",
     series: "Serie",
     round: "Ronde",
+    roundLabel: "R{{round}}: {{name}} ({{date}})",
     session: "Sessie",
     units: "Eenheden",
     selectRound: "Selecteer ronde...",
@@ -33,7 +34,8 @@ export const nl = {
     metricLabel: "Kilometers",
     imperialLabel: "Mijlen",
     windOverlay: "Wind overlay",
-    windZoomDisabled: "Wind overlay gepauzeerd op zoom {{zoom}} — zoom in om wind te zien",
+    windZoomDisabled:
+      "Wind overlay gepauzeerd op zoom {{zoom}} — zoom in om wind te zien",
   },
   forecast: {
     heading: "Sessie voorspelling",
@@ -117,9 +119,12 @@ export const nl = {
     retryConnection: "Probeer verbinding opnieuw",
     retryingConnection: "Verbinding opnieuw proberen",
     initFailed: "Applicatie initialiseren mislukt.",
-    scheduleUnavailable: "De F1-racekalender kon niet worden geladen. De gegevensbron (api.jolpi.ca) is momenteel niet beschikbaar. Probeer het later opnieuw.",
-    scheduleAllUnavailable: "De F1-racekalender kon niet worden geladen. Beide gegevensbronnen (api.jolpi.ca en api.openf1.org) lijken niet beschikbaar. Probeer het later opnieuw.",
-    usingFallbackSource: "Primaire gegevensbron (api.jolpi.ca) niet beschikbaar — gegevens worden getoond vanaf de back-upbron (api.openf1.org).",
+    scheduleUnavailable:
+      "De F1-racekalender kon niet worden geladen. De gegevensbron (api.jolpi.ca) is momenteel niet beschikbaar. Probeer het later opnieuw.",
+    scheduleAllUnavailable:
+      "De F1-racekalender kon niet worden geladen. Beide gegevensbronnen (api.jolpi.ca en api.openf1.org) lijken niet beschikbaar. Probeer het later opnieuw.",
+    usingFallbackSource:
+      "Primaire gegevensbron (api.jolpi.ca) niet beschikbaar — gegevens worden getoond vanaf de back-upbron (api.openf1.org).",
     sessionError: "Sessiefout",
     sessionLoadFailed: "Sessie voorspelling of radargegevens laden mislukt.",
   },
