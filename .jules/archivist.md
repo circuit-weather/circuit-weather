@@ -245,10 +245,12 @@ Prevention: Avoid duplicating configuration values in documentation; reference t
 
 **Learning:** `AGENTS.md` omitted "Wind Overlay" from its "Core Features" section, even though the feature is fully implemented, documented in `PRIVACY.md`, and is an active feature that persists user preference in `localStorage`.
 **Action:** Added the "Wind Overlay" feature to `AGENTS.md` to ensure a single source of truth for application capabilities.
+
 ## 2026-06-02 - Documentation Drift for Proxied Assets in API Endpoints Table
 
 **Learning:** While `src/worker.js` and `PRIVACY.md` correctly identified that `VENDOR_ASSETS` (handling `/api/assets/*`) proxies both Unpkg and Mapbox CDNs, the "API Endpoints" table in `AGENTS.md` was slightly ambiguous and didn't mention Unpkg or CDNs explicitly.
 **Action:** Updated the "API Endpoints" table in `AGENTS.md` to explicitly state that `/api/assets/*` proxies to Unpkg (Leaflet) and Mapbox CDNs for map library assets, maintaining alignment with `worker.js` and `PRIVACY.md`.
+
 ## 2026-06-02 - Unpkg and Mapbox CDN Proxy Drift
 
 **Learning:** When updating API endpoint documentation, it is critical to reflect exact details from the worker file (e.g., `VENDOR_ASSETS`) such as which specific CDNs (like Unpkg or Mapbox CDNs) are proxied by a wildcard endpoint like `/api/assets/*`. Generic descriptions can mislead human or automated analysis about the architecture.
@@ -256,5 +258,10 @@ Prevention: Avoid duplicating configuration values in documentation; reference t
 
 ## 2026-06-02 - Documentation Drift for Local Storage Cache Durations
 
-**Learning:** While the keys for `localStorage` and `SafeStorage` (like `f1_schedule_cache`) were documented in `PRIVACY.md`, the *duration* of the cache (e.g. 7 days vs 24 hours) had drifted from the actual implementation in the codebase (`CACHE_DURATION_MS`). Developers update constants in code but forget to update the corresponding privacy policy entries.
+**Learning:** While the keys for `localStorage` and `SafeStorage` (like `f1_schedule_cache`) were documented in `PRIVACY.md`, the _duration_ of the cache (e.g. 7 days vs 24 hours) had drifted from the actual implementation in the codebase (`CACHE_DURATION_MS`). Developers update constants in code but forget to update the corresponding privacy policy entries.
 **Action:** Always cross-reference the documented cache durations in `PRIVACY.md` against their actual TTL/expiry constants in the source code (e.g. `src/worker.js` or `public/src/api/*.js`).
+
+## 2026-06-03 - Edge Cache TTL Drift
+
+**Learning:** When edge caching configuration (`Cache-Control: max-age`) is updated in Cloudflare Worker code (e.g., in `src/worker.js`), the corresponding documentation for the cache TTL (such as in `AGENTS.md` and `PRIVACY.md`) frequently drifts. Developers often update the implementation but forget to synchronize the publicly documented retention claims.
+**Action:** Whenever a `max-age` value is modified or reviewed in the edge worker logic, always search for the service name (e.g., "Jolpica F1", "track layout") in `AGENTS.md` and `PRIVACY.md` to ensure the documented cache duration is strictly accurate and reflects the code's reality.

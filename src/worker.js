@@ -363,7 +363,7 @@ async function handleApiRequest(request, env, ctx, url) {
     // Bolt Optimization: Stream response instead of buffering text
     const [cacheBody, clientBody] = upstreamResponse.body.tee();
 
-    // Create cacheable response (1 hour)
+    // Create cacheable response (24 hours)
     // We store '*' in cache as a fallback, but we always override on delivery
     const cacheHeaders = new Headers({
       'Content-Type': 'application/json',
