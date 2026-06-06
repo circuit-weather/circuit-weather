@@ -85,7 +85,7 @@ To improve performance and reliability, we load standard libraries and assets fr
 
 The following services provide the raw data that we process and cache via Cloudflare. Your device does not connect to them directly for data API calls.
 
-- **Jolpica F1:** Historical and current F1 schedule data (1-hour edge cache).
+- **Jolpica F1:** Historical and current F1 schedule data (24-hour edge cache).
 - **GitHub (bacinger/f1-circuits):** Stores static track layout files (GeoJSON) (24-hour edge cache).
 - **RainViewer:** Weather radar tiles (2-hour edge cache) and metadata (1-minute cache).
 - **Leaflet (via Unpkg):** Map interaction library assets (proxied for security, 1-year immutable cache).
