@@ -25,6 +25,7 @@ export const hu = {
     f1: "Forma-1",
     series: "Sorozat",
     round: "Forduló",
+    roundLabel: "R{{round}}: {{name}} ({{date}})",
     session: "Esemény",
     units: "Mértékegységek",
     selectRound: "Forduló kiválasztása...",
@@ -33,7 +34,8 @@ export const hu = {
     metricLabel: "Kilométer",
     imperialLabel: "Mérföld",
     windOverlay: "Szélréteg",
-    windZoomDisabled: "Szélréteg {{zoom}} nagyítási szinten szüneteltetve — közelíts a szél megtekintéséhez",
+    windZoomDisabled:
+      "Szélréteg {{zoom}} nagyítási szinten szüneteltetve — közelíts a szél megtekintéséhez",
   },
   forecast: {
     heading: "Esemény előrejelzése",
@@ -119,9 +121,12 @@ export const hu = {
     retryConnection: "Csatlakozás újrapróbálása",
     retryingConnection: "Csatlakozás újrapróbálása folyamatban",
     initFailed: "Nem sikerült inicializálni az alkalmazást.",
-    scheduleUnavailable: "Az F1-es versenynaptár nem tölthető be. Az adatforrás (api.jolpi.ca) jelenleg nem érhető el – kérjük, próbálja újra később.",
-    scheduleAllUnavailable: "Az F1-es versenynaptár nem tölthető be. Mindkét adatforrás (api.jolpi.ca és api.openf1.org) jelenleg nem érhető el – kérjük, próbálja újra később.",
-    usingFallbackSource: "Az elsődleges adatforrás (api.jolpi.ca) nem érhető el – az adatok a tartalék forrásból (api.openf1.org) származnak.",
+    scheduleUnavailable:
+      "Az F1-es versenynaptár nem tölthető be. Az adatforrás (api.jolpi.ca) jelenleg nem érhető el – kérjük, próbálja újra később.",
+    scheduleAllUnavailable:
+      "Az F1-es versenynaptár nem tölthető be. Mindkét adatforrás (api.jolpi.ca és api.openf1.org) jelenleg nem érhető el – kérjük, próbálja újra később.",
+    usingFallbackSource:
+      "Az elsődleges adatforrás (api.jolpi.ca) nem érhető el – az adatok a tartalék forrásból (api.openf1.org) származnak.",
     sessionError: "Esemény hiba",
     sessionLoadFailed:
       "Nem sikerült betölteni az esemény előrejelzését vagy a radart.",

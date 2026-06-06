@@ -25,6 +25,7 @@ export const it = {
     f1: "Formula 1",
     series: "Serie",
     round: "Round",
+    roundLabel: "R{{round}}: {{name}} ({{date}})",
     session: "Sessione",
     units: "Unita",
     selectRound: "Seleziona round...",
@@ -33,7 +34,8 @@ export const it = {
     metricLabel: "Chilometri",
     imperialLabel: "Miglia",
     windOverlay: "Overlay vento",
-    windZoomDisabled: "Overlay vento in pausa allo zoom {{zoom}} — avvicina per vedere il vento",
+    windZoomDisabled:
+      "Overlay vento in pausa allo zoom {{zoom}} — avvicina per vedere il vento",
   },
   forecast: {
     heading: "Previsioni sessione",
@@ -117,9 +119,12 @@ export const it = {
     retryConnection: "Riprova connessione",
     retryingConnection: "Nuovo tentativo di connessione",
     initFailed: "Inizializzazione applicazione non riuscita.",
-    scheduleUnavailable: "Impossibile caricare il calendario F1. La fonte dei dati (api.jolpi.ca) è attualmente non disponibile. Riprova più tardi.",
-    scheduleAllUnavailable: "Impossibile caricare il calendario F1. Entrambe le fonti di dati (api.jolpi.ca e api.openf1.org) risultano non disponibili. Riprova più tardi.",
-    usingFallbackSource: "La fonte primaria (api.jolpi.ca) non è disponibile: dati mostrati dalla fonte di backup (api.openf1.org).",
+    scheduleUnavailable:
+      "Impossibile caricare il calendario F1. La fonte dei dati (api.jolpi.ca) è attualmente non disponibile. Riprova più tardi.",
+    scheduleAllUnavailable:
+      "Impossibile caricare il calendario F1. Entrambe le fonti di dati (api.jolpi.ca e api.openf1.org) risultano non disponibili. Riprova più tardi.",
+    usingFallbackSource:
+      "La fonte primaria (api.jolpi.ca) non è disponibile: dati mostrati dalla fonte di backup (api.openf1.org).",
     sessionError: "Errore sessione",
     sessionLoadFailed:
       "Impossibile caricare previsioni o radar della sessione.",
