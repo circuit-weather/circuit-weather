@@ -235,8 +235,8 @@ export class WeatherClient {
         const roundedDiff = Math.round(diffHours);
 
         if (roundedDiff === 0) return i18n.t('radar.sessionStart');
-        if (roundedDiff < 0) return `${roundedDiff}h`;
-        return `+${roundedDiff}h`;
+        if (roundedDiff < 0) return `${roundedDiff}${i18n.t('countdown.hourShort')}`;
+        return `+${roundedDiff}${i18n.t('countdown.hourShort')}`;
     }
 
     getAccessibleRelativeTime(timestamp, sessionTime) {
