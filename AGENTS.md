@@ -36,6 +36,7 @@ Circuit Weather is a real-time F1 race circuit weather radar application. It dis
 | Service         | Purpose                                                          | Connection           |
 | --------------- | ---------------------------------------------------------------- | -------------------- |
 | Jolpica F1 API  | Race schedule data (1-hour cache)                                | Proxied (Cached)     |
+| OpenF1          | Fallback race schedule data                                      | Direct (Client-side) |
 | RainViewer      | Weather radar tiles (2-hour cache) and metadata (1-minute cache) | Proxied (Cached)     |
 | Open-Meteo      | Weather forecasts                                                | Direct (Client-side) |
 | Mapbox API      | Primary map basemap tiles and rendering                          | Direct (Client-side) |
