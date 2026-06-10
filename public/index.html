@@ -263,7 +263,8 @@
 
             <!-- Scout: Upgraded generic div to semantic footer for better structure -->
             <!-- Shown only when the schedule is served from the OpenF1 fallback source -->
-            <div class="data-source-notice" id="dataSourceNotice" role="status" hidden>
+            <!-- Scout: Upgraded generic div to semantic aside for the data source notice to explicitly signal to search engines that this warning message is secondary, supplementary content to the main document outline. -->
+            <aside class="data-source-notice" id="dataSourceNotice" role="status" hidden>
                 <svg class="icon-warning" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                     stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                     <path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
@@ -271,7 +272,7 @@
                     <line x1="12" y1="17" x2="12.01" y2="17"></line>
                 </svg>
                 <span data-i18n="errors.usingFallbackSource">Primary schedule source unavailable — showing data from a backup source.</span>
-            </div>
+            </aside>
 
             <footer class="sidebar-footer">
                 <div class="language-selector">
