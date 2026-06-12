@@ -82,11 +82,11 @@ Circuit Weather は、Formula 1 サーキット向けのリアルタイム天気
 
 ## データ提供元（プロキシ経由）
 
-- **Jolpica F1**
-- **GitHub (bacinger/f1-circuits)**
-- **RainViewer**
-- **Leaflet (via Unpkg)**
-- **Mapbox (Mapbox CDN 経由):** マップライブラリアセット (セキュリティのためプロキシされます)。
+- **Jolpica F1:** (24時間エッジキャッシュ).
+- **GitHub (bacinger/f1-circuits):** (24時間エッジキャッシュ).
+- **RainViewer:** レーダーメタデータ (1分間キャッシュ) とタイル (2時間エッジキャッシュ).
+- **Leaflet (via Unpkg):** (1年間不変キャッシュ).
+- **Mapbox (Mapbox CDN 経由):** マップライブラリアセット (セキュリティのためプロキシされます、1年間不変キャッシュ)。
 
 ## ローカルストレージ
 

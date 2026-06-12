@@ -82,11 +82,11 @@ Der Browser kann fur Karten, Tiles und Widgets direkt mit Drittanbietern kommuni
 
 ## Datenquellen (proxy)
 
-- **Jolpica F1**
-- **GitHub (bacinger/f1-circuits)**
-- **RainViewer**
-- **Leaflet (via Unpkg)**
-- **Mapbox (über Mapbox CDN):** Interaktionsbibliothek für Karten (aus Sicherheitsgründen geproxyt).
+- **Jolpica F1:** (24-Stunden-Edge-Cache).
+- **GitHub (bacinger/f1-circuits):** (24-Stunden-Edge-Cache).
+- **RainViewer:** Radarmetadaten (1-Minuten-Cache) und Kacheln (2-Stunden-Edge-Cache).
+- **Leaflet (via Unpkg):** (1-Jahr-Immutable-Cache).
+- **Mapbox (über Mapbox CDN):** Interaktionsbibliothek für Karten (aus Sicherheitsgründen geproxyt, 1-Jahr-Immutable-Cache).
 
 ## Lokaler Speicher
 

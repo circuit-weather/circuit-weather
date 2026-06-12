@@ -82,11 +82,11 @@ Your browser may connect directly to third-party services for maps, tiles, and w
 
 ### Data Sources (Proxied)
 
-- **Jolpica F1:** F1 schedule data.
-- **GitHub (bacinger/f1-circuits):** GeoJSON track files.
-- **RainViewer:** Radar metadata and tiles.
-- **Leaflet (via Unpkg):** Map library assets.
-- **Mapbox (via Mapbox CDN):** Map interaction library assets (proxied for security).
+- **Jolpica F1:** F1 schedule data (24-hour edge cache).
+- **GitHub (bacinger/f1-circuits):** GeoJSON track files (24-hour edge cache).
+- **RainViewer:** Radar metadata (1-minute cache) and tiles (2-hour edge cache).
+- **Leaflet (via Unpkg):** Map library assets (1-year immutable cache).
+- **Mapbox (via Mapbox CDN):** Map interaction library assets (proxied for security, 1-year immutable cache).
 
 ## Local Storage
 
