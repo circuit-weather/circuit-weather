@@ -65,3 +65,8 @@
 ## 2025-02-14 - Semantic List Upgrades
 **Learning:** Upgrading loosely grouped generic `<div>` wrappers into semantic HTML lists (`<dl>`, `<dt>`, `<dd>`) can break visual layout depending on global browser defaults and parent CSS rules for list elements, as they often introduce default margins/paddings.
 **Action:** When converting elements to `<dl>` or `<dd>` for SEO/a11y improvements without changing stylesheets, immediately apply inline CSS resets (e.g., `margin: 0`, `padding: 0`, `display: flex`) to strictly preserve the visual design constraints mandated by the SEO prompt guidelines.
+
+## 2025-05-24 - Semantic aside tags for secondary notices
+
+**Learning:** Upgrading generic fallback warning messages (like a `data-source-notice` `<div>`) to semantic `<aside>` tags correctly signals to search engines that the warning is supplementary content and not part of the primary page outline, improving indexation of the core content.
+**Action:** Always scan for persistent or fallback warning containers and replace generic `div`s with `<aside>`, taking care to ensure CSS continues to target class names (`.data-source-notice`) rather than the raw element tags so styling isn't broken.
