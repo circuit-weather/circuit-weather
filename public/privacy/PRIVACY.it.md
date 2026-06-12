@@ -82,11 +82,11 @@ Il browser puo connettersi direttamente ad alcuni servizi per mappe, tile e widg
 
 ## Fonti dati (proxy)
 
-- **Jolpica F1**
-- **GitHub (bacinger/f1-circuits)**
-- **RainViewer**
-- **Leaflet (via Unpkg)**
-- **Mapbox (via Mapbox CDN):** Asset della libreria mappa (proxati per sicurezza).
+- **Jolpica F1:** (cache edge di 24 ore).
+- **GitHub (bacinger/f1-circuits):** (cache edge di 24 ore).
+- **RainViewer:** Metadati radar (cache di 1 minuto) e tile (cache edge di 2 ore).
+- **Leaflet (via Unpkg):** (cache immutabile di 1 anno).
+- **Mapbox (via Mapbox CDN):** Asset della libreria mappa (proxati per sicurezza, cache immutabile di 1 anno).
 
 ## Archiviazione locale
 

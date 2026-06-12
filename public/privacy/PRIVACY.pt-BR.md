@@ -82,11 +82,11 @@ O navegador pode ligar-se diretamente a servicos terceiros para mapas, tiles e w
 
 ## Fontes de dados (proxy)
 
-- **Jolpica F1**
-- **GitHub (bacinger/f1-circuits)**
-- **RainViewer**
-- **Leaflet (via Unpkg)**
-- **Mapbox (via Mapbox CDN):** Recursos de biblioteca de mapas (com proxy por segurança).
+- **Jolpica F1:** (cache de borda de 24 horas).
+- **GitHub (bacinger/f1-circuits):** (cache de borda de 24 horas).
+- **RainViewer:** Metadados de radar (cache de 1 minuto) e tiles (cache de borda de 2 horas).
+- **Leaflet (via Unpkg):** (cache imutável de 1 ano).
+- **Mapbox (via Mapbox CDN):** Recursos de biblioteca de mapas (com proxy por segurança, cache imutável de 1 ano).
 
 ## Armazenamento local
 
