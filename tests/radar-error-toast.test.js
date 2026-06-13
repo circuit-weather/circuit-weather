@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { i18n } from '../public/src/i18n/index.js';
 
 const mockEl = { addEventListener: vi.fn(), classList: { contains: () => true, add: vi.fn(), remove: vi.fn() }, style: {}, setAttribute: vi.fn(), textContent: '' };
 vi.stubGlobal('document', { getElementById: vi.fn(() => mockEl), addEventListener: vi.fn(), activeElement: { tagName: 'BODY' } });
@@ -88,5 +89,30 @@ describe('RadarErrorToast edge cases', () => {
 
         expect(toast.triggerRateLimitCooldown).not.toHaveBeenCalled();
         expect(toast.showErrorToast).toHaveBeenCalled();
+    });
+
+    it('clears existing retryTimer before setting a new one in triggerRateLimitCooldown', () => {
+        vi.useFakeTimers();
+        const oldTimer = setTimeout(() => {}, 1000);
+        toast.retryTimer = oldTimer;
+        const clearTimeoutSpy = vi.spyOn(globalThis, 'clearTimeout');
+
+        toast.triggerRateLimitCooldown(5000, 'Title', 'Msg');
+
+        expect(clearTimeoutSpy).toHaveBeenCalledWith(oldTimer);
+    });
+
+    it('formats retryingTilesMessage correctly for singular and plural', () => {
+        const i18nSpy = vi.spyOn(i18n, 't').mockImplementation((key, opts) => `${key} ${opts.count}`);
+
+        const msgSingular = toast.retryingTilesMessage(1);
+        expect(i18nSpy).toHaveBeenCalledWith('radar.retryingFailedTiles', { count: 1 });
+        expect(msgSingular).toBe('radar.retryingFailedTiles 1');
+
+        const msgPlural = toast.retryingTilesMessage(2);
+        expect(i18nSpy).toHaveBeenCalledWith('radar.retryingFailedTilesPlural', { count: 2 });
+        expect(msgPlural).toBe('radar.retryingFailedTilesPlural 2');
+
+        i18nSpy.mockRestore();
     });
 });
