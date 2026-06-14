@@ -23,6 +23,7 @@ Key features include:
 - **Theme Support:** Automatically adapts to your system's dark or light mode, or you can toggle it manually.
 - **Deep Linking:** Navigate directly to a specific race or session via the URL.
 - **Weather Forecast:** View detailed, session-specific weather forecasts.
+- **Wind Overlay:** Toggle animated wind flow particles over the map.
 - **Multi-language Support:** Use the app in your preferred language.
 - **Responsive Design:** Works great on your phone, tablet, or desktop.
 - **Installable PWA:** Add to your home screen on mobile for a native app-like experience — no app store required.
