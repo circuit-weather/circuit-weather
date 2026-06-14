@@ -70,3 +70,6 @@
 
 **Learning:** Upgrading generic fallback warning messages (like a `data-source-notice` `<div>`) to semantic `<aside>` tags correctly signals to search engines that the warning is supplementary content and not part of the primary page outline, improving indexation of the core content.
 **Action:** Always scan for persistent or fallback warning containers and replace generic `div`s with `<aside>`, taking care to ensure CSS continues to target class names (`.data-source-notice`) rather than the raw element tags so styling isn't broken.
+## 2026-06-14 - Semantic aside tags for forecast warning
+**Learning:** Upgrading generic fallback warning containers (like `<div id="forecastUnavailable">`) to semantic `<aside>` tags correctly signals to search engines that the warning is supplementary content and not part of the primary page outline, improving indexation of the core content. However, CSS must be verified to ensure it targets IDs or classes rather than the generic `div` tag.
+**Action:** Always scan for persistent or fallback warning containers and replace generic `div`s with `<aside>`, taking care to ensure CSS continues to target class names or IDs so styling isn't broken.
