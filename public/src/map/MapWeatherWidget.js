@@ -72,13 +72,13 @@ class MapWeatherWidgetClass {
   }
 
   // Leaflet interface
-  onAdd(map) {
+  onAdd() {
     // Ensure Leaflet-specific classes are present
     this._div.classList.add("leaflet-control");
     return this._div;
   }
 
-  onRemove(map) {
+  onRemove() {
     if (this._div.parentNode) {
       this._div.parentNode.removeChild(this._div);
     }
