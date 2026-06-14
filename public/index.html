@@ -230,9 +230,10 @@
                             </section>
                         </article>
                     </div>
-                    <div id="forecastUnavailable" style="display: none;" aria-live="polite">
+                    <!-- Scout: Upgraded generic div to semantic aside for the forecast unavailable notice to correctly signal to search engines that it is a supplementary warning message, and not part of the primary page outline. -->
+                    <aside id="forecastUnavailable" style="display: none;" aria-live="polite">
                         <p class="forecast-unavailable" data-i18n="forecast.availableCloser">Forecast available closer to session</p>
-                    </div>
+                    </aside>
                 </section>
 
                 <!-- Session Empty State -->
