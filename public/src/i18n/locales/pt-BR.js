@@ -3,9 +3,9 @@ export const ptBR = {
     countryFlagFallback: "Bandeira do país",
     countryFlag: "Bandeira de {{country}}",
     github: "Ver código-fonte no GitHub",
-    loading: "A carregar...",
+    loading: "Carregando...",
     retry: "Tentar novamente",
-    retrying: "A tentar novamente...",
+    retrying: "Tentando novamente...",
     selectLanguage: "Idioma",
     openMenu: "Abrir menu",
     closeMenu: "Fechar menu",
@@ -17,8 +17,8 @@ export const ptBR = {
     switchToDark: "Mudar para modo escuro",
   },
   loading: {
-    schedule: "A carregar calendario de corridas...",
-    session: "A carregar dados da sessao...",
+    schedule: "Carregando calendario de corridas...",
+    session: "Carregando dados da sessao...",
   },
   controls: {
     onlyF1Supported: "Atualmente, apenas a Formula 1 e suportada",
@@ -82,9 +82,9 @@ export const ptBR = {
     serviceError: "Erro de servico",
     highTraffic: "Trafego elevado",
     rateLimitExceeded: "Limite de pedidos excedido. Pausa momentanea.",
-    retryingFailedTiles: "A tentar novamente {{count}} bloco com falha...",
+    retryingFailedTiles: "Tentando novamente {{count}} bloco com falha...",
     retryingFailedTilesPlural:
-      "A tentar novamente {{count}} blocos com falha...",
+      "Tentando novamente {{count}} blocos com falha...",
     radarStatus: "Estado do radar: {{status}}",
   },
   countdown: {
@@ -118,7 +118,7 @@ export const ptBR = {
   errors: {
     connectionFailed: "Falha de ligacao",
     retryConnection: "Tentar novamente ligacao",
-    retryingConnection: "A tentar novamente ligacao",
+    retryingConnection: "Tentando novamente ligacao",
     initFailed: "Falha ao iniciar a aplicacao.",
     scheduleUnavailable:
       "Não foi possível carregar o calendário de F1. A fonte de dados (api.jolpi.ca) está indisponível no momento. Por favor, tente novamente mais tarde.",
