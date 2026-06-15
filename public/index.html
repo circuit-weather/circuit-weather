@@ -408,7 +408,8 @@
                 <p data-i18n="common.loading">Loading...</p>
             </div>
             <!-- Error Toast -->
-            <div id="errorToast" class="error-toast" role="alert" aria-live="assertive">
+            <!-- Scout: Upgraded generic div to semantic aside for the error toast to explicitly signal to search engines that this warning message is secondary, supplementary content to the main document outline. -->
+            <aside id="errorToast" class="error-toast" role="alert" aria-live="assertive">
                 <div class="error-icon">
                     <svg aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="12" r="10"></circle>
@@ -421,7 +422,7 @@
                     <div class="error-message" id="errorMessage" data-i18n="common.retrying">Retrying...</div>
                 </div>
                 <div class="error-timer" id="errorTimer" aria-hidden="true"></div>
-            </div>
+            </aside>
 
             <!-- Fallback content for crawlers/bots that don't execute JavaScript. -->
             <noscript>
