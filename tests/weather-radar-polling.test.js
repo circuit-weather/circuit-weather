@@ -224,6 +224,26 @@ describe('WeatherRadar Polling Logic', () => {
 
             expect(stopSpy).toHaveBeenCalled();
             expect(scheduleSpy).toHaveBeenCalled();
+            expect(radar.polling.stopped).toBe(false);
+        });
+
+        it('should continue polling cycle if started via startPolling', async () => {
+            // Setup time: 12:05:00. Target: 12:11:00 (6 mins delay)
+            const now = new Date('2024-01-01T12:05:00Z').getTime();
+            vi.setSystemTime(now);
+
+            const checkSpy = vi.spyOn(radar.polling, 'checkForUpdates').mockImplementation(() => Promise.resolve());
+
+            radar.startPolling();
+            expect(radar.polling.stopped).toBe(false);
+
+            // Advance time to trigger first timeout (6 minutes)
+            await vi.advanceTimersByTimeAsync(6 * 60 * 1000 + 100);
+            expect(checkSpy).toHaveBeenCalledTimes(1);
+
+            // Advance time to trigger second timeout (10 minutes)
+            await vi.advanceTimersByTimeAsync(10 * 60 * 1000 + 100);
+            expect(checkSpy).toHaveBeenCalledTimes(2);
         });
     });
 

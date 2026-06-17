@@ -17,8 +17,8 @@ export class RadarPolling {
      * Uses sync polling instead of fixed intervals - see scheduleNextPoll().
      */
     startPolling() {
-        this.stopped = false;
         this.stopPolling();
+        this.stopped = false;
         this.scheduleNextPoll();
     }
 
