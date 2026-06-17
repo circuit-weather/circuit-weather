@@ -1,5 +1,4 @@
 import { CONFIG } from '../config.js';
-import { RadarFrames } from './RadarFrames.js';
 
 export class RadarPolling {
     constructor(options = {}) {
@@ -8,6 +7,7 @@ export class RadarPolling {
         this.applyFrameUpdate = options.applyFrameUpdate || (() => {});
         this.setPendingFrames = options.setPendingFrames || (() => {});
         this.onPastCountChange = options.onPastCountChange || (() => {});
+        this.fetchFrames = options.fetchFrames || (() => Promise.resolve({ frames: [], pastCount: 0 }));
 
         this.pollingTimeout = null;
     }
@@ -51,8 +51,8 @@ export class RadarPolling {
         // Minimum delay of 30 seconds to avoid tight loops on clock edge cases
         delay = Math.max(delay, CONFIG.MIN_POLL_DELAY_MS);
 
-        this.pollingTimeout = setTimeout(() => {
-            this.checkForUpdates();
+        this.pollingTimeout = setTimeout(async () => {
+            await this.checkForUpdates();
             this.scheduleNextPoll(); // Schedule next poll recursively
         }, delay);
     }
@@ -66,7 +66,7 @@ export class RadarPolling {
 
     async checkForUpdates() {
         try {
-            const { frames: newFrames, pastCount } = await RadarFrames.getFramesFromApi();
+            const { frames: newFrames, pastCount } = await this.fetchFrames();
             if (!newFrames || newFrames.length === 0) return;
 
             // Inform the parent about the pastCount which might have changed

@@ -62,7 +62,7 @@ describe('WeatherRadar Polling Logic', () => {
     });
 
     describe('scheduleNextPoll', () => {
-        it('should schedule next poll aligned to 10-minute intervals + 1 min offset', () => {
+        it('should schedule next poll aligned to 10-minute intervals + 1 min offset', async () => {
             // Setup time: 12:05:00
             // Next update window: 12:10:00 (RainViewer updates every 10 mins)
             // Poll target: 12:11:00 (1 min offset)
@@ -82,7 +82,8 @@ describe('WeatherRadar Polling Logic', () => {
             const spy = vi.spyOn(radar.polling, 'scheduleNextPoll');
 
             // Advance time to trigger the timeout (6 minutes)
-            vi.advanceTimersByTime(6 * 60 * 1000 + 100);
+            // Awaiting advanceTimersByTimeAsync because the timeout callback is now async
+            await vi.advanceTimersByTimeAsync(6 * 60 * 1000 + 100);
 
             expect(checkSpy).toHaveBeenCalled();
             expect(spy).toHaveBeenCalledTimes(1); // Recursive call (from inside timeout)
@@ -226,15 +227,4 @@ describe('WeatherRadar Polling Logic', () => {
         });
     });
 
-    describe('Relative Time Update Control', () => {
-        it('should clear interval on stopRelativeTimeUpdate', () => {
-            radar.relativeTimeInterval = 456;
-            const spy = vi.spyOn(global, 'clearInterval');
-
-            radar.stopRelativeTimeUpdate();
-
-            expect(spy).toHaveBeenCalledWith(456);
-            expect(radar.relativeTimeInterval).toBeNull();
-        });
-    });
 });

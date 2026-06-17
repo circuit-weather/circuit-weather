@@ -77,7 +77,6 @@ describe('WeatherRadar Lifecycle & Playback', () => {
         radar = new WeatherRadar(mockMap);
 
         // Mock UI
-        radar.ui.controls = createMockElement('radarControls');
         radar.ui.slider = createMockElement('radarSlider');
         radar.ui.time = createMockElement('radarTime');
         radar.ui.relative = createMockElement('radarRelative');

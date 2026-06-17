@@ -26,7 +26,8 @@ export class WeatherRadar {
             isPlaying: () => this.playback.isPlaying,
             applyFrameUpdate: (frames) => this.applyFrameUpdate(frames),
             setPendingFrames: (frames) => { this.pendingFrames = frames; },
-            onPastCountChange: (count) => { this.pastFrameCount = count; }
+            onPastCountChange: (count) => { this.pastFrameCount = count; },
+            fetchFrames: () => RadarFrames.getFramesFromApi()
         });
 
         // Shared time formatter (O(1) creation, reuse in loops)
@@ -112,6 +113,11 @@ export class WeatherRadar {
         document.removeEventListener('i18n:change', this.handleLanguageChange);
         this.errorToast.destroy();
         this.playback.destroy();
+        this.polling.stopPolling();
+        if (this.relativeTimeInterval) {
+            clearInterval(this.relativeTimeInterval);
+            this.relativeTimeInterval = null;
+        }
     }
 
     setSessionTime(sessionTime) {
@@ -164,15 +170,6 @@ export class WeatherRadar {
     scheduleNextPoll() { this.polling.scheduleNextPoll(); }
     checkForUpdates() { return this.polling.checkForUpdates(); }
 
-    /**
-     * Stop the periodic relative time display refresh.
-     */
-    stopRelativeTimeUpdate() {
-        if (this.relativeTimeInterval) {
-            clearInterval(this.relativeTimeInterval);
-            this.relativeTimeInterval = null;
-        }
-    }
 
     createLayers() {
         if (!this.map) return;
@@ -702,12 +699,6 @@ export class WeatherRadar {
         }
     }
 
-    /**
-     * Formats a duration in minutes into a readable string.
-     * Always includes minutes to prevent layout jumps during playback.
-     * @param {number} totalMinutes
-     * @returns {string} e.g. "1 day 2 hours 30 minutes"
-     */
     handleLanguageChange() {
         // Update time formatter with new locale
         this.timeFormatter = new Intl.DateTimeFormat(i18n.locale, {
@@ -753,6 +744,12 @@ export class WeatherRadar {
         });
     }
 
+    /**
+     * Formats a duration in minutes into a readable string.
+     * Always includes minutes to prevent layout jumps during playback.
+     * @param {number} totalMinutes
+     * @returns {string} e.g. "1 day 2 hours 30 minutes"
+     */
     formatDuration(totalMinutes) {
         const days = Math.floor(totalMinutes / (24 * 60));
         const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
