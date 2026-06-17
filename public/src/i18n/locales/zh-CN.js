@@ -18,8 +18,9 @@ export const zhCN = {
   },
   loading: { schedule: "正在加载比赛赛历...", session: "正在加载赛段数据..." },
   controls: {
-    onlyF1Supported: "目前仅支持 F1",
     f1: "F1",
+    f2: "Formula 2",
+    f3: "Formula 3",
     series: "系列赛",
     round: "分站",
     roundLabel: "R{{round}}: {{name}} ({{date}})",

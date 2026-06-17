@@ -21,8 +21,9 @@ export const ptBR = {
     session: "Carregando dados da sessao...",
   },
   controls: {
-    onlyF1Supported: "Atualmente, apenas a Formula 1 e suportada",
     f1: "Formula 1",
+    f2: "Formula 2",
+    f3: "Formula 3",
     series: "Serie",
     round: "Ronda",
     roundLabel: "R{{round}}: {{name}} ({{date}})",

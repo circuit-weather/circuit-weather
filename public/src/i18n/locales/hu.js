@@ -21,8 +21,9 @@ export const hu = {
     switchToDark: "Váltás sötét módra",
   },
   controls: {
-    onlyF1Supported: "Jelenleg csak a Forma-1 támogatott",
     f1: "Forma-1",
+    f2: "Formula 2",
+    f3: "Formula 3",
     series: "Sorozat",
     round: "Forduló",
     roundLabel: "R{{round}}: {{name}} ({{date}})",

@@ -39,6 +39,7 @@ export class CircuitWeatherApp {
         this.races = [];
         this.selectedRace = null;
         this.selectedSession = null;
+        this.currentSeries = 'f1';
         this.router = new Router(params => this.handleRoute(params));
         this.mobileQuery = window.matchMedia('(max-width: 768px)');
         this.liveWeatherDebounceTimer = null;
@@ -51,6 +52,7 @@ export class CircuitWeatherApp {
         // Bolt Optimization: Cache frequently accessed DOM elements
         this.ui = {
             loadingOverlay: document.getElementById('loadingOverlay'),
+            seriesSelect: document.getElementById('seriesSelect'),
             roundSelect: document.getElementById('roundSelect'),
             sessionSelect: document.getElementById('sessionSelect'),
             // Race Info Banner (Sidebar)
@@ -121,12 +123,18 @@ export class CircuitWeatherApp {
 
             this.bindEvents();
 
-            // Load schedule
-            const schedule = await this.f1Api.getSchedule();
-            this.races = schedule.map(r => this.f1Api.parseRace(r));
+            if (this.ui.seriesSelect) {
+                this.ui.seriesSelect.addEventListener('change', async (e) => {
+                    this.currentSeries = e.target.value;
+                    this.selectedSession = null;
+                    this.selectedRace = null;
+                    this.router.navigate(this.currentSeries, null, null);
+                    await this.loadSchedule(this.currentSeries);
+                });
+            }
 
-            this.updateDataSourceNotice();
-            this.populateRoundSelect();
+            // Load schedule
+            await this.loadSchedule(this.currentSeries);
 
             document.addEventListener('i18n:change', this.handleLanguageChange);
 
@@ -152,6 +160,37 @@ export class CircuitWeatherApp {
                 : scheduleMatch ? 'errors.scheduleUnavailable'
                 : 'errors.initFailed';
             this.renderError(i18n.t(msgKey));
+        } finally {
+            this.showLoading(false);
+        }
+    }
+
+    async loadSchedule(series) {
+        this.showLoading(true, i18n.t('loading.schedule'));
+        try {
+            const schedule = await this.f1Api.getSchedule(series);
+            this.races = schedule.map(r => this.f1Api.parseRace(r));
+
+            this.updateDataSourceNotice();
+            this.populateRoundSelect();
+
+            if (this.ui.roundSelect) this.ui.roundSelect.value = '';
+            if (this.ui.sessionSelect) {
+                this.ui.sessionSelect.innerHTML = `<option value="">${escapeHtml(i18n.t('controls.selectRoundFirst'))}</option>`;
+                this.ui.sessionSelect.disabled = true;
+                this.ui.sessionSelect.setAttribute('aria-disabled', 'true');
+                this.ui.sessionSelect.title = i18n.t('controls.selectRoundFirst');
+            }
+            if (this.ui.raceInfoBanner) this.ui.raceInfoBanner.style.display = 'none';
+            if (this.ui.forecastSection) this.ui.forecastSection.style.display = 'none';
+            if (this.ui.sessionEmptyState) this.ui.sessionEmptyState.style.display = 'flex';
+            this.countdown.show(false);
+            if (this.trackLayer) this.trackLayer.clear();
+            if (this.rangeCircles) this.rangeCircles.clear();
+            this.stopSessionForecastInterval();
+            this.updatePageMetadata();
+        } catch (error) {
+            console.error(`Failed to load schedule for ${series}:`, error);
         } finally {
             this.showLoading(false);
         }
@@ -590,7 +629,7 @@ export class CircuitWeatherApp {
                 "@type": "ListItem",
                 "position": 2,
                 "name": this.selectedRace.name,
-                "item": `${baseUrl}/f1/${this.selectedRace.round}`
+                "item": `${baseUrl}/${this.currentSeries}/${this.selectedRace.round}`
             });
 
             if (this.selectedSession) {
@@ -598,7 +637,7 @@ export class CircuitWeatherApp {
                     "@type": "ListItem",
                     "position": 3,
                     "name": this.selectedSession.name,
-                    "item": `${baseUrl}/f1/${this.selectedRace.round}/${this.selectedSession.id}`
+                    "item": `${baseUrl}/${this.currentSeries}/${this.selectedRace.round}/${this.selectedSession.id}`
                 });
             }
         }
@@ -749,7 +788,7 @@ export class CircuitWeatherApp {
         // Start polling again, it will only do work if a session is actively selected
         this.startSessionForecastInterval();
 
-        this.router.navigate('f1', round, null);
+        this.router.navigate(this.currentSeries, round, null);
     }
 
     updateRaceInfo(race) {
@@ -863,7 +902,7 @@ export class CircuitWeatherApp {
             // Ensure mobile elements are visible
             this.updateMobileVisibility();
 
-            this.router.navigate('f1', this.selectedRace.round, sessionId);
+            this.router.navigate(this.currentSeries, this.selectedRace.round, sessionId);
         } catch (error) {
             console.error('Error selecting session:', error);
 
@@ -1157,10 +1196,13 @@ export class CircuitWeatherApp {
     }
 
     async handleRoute({ series, round, session }) {
-        // TODO: Feature — only 'f1' is supported today although the UI is built
-        // around a series dropdown. F2/F3 share circuits and the Jolpica API, so
-        // generalise selection/routing here (and the F1API client) to add them.
-        if (series !== 'f1') return;
+        if (!['f1', 'f2', 'f3'].includes(series)) return;
+
+        if (this.currentSeries !== series) {
+            this.currentSeries = series;
+            if (this.ui.seriesSelect) this.ui.seriesSelect.value = series;
+            await this.loadSchedule(series);
+        }
 
         if (round) {
             if (this.ui.roundSelect) this.ui.roundSelect.value = round;

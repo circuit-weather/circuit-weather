@@ -130,7 +130,7 @@ export default {
     }
 
     // Only /api/* routes reach this worker (configured via run_worker_first)
-    if (path.startsWith('/api/f1/')) {
+    if (path.startsWith('/api/f1/') || path.startsWith('/api/f2/') || path.startsWith('/api/f3/')) {
       return handleApiRequest(request, env, ctx, url);
     }
 
@@ -280,9 +280,13 @@ async function handleApiRequest(request, env, ctx, url) {
   }
 
 
-  // Extract path parameters after /api/f1/
-  // e.g. /api/f1/current -> current
-  const apiPath = url.pathname.slice('/api/f1/'.length);
+  // Extract path parameters after /api/f1/ (or f2/f3)
+  const match = url.pathname.match(/^\/api\/(f[123])\/(.*)/);
+  if (!match) {
+      return createErrorResponse(request, 400, 'Invalid API path format');
+  }
+  const series = match[1];
+  const apiPath = match[2];
 
   // Validate apiPath: Strict whitelist + structure check
   // Allows: alphanumeric, dot, hyphen, underscore, slash
@@ -302,7 +306,7 @@ async function handleApiRequest(request, env, ctx, url) {
   }
 
   // Build upstream URL
-  const upstreamUrl = `https://api.jolpi.ca/ergast/f1/${apiPath}`;
+  const upstreamUrl = `https://api.jolpi.ca/ergast/${series}/${apiPath}`;
 
   // Cache key based on the full upstream URL
   // SEC: Normalize cache key to URL only to prevent cache busting via headers
