@@ -71,7 +71,7 @@ describe('WeatherRadar Polling Logic', () => {
             const now = new Date('2024-01-01T12:05:00Z').getTime();
             vi.setSystemTime(now);
 
-            const checkSpy = vi.spyOn(radar, 'checkForUpdates').mockImplementation(() => Promise.resolve());
+            const checkSpy = vi.spyOn(radar.polling, 'checkForUpdates').mockImplementation(() => Promise.resolve());
 
             radar.scheduleNextPoll(); // Manual call
 
@@ -79,7 +79,7 @@ describe('WeatherRadar Polling Logic', () => {
             expect(vi.getTimerCount()).toBe(2);
 
             // Spy on the recursive call
-            const spy = vi.spyOn(radar, 'scheduleNextPoll');
+            const spy = vi.spyOn(radar.polling, 'scheduleNextPoll');
 
             // Advance time to trigger the timeout (6 minutes)
             vi.advanceTimersByTime(6 * 60 * 1000 + 100);
@@ -206,18 +206,18 @@ describe('WeatherRadar Polling Logic', () => {
 
     describe('Polling Control', () => {
         it('should clear timeout on stopPolling', () => {
-            radar.pollingTimeout = 123;
+            radar.polling.pollingTimeout = 123;
             const spy = vi.spyOn(global, 'clearTimeout');
 
             radar.stopPolling();
 
             expect(spy).toHaveBeenCalledWith(123);
-            expect(radar.pollingTimeout).toBeNull();
+            expect(radar.polling.pollingTimeout).toBeNull();
         });
 
         it('should restart polling on startPolling', () => {
-            const stopSpy = vi.spyOn(radar, 'stopPolling');
-            const scheduleSpy = vi.spyOn(radar, 'scheduleNextPoll');
+            const stopSpy = vi.spyOn(radar.polling, 'stopPolling');
+            const scheduleSpy = vi.spyOn(radar.polling, 'scheduleNextPoll');
 
             radar.startPolling();
 
