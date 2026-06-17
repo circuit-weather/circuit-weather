@@ -177,7 +177,7 @@ describe('F1API', () => {
             // 1 Jolpica + 2 OpenF1 (meetings + sessions)
             expect(mockFetch).toHaveBeenCalledTimes(3);
             // Result persisted to localStorage
-            expect(SafeStorage.setItem).toHaveBeenCalledWith('f1_schedule_cache_f1', expect.any(String));
+            expect(SafeStorage.setItem).toHaveBeenCalledWith('f1_schedule_cache', expect.any(String));
             warnSpy.mockRestore();
         });
 
@@ -275,7 +275,7 @@ describe('F1API', () => {
 
             expect(result).toEqual(mockRaces);
             expect(mockFetch).not.toHaveBeenCalled();
-            expect(SafeStorage.getItem).toHaveBeenCalledWith('f1_schedule_cache_f1');
+            expect(SafeStorage.getItem).toHaveBeenCalledWith('f1_schedule_cache');
         });
 
         it('fetches fresh data if localStorage cache is expired', async () => {
@@ -295,7 +295,7 @@ describe('F1API', () => {
 
             expect(result).toEqual(mockRaces);
             expect(mockFetch).toHaveBeenCalledTimes(1);
-            expect(SafeStorage.setItem).toHaveBeenCalledWith('f1_schedule_cache_f1', expect.any(String));
+            expect(SafeStorage.setItem).toHaveBeenCalledWith('f1_schedule_cache', expect.any(String));
         });
 
         it('fetches fresh data if localStorage contains invalid JSON', async () => {
@@ -313,7 +313,7 @@ describe('F1API', () => {
 
             expect(result).toEqual(mockRaces);
             expect(mockFetch).toHaveBeenCalledTimes(1);
-            expect(SafeStorage.setItem).toHaveBeenCalledWith('f1_schedule_cache_f1', expect.any(String));
+            expect(SafeStorage.setItem).toHaveBeenCalledWith('f1_schedule_cache', expect.any(String));
             warnSpy.mockRestore();
         });
     });

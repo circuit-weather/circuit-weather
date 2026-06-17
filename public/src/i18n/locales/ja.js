@@ -21,9 +21,8 @@ export const ja = {
     session: "セッションデータを読み込み中...",
   },
   controls: {
+    onlyF1Supported: "現在はF1のみサポートされています",
     f1: "F1",
-    f2: "Formula 2",
-    f3: "Formula 3",
     series: "シリーズ",
     round: "ラウンド",
     roundLabel: "R{{round}}: {{name}} ({{date}})",

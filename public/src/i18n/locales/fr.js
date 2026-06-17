@@ -21,9 +21,8 @@ export const fr = {
     session: "Chargement des donnees de session...",
   },
   controls: {
+    onlyF1Supported: "Seule la Formule 1 est actuellement prise en charge",
     f1: "Formule 1",
-    f2: "Formula 2",
-    f3: "Formula 3",
     series: "Serie",
     round: "Manche",
     roundLabel: "R{{round}}: {{name}} ({{date}})",

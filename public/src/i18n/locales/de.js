@@ -21,9 +21,8 @@ export const de = {
     session: "Lade Sessiondaten...",
   },
   controls: {
+    onlyF1Supported: "Derzeit wird nur die Formel 1 unterstutzt",
     f1: "Formel 1",
-    f2: "Formula 2",
-    f3: "Formula 3",
     series: "Serie",
     round: "Runde",
     roundLabel: "R{{round}}: {{name}} ({{date}})",

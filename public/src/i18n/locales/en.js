@@ -21,9 +21,8 @@ export const en = {
     switchToDark: "Switch to dark mode",
   },
   controls: {
+    onlyF1Supported: "Only Formula 1 is currently supported",
     f1: "Formula 1",
-    f2: "Formula 2",
-    f3: "Formula 3",
     series: "Series",
     round: "Round",
     roundLabel: "R{{round}}: {{name}} ({{date}})",

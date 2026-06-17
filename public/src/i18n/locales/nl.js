@@ -21,9 +21,8 @@ export const nl = {
     switchToDark: "Overschakelen naar donkere modus",
   },
   controls: {
+    onlyF1Supported: "Alleen de Formule 1 wordt momenteel ondersteund",
     f1: "Formule 1",
-    f2: "Formula 2",
-    f3: "Formula 3",
     series: "Serie",
     round: "Ronde",
     roundLabel: "R{{round}}: {{name}} ({{date}})",

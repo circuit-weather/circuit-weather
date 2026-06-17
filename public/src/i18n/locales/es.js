@@ -21,9 +21,8 @@ export const es = {
     session: "Cargando datos de la sesion...",
   },
   controls: {
+    onlyF1Supported: "Actualmente solo se admite Formula 1",
     f1: "Formula 1",
-    f2: "Formula 2",
-    f3: "Formula 3",
     series: "Serie",
     round: "Ronda",
     roundLabel: "R{{round}}: {{name}} ({{date}})",
