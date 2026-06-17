@@ -17,6 +17,7 @@ export class RadarPolling {
      * Uses sync polling instead of fixed intervals - see scheduleNextPoll().
      */
     startPolling() {
+        this.stopped = false;
         this.stopPolling();
         this.scheduleNextPoll();
     }
@@ -53,11 +54,14 @@ export class RadarPolling {
 
         this.pollingTimeout = setTimeout(async () => {
             await this.checkForUpdates();
-            this.scheduleNextPoll(); // Schedule next poll recursively
+            if (!this.stopped) {
+                this.scheduleNextPoll(); // Schedule next poll recursively
+            }
         }, delay);
     }
 
     stopPolling() {
+        this.stopped = true;
         if (this.pollingTimeout) {
             clearTimeout(this.pollingTimeout);
             this.pollingTimeout = null;

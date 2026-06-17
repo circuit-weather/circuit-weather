@@ -160,11 +160,7 @@ export class WeatherRadar {
         }
     }
 
-    /**
-     * Start the smart polling cycle for radar updates.
-     * Uses sync polling instead of fixed intervals - see scheduleNextPoll().
-     */
-    // Legacy mapping (Proxy for tests/external users)
+    // Delegates to RadarPolling
     startPolling() { this.polling.startPolling(); }
     stopPolling() { this.polling.stopPolling(); }
     scheduleNextPoll() { this.polling.scheduleNextPoll(); }
