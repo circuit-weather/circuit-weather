@@ -10,6 +10,7 @@ import { fr } from './locales/fr.js';
 import { hu } from './locales/hu.js';
 import { it } from './locales/it.js';
 import { ja } from './locales/ja.js';
+import { ko } from './locales/ko.js';
 import { nl } from './locales/nl.js';
 import { ptBR } from './locales/pt-BR.js';
 import { zhCN } from './locales/zh-CN.js';
@@ -29,6 +30,7 @@ export const TRANSLATIONS = {
     hu,
     it,
     ja,
+    ko,
     nl,
     'pt-BR': ptBR,
     'zh-CN': zhCN,
@@ -43,6 +45,7 @@ export const LANGUAGE_NAMES = {
     'fr': 'Français',
     'hu': 'Magyar',
     'it': 'Italiano',
+    'ko': '한국어',
     'nl': 'Nederlands',
     'pt-BR': 'Português (BR)',
     'zh-CN': '简体中文',
