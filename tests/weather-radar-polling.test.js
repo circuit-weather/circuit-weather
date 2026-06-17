@@ -62,7 +62,7 @@ describe('WeatherRadar Polling Logic', () => {
     });
 
     describe('scheduleNextPoll', () => {
-        it('should schedule next poll aligned to 10-minute intervals + 1 min offset', () => {
+        it('should schedule next poll aligned to 10-minute intervals + 1 min offset', async () => {
             // Setup time: 12:05:00
             // Next update window: 12:10:00 (RainViewer updates every 10 mins)
             // Poll target: 12:11:00 (1 min offset)
@@ -71,7 +71,7 @@ describe('WeatherRadar Polling Logic', () => {
             const now = new Date('2024-01-01T12:05:00Z').getTime();
             vi.setSystemTime(now);
 
-            const checkSpy = vi.spyOn(radar, 'checkForUpdates').mockImplementation(() => Promise.resolve());
+            const checkSpy = vi.spyOn(radar.polling, 'checkForUpdates').mockImplementation(() => Promise.resolve());
 
             radar.scheduleNextPoll(); // Manual call
 
@@ -79,10 +79,11 @@ describe('WeatherRadar Polling Logic', () => {
             expect(vi.getTimerCount()).toBe(2);
 
             // Spy on the recursive call
-            const spy = vi.spyOn(radar, 'scheduleNextPoll');
+            const spy = vi.spyOn(radar.polling, 'scheduleNextPoll');
 
             // Advance time to trigger the timeout (6 minutes)
-            vi.advanceTimersByTime(6 * 60 * 1000 + 100);
+            // Awaiting advanceTimersByTimeAsync because the timeout callback is now async
+            await vi.advanceTimersByTimeAsync(6 * 60 * 1000 + 100);
 
             expect(checkSpy).toHaveBeenCalled();
             expect(spy).toHaveBeenCalledTimes(1); // Recursive call (from inside timeout)
@@ -206,35 +207,44 @@ describe('WeatherRadar Polling Logic', () => {
 
     describe('Polling Control', () => {
         it('should clear timeout on stopPolling', () => {
-            radar.pollingTimeout = 123;
+            radar.polling.pollingTimeout = 123;
             const spy = vi.spyOn(global, 'clearTimeout');
 
             radar.stopPolling();
 
             expect(spy).toHaveBeenCalledWith(123);
-            expect(radar.pollingTimeout).toBeNull();
+            expect(radar.polling.pollingTimeout).toBeNull();
         });
 
         it('should restart polling on startPolling', () => {
-            const stopSpy = vi.spyOn(radar, 'stopPolling');
-            const scheduleSpy = vi.spyOn(radar, 'scheduleNextPoll');
+            const stopSpy = vi.spyOn(radar.polling, 'stopPolling');
+            const scheduleSpy = vi.spyOn(radar.polling, 'scheduleNextPoll');
 
             radar.startPolling();
 
             expect(stopSpy).toHaveBeenCalled();
             expect(scheduleSpy).toHaveBeenCalled();
+            expect(radar.polling.stopped).toBe(false);
+        });
+
+        it('should continue polling cycle if started via startPolling', async () => {
+            // Setup time: 12:05:00. Target: 12:11:00 (6 mins delay)
+            const now = new Date('2024-01-01T12:05:00Z').getTime();
+            vi.setSystemTime(now);
+
+            const checkSpy = vi.spyOn(radar.polling, 'checkForUpdates').mockImplementation(() => Promise.resolve());
+
+            radar.startPolling();
+            expect(radar.polling.stopped).toBe(false);
+
+            // Advance time to trigger first timeout (6 minutes)
+            await vi.advanceTimersByTimeAsync(6 * 60 * 1000 + 100);
+            expect(checkSpy).toHaveBeenCalledTimes(1);
+
+            // Advance time to trigger second timeout (10 minutes)
+            await vi.advanceTimersByTimeAsync(10 * 60 * 1000 + 100);
+            expect(checkSpy).toHaveBeenCalledTimes(2);
         });
     });
 
-    describe('Relative Time Update Control', () => {
-        it('should clear interval on stopRelativeTimeUpdate', () => {
-            radar.relativeTimeInterval = 456;
-            const spy = vi.spyOn(global, 'clearInterval');
-
-            radar.stopRelativeTimeUpdate();
-
-            expect(spy).toHaveBeenCalledWith(456);
-            expect(radar.relativeTimeInterval).toBeNull();
-        });
-    });
 });

@@ -77,7 +77,6 @@ describe('WeatherRadar Lifecycle & Playback', () => {
         radar = new WeatherRadar(mockMap);
 
         // Mock UI
-        radar.ui.controls = createMockElement('radarControls');
         radar.ui.slider = createMockElement('radarSlider');
         radar.ui.time = createMockElement('radarTime');
         radar.ui.relative = createMockElement('radarRelative');
@@ -98,38 +97,21 @@ describe('WeatherRadar Lifecycle & Playback', () => {
     });
 
     // ---------------------------------------------------------------
-    // getFramesFromApi — fetches and structures radar data
+    // fetchAndFilter
     // ---------------------------------------------------------------
-    describe('getFramesFromApi', () => {
-        it('returns combined past and nowcast frames with tile URLs', async () => {
-            global.fetch.mockResolvedValueOnce({ ok: true,
-                json: () => Promise.resolve({
-                    radar: {
-                        past: [{ time: 100, path: '/v2/radar/100' }],
-                        nowcast: [{ time: 200, path: '/v2/radar/200' }],
-                    }
-                })
+    describe('fetchAndFilter', () => {
+        it('fetches frames and updates this.frames and pastFrameCount', async () => {
+            const { RadarFrames } = await import('../public/src/map/RadarFrames.js');
+            vi.spyOn(RadarFrames, 'getFramesFromApi').mockResolvedValue({
+                frames: [{ time: 100, path: '/p1', url: '/u1' }],
+                pastCount: 1
             });
 
-            const frames = await radar.getFramesFromApi();
+            const frames = await radar.fetchAndFilter();
 
-            expect(frames).toHaveLength(2);
-            expect(frames[0]).toEqual({
-                time: 100,
-                path: '/v2/radar/100',
-                url: '/api/tiles/v2/radar/100/512/{z}/{x}/{y}/2/1_1.png',
-            });
+            expect(frames).toHaveLength(1);
+            expect(radar.frames).toBe(frames);
             expect(radar.pastFrameCount).toBe(1);
-        });
-
-        it('handles missing radar data gracefully', async () => {
-            global.fetch.mockResolvedValueOnce({ ok: true,
-                json: () => Promise.resolve({})
-            });
-
-            const frames = await radar.getFramesFromApi();
-            expect(frames).toHaveLength(0);
-            expect(radar.pastFrameCount).toBe(0);
         });
     });
 
@@ -275,13 +257,10 @@ describe('WeatherRadar Lifecycle & Playback', () => {
     // ---------------------------------------------------------------
     describe('load', () => {
         it('fetches frames, creates layers, and starts playback', async () => {
-            global.fetch.mockResolvedValueOnce({ ok: true,
-                json: () => Promise.resolve({
-                    radar: {
-                        past: [{ time: 100, path: '/p1' }],
-                        nowcast: [{ time: 200, path: '/p2' }],
-                    }
-                })
+            const { RadarFrames } = await import('../public/src/map/RadarFrames.js');
+            vi.spyOn(RadarFrames, 'getFramesFromApi').mockResolvedValue({
+                frames: [{ time: 100, path: '/p1' }, { time: 200, path: '/p2' }],
+                pastCount: 1
             });
 
             // Mock waitForTilesToLoad to resolve immediately
@@ -295,8 +274,10 @@ describe('WeatherRadar Lifecycle & Playback', () => {
         });
 
         it('handles empty API response gracefully', async () => {
-            global.fetch.mockResolvedValueOnce({ ok: true,
-                json: () => Promise.resolve({ radar: { past: [], nowcast: [] } })
+            const { RadarFrames } = await import('../public/src/map/RadarFrames.js');
+            vi.spyOn(RadarFrames, 'getFramesFromApi').mockResolvedValue({
+                frames: [],
+                pastCount: 0
             });
 
             await radar.load();
@@ -306,8 +287,10 @@ describe('WeatherRadar Lifecycle & Playback', () => {
         });
 
         it('always starts polling even if load fails', async () => {
+            const { RadarFrames } = await import('../public/src/map/RadarFrames.js');
+            vi.spyOn(RadarFrames, 'getFramesFromApi').mockRejectedValue(new Error('Network Error'));
+
             const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-            global.fetch.mockRejectedValueOnce(new Error('Network Error'));
             const pollSpy = vi.spyOn(radar, 'startPolling');
 
             await radar.load();

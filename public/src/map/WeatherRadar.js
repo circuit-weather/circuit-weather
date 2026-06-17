@@ -2,13 +2,10 @@ import { CONFIG } from '../config.js';
 import { i18n } from '../i18n/index.js';
 import { RadarErrorToast } from './RadarErrorToast.js';
 import { RadarPlayback } from './RadarPlayback.js';
+import { RadarFrames } from './RadarFrames.js';
+import { RadarPolling } from './RadarPolling.js';
+import { RadarReconcile } from './RadarReconcile.js';
 
-// TODO: Refactor (in progress) — this class is large and mixes several concerns:
-// frame management, playback animation, polling/reconciliation, and the error/toast
-// UI. The error/toast subsystem (RadarErrorToast.js) and playback (RadarPlayback.js)
-// have been extracted; continue splitting the remaining concerns into separate units
-// (the existing test files hint at these seams: frames, polling, reconcile).
-//
 // TODO: Feature — rain alerts. We already retain ~2h of radar frames; derive an
 // "approaching precipitation" signal relative to the selected circuit centre and
 // surface a "rain incoming" indicator for race strategy.
@@ -19,10 +16,19 @@ export class WeatherRadar {
         this.layers = [];
         this.visibleLayerIndex = -1;
         this.currentFrame = 0;
-        this.pollingTimeout = null;
         this.sessionTime = null;
         this.pastFrameCount = 0;
         this.pendingFrames = null;
+
+        // Smart polling + auto update checker
+        this.polling = new RadarPolling({
+            getFrames: () => this.frames,
+            isPlaying: () => this.playback.isPlaying,
+            applyFrameUpdate: (frames) => this.applyFrameUpdate(frames),
+            setPendingFrames: (frames) => { this.pendingFrames = frames; },
+            onPastCountChange: (count) => { this.pastFrameCount = count; },
+            fetchFrames: () => RadarFrames.getFramesFromApi()
+        });
 
         // Shared time formatter (O(1) creation, reuse in loops)
         this.timeFormatter = new Intl.DateTimeFormat(i18n.locale, {
@@ -107,6 +113,11 @@ export class WeatherRadar {
         document.removeEventListener('i18n:change', this.handleLanguageChange);
         this.errorToast.destroy();
         this.playback.destroy();
+        this.polling.stopPolling();
+        if (this.relativeTimeInterval) {
+            clearInterval(this.relativeTimeInterval);
+            this.relativeTimeInterval = null;
+        }
     }
 
     setSessionTime(sessionTime) {
@@ -114,36 +125,10 @@ export class WeatherRadar {
     }
 
     async fetchAndFilter() {
-        this.frames = await this.getFramesFromApi();
+        const result = await RadarFrames.getFramesFromApi();
+        this.frames = result.frames;
+        this.pastFrameCount = result.pastCount;
         return this.frames;
-    }
-
-    async getFramesFromApi() {
-        try {
-            const response = await fetch(CONFIG.rainViewerApi, {
-                signal: AbortSignal.timeout(5000)
-            });
-            if (!response.ok) {
-                console.error(`RainViewer API error: ${response.status}`);
-                return [];
-            }
-            const data = await response.json();
-
-            const past = data.radar?.past || [];
-            const nowcast = data.radar?.nowcast || [];
-
-            // Store the count of past frames to identify the forecast start
-            this.pastFrameCount = past.length;
-
-            return [...past, ...nowcast].map(frame => ({
-                time: frame.time,
-                path: frame.path,
-                url: `/api/tiles${frame.path}/512/{z}/{x}/{y}/2/1_1.png`,
-            }));
-        } catch (error) {
-            console.error('Failed to fetch radar frames:', error);
-            return [];
-        }
     }
 
     async load() {
@@ -175,102 +160,12 @@ export class WeatherRadar {
         }
     }
 
-    /**
-     * Start the smart polling cycle for radar updates.
-     * Uses sync polling instead of fixed intervals - see scheduleNextPoll().
-     */
-    startPolling() {
-        this.stopPolling();
-        this.scheduleNextPoll();
-    }
+    // Delegates to RadarPolling
+    startPolling() { this.polling.startPolling(); }
+    stopPolling() { this.polling.stopPolling(); }
+    scheduleNextPoll() { this.polling.scheduleNextPoll(); }
+    checkForUpdates() { return this.polling.checkForUpdates(); }
 
-    /**
-     * Schedule the next poll to sync with RainViewer's update cycle.
-     *
-     * RATE LIMITING STRATEGY:
-     * Instead of polling every 30 seconds (120 API calls/hour), we sync with
-     * RainViewer's 10-minute update cycle. We poll 1 minute after each :X0 mark
-     * (e.g., :01, :11, :21) when new data is available.
-     *
-     * This reduces API calls from ~120/hour to ~6/hour while still getting
-     * fresh data within 1 minute of it becoming available.
-     */
-    scheduleNextPoll() {
-        const now = Date.now();
-        const updateIntervalMs = 10 * CONFIG.ONE_MINUTE_MS; // RainViewer updates every 10 minutes
-        const offsetMs = 1 * CONFIG.ONE_MINUTE_MS; // Poll 1 minute after update to ensure data is ready
-
-        // Calculate ms since last :X0 mark (e.g., :00, :10, :20, etc.)
-        const msSinceLastUpdate = now % updateIntervalMs;
-
-        // Calculate delay until next update + offset
-        let delay = updateIntervalMs - msSinceLastUpdate + offsetMs;
-
-        // If we're already past the offset window, wait for next cycle
-        if (delay > updateIntervalMs) {
-            delay -= updateIntervalMs;
-        }
-
-        // Minimum delay of 30 seconds to avoid tight loops on clock edge cases
-        delay = Math.max(delay, CONFIG.MIN_POLL_DELAY_MS);
-
-        this.pollingTimeout = setTimeout(() => {
-            this.checkForUpdates();
-            this.scheduleNextPoll(); // Schedule next poll recursively
-        }, delay);
-    }
-
-    stopPolling() {
-        if (this.pollingTimeout) {
-            clearTimeout(this.pollingTimeout);
-            this.pollingTimeout = null;
-        }
-    }
-
-    /**
-     * Stop the periodic relative time display refresh.
-     */
-    stopRelativeTimeUpdate() {
-        if (this.relativeTimeInterval) {
-            clearInterval(this.relativeTimeInterval);
-            this.relativeTimeInterval = null;
-        }
-    }
-
-    async checkForUpdates() {
-        try {
-            const newFrames = await this.getFramesFromApi();
-            if (!newFrames || newFrames.length === 0) return;
-
-            // Bolt Optimization: Check if frames have changed
-            if (this.areFramesEqual(this.frames, newFrames)) {
-                return;
-            }
-
-            // Always attempt update - rebuild logic is cheap and robust
-            if (this.playback.isPlaying) {
-                this.applyFrameUpdate(newFrames);
-            } else {
-                // Defer update until played
-                this.pendingFrames = newFrames;
-            }
-        } catch (error) {
-            console.error('Failed to check for radar updates:', error);
-        }
-    }
-
-    areFramesEqual(a, b) {
-        if (!a || !b) return false;
-        if (a.length !== b.length) return false;
-
-        // Check timestamps and paths
-        for (let i = 0; i < a.length; i++) {
-            if (a[i].time !== b[i].time || a[i].path !== b[i].path) {
-                return false;
-            }
-        }
-        return true;
-    }
 
     createLayers() {
         if (!this.map) return;
@@ -473,58 +368,9 @@ export class WeatherRadar {
 
     // Bolt Optimization: Reuse Leaflet layers to reduce DOM churn
     reconcileLayers(newFrames) {
-        const isMapbox = !this.map.hasLayer;
-
-        // Map (time + path) -> Layer
-        const existingLayerMap = new Map();
-
-        // Populate map with existing valid layers
-        this.layers.forEach(layer => {
-            if (layer) {
-                const key = `${layer.frameTime}-${layer.framePath}`;
-                existingLayerMap.set(key, layer);
-            }
-        });
-
-        const newLayers = new Array(newFrames.length).fill(null);
-        let newVisibleIndex = -1;
-
-        // Current visible layer (reference)
-        const visibleLayer = this.visibleLayerIndex >= 0 ? this.layers[this.visibleLayerIndex] : null;
-
-        newFrames.forEach((frame, index) => {
-            const key = `${frame.time}-${frame.path}`;
-            if (existingLayerMap.has(key)) {
-                // Reuse existing layer
-                const layer = existingLayerMap.get(key);
-                layer.setZIndex(100 + index);
-                newLayers[index] = layer;
-
-                // If this was the visible layer, track its new index
-                if (layer === visibleLayer) {
-                    newVisibleIndex = index;
-                }
-
-                // Remove from map so we know what's left is unused
-                existingLayerMap.delete(key);
-            } else {
-                // Lazy Load: Leave as null.
-                // Layer will be created by getLayer() when needed (e.g. by showFrame or preloading).
-                newLayers[index] = null;
-            }
-        });
-
-        // Remove unused layers
-        existingLayerMap.forEach(layer => {
-            if (isMapbox) {
-                if (this.map.getLayer(layer.id)) this.map.removeLayer(layer.id);
-                if (this.map.getSource(layer.sourceId)) this.map.removeSource(layer.sourceId);
-            } else {
-                this.map.removeLayer(layer);
-            }
-        });
-
-        // Update state
+        const { newLayers, newVisibleIndex } = RadarReconcile.reconcileLayers(
+            this.map, this.layers, newFrames, this.visibleLayerIndex
+        );
         this.layers = newLayers;
         this.visibleLayerIndex = newVisibleIndex;
     }
@@ -849,12 +695,6 @@ export class WeatherRadar {
         }
     }
 
-    /**
-     * Formats a duration in minutes into a readable string.
-     * Always includes minutes to prevent layout jumps during playback.
-     * @param {number} totalMinutes
-     * @returns {string} e.g. "1 day 2 hours 30 minutes"
-     */
     handleLanguageChange() {
         // Update time formatter with new locale
         this.timeFormatter = new Intl.DateTimeFormat(i18n.locale, {
@@ -900,6 +740,12 @@ export class WeatherRadar {
         });
     }
 
+    /**
+     * Formats a duration in minutes into a readable string.
+     * Always includes minutes to prevent layout jumps during playback.
+     * @param {number} totalMinutes
+     * @returns {string} e.g. "1 day 2 hours 30 minutes"
+     */
     formatDuration(totalMinutes) {
         const days = Math.floor(totalMinutes / (24 * 60));
         const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
