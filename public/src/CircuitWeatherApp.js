@@ -1157,9 +1157,29 @@ export class CircuitWeatherApp {
     }
 
     async handleRoute({ series, round, session }) {
-        // TODO: Feature — only 'f1' is supported today although the UI is built
-        // around a series dropdown. F2/F3 share circuits and the Jolpica API, so
-        // generalise selection/routing here (and the F1API client) to add them.
+        // Only 'f1' is supported. The series dropdown in the UI is intentionally
+        // disabled (see public/index.html #seriesSelect) for this reason.
+        //
+        // WHY F2/F3 ARE NOT SUPPORTED:
+        // The schedule comes from the Jolpica API (api.jolpi.ca/ergast), a
+        // drop-in replacement for the now-deprecated Ergast API. Ergast/Jolpica
+        // only ever served Formula 1 data — there is no Formula 2 or Formula 3
+        // dataset behind it. The "/f1/" in the upstream path is a fixed part of
+        // the Ergast route, NOT a series selector: requesting "/ergast/f2/..."
+        // or "/ergast/f3/..." does not return F2/F3 data. The path segment is
+        // ignored upstream and you get the F1 schedule back regardless, which is
+        // why a naive "swap f1 for f2 in the URL" approach (attempted in #729)
+        // produces identical rounds and session start times for every series.
+        //
+        // The OpenF1 fallback (see api/openf1.js) is likewise F1-only.
+        //
+        // Adding real F2/F3 support therefore requires sourcing an entirely new
+        // dataset that provides per-round schedules WITH session start times and
+        // circuit coordinates (needed for the weather lookup), and that is
+        // reachable from a Cloudflare Worker / browser (CORS + not blocking
+        // datacenter IPs). No such free, proxy-friendly source has been found at
+        // the time of writing. Until one exists, the dropdown stays disabled and
+        // routing for any non-F1 series is rejected here.
         if (series !== 'f1') return;
 
         if (round) {
