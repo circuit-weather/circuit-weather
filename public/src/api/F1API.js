@@ -56,6 +56,11 @@ export class F1API {
         }
     }
 
+    // NOTE: Jolpica (Ergast-compatible) is Formula 1 only. There is no F2/F3
+    // dataset behind it — the "/f1/" in the proxied path is a fixed Ergast route
+    // segment, not a series selector. See the detailed explanation in
+    // CircuitWeatherApp.handleRoute() for why F2/F3 cannot be added by simply
+    // parameterising this client by series.
     async fetchFromJolpica() {
         const response = await fetch(`${CONFIG.f1ApiBase}/current.json`, {
             // SEC: Add timeout to prevent hanging connections if the proxy is unresponsive

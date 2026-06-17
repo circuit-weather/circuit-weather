@@ -130,6 +130,10 @@ export default {
     }
 
     // Only /api/* routes reach this worker (configured via run_worker_first)
+    // NOTE: Only the F1 prefix is proxied. The upstream (Jolpica/Ergast) is
+    // F1-only, so there is no /api/f2/ or /api/f3/ to add here — those segments
+    // would resolve to the same F1 dataset upstream. See the detailed write-up
+    // in public/src/CircuitWeatherApp.js handleRoute() before attempting F2/F3.
     if (path.startsWith('/api/f1/')) {
       return handleApiRequest(request, env, ctx, url);
     }
