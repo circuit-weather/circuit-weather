@@ -13,7 +13,7 @@ This web app is completely and unashamedly vibe coded primarily using Google ant
 
 ## What it does
 
-The site provides a live weather radar overlay on top of the circuit map. You can see past weather movement and a short-term forecast to predict if rain is incoming. It automatically loads the schedule for the current F1 season, allowing you to jump between different rounds and sessions (like Qualifying or the Race).
+The site provides a live weather radar overlay on top of the circuit map. You can see past weather movement. It automatically loads the schedule for the current F1 season, allowing you to jump between different rounds and sessions (like Qualifying or the Race).
 
 Key features include:
 
