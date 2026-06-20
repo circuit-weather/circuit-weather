@@ -65,6 +65,7 @@ export const hu = {
     windSpeed: "Szélsebesség",
   },
   radar: {
+    controlsLabel: "Radar lejátszás vezérlők",
     play: "Radar animáció lejátszása",
     pause: "Radar animáció szüneteltetése",
     playTitle: "Lejátszás (Szóköz)",

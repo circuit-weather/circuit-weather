@@ -63,6 +63,7 @@ export const en = {
     windSpeed: "Wind Speed",
   },
   radar: {
+    controlsLabel: "Radar Playback Controls",
     play: "Play radar animation",
     pause: "Pause radar animation",
     playTitle: "Play (Space)",

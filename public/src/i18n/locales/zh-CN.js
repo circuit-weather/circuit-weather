@@ -59,6 +59,7 @@ export const zhCN = {
     windSpeed: "风速",
   },
   radar: {
+    controlsLabel: "雷达播放控制",
     play: "播放雷达动画",
     pause: "暂停雷达动画",
     playTitle: "播放 (Space)",

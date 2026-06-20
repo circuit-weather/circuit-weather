@@ -63,6 +63,7 @@ export const ja = {
     windSpeed: "風速",
   },
   radar: {
+    controlsLabel: "レーダー再生コントロール",
     play: "レーダー再生",
     pause: "レーダー一時停止",
     playTitle: "再生 (Space)",

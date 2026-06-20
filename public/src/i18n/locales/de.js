@@ -64,6 +64,7 @@ export const de = {
     windSpeed: "Windgeschwindigkeit",
   },
   radar: {
+    controlsLabel: "Radar-Wiedergabesteuerung",
     play: "Radar abspielen",
     pause: "Radar pausieren",
     playTitle: "Abspielen (Leertaste)",
