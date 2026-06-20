@@ -63,6 +63,7 @@ export const es = {
     windSpeed: "Velocidad del viento",
   },
   radar: {
+    controlsLabel: "Controles de reproducción de radar",
     play: "Reproducir radar",
     pause: "Pausar radar",
     playTitle: "Reproducir (Espacio)",

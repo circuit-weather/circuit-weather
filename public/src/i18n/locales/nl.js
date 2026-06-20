@@ -64,6 +64,7 @@ export const nl = {
     windSpeed: "Windsnelheid",
   },
   radar: {
+    controlsLabel: "Radar afspeelbediening",
     play: "Speel radar animatie af",
     pause: "Pauzeer radar animatie",
     playTitle: "Afspelen (Spatie)",

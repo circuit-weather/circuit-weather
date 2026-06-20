@@ -63,6 +63,7 @@ export const ko = {
     windSpeed: "풍속",
   },
   radar: {
+    controlsLabel: "레이더 재생 제어",
     play: "레이더 애니메이션 재생",
     pause: "레이더 애니메이션 일시 중지",
     playTitle: "재생 (스페이스바)",

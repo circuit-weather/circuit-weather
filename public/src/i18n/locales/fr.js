@@ -63,6 +63,7 @@ export const fr = {
     windSpeed: "Vitesse du vent",
   },
   radar: {
+    controlsLabel: "Contrôles de lecture du radar",
     play: "Lire le radar",
     pause: "Mettre le radar en pause",
     playTitle: "Lire (Espace)",
