@@ -22,7 +22,7 @@ Circuit Weather は、Formula 1 サーキット向けのリアルタイム天気
 
 本サイトは **Cloudflare Workers** 上で運用されています。
 
-- **プライバシープロキシ:** F1 スケジュール、トラックレイアウト、Leaflet アセット、RainViewer タイルは Worker 経由で配信されます。
+- **プライバシープロキシ:** F1 スケジュール、トラックレイアウト、Leaflet アセット、Mapbox GL JS アセット、RainViewer タイルは Worker 経由で配信されます。
 - **エッジキャッシュ:** API 応答はエッジにキャッシュされ、帯域と上流負荷を削減します。
 - **処理データ:** Cloudflare は配信とセキュリティのため IP とリクエストメタデータを処理します。
 - **ポリシー:** [cloudflare.com/privacypolicy](https://www.cloudflare.com/privacypolicy/)

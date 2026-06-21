@@ -22,7 +22,7 @@ Zur Funktion nutzt die Anwendung Drittanbieter, die ubliche Webanfragedaten (z. 
 
 Die Website wird auf **Cloudflare Workers** betrieben.
 
-- **Privacy-Proxy:** F1-Kalender, Streckenlayouts, Leaflet-Assets und RainViewer-Tiles laufen uber unseren Worker.
+- **Privacy-Proxy:** F1-Kalender, Streckenlayouts, Leaflet-Assets, Mapbox GL JS-Assets und RainViewer-Tiles laufen uber unseren Worker.
 - **Edge-Cache:** API-Antworten werden am Edge zwischengespeichert.
 - **Verarbeitete Daten:** Cloudflare verarbeitet IP und Request-Metadaten fur Auslieferung und Sicherheit.
 - **Datenschutzrichtlinie:** [cloudflare.com/privacypolicy](https://www.cloudflare.com/privacypolicy/)

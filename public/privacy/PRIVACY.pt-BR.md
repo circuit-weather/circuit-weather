@@ -22,7 +22,7 @@ A aplicacao depende de servicos de terceiros que podem processar dados web padra
 
 O website esta alojado em **Cloudflare Workers**.
 
-- **Proxy de privacidade:** Calendario F1, tracados, assets Leaflet e tiles RainViewer passam pelo nosso Worker.
+- **Proxy de privacidade:** Calendario F1, tracados, assets Leaflet, assets Mapbox GL JS e tiles RainViewer passam pelo nosso Worker.
 - **Cache edge:** Respostas API sao guardadas em cache para melhor desempenho.
 - **Dados processados:** A Cloudflare processa IP e metadados de pedido para entrega e seguranca.
 - **Politica:** [cloudflare.com/privacypolicy](https://www.cloudflare.com/privacypolicy/)

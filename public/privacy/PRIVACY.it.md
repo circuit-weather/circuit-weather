@@ -22,7 +22,7 @@ L'app usa servizi terzi che possono elaborare dati standard delle richieste web 
 
 Il sito e ospitato su **Cloudflare Workers**.
 
-- **Proxy privacy:** Calendario F1, tracciati, asset Leaflet e tile RainViewer passano dal nostro Worker.
+- **Proxy privacy:** Calendario F1, tracciati, asset Leaflet, asset Mapbox GL JS e tile RainViewer passano dal nostro Worker.
 - **Cache edge:** Le risposte API vengono memorizzate in cache vicino all'utente.
 - **Dati elaborati:** Cloudflare elabora IP e metadati di richiesta per consegna e sicurezza.
 - **Privacy Policy:** [cloudflare.com/privacypolicy](https://www.cloudflare.com/privacypolicy/)

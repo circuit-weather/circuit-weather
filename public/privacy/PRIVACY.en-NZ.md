@@ -22,7 +22,7 @@ However, the application relies on third-party services and infrastructure which
 
 This website is hosted on **Cloudflare Workers** (using Static Assets) which serves both the website and powers its API.
 
-- **Privacy proxy:** Requests for F1 schedules, track layouts, Leaflet assets, and all RainViewer radar tiles are proxied through our Cloudflare Worker.
+- **Privacy proxy:** Requests for F1 schedules, track layouts, Leaflet assets, Mapbox GL JS assets, and all RainViewer radar tiles are proxied through our Cloudflare Worker.
 - **Advanced caching:** API responses are cached at the edge to minimise bandwidth use and upstream load.
 - **Data processed:** Cloudflare processes IP address and request metadata to deliver and protect the site.
 - **Privacy policy:** [cloudflare.com/privacypolicy](https://www.cloudflare.com/privacypolicy/)
