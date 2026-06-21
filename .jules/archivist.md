@@ -270,3 +270,8 @@ Prevention: Avoid duplicating configuration values in documentation; reference t
 
 **Learning:** `AGENTS.md` omitted "OpenF1" from its "Third-Party Services" table, even though it is used as a fallback data source for F1 schedules. It must be documented that OpenF1 is accessed directly (Client-side) because it blocks requests from datacenter IP ranges (Cloudflare Workers).
 **Action:** Added the "OpenF1" data source to the `AGENTS.md` Third-Party Services table to ensure architectural claims are exhaustive.
+
+## 2026-06-08 - Drift in Privacy Proxy list in PRIVACY.md
+
+**Learning:** While the 'Data Sources (Proxied)' section of `PRIVACY.md` accurately documented that both Leaflet and Mapbox GL JS assets are proxied through the Cloudflare worker, the 'Privacy Proxy' bullet point in the 'Infrastructure & Caching' section had drifted and only mentioned Leaflet library assets. This inconsistency created ambiguity about whether Mapbox assets are also proxied for privacy reasons.
+**Action:** Always cross-reference the components listed in the 'Privacy Proxy' infrastructure summary with the detailed breakdown in the 'Data Sources (Proxied)' section to ensure all proxied third-party assets (like Mapbox GL JS) are accurately represented in both places across all localized privacy policies.

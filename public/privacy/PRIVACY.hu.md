@@ -22,7 +22,7 @@ Az alkalmazás azonban harmadik féltől származó szolgáltatásokra és infra
 
 Ez a weboldal a **Cloudflare Workers** szolgáltatáson (Static Assets használatával) fut, amely a weboldalt szolgálja ki és az API-t is működteti.
 
-- **Adatvédelmi proxy:** Az F1-es naptár, a pályarajzok, a Leaflet eszközök és a RainViewer radar csempék kéréseit a Cloudflare Workerünk proxizza.
+- **Adatvédelmi proxy:** Az F1-es naptár, a pályarajzok, a Leaflet eszközök, a Mapbox GL JS eszközök és a RainViewer radar csempék kéréseit a Cloudflare Workerünk proxizza.
 - **Fejlett gyorsítótárazás:** Az API-válaszokat a peremen (edge) gyorsítótárazzuk a sávszélesség-használat és a feltöltési terhelés minimalizálása érdekében.
 - **Feldolgozott adatok:** A Cloudflare feldolgozza az IP-címeket és a kérések metaadatait a weboldal kézbesítése és védelme érdekében.
 - **Adatvédelmi irányelvek:** [cloudflare.com/privacypolicy](https://www.cloudflare.com/privacypolicy/)

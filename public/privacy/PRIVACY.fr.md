@@ -22,7 +22,7 @@ L'application s'appuie toutefois sur des services tiers qui peuvent traiter des 
 
 Le site est heberge sur **Cloudflare Workers**.
 
-- **Proxy de confidentialite :** Les requetes F1, traces, assets Leaflet et tuiles RainViewer passent par notre Worker.
+- **Proxy de confidentialite :** Les requetes F1, traces, assets Leaflet, assets Mapbox GL JS et tuiles RainViewer passent par notre Worker.
 - **Cache avance :** Les reponses API sont mises en cache en edge.
 - **Donnees traitees :** Cloudflare traite IP et metadonnees de requete pour fournir et securiser le site.
 - **Politique :** [cloudflare.com/privacypolicy](https://www.cloudflare.com/privacypolicy/)

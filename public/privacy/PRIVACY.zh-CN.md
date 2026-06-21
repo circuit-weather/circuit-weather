@@ -22,7 +22,7 @@ Circuit Weather 是一个开源网站应用，用于显示 Formula 1 赛道的�
 
 网站部署在 **Cloudflare Workers**。
 
-- **隐私代理:** F1 赛历、赛道布局、Leaflet 资源和 RainViewer 雷达瓦片通过 Worker 代理。
+- **隐私代理:** F1 赛历、赛道布局、Leaflet 资源、Mapbox GL JS 资源和 RainViewer 雷达瓦片通过 Worker 代理。
 - **边缘缓存:** API 响应在边缘节点缓存，以降低带宽和上游负载。
 - **处理数据:** Cloudflare 会处理 IP 与请求元数据以完成分发和安全防护。
 - **隐私政策:** [cloudflare.com/privacypolicy](https://www.cloudflare.com/privacypolicy/)
