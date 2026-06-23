@@ -132,7 +132,7 @@ export const de = {
     sessionLoadFailed:
       "Session-Prognose oder Radar konnte nicht geladen werden.",
   },
-  status: { live: "LIVE", current: "Aktuell", next: "Nachste" },
+  status: { live: "LIVE", current: "Aktuell", next: "Nächste" },
   meta: {
     defaultTitle: "Circuit Weather — Live-F1-Wetterradar und Prognosen",
     defaultDesc:
