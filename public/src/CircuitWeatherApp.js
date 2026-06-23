@@ -19,9 +19,6 @@ import { i18n } from './i18n/index.js';
 /**
  * Main application orchestrator for Circuit Weather.
  */
-// TODO: Refactor — this orchestrator is large (~1100 lines). Consider extracting
-// cohesive responsibilities (session/forecast handling, selection + routing glue,
-// live-weather refresh loops) into smaller collaborators to ease testing.
 export class CircuitWeatherApp {
     constructor() {
         this.mapManager = new MapManager();

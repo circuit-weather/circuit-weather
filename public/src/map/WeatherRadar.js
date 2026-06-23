@@ -6,9 +6,6 @@ import { RadarFrames } from './RadarFrames.js';
 import { RadarPolling } from './RadarPolling.js';
 import { RadarReconcile } from './RadarReconcile.js';
 
-// TODO: Feature — rain alerts. We already retain ~2h of radar frames; derive an
-// "approaching precipitation" signal relative to the selected circuit centre and
-// surface a "rain incoming" indicator for race strategy.
 export class WeatherRadar {
     constructor(map) {
         this.map = map;
