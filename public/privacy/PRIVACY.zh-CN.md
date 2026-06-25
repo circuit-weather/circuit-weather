@@ -85,7 +85,7 @@ Circuit Weather 是一个开源网站应用，用于显示 Formula 1 赛道的�
 - **Jolpica F1:** (24 小时边缘缓存).
 - **GitHub (bacinger/f1-circuits):** (24 小时边缘缓存).
 - **RainViewer:** 雷达元数据 (1 分钟缓存) 和瓦片 (2 小时边缘缓存).
-- **Leaflet (via Unpkg):** (1 年不可变缓存).
+- **Leaflet (通过 Mapbox CDN):** (1 年不可变缓存).
 - **Mapbox (通过 Mapbox CDN):** 地图交互库资产 (为了安全而进行代理, 1 年不可变缓存)。
 
 ## 本地存储
