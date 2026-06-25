@@ -275,3 +275,8 @@ Prevention: Avoid duplicating configuration values in documentation; reference t
 
 **Learning:** While the 'Data Sources (Proxied)' section of `PRIVACY.md` accurately documented that both Leaflet and Mapbox GL JS assets are proxied through the Cloudflare worker, the 'Privacy Proxy' bullet point in the 'Infrastructure & Caching' section had drifted and only mentioned Leaflet library assets. This inconsistency created ambiguity about whether Mapbox assets are also proxied for privacy reasons.
 **Action:** Always cross-reference the components listed in the 'Privacy Proxy' infrastructure summary with the detailed breakdown in the 'Data Sources (Proxied)' section to ensure all proxied third-party assets (like Mapbox GL JS) are accurately represented in both places across all localized privacy policies.
+
+## 2026-06-25 - Drift in Localized Privacy Policies
+
+**Learning:** When core infrastructure components change, such as adding Mapbox CDN to the proxied data sources list in `public/PRIVACY.md`, the English root file often gets updated with statements like "(proxied for security...)", but developers forget to apply the corresponding translation to the identical asset (Leaflet) in all localized privacy policies (`public/privacy/PRIVACY.*.md`). This results in privacy policy drift across different languages.
+**Action:** When updating or reviewing `public/PRIVACY.md` for infrastructure changes, ensure that both `Leaflet` and `Mapbox` asset descriptions reflect the same translated "proxied for security" verbiage across all localized files.

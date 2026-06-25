@@ -85,7 +85,7 @@ Tu navegador puede conectarse directamente a servicios de terceros para mapas, t
 - **Jolpica F1:** Calendario F1 (caché de borde de 24 horas).
 - **GitHub (bacinger/f1-circuits):** Archivos GeoJSON de circuitos (caché de borde de 24 horas).
 - **RainViewer:** Metadatos de radar (caché de 1 minuto) y tiles (caché de borde de 2 horas).
-- **Leaflet (via Unpkg):** Recursos de libreria de mapas (caché inmutable de 1 año).
+- **Leaflet (vía Mapbox CDN):** Recursos de libreria de mapas (caché inmutable de 1 año).
 - **Mapbox (vía Mapbox CDN):** Recursos de librería de mapas (con proxy por seguridad, caché inmutable de 1 año).
 
 ## Almacenamiento local
