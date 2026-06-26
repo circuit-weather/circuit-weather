@@ -85,7 +85,7 @@ A böngészője közvetlenül is csatlakozhat harmadik féltől származó szolg
 - **Jolpica F1:** F1-es naptár adatok (24 órás edge cache).
 - **GitHub (bacinger/f1-circuits):** GeoJSON pályafájlok (24 órás edge cache).
 - **RainViewer:** Radar metaadatok (1 perces cache) és csempék (2 órás edge cache).
-- **Leaflet (a Mapbox CDN-en keresztül):** Térképkönyvtár eszközei (1 éves módosíthatatlan cache).
+- **Leaflet (a Unpkg-en keresztül):** Térkép interakciós könyvtár eszközei (biztonsági okokból proxizva, 1 éves módosíthatatlan cache).
 - **Mapbox (a Mapbox CDN-en keresztül):** Térkép interakciós könyvtár eszközei (biztonsági okokból proxizva, 1 éves módosíthatatlan cache).
 
 ## Helyi Tárolás
