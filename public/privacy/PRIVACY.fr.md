@@ -85,7 +85,7 @@ Votre navigateur peut se connecter directement a certains services tiers.
 - **Jolpica F1 :** (cache edge de 24 heures).
 - **GitHub (bacinger/f1-circuits) :** (cache edge de 24 heures).
 - **RainViewer :** Métadonnées radar (cache d'une minute) et tuiles (cache edge de 2 heures).
-- **Leaflet (via Mapbox CDN) :** (cache immuable d'un an).
+- **Leaflet (via Unpkg) :** Assets de bibliothèque de carte (proxyfiés par sécurité, cache immuable d'un an).
 - **Mapbox (via Mapbox CDN) :** Assets de bibliothèque de carte (proxyfiés par sécurité, cache immuable d'un an).
 
 ## Stockage local

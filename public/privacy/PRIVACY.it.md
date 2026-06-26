@@ -85,7 +85,7 @@ Il browser puo connettersi direttamente ad alcuni servizi per mappe, tile e widg
 - **Jolpica F1:** (cache edge di 24 ore).
 - **GitHub (bacinger/f1-circuits):** (cache edge di 24 ore).
 - **RainViewer:** Metadati radar (cache di 1 minuto) e tile (cache edge di 2 ore).
-- **Leaflet (via Mapbox CDN):** (cache immutabile di 1 anno).
+- **Leaflet (via Unpkg):** Asset della libreria mappa (proxati per sicurezza, cache immutabile di 1 anno).
 - **Mapbox (via Mapbox CDN):** Asset della libreria mappa (proxati per sicurezza, cache immutabile di 1 anno).
 
 ## Archiviazione locale

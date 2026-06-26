@@ -280,3 +280,8 @@ Prevention: Avoid duplicating configuration values in documentation; reference t
 
 **Learning:** When core infrastructure components change, such as adding Mapbox CDN to the proxied data sources list in `public/PRIVACY.md`, the English root file often gets updated with statements like "(proxied for security...)", but developers forget to apply the corresponding translation to the identical asset (Leaflet) in all localized privacy policies (`public/privacy/PRIVACY.*.md`). This results in privacy policy drift across different languages.
 **Action:** When updating or reviewing `public/PRIVACY.md` for infrastructure changes, ensure that both `Leaflet` and `Mapbox` asset descriptions reflect the same translated "proxied for security" verbiage across all localized files.
+
+## 2026-06-25 - Drift in Localized Privacy Policies (Resolved)
+
+**Learning:** When core infrastructure components change, such as correcting the documented CDN provider for Leaflet assets from `Mapbox CDN` to `Unpkg` in the English `PRIVACY.md`, developers often forget to apply the corresponding translation to all localized privacy policies (`public/privacy/PRIVACY.*.md`). This results in privacy policy drift across different languages, causing inaccuracies regarding data flow.
+**Action:** When updating or reviewing `public/PRIVACY.md` for infrastructure changes, ensure that modifications to specific services (like `Leaflet (via Unpkg)`) are faithfully replicated and accurately translated across all localized files. Use automated scripts with regex parsing to reliably apply these localized updates and maintain consistency.
