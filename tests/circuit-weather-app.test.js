@@ -117,10 +117,12 @@ vi.mock('../public/src/api/WeatherClient.js', () => ({
             getForecast: vi.fn().mockResolvedValue({ available: false }),
             getRelativeTime: vi.fn(),
             getWeatherDescription: vi.fn(),
-            getAccessibleRelativeTime: vi.fn(),
-            getWindDirection: vi.fn(() => ({ text: 'N', rotation: 0 }))
+            getAccessibleRelativeTime: vi.fn()
         }
     })
+}));
+vi.mock('../public/src/utils/wind.js', () => ({
+    getWindDirection: vi.fn(() => ({ text: 'N', rotation: 0 }))
 }));
 vi.mock('../public/src/map/TrackLayer.js', () => ({
     TrackLayer: vi.fn().mockImplementation(function () {
@@ -702,8 +704,9 @@ describe('CircuitWeatherApp Pure Methods', () => {
             expect(app.ui.forecastContent.innerHTML).toContain('weather-dashboard');
         });
 
-        it('escapes windInfo.text and rotation in the forecast dashboard', () => {
-            app.weatherClient.getWindDirection = vi.fn().mockReturnValue({
+        it('escapes windInfo.text and rotation in the forecast dashboard', async () => {
+            const windModule = await import('../public/src/utils/wind.js');
+            windModule.getWindDirection.mockReturnValue({
                 text: '<script>alert("xss")</script>',
                 rotation: '"><img src=x onerror=alert(1)>'
             });

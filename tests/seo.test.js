@@ -71,8 +71,7 @@ vi.mock('../public/src/api/WeatherClient.js', () => ({
             getForecast: vi.fn().mockResolvedValue({ available: false }),
             getRelativeTime: vi.fn(),
             getWeatherDescription: vi.fn(),
-            getAccessibleRelativeTime: vi.fn(),
-            getWindDirection: vi.fn(() => ({ text: 'N', rotation: 0 }))
+            getAccessibleRelativeTime: vi.fn()
         }
     })
 }));

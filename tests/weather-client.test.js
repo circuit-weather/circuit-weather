@@ -197,28 +197,6 @@ describe('WeatherClient', () => {
         });
     });
 
-    describe('getWindDirection', () => {
-        const cases = [
-            [0, 'N', 180],
-            [45, 'NE', 225],
-            [90, 'E', 270],
-            [135, 'SE', 315],
-            [180, 'S', 360],
-            [225, 'SW', 405],
-            [270, 'W', 450],
-            [315, 'NW', 495],
-            [360, 'N', 540],
-        ];
-
-        cases.forEach(([degrees, text, rotation]) => {
-            it(`returns ${text} (rotation ${rotation}°) for ${degrees}°`, () => {
-                const result = client.getWindDirection(degrees);
-                expect(result.text).toBe(text);
-                expect(result.rotation).toBe(rotation);
-            });
-        });
-    });
-
     describe('getForecast', () => {
         let mockFetch;
 

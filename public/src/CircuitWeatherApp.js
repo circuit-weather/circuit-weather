@@ -15,6 +15,7 @@ import { ThemeManager } from './ui/ThemeManager.js';
 import { SidebarManager } from './ui/SidebarManager.js';
 import { getSessionStatus, getRoundStatus, formatStatusLabel } from './utils/status.js';
 import { i18n } from './i18n/index.js';
+import { getWindDirection } from './utils/wind.js';
 
 /**
  * Main application orchestrator for Circuit Weather.
@@ -1063,7 +1064,7 @@ export class CircuitWeatherApp {
             const maxPrecip = Math.max(...weather.hourly.map(h => h.precipProb));
 
             // Wind Direction Logic
-            const windInfo = this.weatherClient.getWindDirection(dir);
+            const windInfo = getWindDirection(dir);
             // Rotation: Input 0 (N) -> Blows South -> Arrow (Up) needs 180 deg rotation
             const rotation = windInfo.rotation;
 
