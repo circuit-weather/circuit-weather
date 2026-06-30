@@ -1,6 +1,6 @@
 import { CONFIG } from '../config.js';
 import { i18n } from '../i18n/index.js';
-import { getWindDirection as resolveWindDirection, windToVector } from '../utils/wind.js';
+import { windToVector } from '../utils/wind.js';
 
 export class WeatherClient {
     constructor() {
@@ -251,9 +251,5 @@ export class WeatherClient {
         }
         const unit = hours === 1 ? i18n.t('countdown.hour') : i18n.t('countdown.hourPlural');
         return i18n.t('radar.afterSession', { duration: `${hours} ${unit}` });
-    }
-
-    getWindDirection(degrees) {
-        return resolveWindDirection(degrees);
     }
 }
