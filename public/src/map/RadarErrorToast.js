@@ -105,7 +105,7 @@ export class RadarErrorToast {
             const message = this.retryingTilesMessage(count);
 
             // Fix Timer Sync: Use actual remaining time if a retry cooldown is active
-            let duration = 60;
+            let duration = 0;
             if (this.rateLimitResetTime > Date.now()) {
                 duration = Math.ceil((this.rateLimitResetTime - Date.now()) / 1000);
                 duration = Math.max(1, duration); // Ensure at least 1s
@@ -191,7 +191,7 @@ export class RadarErrorToast {
             } else {
                 this.ui.errorTimer.textContent = '';
                 this.toastAnimationFrame = null;
-                if (durationSec < 10 && this.rateLimitResetTime < Date.now()) {
+                if (durationSec > 0 && durationSec < 10 && this.rateLimitResetTime < Date.now()) {
                     this.hideErrorToast();
                 }
             }
