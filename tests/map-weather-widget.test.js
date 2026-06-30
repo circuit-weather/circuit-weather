@@ -13,6 +13,7 @@ const createMockElement = (tag, className) => {
         innerHTML: '',
         textContent: '',
         children: [],
+        style: {},
         querySelector: vi.fn((selector) => {
             // Simple mock: return a dummy element that can hold textContent
             return {
@@ -31,6 +32,18 @@ const createMockElement = (tag, className) => {
         classList: {
             add: vi.fn(),
             remove: vi.fn()
+        },
+        appendChild: vi.fn((child) => {
+            el.children.push(child);
+            return child;
+        }),
+        removeChild: vi.fn((child) => {
+            const idx = el.children.indexOf(child);
+            if (idx !== -1) el.children.splice(idx, 1);
+            return child;
+        }),
+        parentNode: {
+            removeChild: vi.fn()
         }
     };
     return el;
@@ -39,8 +52,21 @@ const createMockElement = (tag, className) => {
 // Mock Document
 vi.stubGlobal('document', {
     createElement: vi.fn((tag) => createMockElement(tag, '')),
+    createElementNS: vi.fn((ns, tag) => createMockElement(tag, '')),
     getElementById: vi.fn((id) => createMockElement(id, '')),
 });
+
+// Mock DOMParser
+class MockDOMParser {
+    parseFromString(str, type) {
+        return {
+            documentElement: {
+                childNodes: []
+            }
+        };
+    }
+}
+vi.stubGlobal('DOMParser', MockDOMParser);
 
 // Setup global mocks
 vi.stubGlobal('L', {
@@ -86,10 +112,11 @@ describe('MapWeatherWidget', () => {
         expect(widget._div).toBeDefined();
         expect(widget._div.setAttribute).toHaveBeenCalledWith('data-i18n-attr', 'aria-label:weather.currentCircuitWeather');
 
-        // Check if innerHTML was set and contains i18n bindings
-        expect(widget._div.innerHTML).toContain('weather-widget-metric');
-        expect(widget._div.innerHTML).toContain('data-i18n="weather.currentConditions"');
-        expect(widget._div.innerHTML).toContain('data-i18n-attr="aria-label:weather.temperature,title:weather.temperature"');
+        // Check that querySelectors were used on our _div to get UI elements
+        expect(widget._div.querySelector).toHaveBeenCalledWith('.temp-value');
+        expect(widget._div.querySelector).toHaveBeenCalledWith('.rain-value');
+        expect(widget._div.querySelector).toHaveBeenCalledWith('.humid-value');
+        expect(widget._div.querySelector).toHaveBeenCalledWith('.wind-value');
 
         // Verify UI cache was created
         expect(widget._ui).toBeDefined();

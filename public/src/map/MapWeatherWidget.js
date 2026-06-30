@@ -22,44 +22,121 @@ class MapWeatherWidgetClass {
     );
     this._div.setAttribute("tabindex", "0");
 
-    this._div.innerHTML = `
-            <h2 class="weather-widget-heading" data-i18n="weather.currentConditions">${i18n.t("weather.currentConditions")}</h2>
-            <!-- Scout: Upgraded generic div/span wrappers to semantic description list (dl/dt/dd) to explicitly associate weather labels with their values for crawlers and assistive tech. -->
-            <dl class="weather-widget-list" style="margin: 0; padding: 0;">
-                <div class="weather-widget-metric" role="group" aria-label="${i18n.t("weather.temperature")}" title="${i18n.t("weather.temperature")}" data-i18n-attr="aria-label:weather.temperature,title:weather.temperature">
-                    <dt class="sr-only">${i18n.t("weather.temperature")}</dt>
-                    <dd style="display: flex; align-items: center; margin: 0;">
-                        <svg class="icon-weather icon-temp" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z" /></svg>
-                        <span class="temp-value">--</span>
-                    </dd>
-                </div>
-                <div class="weather-widget-metric" role="group" aria-label="${i18n.t("weather.rainChance")}" title="${i18n.t("weather.rainChance")}" data-i18n-attr="aria-label:weather.rainChance,title:weather.rainChance">
-                    <dt class="sr-only">${i18n.t("weather.rainChance")}</dt>
-                    <dd style="display: flex; align-items: center; margin: 0;">
-                        <svg class="icon-weather icon-rain" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M16 14v6"/><path d="M8 14v6"/><path d="M12 16v6"/></svg>
-                        <span class="rain-value">--%</span>
-                    </dd>
-                </div>
-                <div class="weather-widget-metric" role="group" aria-label="${i18n.t("weather.humidity")}" title="${i18n.t("weather.humidity")}" data-i18n-attr="aria-label:weather.humidity,title:weather.humidity">
-                    <dt class="sr-only">${i18n.t("weather.humidity")}</dt>
-                    <dd style="display: flex; align-items: center; margin: 0;">
-                        <svg class="icon-weather icon-humidity" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" /></svg>
-                        <span class="humid-value">--%</span>
-                    </dd>
-                </div>
-                <div class="weather-widget-metric" role="group" aria-label="${i18n.t("weather.windSpeed")}" title="${i18n.t("weather.wind")}" data-i18n-attr="aria-label:weather.windSpeed,title:weather.wind">
-                    <dt class="sr-only">${i18n.t("weather.wind")}</dt>
-                    <dd style="display: flex; align-items: center; margin: 0;">
-                        <svg class="icon-weather icon-wind" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2" /></svg>
-                        <span class="wind-value">--</span>
-                        <span class="wind-dir">
-                            <span class="wind-dir-text"></span>
-                            <svg class="icon-wind-arrow" aria-hidden="true" style="visibility: hidden;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>
-                        </span>
-                    </dd>
-                </div>
-            </dl>
-        `;
+    const heading = document.createElement("h2");
+    heading.className = "weather-widget-heading";
+    heading.setAttribute("data-i18n", "weather.currentConditions");
+    heading.textContent = i18n.t("weather.currentConditions");
+    this._div.appendChild(heading);
+
+    const dl = document.createElement("dl");
+    dl.className = "weather-widget-list";
+    dl.style.margin = "0";
+    dl.style.padding = "0";
+    this._div.appendChild(dl);
+
+    const createMetric = (key, iconSvgPath, valueClass, extraSpans = []) => {
+      const wrapper = document.createElement("div");
+      wrapper.className = "weather-widget-metric";
+      wrapper.setAttribute("role", "group");
+      wrapper.setAttribute("aria-label", i18n.t(key));
+      wrapper.setAttribute("title", i18n.t(key));
+
+      let attrKey = key;
+      if (key === "weather.windSpeed") attrKey = "weather.wind";
+      wrapper.setAttribute("data-i18n-attr", `aria-label:${key},title:${attrKey}`);
+
+      const dt = document.createElement("dt");
+      dt.className = "sr-only";
+      dt.textContent = i18n.t(key);
+      wrapper.appendChild(dt);
+
+      const dd = document.createElement("dd");
+      dd.style.display = "flex";
+      dd.style.alignItems = "center";
+      dd.style.margin = "0";
+
+      const svgNS = "http://www.w3.org/2000/svg";
+      const svg = document.createElementNS(svgNS, "svg");
+      svg.setAttribute("class", `icon-weather icon-${valueClass.split('-')[0]}`);
+      svg.setAttribute("aria-hidden", "true");
+      svg.setAttribute("viewBox", "0 0 24 24");
+      svg.setAttribute("fill", "none");
+      svg.setAttribute("stroke", "currentColor");
+      svg.setAttribute("stroke-width", "2");
+
+      if (valueClass.includes("rain")) {
+        svg.setAttribute("stroke-linecap", "round");
+        svg.setAttribute("stroke-linejoin", "round");
+      }
+
+      // Parse paths
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(`<svg xmlns="http://www.w3.org/2000/svg">${iconSvgPath}</svg>`, "image/svg+xml");
+      const childNodes = doc.documentElement.childNodes;
+      childNodes.forEach(node => {
+        if (node.nodeType === 1) { // ELEMENT_NODE
+          const newNode = document.createElementNS(svgNS, node.tagName);
+          Array.from(node.attributes).forEach(attr => newNode.setAttribute(attr.name, attr.value));
+          svg.appendChild(newNode);
+        }
+      });
+
+      dd.appendChild(svg);
+
+      const valueSpan = document.createElement("span");
+      valueSpan.className = valueClass;
+      valueSpan.textContent = valueClass.includes("temp") || valueClass.includes("wind") ? "--" : "--%";
+      dd.appendChild(valueSpan);
+
+      extraSpans.forEach(spanFn => {
+        dd.appendChild(spanFn());
+      });
+
+      wrapper.appendChild(dd);
+      return wrapper;
+    };
+
+    dl.appendChild(createMetric("weather.temperature", `<path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z" />`, "temp-value"));
+    dl.appendChild(createMetric("weather.rainChance", `<path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M16 14v6"/><path d="M8 14v6"/><path d="M12 16v6"/>`, "rain-value"));
+    dl.appendChild(createMetric("weather.humidity", `<path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />`, "humid-value"));
+
+    dl.appendChild(createMetric("weather.windSpeed", `<path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2" />`, "wind-value", [
+        () => {
+            const windDirSpan = document.createElement("span");
+            windDirSpan.className = "wind-dir";
+
+            const windDirTextSpan = document.createElement("span");
+            windDirTextSpan.className = "wind-dir-text";
+            windDirSpan.appendChild(windDirTextSpan);
+
+            const svgNS = "http://www.w3.org/2000/svg";
+            const svg = document.createElementNS(svgNS, "svg");
+            svg.setAttribute("class", "icon-wind-arrow");
+            svg.setAttribute("aria-hidden", "true");
+            svg.setAttribute("style", "visibility: hidden;");
+            svg.setAttribute("viewBox", "0 0 24 24");
+            svg.setAttribute("fill", "none");
+            svg.setAttribute("stroke", "currentColor");
+            svg.setAttribute("stroke-width", "2.5");
+            svg.setAttribute("stroke-linecap", "round");
+            svg.setAttribute("stroke-linejoin", "round");
+
+            const line = document.createElementNS(svgNS, "line");
+            line.setAttribute("x1", "12");
+            line.setAttribute("y1", "19");
+            line.setAttribute("x2", "12");
+            line.setAttribute("y2", "5");
+            svg.appendChild(line);
+
+            const polyline = document.createElementNS(svgNS, "polyline");
+            polyline.setAttribute("points", "5 12 12 5 19 12");
+            svg.appendChild(polyline);
+
+            windDirSpan.appendChild(svg);
+
+            return windDirSpan;
+        }
+    ]));
 
     this._ui = {
       temp: this._div.querySelector(".temp-value"),
