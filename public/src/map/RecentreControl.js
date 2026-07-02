@@ -31,12 +31,29 @@ export class RecentreControl {
         this.button.setAttribute('role', 'button');
         this.button.setAttribute('aria-label', recenterLabel);
         this.button.setAttribute('aria-keyshortcuts', 'c');
-        this.button.innerHTML = `
-            <svg class="recentre-icon" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="width: 20px; height: 20px;">
-                <circle cx="12" cy="12" r="3"/>
-                <path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>
-            </svg>
-        `;
+
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('class', 'recentre-icon');
+        svg.setAttribute('aria-hidden', 'true');
+        svg.setAttribute('viewBox', '0 0 24 24');
+        svg.setAttribute('fill', 'none');
+        svg.setAttribute('stroke', 'currentColor');
+        svg.setAttribute('stroke-width', '2.5');
+        svg.style.width = '20px';
+        svg.style.height = '20px';
+
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('cx', '12');
+        circle.setAttribute('cy', '12');
+        circle.setAttribute('r', '3');
+
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', 'M12 2v4M12 18v4M2 12h4M18 12h4');
+
+        svg.appendChild(circle);
+        svg.appendChild(path);
+
+        this.button.appendChild(svg);
         this.button.style.display = 'none';
 
         // Insert at the top of the zoom control (before zoom in)

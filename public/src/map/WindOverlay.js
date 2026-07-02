@@ -317,14 +317,40 @@ export class WindOverlay {
         el.className = 'wind-info-toast';
         el.setAttribute('role', 'status');
         el.setAttribute('aria-live', 'polite');
-        el.innerHTML = `
-            <span class="wind-toast-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M9.59 4.59A2 2 0 1 1 11 8H2"/><path d="M12.42 19.42A2 2 0 1 0 14 16H2"/><path d="M16.27 7.27A2.5 2.5 0 1 1 18.5 12H2"/>
-                </svg>
-            </span>
-            <span class="wind-toast-message"></span>
-        `;
+
+        const iconSpan = document.createElement('span');
+        iconSpan.className = 'wind-toast-icon';
+        iconSpan.setAttribute('aria-hidden', 'true');
+
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('viewBox', '0 0 24 24');
+        svg.setAttribute('fill', 'none');
+        svg.setAttribute('stroke', 'currentColor');
+        svg.setAttribute('stroke-width', '2');
+        svg.setAttribute('stroke-linecap', 'round');
+        svg.setAttribute('stroke-linejoin', 'round');
+
+        const path1 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path1.setAttribute('d', 'M9.59 4.59A2 2 0 1 1 11 8H2');
+
+        const path2 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path2.setAttribute('d', 'M12.42 19.42A2 2 0 1 0 14 16H2');
+
+        const path3 = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path3.setAttribute('d', 'M16.27 7.27A2.5 2.5 0 1 1 18.5 12H2');
+
+        svg.appendChild(path1);
+        svg.appendChild(path2);
+        svg.appendChild(path3);
+
+        iconSpan.appendChild(svg);
+
+        const msgSpan = document.createElement('span');
+        msgSpan.className = 'wind-toast-message';
+
+        el.appendChild(iconSpan);
+        el.appendChild(msgSpan);
+
         this.container.appendChild(el);
         return el;
     }

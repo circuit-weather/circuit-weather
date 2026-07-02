@@ -23,7 +23,7 @@ export class LanguageManager {
     }
 
     populateMenu() {
-        this.menu.innerHTML = '';
+        this.menu.textContent = '';
         // Bolt Optimization: Use DocumentFragment to batch DOM insertions
         // Reduces reflows when populating the language menu
         const fragment = document.createDocumentFragment();
