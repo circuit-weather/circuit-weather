@@ -84,7 +84,7 @@ export class MapManager {
     // Clean up map container if it already has mapbox DOM elements
     const mapContainer = document.getElementById("map");
     if (mapContainer) {
-      mapContainer.innerHTML = '';
+      mapContainer.textContent = '';
       mapContainer.className = 'map'; // reset classes
     }
 

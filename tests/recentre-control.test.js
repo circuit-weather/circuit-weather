@@ -49,6 +49,7 @@ vi.stubGlobal('L', {
 const mockDocument = {
     querySelector: vi.fn(),
     createElement: vi.fn((tag) => createMockElement(tag)),
+    createElementNS: vi.fn((ns, tag) => createMockElement(tag)),
     addEventListener: vi.fn(),
     activeElement: { tagName: 'BODY' },
     body: createMockElement('body')
