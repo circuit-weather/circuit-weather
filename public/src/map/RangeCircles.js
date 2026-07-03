@@ -31,6 +31,17 @@ export class RangeCircles {
                 const option = e.target.closest('.unit-option');
                 if (option) this.setUnit(option.dataset.unit);
             });
+
+            // Palette A11y: Add keyboard navigation for unit toggles
+            toggle.addEventListener('keydown', (e) => {
+                if (e.key === ' ' || e.key === 'Enter') {
+                    const option = e.target.closest('.unit-option');
+                    if (option) {
+                        e.preventDefault();
+                        this.setUnit(option.dataset.unit);
+                    }
+                }
+            });
         }
 
         // Adjust visible circles based on zoom and map movement

@@ -69,6 +69,13 @@ export class WindOverlay {
             : null;
         if (this._toggle && this._toggle.addEventListener) {
             this._toggle.addEventListener('click', () => this.setEnabled(!this.enabled));
+            // Palette A11y: Ensure keyboard users can activate the switch
+            this._toggle.addEventListener('keydown', (e) => {
+                if (e.key === ' ' || e.key === 'Enter') {
+                    e.preventDefault();
+                    this.setEnabled(!this.enabled);
+                }
+            });
         }
         this._updateToggleUI();
         this._resize();
