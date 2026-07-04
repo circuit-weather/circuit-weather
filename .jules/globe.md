@@ -13,3 +13,6 @@
 ## 2024-06-06 - Extracting Hardcoded Concatenations
 **Learning:** Hardcoded strings in UI components often disguise themselves as simple concatenations (e.g. `` `R${race.round}: ${race.name} (${dateStr})` ``). When extracting these, it's crucial to map the raw JavaScript variable names to proper i18n placeholders (like `{{round}}`) to ensure correct interpolation across locales.
 **Action:** Always replace string template literals containing UI text with `i18n.t()` calls passing a context object that maps the local variables to the placeholder keys defined in the dictionary.
+## 2026-07-04 - Brazilian vs European Portuguese Terminology
+**Learning:** When localizing for Brazilian Portuguese (pt-BR), 'separador' (European for tab) must be 'aba', and 'ligação' (European for network connection, but meaning phone call in Brazil) must be 'conexão'.
+**Action:** Always verify proper contextual translation for tabs and connections in pt-BR, avoiding direct translations from European Portuguese.

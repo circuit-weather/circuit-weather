@@ -79,7 +79,7 @@ export const ptBR = {
     liveAria: "Radar ao vivo",
     minutesAgo: "{{count}} min atras",
     minutesAgoPlural: "{{count}} mins atras",
-    connectionInstability: "Instabilidade de ligacao",
+    connectionInstability: "Instabilidade de conexão",
     serviceError: "Erro de servico",
     highTraffic: "Trafego elevado",
     rateLimitExceeded: "Limite de pedidos excedido. Pausa momentanea.",
@@ -112,14 +112,14 @@ export const ptBR = {
     title: "Politica de privacidade",
     closePolicy: "Fechar politica de privacidade",
     contentAria: "Conteudo da politica de privacidade",
-    opensInNewTab: "(abre em novo separador)",
+    opensInNewTab: "(abre em nova aba)",
     loadFailed:
       "Falha ao carregar a politica de privacidade. Tente novamente mais tarde.",
   },
   errors: {
-    connectionFailed: "Falha de ligacao",
-    retryConnection: "Tentar novamente ligacao",
-    retryingConnection: "Tentando novamente ligacao",
+    connectionFailed: "Falha de conexão",
+    retryConnection: "Tentar novamente conexão",
+    retryingConnection: "Tentando novamente conexão",
     initFailed: "Falha ao iniciar a aplicacao.",
     scheduleUnavailable:
       "Não foi possível carregar o calendário de F1. A fonte de dados (api.jolpi.ca) está indisponível no momento. Por favor, tente novamente mais tarde.",
