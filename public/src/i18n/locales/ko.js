@@ -1,4 +1,9 @@
 export const ko = {
+  nav: {
+    main: "메인 내비게이션",
+    raceSelection: "레이스 선택",
+    sponsor: "스폰서",
+  },
   common: {
     countryFlagFallback: "국기",
     countryFlag: "{{country}} 국기",

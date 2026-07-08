@@ -1,4 +1,9 @@
 export const hu = {
+  nav: {
+    main: "Fő navigáció",
+    raceSelection: "Futam választás",
+    sponsor: "Támogató",
+  },
   common: {
     countryFlagFallback: "Országzászló",
     countryFlag: "{{country}} zászlaja",

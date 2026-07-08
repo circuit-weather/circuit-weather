@@ -1,4 +1,9 @@
 export const it = {
+  nav: {
+    main: "Navigazione principale",
+    raceSelection: "Selezione gara",
+    sponsor: "Sponsor",
+  },
   common: {
     countryFlagFallback: "Bandiera del paese",
     countryFlag: "Bandiera: {{country}}",

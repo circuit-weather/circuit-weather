@@ -1,4 +1,9 @@
 export const fr = {
+  nav: {
+    main: "Navigation principale",
+    raceSelection: "Sélection de la course",
+    sponsor: "Sponsor",
+  },
   common: {
     countryFlagFallback: "Drapeau du pays",
     countryFlag: "Drapeau : {{country}}",

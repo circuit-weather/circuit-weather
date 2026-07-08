@@ -1,4 +1,9 @@
 export const zhCN = {
+  nav: {
+    main: "主导航",
+    raceSelection: "比赛选择",
+    sponsor: "赞助商",
+  },
   common: {
     countryFlagFallback: "国旗",
     countryFlag: "{{country}} 国旗",

@@ -1,4 +1,9 @@
 export const ptBR = {
+  nav: {
+    main: "Navegação principal",
+    raceSelection: "Seleção de corrida",
+    sponsor: "Patrocinador",
+  },
   common: {
     countryFlagFallback: "Bandeira do país",
     countryFlag: "Bandeira de {{country}}",
