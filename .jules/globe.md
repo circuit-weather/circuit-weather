@@ -16,3 +16,7 @@
 ## 2024-10-25 - Brazilian Portuguese Dialect Preferences
 **Learning:** The `pt-BR` locale initially contained European Portuguese (pt-PT) terms. For browser tabs, Brazilian Portuguese strictly uses "aba" instead of the European "separador". The word for a network connection is "conexão", not "ligação" (which means a phone call in Brazil).
 **Action:** Always use "aba" for tabs and "conexão" for network connections to ensure Brazilian terminology is maintained over European equivalents.
+
+## 2024-07-08 - Regional Variants Inheritance
+**Learning:** Regional localization variants like `en-US.js`, `en-GB.js`, and `en-NZ.js` use the JavaScript spread operator `...en` to inherit base strings from `en.js`. Duplicating keys from the base language directly into these files creates redundant dead code that is instantly overwritten by the base structure.
+**Action:** When extracting new translation strings, add them to the base `en.js` file and avoid explicitly adding them to regional variants unless the localized word specifically differs (e.g., color vs. colour).

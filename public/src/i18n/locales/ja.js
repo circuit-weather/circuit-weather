@@ -1,4 +1,9 @@
 export const ja = {
+  nav: {
+    main: "メインナビゲーション",
+    raceSelection: "レース選択",
+    sponsor: "スポンサー",
+  },
   common: {
     countryFlagFallback: "国旗",
     countryFlag: "{{country}}の国旗",

@@ -1,4 +1,9 @@
 export const nl = {
+  nav: {
+    main: "Hoofdnavigatie",
+    raceSelection: "Race Selectie",
+    sponsor: "Sponsor",
+  },
   common: {
     countryFlagFallback: "Landvlag",
     countryFlag: "Vlag van {{country}}",
