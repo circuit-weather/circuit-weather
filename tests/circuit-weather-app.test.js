@@ -38,6 +38,8 @@ const documentMock = {
     addEventListener: vi.fn(),
     querySelector: vi.fn((sel) => createMockElement(sel)),
     createElement: vi.fn((tag) => createMockElement(tag)),
+    createElementNS: vi.fn((ns, tag) => createMockElement(tag)),
+    createTextNode: vi.fn((text) => text),
     createDocumentFragment: vi.fn(() => ({ appendChild: vi.fn() })),
     head: { appendChild: vi.fn() },
     body: { appendChild: vi.fn() },
@@ -1543,21 +1545,23 @@ describe('CircuitWeatherApp Pure Methods', () => {
              // We need to test renderError specifically here, not init
              // This tests the side-effects of renderError on the DOM
              const mockContent = createMockElement('content');
-             const mockBtn = createMockElement('btn');
 
              // Setup querySelector mocks
              vi.spyOn(document, 'querySelector').mockReturnValue(mockContent);
-             mockContent.querySelector.mockReturnValue(mockBtn);
 
              app.renderError('Boom');
 
-             expect(mockContent.innerHTML).toContain('Connection Failed');
-             expect(mockContent.innerHTML).toContain('Boom');
-             // Verify click listener is added
-             expect(mockBtn.addEventListener).toHaveBeenCalledWith('click', expect.any(Function));
+             // Since we construct the DOM using appendChild now, verify it using mockContent.appendChild.mock.calls
+             const appendedNode = mockContent.appendChild.mock.calls[0][0];
+             expect(appendedNode.className).toBe('error-state');
+
+             // Find the button in the appended node
+             const btn = appendedNode.appendChild.mock.calls.find(call => call[0].className === 'retry-btn')?.[0];
+             expect(btn).toBeDefined();
+             expect(btn.addEventListener).toHaveBeenCalledWith('click', expect.any(Function));
 
              // Verify the listener reloads the page
-             const clickHandler = mockBtn.addEventListener.mock.calls[0][1];
+             const clickHandler = btn.addEventListener.mock.calls[0][1];
              clickHandler();
              expect(window.location.reload).toHaveBeenCalled();
         });
@@ -1570,16 +1574,6 @@ describe('CircuitWeatherApp Pure Methods', () => {
              expect(() => app.renderError('Boom')).not.toThrow();
         });
 
-        it('renderError gracefully handles missing retry button', () => {
-             const mockContent = createMockElement('content');
-             // Mock content found, but button missing
-             vi.spyOn(document, 'querySelector').mockReturnValue(mockContent);
-             mockContent.querySelector.mockReturnValue(null);
-
-             // Should not throw
-             expect(() => app.renderError('Boom')).not.toThrow();
-             expect(mockContent.innerHTML).toContain('Connection Failed');
-        });
 
         it('ThemeManager callback handles missing currentCircuitCenter', async () => {
             app.mapManager.init = vi.fn().mockResolvedValue({ hasLayer: false, addControl: vi.fn() });

@@ -165,32 +165,82 @@ export class CircuitWeatherApp {
     renderError(message) {
         const sidebarContent = document.querySelector('.sidebar-content');
         if (sidebarContent) {
-            sidebarContent.innerHTML = `
-                <div class="error-state">
-                    <div class="error-icon">
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <line x1="12" y1="8" x2="12" y2="12"></line>
-                            <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                        </svg>
-                    </div>
-                    <!-- Scout: Upgraded from h3 to h2 to fix broken heading hierarchy. When connection fails, this replaces the sidebar content which sits directly under the h1 sidebar-header. -->
-                    <h2 data-i18n="errors.connectionFailed">${escapeHtml(i18n.t('errors.connectionFailed'))}</h2>
-                    <p>${escapeHtml(message)}</p>
-                    <button class="retry-btn" type="button" data-i18n="common.retry" data-i18n-attr="aria-label:errors.retryConnection" aria-label="${escapeHtml(i18n.t('errors.retryConnection'))}">${escapeHtml(i18n.t('common.retry'))}</button>
-                </div>
-            `;
-            const btn = sidebarContent.querySelector('.retry-btn');
-            if (btn) {
-                btn.addEventListener('click', () => {
-                    btn.disabled = true;
-                    btn.setAttribute('aria-disabled', 'true');
-                    // Palette UX: Add loading spinner to async submit button
-                    btn.innerHTML = `<svg aria-hidden="true" style="width: 1rem; height: 1rem; margin-right: 0.5rem; animation: spin 1s linear infinite;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"></path></svg>${escapeHtml(i18n.t('common.retrying'))}`;
-                    btn.setAttribute('aria-label', i18n.t('errors.retryingConnection'));
-                    window.location.reload();
-                });
-            }
+            sidebarContent.innerHTML = '';
+            const errorState = document.createElement('div');
+            errorState.className = 'error-state';
+
+            const errorIcon = document.createElement('div');
+            errorIcon.className = 'error-icon';
+            const svgNS = "http://www.w3.org/2000/svg";
+            const svg = document.createElementNS(svgNS, "svg");
+            svg.setAttribute("viewBox", "0 0 24 24");
+            svg.setAttribute("fill", "none");
+            svg.setAttribute("stroke", "currentColor");
+            svg.setAttribute("stroke-width", "2");
+            const circle = document.createElementNS(svgNS, "circle");
+            circle.setAttribute("cx", "12");
+            circle.setAttribute("cy", "12");
+            circle.setAttribute("r", "10");
+            const line1 = document.createElementNS(svgNS, "line");
+            line1.setAttribute("x1", "12");
+            line1.setAttribute("y1", "8");
+            line1.setAttribute("x2", "12");
+            line1.setAttribute("y2", "12");
+            const line2 = document.createElementNS(svgNS, "line");
+            line2.setAttribute("x1", "12");
+            line2.setAttribute("y1", "16");
+            line2.setAttribute("x2", "12.01");
+            line2.setAttribute("y2", "16");
+            svg.appendChild(circle);
+            svg.appendChild(line1);
+            svg.appendChild(line2);
+            errorIcon.appendChild(svg);
+            errorState.appendChild(errorIcon);
+
+            // Scout: Upgraded from h3 to h2 to fix broken heading hierarchy. When connection fails, this replaces the sidebar content which sits directly under the h1 sidebar-header.
+            const h2 = document.createElement('h2');
+            h2.setAttribute('data-i18n', 'errors.connectionFailed');
+            h2.textContent = i18n.t('errors.connectionFailed');
+            errorState.appendChild(h2);
+
+            const p = document.createElement('p');
+            p.textContent = message;
+            errorState.appendChild(p);
+
+            const btn = document.createElement('button');
+            btn.className = 'retry-btn';
+            btn.type = 'button';
+            btn.setAttribute('data-i18n', 'common.retry');
+            btn.setAttribute('data-i18n-attr', 'aria-label:errors.retryConnection');
+            btn.setAttribute('aria-label', i18n.t('errors.retryConnection'));
+            btn.textContent = i18n.t('common.retry');
+            errorState.appendChild(btn);
+
+            sidebarContent.appendChild(errorState);
+
+            btn.addEventListener('click', () => {
+                btn.disabled = true;
+                btn.setAttribute('aria-disabled', 'true');
+                // Palette UX: Add loading spinner to async submit button
+                btn.innerHTML = '';
+                const btnSvg = document.createElementNS(svgNS, "svg");
+                btnSvg.setAttribute("aria-hidden", "true");
+                btnSvg.setAttribute("style", "width: 1rem; height: 1rem; margin-right: 0.5rem; animation: spin 1s linear infinite;");
+                btnSvg.setAttribute("viewBox", "0 0 24 24");
+                btnSvg.setAttribute("fill", "none");
+                btnSvg.setAttribute("stroke", "currentColor");
+                btnSvg.setAttribute("stroke-width", "2");
+                const path = document.createElementNS(svgNS, "path");
+                path.setAttribute("stroke-linecap", "round");
+                path.setAttribute("stroke-linejoin", "round");
+                path.setAttribute("d", "M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83");
+                btnSvg.appendChild(path);
+                btn.appendChild(btnSvg);
+                btn.appendChild(document.createTextNode(i18n.t('common.retrying')));
+
+                btn.setAttribute('aria-label', i18n.t('errors.retryingConnection'));
+                window.location.reload();
+            });
         }
     }
 
