@@ -2142,7 +2142,7 @@ button:disabled,
     height: 1.5rem;
 }
 
-.error-state h3 {
+.error-state h2 {
     font-size: 1rem;
     font-weight: 600;
     color: var(--color-text);
