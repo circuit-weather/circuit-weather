@@ -57,12 +57,26 @@ export class ThemeManager {
         const toggleBtn = document.getElementById('themeToggle');
         if (toggleBtn) {
             toggleBtn.addEventListener('click', () => this.toggle());
+            // Palette A11y: Ensure keyboard users can activate the theme toggle switch
+            toggleBtn.addEventListener('keydown', (e) => {
+                if (e.key === ' ' || e.key === 'Enter') {
+                    e.preventDefault();
+                    this.toggle();
+                }
+            });
         }
 
         // Mobile header theme toggle
         const mobileToggleBtn = document.getElementById('mobileThemeToggle');
         if (mobileToggleBtn) {
             mobileToggleBtn.addEventListener('click', () => this.toggle());
+            // Palette A11y: Ensure keyboard users can activate the theme toggle switch
+            mobileToggleBtn.addEventListener('keydown', (e) => {
+                if (e.key === ' ' || e.key === 'Enter') {
+                    e.preventDefault();
+                    this.toggle();
+                }
+            });
         }
     }
 }
