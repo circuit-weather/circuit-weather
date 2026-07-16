@@ -10,3 +10,6 @@
 ## 2024-07-10 - Focus Indicators for Scrollable Regions
 **Learning:** Adding `tabindex="0"` to scrollable regions (like `.weather-timeline`, `.privacy-modal-content`, and `.leaflet-control-weather`) correctly makes them accessible to keyboard users for scrolling, but without explicit `:focus-visible` styles, the focus ring disappears entirely when navigating to these areas, causing users to lose track of their position.
 **Action:** When implementing custom scrollable regions with `tabindex="0"`, always explicitly define `:focus-visible` styles (e.g. an inset outline) to ensure keyboard users have visual confirmation of their focus state.
+## 2024-05-24 - Theme Toggle Keyboard Accessibility
+**Learning:** In vanilla JavaScript, custom theme toggle buttons (like those inside sidebars and mobile headers) that rely purely on `click` event listeners become inaccessible to keyboard users navigating via Tab, as they cannot trigger the action using Space or Enter.
+**Action:** When auditing or implementing interactive toggle components, explicitly bind `keydown` listeners for 'Space' and 'Enter' (with `e.preventDefault()`) to ensure complete keyboard accessibility, mirroring the functionality of the `click` handlers.
