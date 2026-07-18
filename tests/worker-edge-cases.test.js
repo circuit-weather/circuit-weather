@@ -16,7 +16,6 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 
 // Import worker-utils for helper mocking
 import {
-    getErrorHeaders,
     getAllowedOrigin,
 } from '../src/worker-utils.js';
 
