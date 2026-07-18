@@ -19,6 +19,13 @@ export class SidebarManager {
                 e.stopPropagation();
                 this.toggle();
             });
+            // Palette A11y: Ensure keyboard users can activate the sidebar toggle switch
+            this.toggleBtn.addEventListener('keydown', (e) => {
+                if (e.key === ' ' || e.key === 'Enter') {
+                    e.preventDefault();
+                    this.toggle();
+                }
+            });
         }
 
         // Mobile header menu button
@@ -26,6 +33,13 @@ export class SidebarManager {
             this.mobileMenuBtn.addEventListener('click', (e) => {
                 e.stopPropagation();
                 this.toggle();
+            });
+            // Palette A11y: Ensure keyboard users can activate the mobile menu toggle switch
+            this.mobileMenuBtn.addEventListener('keydown', (e) => {
+                if (e.key === ' ' || e.key === 'Enter') {
+                    e.preventDefault();
+                    this.toggle();
+                }
             });
         }
 
