@@ -553,6 +553,7 @@ body {
 .weather-sub {
     font-size: 0.6rem;
     color: var(--color-text-secondary);
+    margin-top: var(--spacing-xs);
 }
 
 .weather-timeline {
@@ -1804,7 +1805,7 @@ body {
     align-items: center;
     gap: 2px;
     min-width: 0;
-    margin-left: auto;
+    margin-left: var(--spacing-sm);
     opacity: 0.8;
 }
 
