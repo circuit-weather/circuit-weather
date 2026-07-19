@@ -106,7 +106,10 @@ export class PrivacyModal {
     } catch (error) {
       console.error("Failed to load privacy policy:", error);
       if (this.content) {
-        this.content.innerHTML = `<p>${escapeHtml(i18n.t('privacy.loadFailed'))}</p>`;
+        this.content.textContent = '';
+        const p = document.createElement('p');
+        p.textContent = i18n.t('privacy.loadFailed');
+        this.content.appendChild(p);
       }
     }
   }
