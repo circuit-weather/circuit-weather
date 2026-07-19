@@ -17,6 +17,7 @@ const createMockElement = (id) => {
     removeAttribute: vi.fn(),
     textContent: "",
     innerHTML: "",
+    appendChild: vi.fn(),
     focus: vi.fn(function () {
       // Correctly update activeElement when focus is called
       mockActiveElement = this;
@@ -33,6 +34,7 @@ const createMockElement = (id) => {
 let mockActiveElement = { tagName: "BODY" };
 
 vi.stubGlobal("document", {
+  createElement: vi.fn((tag) => createMockElement(tag)),
   getElementById: vi.fn((id) => createMockElement(id)),
   addEventListener: vi.fn(),
   removeEventListener: vi.fn(),
@@ -525,7 +527,8 @@ describe("PrivacyModal", () => {
 
       expect(modal.loaded).toBe(false);
       expect(errorSpy).toHaveBeenCalledWith("Failed to load privacy policy:", expect.any(Error));
-      expect(modal.content.innerHTML).toContain("Failed to load privacy policy");
+      const appendedP = modal.content.appendChild.mock.calls[0][0];
+      expect(appendedP.textContent).toContain("Failed to load privacy policy");
       errorSpy.mockRestore();
     });
 
@@ -535,7 +538,8 @@ describe("PrivacyModal", () => {
 
       await modal.open();
 
-      expect(modal.content.innerHTML).toContain(
+      const appendedP = modal.content.appendChild.mock.calls[0][0];
+      expect(appendedP.textContent).toContain(
         "Failed to load privacy policy",
       );
       // Even if failed, it might set loaded to false or just show error.
