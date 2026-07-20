@@ -32,9 +32,23 @@ export class RadarPlayback {
 
         if (this.ui.playBtn) {
             this.ui.playBtn.addEventListener('click', () => this.togglePlay());
+            // Palette A11y: Ensure keyboard users can activate the play button
+            this.ui.playBtn.addEventListener('keydown', (e) => {
+                if (e.key === ' ' || e.key === 'Enter') {
+                    e.preventDefault();
+                    this.togglePlay();
+                }
+            });
         }
         if (this.ui.speedBtn) {
             this.ui.speedBtn.addEventListener('click', () => this.cycleSpeed());
+            // Palette A11y: Ensure keyboard users can activate the speed button
+            this.ui.speedBtn.addEventListener('keydown', (e) => {
+                if (e.key === ' ' || e.key === 'Enter') {
+                    e.preventDefault();
+                    this.cycleSpeed();
+                }
+            });
         }
 
         this.updateSpeedLabel();
