@@ -1775,8 +1775,10 @@ describe('CircuitWeatherApp Pure Methods', () => {
             // Simulate mutation adding a relevant node
             const mockNode = {
                 nodeType: 1, // Node.ELEMENT_NODE
-                matches: vi.fn(sel => sel.includes('.mapboxgl-ctrl-bottom-left')),
-                querySelector: vi.fn()
+                classList: {
+                    contains: vi.fn(cls => cls === 'mapboxgl-ctrl-bottom-left')
+                },
+                getElementsByClassName: vi.fn(() => [])
             };
 
             moCb([{ addedNodes: [mockNode] }]);
