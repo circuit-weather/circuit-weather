@@ -1,7 +1,7 @@
 /* @vitest-environment jsdom */
 
 import { beforeEach, describe, expect, it } from 'vitest';
-import { parseLocale, getUserLocale, usesImperialUnits } from '../public/src/utils/locale.js';
+import { getUserLocale, usesImperialUnits } from '../public/src/utils/locale.js';
 import { i18n } from '../public/src/i18n/index.js';
 
 describe('Locale helpers', () => {
@@ -17,13 +17,16 @@ describe('Locale helpers', () => {
         i18n.init('en-NZ');
     });
 
-    it('parses language and region from locale strings', () => {
-        expect(parseLocale('en-US')).toEqual({ language: 'en', region: 'US' });
-        expect(parseLocale('en_NZ')).toEqual({ language: 'en', region: 'NZ' });
-    });
-
-    it('detects imperial unit regions correctly', () => {
+    it('detects imperial unit regions correctly from locale strings', () => {
+        // Imperial regions (US, LR, MM)
         expect(usesImperialUnits('en-US')).toBe(true);
+        expect(usesImperialUnits('en_US')).toBe(true);
+        expect(usesImperialUnits('en-LR')).toBe(true);
+        expect(usesImperialUnits('my-MM')).toBe(true);
+
+        // Metric regions
+        expect(usesImperialUnits('en-NZ')).toBe(false);
+        expect(usesImperialUnits('en_NZ')).toBe(false);
         expect(usesImperialUnits('en-GB')).toBe(false);
     });
 
@@ -59,28 +62,28 @@ describe('Locale helpers', () => {
     });
 
 
-    it('handles invalid locale types in parseLocale', () => {
-        expect(parseLocale(null)).toEqual({ language: 'en', region: 'NZ' });
-        expect(parseLocale(123)).toEqual({ language: 'en', region: 'NZ' });
+    it('handles invalid locale types in usesImperialUnits', () => {
+        expect(usesImperialUnits(null)).toBe(false); // Default NZ (metric)
+        expect(usesImperialUnits(123)).toBe(false); // Default NZ (metric)
     });
 
-    it('handles cases where Intl.Locale fails or returns missing data', () => {
+    it('handles cases where Intl.Locale fails or returns missing data in usesImperialUnits', () => {
         // Fallback catch block handles non-standard but string formats
-        expect(parseLocale('english')).toEqual({ language: 'english', region: '' });
-        expect(parseLocale('-')).toEqual({ language: 'en', region: '' });
-        expect(parseLocale('en-')).toEqual({ language: 'en', region: '' });
-        expect(parseLocale('-US')).toEqual({ language: 'en', region: 'US' });
+        expect(usesImperialUnits('english')).toBe(false);
+        expect(usesImperialUnits('-')).toBe(false);
+        expect(usesImperialUnits('en-')).toBe(false);
+        expect(usesImperialUnits('-US')).toBe(true); // US is imperial
 
-        // Mock Intl.Locale returning empty language to hit branch 11
+        // Mock Intl.Locale returning empty language/region
         const originalIntlLocale = globalThis.Intl.Locale;
         try {
             globalThis.Intl.Locale = class {
                 constructor() {
                     this.language = '';
-                    this.region = 'NZ';
+                    this.region = ''; // Maps to metric
                 }
             };
-            expect(parseLocale('mock')).toEqual({ language: 'en', region: 'NZ' });
+            expect(usesImperialUnits('mock')).toBe(false);
         } finally {
             globalThis.Intl.Locale = originalIntlLocale;
         }
