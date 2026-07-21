@@ -1,26 +1,5 @@
 const IMPERIAL_REGIONS = new Set(['US', 'LR', 'MM']);
 
-export function parseLocale(locale) {
-    if (!locale || typeof locale !== 'string') {
-        return { language: 'en', region: 'NZ' };
-    }
-
-    try {
-        const parsed = new Intl.Locale(locale);
-        return {
-            language: (parsed.language || 'en').toLowerCase(),
-            region: (parsed.region || '').toUpperCase(),
-        };
-    } catch {
-        const normalized = locale.replace('_', '-');
-        const parts = normalized.split('-');
-        return {
-            language: (parts[0] || 'en').toLowerCase(),
-            region: (parts[1] || '').toUpperCase(),
-        };
-    }
-}
-
 export function getUserLocale() {
     if (typeof navigator === 'undefined') {
         return 'en-NZ';
@@ -33,6 +12,18 @@ export function getUserLocale() {
 }
 
 export function usesImperialUnits(locale = getUserLocale()) {
-    const { region } = parseLocale(locale);
+    let region = 'NZ';
+
+    if (locale && typeof locale === 'string') {
+        try {
+            const parsed = new Intl.Locale(locale);
+            region = (parsed.region || '').toUpperCase();
+        } catch {
+            const normalized = locale.replace('_', '-');
+            const parts = normalized.split('-');
+            region = (parts[1] || '').toUpperCase();
+        }
+    }
+
     return IMPERIAL_REGIONS.has(region);
 }
