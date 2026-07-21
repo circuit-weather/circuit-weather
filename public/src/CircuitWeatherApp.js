@@ -334,12 +334,13 @@ export class CircuitWeatherApp {
         });
 
         // Watch for dynamically added map controls (common with Mapbox)
+        const combinedControlsSelector = bottomControls.join(', ');
         const mutationObserver = new MutationObserver((mutations) => {
             let shouldUpdate = false;
             for (const mutation of mutations) {
                 mutation.addedNodes.forEach(node => {
                     if (node.nodeType === Node.ELEMENT_NODE) {
-                        const isControl = bottomControls.some(sel => node.matches(sel) || node.querySelector(sel));
+                        const isControl = node.matches(combinedControlsSelector) || node.querySelector(combinedControlsSelector);
                         if (isControl) {
                             observer.observe(node);
                             shouldUpdate = true;
