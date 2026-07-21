@@ -1734,25 +1734,6 @@ body {
 
 
 /* Weather Icon Colors */
-.icon-temp {
-    color: #ef4444;
-    /* Red-500 */
-}
-
-.icon-humidity {
-    color: #3b82f6;
-    /* Blue-500 */
-}
-
-.icon-wind {
-    color: #64748b;
-    /* Slate-500 */
-}
-
-.icon-rain {
-    color: #3b82f6;
-    /* Blue-500 for rain/precip */
-}
 
 .icon-wind-arrow {
     width: 0.8em;
