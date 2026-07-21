@@ -443,8 +443,8 @@ export class WeatherRadar {
     }
 
     /**
-     * Serial Preloader: Loads frames one-by-one to prevent API hammering.
-     * Prevents the "Wall of Requests" (50+ pending) issue.
+     * Concurrent Preloader: Loads frames in a bounded pool to prevent API hammering.
+     * Speeds up preloading while preventing the "Wall of Requests" (50+ pending) issue.
      */
     async preloadSequence() {
         // Order: Start from current frame + 1, wrap around.
@@ -456,9 +456,18 @@ export class WeatherRadar {
             }
         }
 
-        for (const index of sequence) {
-            await this.preloadFrame(index);
-        }
+        // Concurrency pool to speed up preloading without hammering the API
+        const poolSize = 3;
+        let index = 0;
+
+        const workers = new Array(Math.min(poolSize, sequence.length)).fill(0).map(async () => {
+            while (index < sequence.length) {
+                const currentIndex = sequence[index++];
+                await this.preloadFrame(currentIndex);
+            }
+        });
+
+        await Promise.all(workers);
     }
 
     preloadFrame(index) {
