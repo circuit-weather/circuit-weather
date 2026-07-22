@@ -203,6 +203,25 @@ describe('WeatherRadar Polling Logic', () => {
             expect(applySpy).not.toHaveBeenCalled();
             expect(radar.pendingFrames).toHaveLength(2);
         });
+
+        it('should catch and log errors during fetch without crashing', async () => {
+            const error = new Error('Fetch failed');
+
+            // Because radar.polling.fetchFrames uses RadarFrames.getFramesFromApi which catches its own errors
+            // and returns { frames: [], pastCount: 0 } instead of throwing, we need to mock radar.polling.fetchFrames
+            // directly to test RadarPolling's catch block in checkForUpdates.
+            radar.polling.fetchFrames = vi.fn().mockRejectedValueOnce(error);
+
+            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+            const applySpy = vi.spyOn(radar, 'applyFrameUpdate');
+
+            await expect(radar.checkForUpdates()).resolves.toBeUndefined();
+
+            expect(consoleSpy).toHaveBeenCalledWith('Failed to check for radar updates:', error);
+            expect(applySpy).not.toHaveBeenCalled();
+
+            consoleSpy.mockRestore();
+        });
     });
 
     describe('Polling Control', () => {
