@@ -27,3 +27,8 @@
 
 **Learning:** Flex containers without explicit gaps or flexible base sizing can cause adjacent horizontal content blocks to collide in narrow widget views (such as map-based current weather widgets), reducing spacing between units (e.g. "km/h") and direction indicators (e.g. "NE") to 0px.
 **Action:** Ensure inline-related elements have guaranteed physical spacing (such as `margin-left: var(--spacing-sm)`) rather than relying on `margin-left: auto` in container dimensions that shrink to fit.
+
+## 2024-05-24 - Native Button Redundancy
+
+**Learning:** Native HTML `<button>` elements automatically map 'Enter' and 'Space' keypresses to `click` events by default in browsers. Explicitly binding `keydown` listeners for these keys on standard `<button>` elements adds unnecessary overhead and redundancy.
+**Action:** When implementing keyboard accessibility for interactive elements, only explicitly bind `keydown` listeners for 'Space' and 'Enter' if the element is a custom component (e.g., a `div` or `a` functioning as a button) and *not* a standard `<button>` element.
