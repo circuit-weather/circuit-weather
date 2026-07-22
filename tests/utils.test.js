@@ -33,6 +33,25 @@ describe('Utility Functions', () => {
       const input = 'Hello World! 123';
       expect(escapeHtml(input)).toBe(input);
     });
+
+    it('converts booleans to strings', () => {
+      expect(escapeHtml(true)).toBe('true');
+      expect(escapeHtml(false)).toBe('false');
+    });
+
+    it('escapes consecutive dangerous characters', () => {
+      expect(escapeHtml('<<>>&&""\'\'')).toBe('&lt;&lt;&gt;&gt;&amp;&amp;&quot;&quot;&#39;&#39;');
+    });
+
+    it('handles objects with custom toString() returning dangerous characters', () => {
+      const obj = { toString: () => '<evil>' };
+      expect(escapeHtml(obj)).toBe('&lt;evil&gt;');
+    });
+
+    it('handles arrays safely (which implicitly call toString() converting to comma-separated values)', () => {
+      const arr = [1, '<', 2];
+      expect(escapeHtml(arr)).toBe('1,&lt;,2');
+    });
   });
 
   describe('SafeStorage', () => {
