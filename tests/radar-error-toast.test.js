@@ -115,4 +115,26 @@ describe('RadarErrorToast edge cases', () => {
 
         i18nSpy.mockRestore();
     });
+
+    it('handleTileError calls updateErrorUI on fetch network rejection', async () => {
+        toast.failedTiles.add('tile');
+        toast.isCheckingStatus = false;
+
+        const error = new Error('Network error');
+        vi.stubGlobal('fetch', vi.fn(() => Promise.reject(error)));
+
+        toast.updateErrorUI = vi.fn();
+        const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+        toast.handleTileError({ tile: 'tile' });
+
+        // Let the promise reject
+        await new Promise(r => setImmediate(r));
+
+        expect(toast.isCheckingStatus).toBe(false);
+        expect(consoleErrorSpy).toHaveBeenCalledWith('Network error during API status check:', error);
+        expect(toast.updateErrorUI).toHaveBeenCalled();
+
+        consoleErrorSpy.mockRestore();
+    });
 });
