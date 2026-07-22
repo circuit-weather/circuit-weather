@@ -32,3 +32,8 @@
 
 **Learning:** Native HTML `<button>` elements automatically map 'Enter' and 'Space' keypresses to `click` events by default in browsers. Explicitly binding `keydown` listeners for these keys on standard `<button>` elements adds unnecessary overhead and redundancy.
 **Action:** When implementing keyboard accessibility for interactive elements, only explicitly bind `keydown` listeners for 'Space' and 'Enter' if the element is a custom component (e.g., a `div` or `a` functioning as a button) and *not* a standard `<button>` element.
+
+## 2024-05-24 - Menu Transition Layout Shifts
+
+**Learning:** When replacing `display: none` with `visibility: hidden` to enable CSS transitions on UI components (like dropdown menus), ensure the element is absolutely positioned (`position: absolute` or `position: fixed`) so it doesn't disrupt document layout. `visibility: hidden` preserves the element's box in layout, but correctly removes it from the accessibility tree mimicking `display: none` for screen readers.
+**Action:** When animating display states, prefer `opacity` and `visibility: hidden` with `position: absolute` over `display: none`.

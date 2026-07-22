@@ -218,7 +218,7 @@ export class CircuitWeatherApp {
 
             sidebarContent.appendChild(errorState);
 
-            const handleRetry = () => {
+            btn.addEventListener('click', () => {
                 btn.disabled = true;
                 btn.setAttribute('aria-disabled', 'true');
                 // Palette UX: Add loading spinner to async submit button
@@ -240,16 +240,6 @@ export class CircuitWeatherApp {
 
                 btn.setAttribute('aria-label', i18n.t('errors.retryingConnection'));
                 window.location.reload();
-            };
-
-            btn.addEventListener('click', handleRetry);
-
-            // Palette A11y: Ensure keyboard users can activate the retry button
-            btn.addEventListener('keydown', (e) => {
-                if (e.key === ' ' || e.key === 'Enter') {
-                    e.preventDefault();
-                    handleRetry();
-                }
             });
         }
     }
