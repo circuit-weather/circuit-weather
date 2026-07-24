@@ -2027,7 +2027,8 @@ button:disabled,
 /* Accessibility: Ensure keyboard scrollable regions show focus */
 .weather-timeline:focus-visible,
 .privacy-modal-content:focus-visible,
-.leaflet-control-weather:focus-visible {
+.leaflet-control-weather:focus-visible,
+.mapboxgl-ctrl-group:focus-visible {
     outline: 2px solid var(--color-primary);
     outline-offset: -2px;
     border-radius: var(--radius-sm);

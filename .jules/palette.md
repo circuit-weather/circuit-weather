@@ -37,3 +37,8 @@
 
 **Learning:** When replacing `display: none` with `visibility: hidden` to enable CSS transitions on UI components (like dropdown menus), ensure the element is absolutely positioned (`position: absolute` or `position: fixed`) so it doesn't disrupt document layout. `visibility: hidden` preserves the element's box in layout, but correctly removes it from the accessibility tree mimicking `display: none` for screen readers.
 **Action:** When animating display states, prefer `opacity` and `visibility: hidden` with `position: absolute` over `display: none`.
+
+## 2024-11-20 - Multi-Renderer CSS Targeting
+
+**Learning:** When implementing custom UI controls that are compatible with both Leaflet and Mapbox GL JS (like `MapWeatherWidget`), the controls are wrapped in renderer-specific container classes. Writing CSS (like `:focus-visible` for accessibility) that targets only one of these classes (e.g., `.leaflet-control-weather`) will cause the style to fail when the other renderer (e.g., Mapbox) is active.
+**Action:** Always ensure CSS styles explicitly target both renderer-specific container classes (e.g., `.leaflet-control-weather:focus-visible` and `.mapboxgl-ctrl-group:focus-visible`) to maintain consistent styling and accessibility across both map engines.
