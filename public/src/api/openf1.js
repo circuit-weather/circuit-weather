@@ -82,7 +82,7 @@ export function openF1ToErgastDateTime(dateStr, gmtOffset) {
  * Transform OpenF1 meetings + sessions arrays into the Ergast
  * RaceTable.Races shape the rest of the app already consumes.
  */
-export function transformOpenF1(meetings, sessions) {
+function transformOpenF1(meetings, sessions) {
     const sessionsByMeeting = {};
     for (const s of sessions) {
         (sessionsByMeeting[s.meeting_key] ??= []).push(s);

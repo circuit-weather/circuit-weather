@@ -1,7 +1,17 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { openF1ToErgastDateTime, transformOpenF1, fetchOpenF1Schedule } from '../public/src/api/openf1.js';
+import { openF1ToErgastDateTime, fetchOpenF1Schedule } from '../public/src/api/openf1.js';
 
 describe('openf1', () => {
+    let mockFetch;
+
+    beforeEach(() => {
+        mockFetch = vi.fn();
+        vi.stubGlobal('fetch', mockFetch);
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+    });
     describe('openF1ToErgastDateTime', () => {
         it('converts a positive GMT offset to UTC', () => {
             // 15:00 local at UTC+3 → 12:00 UTC
@@ -56,7 +66,7 @@ describe('openf1', () => {
         });
     });
 
-    describe('transformOpenF1', () => {
+    describe('transformOpenF1 (via fetchOpenF1Schedule)', () => {
         const meetings = [
             {
                 meeting_key: 2,
@@ -95,8 +105,11 @@ describe('openf1', () => {
             { meeting_key: 99, session_type: 'Practice 1', date_start: '2026-02-26T07:00:00', gmt_offset: '03:00:00' },
         ];
 
-        it('filters out non-race meetings and sorts by date', () => {
-            const races = transformOpenF1(meetings, sessions);
+        it('filters out non-race meetings and sorts by date', async () => {
+            mockFetch
+                .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(meetings) })
+                .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(sessions) });
+            const races = await fetchOpenF1Schedule();
 
             expect(races).toHaveLength(2);
             // Sorted chronologically: Bahrain (round 1) before Saudi (round 2)
@@ -106,14 +119,20 @@ describe('openf1', () => {
             expect(races[1].round).toBe('2');
         });
 
-        it('maps circuit_key to the Ergast circuitId', () => {
-            const races = transformOpenF1(meetings, sessions);
+        it('maps circuit_key to the Ergast circuitId', async () => {
+            mockFetch
+                .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(meetings) })
+                .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(sessions) });
+            const races = await fetchOpenF1Schedule();
             expect(races[0].Circuit.circuitId).toBe('bahrain');
             expect(races[1].Circuit.circuitId).toBe('jeddah');
         });
 
-        it('produces Ergast-shaped session fields with UTC times', () => {
-            const races = transformOpenF1(meetings, sessions);
+        it('produces Ergast-shaped session fields with UTC times', async () => {
+            mockFetch
+                .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(meetings) })
+                .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(sessions) });
+            const races = await fetchOpenF1Schedule();
             const bahrain = races[0];
             expect(bahrain.FirstPractice).toEqual({ date: '2026-03-20', time: '08:30:00Z' });
             expect(bahrain.Qualifying).toEqual({ date: '2026-03-21', time: '12:00:00Z' });
@@ -121,7 +140,7 @@ describe('openf1', () => {
             expect(bahrain.time).toBe('12:00:00Z');
         });
 
-        it('handles all possible session types correctly', () => {
+        it('handles all possible session types correctly', async () => {
             const allSessionsMtg = [{ meeting_key: 10, meeting_name: 'Sprint Weekend GP', date_start: '2026-07-01T10:00:00' }];
             const allSessions = [
                 { meeting_key: 10, session_type: 'Practice 1', date_start: '2026-07-01T10:00:00Z', gmt_offset: null },
@@ -133,7 +152,10 @@ describe('openf1', () => {
                 { meeting_key: 10, session_type: 'Qualifying', date_start: '2026-07-03T14:00:00Z', gmt_offset: null },
                 { meeting_key: 10, session_type: 'Race', date_start: '2026-07-04T15:00:00Z', gmt_offset: null },
             ];
-            const races = transformOpenF1(allSessionsMtg, allSessions);
+            mockFetch
+                .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(allSessionsMtg) })
+                .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(allSessions) });
+            const races = await fetchOpenF1Schedule();
             const race = races[0];
 
             expect(race.FirstPractice).toEqual({ date: '2026-07-01', time: '10:00:00Z' });
@@ -147,53 +169,54 @@ describe('openf1', () => {
             expect(race.time).toBe('15:00:00Z');
         });
 
-        it('skips sessions with null date_start or gmt_offset', () => {
+        it('skips sessions with null date_start or gmt_offset', async () => {
             const mtgs = [{ meeting_key: 3, meeting_name: 'Test GP', circuit_short_name: 'Sakhir', location: 'Sakhir', country_name: 'Bahrain', date_start: '2026-05-01T12:00:00' }];
             const sess = [
                 { meeting_key: 3, session_type: 'Practice 1', date_start: null, gmt_offset: '03:00:00' },
                 { meeting_key: 3, session_type: 'Qualifying', date_start: '2026-05-02T15:00:00', gmt_offset: null },
                 { meeting_key: 3, session_type: 'Race', date_start: '2026-05-03T15:00:00', gmt_offset: '03:00:00' },
             ];
-            const races = transformOpenF1(mtgs, sess);
+            mockFetch
+                .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(mtgs) })
+                .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(sess) });
+            const races = await fetchOpenF1Schedule();
             expect(races).toHaveLength(1);
             expect(races[0].FirstPractice).toBeUndefined();
             expect(races[0].Qualifying).toBeUndefined();
             expect(races[0].date).toBe('2026-05-03');
         });
 
-        it('leaves coordinates empty (the map centre is derived from the track GeoJSON)', () => {
-            const races = transformOpenF1(meetings, sessions);
+        it('leaves coordinates empty (the map centre is derived from the track GeoJSON)', async () => {
+            mockFetch
+                .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(meetings) })
+                .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(sessions) });
+            const races = await fetchOpenF1Schedule();
             expect(races[0].Circuit.Location.lat).toBe('');
             expect(races[0].Circuit.Location.long).toBe('');
         });
 
-        it('leaves circuitId null for an unknown circuit', () => {
+        it('leaves circuitId null for an unknown circuit', async () => {
             const unknown = [{ meeting_key: 5, meeting_name: 'Mystery GP', circuit_short_name: 'Atlantis', date_start: '2026-05-01T12:00:00' }];
             const unknownSessions = [{ meeting_key: 5, session_type: 'Race', date_start: '2026-05-01T12:00:00', gmt_offset: '00:00:00' }];
-            const races = transformOpenF1(unknown, unknownSessions);
+            mockFetch
+                .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(unknown) })
+                .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(unknownSessions) });
+            const races = await fetchOpenF1Schedule();
             expect(races[0].Circuit.circuitId).toBeNull();
         });
 
-        it('handles a meeting with no sessions safely', () => {
+        it('handles a meeting with no sessions safely', async () => {
             const emptySessionMtg = [{ meeting_key: 6, meeting_name: 'No Sessions GP', date_start: '2026-06-01T12:00:00' }];
             const emptySessions = [];
-            const races = transformOpenF1(emptySessionMtg, emptySessions);
+            mockFetch
+                .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(emptySessionMtg) })
+                .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(emptySessions) });
+            const races = await fetchOpenF1Schedule();
             expect(races).toHaveLength(0); // Because we filter out meetings with no "Race" session
         });
     });
 
     describe('fetchOpenF1Schedule', () => {
-        let mockFetch;
-
-        beforeEach(() => {
-            mockFetch = vi.fn();
-            vi.stubGlobal('fetch', mockFetch);
-        });
-
-        afterEach(() => {
-            vi.restoreAllMocks();
-        });
-
         it('fetches meetings + sessions and returns transformed races', async () => {
             const meetings = [{ meeting_key: 1, circuit_key: 63, meeting_name: 'Bahrain Grand Prix', circuit_short_name: 'Sakhir', location: 'Sakhir', country_name: 'Bahrain', date_start: '2026-03-20T11:30:00' }];
             const sessions = [{ meeting_key: 1, session_type: 'Race', date_start: '2026-03-22T15:00:00', gmt_offset: '03:00:00' }];
