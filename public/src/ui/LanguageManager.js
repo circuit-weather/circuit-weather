@@ -1,10 +1,11 @@
 import { i18n, LANGUAGE_NAMES } from '../i18n/index.js';
+import { BaseToggleable } from './BaseToggleable.js';
 
-export class LanguageManager {
+export class LanguageManager extends BaseToggleable {
     constructor() {
+        super();
         this.toggleBtn = document.getElementById('languageToggle');
         this.menu = document.getElementById('languageMenu');
-        this.isOpen = false;
 
         if (this.toggleBtn && this.menu) {
             this.init();
@@ -109,14 +110,6 @@ export class LanguageManager {
                 }
             });
         });
-    }
-
-    toggle() {
-        if (this.isOpen) {
-            this.close();
-        } else {
-            this.open();
-        }
     }
 
     open() {
