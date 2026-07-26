@@ -5,8 +5,7 @@ import {
   getAllowedOrigin,
   VALID_API_PATH_REGEX
 } from '../src/worker-utils.js';
-
-const PRODUCTION_DOMAIN = 'https://circuit-weather.racing';
+import { PRODUCTION_DOMAIN } from './helpers/constants.js';
 
 // Mock Request object helper
 const createRequest = (headers = {}) => ({
