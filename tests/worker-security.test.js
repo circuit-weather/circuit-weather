@@ -3,9 +3,10 @@ import {
   checkRequestSource,
   checkFetchDest,
   getAllowedOrigin,
-  VALID_API_PATH_REGEX,
-  PRODUCTION_DOMAIN
+  VALID_API_PATH_REGEX
 } from '../src/worker-utils.js';
+
+const PRODUCTION_DOMAIN = 'https://circuit-weather.racing';
 
 // Mock Request object helper
 const createRequest = (headers = {}) => ({

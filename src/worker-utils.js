@@ -2,7 +2,7 @@
 
 export const VALID_API_PATH_REGEX = /^[a-zA-Z0-9/._-]*$/;
 export const VALID_TRACK_ID_REGEX = /^[a-z0-9-]+$/;
-export const PRODUCTION_DOMAIN = 'https://circuit-weather.racing';
+const PRODUCTION_DOMAIN = 'https://circuit-weather.racing';
 const ALLOWED_ORIGIN_LOCALHOST_REGEX = /^http:\/\/localhost(:\d+)?(\/|$)/;
 const ALLOWED_ORIGIN_127_REGEX = /^http:\/\/127\.0\.0\.1(:\d+)?(\/|$)/;
 const ALLOWED_PREVIEW_REGEX = /^https:\/\/(?:[a-zA-Z0-9-]+\.)*circuit-weather\.pages\.dev(?:\/|$)/;
