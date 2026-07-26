@@ -1,12 +1,13 @@
 import { i18n } from '../i18n/index.js';
+import { BaseToggleable } from './BaseToggleable.js';
 
-export class SidebarManager {
+export class SidebarManager extends BaseToggleable {
     constructor() {
+        super();
         this.sidebar = document.getElementById('sidebar');
         this.toggleBtn = document.getElementById('sidebarToggle');
         this.mobileMenuBtn = document.getElementById('mobileMenuBtn');
         this.backdrop = document.getElementById('sidebarBackdrop');
-        this.isOpen = false;
         this.mobileBreakpoint = 768;
         this._handleFocusTrap = this.handleFocusTrap.bind(this);
         this.bindEvents();
@@ -68,14 +69,6 @@ export class SidebarManager {
                 this.close();
             }
         });
-    }
-
-    toggle() {
-        if (this.isOpen) {
-            this.close();
-        } else {
-            this.open();
-        }
     }
 
     open() {
