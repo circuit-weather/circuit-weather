@@ -15,6 +15,11 @@ import { nl } from './locales/nl.js';
 import { ptBR } from './locales/pt-BR.js';
 import { zhCN } from './locales/zh-CN.js';
 
+// Exported for tests/i18n-locales-completeness.test.js, which checks every
+// locale against `en`. It needs this aggregate rather than the individual
+// locale modules — importing those separately would silently skip a newly
+// added locale, which is exactly what that test exists to catch. Intentionally
+// exported despite having no other importer: do not sweep it.
 export const TRANSLATIONS = {
     en,
     'en-GB': enGB,
