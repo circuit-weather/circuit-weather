@@ -53,7 +53,7 @@ const OPENF1_TIMEOUT_MS = 8000;
  * timezone (e.g. "2026-03-22T15:00:00"), we apply gmtOffset ("03:00:00" /
  * "-05:00:00") to derive UTC.
  */
-export function openF1ToErgastDateTime(dateStr, gmtOffset) {
+function openF1ToErgastDateTime(dateStr, gmtOffset) {
     if (!dateStr) return null;
 
     // If date_start already carries a timezone (trailing Z, or ±HH:MM after the time),

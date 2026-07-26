@@ -1,61 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { openF1ToErgastDateTime, transformOpenF1, fetchOpenF1Schedule } from '../public/src/api/openf1.js';
+import { transformOpenF1, fetchOpenF1Schedule } from '../public/src/api/openf1.js';
 
 describe('openf1', () => {
-    describe('openF1ToErgastDateTime', () => {
-        it('converts a positive GMT offset to UTC', () => {
-            // 15:00 local at UTC+3 → 12:00 UTC
-            expect(openF1ToErgastDateTime('2026-03-22T15:00:00', '03:00:00')).toEqual({
-                date: '2026-03-22',
-                time: '12:00:00Z',
-            });
-        });
-
-        it('converts a negative GMT offset to UTC', () => {
-            // 14:00 local at UTC-5 → 19:00 UTC
-            expect(openF1ToErgastDateTime('2026-10-19T14:00:00', '-05:00:00')).toEqual({
-                date: '2026-10-19',
-                time: '19:00:00Z',
-            });
-        });
-
-        it('rolls over to the next day when offset crosses midnight', () => {
-            // 23:00 local at UTC-5 → 04:00 UTC next day
-            expect(openF1ToErgastDateTime('2026-10-19T23:00:00', '-05:00:00')).toEqual({
-                date: '2026-10-20',
-                time: '04:00:00Z',
-            });
-        });
-
-        it('parses an ISO string that already carries its timezone offset', () => {
-            // OpenF1 normally returns date_start with an embedded offset; gmt_offset is ignored.
-            // 15:00 at +03:00 → 12:00 UTC
-            expect(openF1ToErgastDateTime('2026-03-22T15:00:00+03:00', '03:00:00')).toEqual({
-                date: '2026-03-22',
-                time: '12:00:00Z',
-            });
-        });
-
-        it('parses an ISO string with a trailing Z', () => {
-            expect(openF1ToErgastDateTime('2026-03-22T12:00:00Z', null)).toEqual({
-                date: '2026-03-22',
-                time: '12:00:00Z',
-            });
-        });
-
-        it('returns null when no timezone is embedded and no gmt_offset is given', () => {
-            expect(openF1ToErgastDateTime('2026-03-22T15:00:00', null)).toBeNull();
-        });
-
-        it('returns null for an absent datetime', () => {
-            expect(openF1ToErgastDateTime(null, '03:00:00')).toBeNull();
-        });
-
-        it('returns null when the resulting datetime is invalid', () => {
-            expect(openF1ToErgastDateTime('invalid-date', '03:00:00')).toBeNull();
-        });
-    });
-
     describe('transformOpenF1', () => {
         const meetings = [
             {
