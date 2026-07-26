@@ -215,7 +215,7 @@ export class RateLimiter {
 }
 
 // Helper to generate standard error headers (Security + CORS + No-Cache)
-export function getErrorHeaders(request) {
+function getErrorHeaders(request) {
   const headers = {
     'Content-Type': 'application/json',
     'Cache-Control': 'no-store',
