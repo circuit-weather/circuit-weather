@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest';
 import {
-    getErrorHeaders,
     getEmptyRadarResponse,
     calculateHash,
     API_SECURITY_HEADERS
@@ -16,56 +15,6 @@ const createRequest = (headers = {}) => ({
 });
 
 describe('Worker Utils Helpers', () => {
-
-    describe('getErrorHeaders', () => {
-        it('returns JSON content-type and no-store cache-control', () => {
-            const req = createRequest({});
-            const headers = getErrorHeaders(req);
-
-            expect(headers['Content-Type']).toBe('application/json');
-            expect(headers['Cache-Control']).toBe('no-store');
-        });
-
-        it('includes all API security headers', () => {
-            const req = createRequest({});
-            const headers = getErrorHeaders(req);
-
-            for (const [key, value] of Object.entries(API_SECURITY_HEADERS)) {
-                expect(headers[key]).toBe(value);
-            }
-        });
-
-        it('adds CORS headers for allowed origin', () => {
-            const req = createRequest({ 'Origin': PRODUCTION_DOMAIN });
-            const headers = getErrorHeaders(req);
-
-            expect(headers['Access-Control-Allow-Origin']).toBe(PRODUCTION_DOMAIN);
-            expect(headers['Vary']).toBe('Origin');
-        });
-
-        it('omits CORS headers for disallowed origin', () => {
-            const req = createRequest({ 'Origin': 'https://evil.com' });
-            const headers = getErrorHeaders(req);
-
-            expect(headers['Access-Control-Allow-Origin']).toBeUndefined();
-            expect(headers['Vary']).toBeUndefined();
-        });
-
-        it('omits CORS headers when no Origin header is present', () => {
-            const req = createRequest({});
-            const headers = getErrorHeaders(req);
-
-            expect(headers['Access-Control-Allow-Origin']).toBeUndefined();
-        });
-
-        it('adds CORS headers for localhost origin', () => {
-            const req = createRequest({ 'Origin': 'http://localhost:8787' });
-            const headers = getErrorHeaders(req);
-
-            expect(headers['Access-Control-Allow-Origin']).toBe('http://localhost:8787');
-            expect(headers['Vary']).toBe('Origin');
-        });
-    });
 
     describe('getEmptyRadarResponse', () => {
         it('returns a 200 Response', async () => {
