@@ -3,9 +3,10 @@ import {
     getErrorHeaders,
     getEmptyRadarResponse,
     calculateHash,
-    API_SECURITY_HEADERS,
-    PRODUCTION_DOMAIN
+    API_SECURITY_HEADERS
 } from '../src/worker-utils.js';
+
+const PRODUCTION_DOMAIN = 'https://circuit-weather.racing';
 
 // Mock Request helper
 const createRequest = (headers = {}) => ({
