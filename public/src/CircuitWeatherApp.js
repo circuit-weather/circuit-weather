@@ -245,15 +245,20 @@ export class CircuitWeatherApp {
     }
 
     getRaceEndTime(race) {
+        if (race._endTime) return race._endTime;
+
+        let end;
         const raceSession = race.sessions.find(s => s.id === 'race');
         if (raceSession && raceSession.date && raceSession.time) {
-            const end = new Date(`${raceSession.date}T${raceSession.time}`);
+            end = new Date(`${raceSession.date}T${raceSession.time}`);
             end.setHours(end.getHours() + CONFIG.RACE_DURATION_BUFFER_HOURS);
-            return end;
+        } else {
+            // Fallback if no time (shouldn't happen for recent races)
+            end = new Date(race.date);
+            end.setHours(end.getHours() + CONFIG.RACE_DAY_END_HOUR);
         }
-        // Fallback if no time (shouldn't happen for recent races)
-        const end = new Date(race.date);
-        end.setHours(end.getHours() + CONFIG.RACE_DAY_END_HOUR);
+
+        race._endTime = end;
         return end;
     }
 
