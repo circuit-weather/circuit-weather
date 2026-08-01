@@ -168,6 +168,10 @@ describe('Worker Security Utils', () => {
       expect(checkFetchDest(createRequest({ 'Sec-Fetch-Dest': 'object' }))).toBe(false);
     });
 
+    it('blocks embed destination', () => {
+      expect(checkFetchDest(createRequest({ 'Sec-Fetch-Dest': 'embed' }))).toBe(false);
+    });
+
     it('blocks iframe destination', () => {
       expect(checkFetchDest(createRequest({ 'Sec-Fetch-Dest': 'iframe' }))).toBe(false);
     });
