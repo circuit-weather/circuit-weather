@@ -284,6 +284,44 @@ describe('CircuitWeatherApp Pure Methods', () => {
 
             expect(result.getTime()).toBe(expected.getTime());
         });
+
+        it('memoises the result without handing back a shared mutable Date', () => {
+            const race = {
+                date: '2024-03-10',
+                sessions: [
+                    { id: 'race', name: 'Race', date: '2024-03-10', time: '14:00:00Z' },
+                ],
+            };
+
+            const first = app.getRaceEndTime(race);
+            const expected = first.getTime();
+
+            // A caller mutating the returned Date must not poison the cache.
+            first.setFullYear(first.getFullYear() + 5);
+
+            const second = app.getRaceEndTime(race);
+            expect(second.getTime()).toBe(expected);
+            expect(second).not.toBe(first);
+        });
+
+        it('keeps the memo off enumerable state so races stay serialisable', () => {
+            const race = {
+                date: '2024-03-10',
+                sessions: [
+                    { id: 'race', name: 'Race', date: '2024-03-10', time: '14:00:00Z' },
+                ],
+            };
+
+            app.getRaceEndTime(race);
+
+            expect(Object.keys(race)).toEqual(['date', 'sessions']);
+            expect(JSON.parse(JSON.stringify(race))).toEqual({
+                date: '2024-03-10',
+                sessions: [
+                    { id: 'race', name: 'Race', date: '2024-03-10', time: '14:00:00Z' },
+                ],
+            });
+        });
     });
 
     // ---------------------------------------------------------------
