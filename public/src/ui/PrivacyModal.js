@@ -85,11 +85,21 @@ export class PrivacyModal {
     try {
       let markdown = null;
 
-      for (const path of paths) {
+      // ⚡ Start all fetches concurrently to minimize network latency
+      const fetchPromises = paths.map(path =>
         // SEC: Add timeout to prevent hanging connections during document fetch
-        const response = await fetch(path, {
+        fetch(path, {
             signal: AbortSignal.timeout(3000)
-        });
+        }).catch(err => err) // Catch errors so Promise.all (if used) wouldn't fail fast, though we iterate directly
+      );
+
+      for (const promise of fetchPromises) {
+        const response = await promise;
+        // If an explicit network error/timeout happened on this request, we throw to hit the outer catch block
+        // matching the original behavior (which threw if the first fetch() threw an exception).
+        // Actually, if we throw immediately on a failed fallback fetch, we might break fallback.
+        // The original code did `await fetch(path)`. If that throws, the entire loop aborts and goes to catch.
+        if (response instanceof Error) throw response;
         if (!response.ok) continue;
         markdown = await response.text();
         break;
