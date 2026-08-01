@@ -114,7 +114,8 @@ export class RadarErrorToast {
             this.showErrorToast(
                 this.activeErrorTitle || i18n.t('radar.connectionInstability'),
                 message,
-                duration
+                duration,
+                this.rateLimitResetTime > Date.now() ? this.rateLimitResetTime : null
             );
         } else {
             // DEBOUNCE HIDE: Wait 1s before hiding to prevent "popping" during redraws
@@ -137,7 +138,7 @@ export class RadarErrorToast {
         this.activeErrorTitle = title; // Track title for consistency
 
         // Show persistent toast
-        this.showErrorToast(title, message, Math.ceil(waitTimeMs / 1000));
+        this.showErrorToast(title, message, Math.ceil(waitTimeMs / 1000), this.rateLimitResetTime);
 
         // Schedule Retry
         if (this.retryTimer) clearTimeout(this.retryTimer);
@@ -161,7 +162,7 @@ export class RadarErrorToast {
         this.onRetry();
     }
 
-    showErrorToast(title, message, durationSec = 5) {
+    showErrorToast(title, message, durationSec = 5, targetEndTimeMs = null) {
         if (!this.ui.errorToast) return;
 
         // Cancel any existing timer loop to prevent overlap
@@ -176,7 +177,7 @@ export class RadarErrorToast {
         this.ui.errorToast.style.opacity = '1';
 
         // Handle Countdown UI
-        const endTime = Date.now() + (durationSec * 1000);
+        const endTime = targetEndTimeMs || (Date.now() + (durationSec * 1000));
 
         const updateTimer = () => {
             if (!this.ui.errorToast.classList.contains('visible')) {

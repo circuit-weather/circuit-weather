@@ -128,7 +128,8 @@ describe('WeatherRadar Timer Logic', () => {
         expect(toastSpy).toHaveBeenCalledWith(
             expect.any(String),
             expect.stringContaining('Retrying 1 failed tile'),
-            45 // Duration should be 45
+            45, // Duration should be 45
+            radar.errorToast.rateLimitResetTime
         );
 
         vi.useRealTimers();
