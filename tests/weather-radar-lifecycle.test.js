@@ -363,7 +363,7 @@ describe('WeatherRadar Lifecycle & Playback', () => {
             radar.errorToast.triggerRateLimitCooldown(30000, 'Rate Limited', 'Wait 30s');
 
             expect(radar.errorToast.rateLimitResetTime).toBe(1000000 + 30000);
-            expect(toastSpy).toHaveBeenCalledWith('Rate Limited', 'Wait 30s', 30);
+            expect(toastSpy).toHaveBeenCalledWith('Rate Limited', 'Wait 30s', 30, radar.errorToast.rateLimitResetTime);
         });
 
         it('does not re-trigger if already in cooldown', () => {
