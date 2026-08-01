@@ -91,7 +91,9 @@ function transformOpenF1(meetings, sessions) {
     // Filter out pre-season testing (meetings with no Race session) and sort by date
     const raceMeetings = meetings
         .filter(m => (sessionsByMeeting[m.meeting_key] ?? []).some(s => s.session_type === 'Race'))
-        .sort((a, b) => new Date(a.date_start) - new Date(b.date_start));
+        .map(m => ({ meeting: m, time: new Date(m.date_start).getTime() }))
+        .sort((a, b) => a.time - b.time)
+        .map(item => item.meeting);
 
     return raceMeetings.map((meeting, i) => {
         const msessions = sessionsByMeeting[meeting.meeting_key] ?? [];
