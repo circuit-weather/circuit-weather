@@ -286,7 +286,25 @@ async function handleApiRequest(request, env, ctx, url) {
 
   // Extract path parameters after /api/f1/
   // e.g. /api/f1/current -> current
-  const apiPath = url.pathname.slice('/api/f1/'.length);
+  let apiPath = url.pathname.slice('/api/f1/'.length);
+
+  // SEC: Recursively decode URL to prevent SSRF/Directory Traversal via multiple encodings
+  let decodedPath = apiPath;
+  let prevPath;
+  let iterations = 0;
+  try {
+    do {
+      prevPath = decodedPath;
+      decodedPath = decodeURIComponent(decodedPath);
+      iterations++;
+      if (iterations > 5) {
+        return createErrorResponse(request, 400, 'Invalid API path: encoding too deep');
+      }
+    } while (prevPath !== decodedPath);
+    apiPath = decodedPath;
+  } catch (e) {
+    return createErrorResponse(request, 400, 'Invalid API path: malformed URI');
+  }
 
   // Validate apiPath: Strict whitelist + structure check
   // Allows: alphanumeric, dot, hyphen, underscore, slash
@@ -758,7 +776,25 @@ async function handleHealthRequest(request, env, ctx, url) {
 async function handleTileRequest(request, env, ctx, url) {
 
   // Extract path suffix: /api/tiles/v2/radar/... -> /v2/radar/...
-  const tilePath = url.pathname.slice('/api/tiles'.length);
+  let tilePath = url.pathname.slice('/api/tiles'.length);
+
+  // SEC: Recursively decode URL to prevent SSRF/Directory Traversal via multiple encodings
+  let decodedTilePath = tilePath;
+  let prevTilePath;
+  let tileIterations = 0;
+  try {
+    do {
+      prevTilePath = decodedTilePath;
+      decodedTilePath = decodeURIComponent(decodedTilePath);
+      tileIterations++;
+      if (tileIterations > 5) {
+        return createErrorResponse(request, 400, 'Invalid tile path: encoding too deep');
+      }
+    } while (prevTilePath !== decodedTilePath);
+    tilePath = decodedTilePath;
+  } catch (e) {
+    return createErrorResponse(request, 400, 'Invalid tile path: malformed URI');
+  }
 
   // SEC: Validate tilePath (length and content) to prevent traversal/SSRF
   // SEC: Prevent access to hidden files/directories (dotfiles)
