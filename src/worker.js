@@ -197,7 +197,7 @@ function handleOptions(request) {
 /**
  * Helper to cache and return an error response
  */
-function cacheAndReturnError(request, cache, cacheKey, status, message, extraDetails, ctx) {
+function cacheAndReturnError({ request, cache, cacheKey, status, message, extraDetails = {}, ctx }) {
   // Cache error response to prevent hammering upstream
   const errorCacheTTL = status === 429 ? 300 : 60;
 
@@ -348,7 +348,7 @@ async function handleApiRequest(request, env, ctx, url) {
     const status = upstreamResponse.status;
 
     if (!upstreamResponse.ok) {
-      return cacheAndReturnError(request, cache, cacheKey, status, 'Upstream API error', {}, ctx);
+      return cacheAndReturnError({ request, cache, cacheKey, status, message: 'Upstream API error', ctx });
     }
 
     // SEC: Strict Content-Type Validation
@@ -361,7 +361,7 @@ async function handleApiRequest(request, env, ctx, url) {
       if (env.ENVIRONMENT !== 'production') {
         console.error(`Upstream Invalid Content-Type: ${contentType} (parsed: ${mime})`);
       }
-      return cacheAndReturnError(request, cache, cacheKey, 502, 'Invalid upstream content type', {}, ctx);
+      return cacheAndReturnError({ request, cache, cacheKey, status: 502, message: 'Invalid upstream content type', ctx });
     }
 
     // Bolt Optimization: Stream response instead of buffering text
@@ -473,7 +473,7 @@ async function handleTrackRequest(request, env, ctx, url) {
 
     if (!upstreamResponse.ok) {
       const status = upstreamStatus === 404 ? 404 : 502;
-      return cacheAndReturnError(request, cache, cacheKey, status, 'Track not found', {}, ctx);
+      return cacheAndReturnError({ request, cache, cacheKey, status, message: 'Track not found', ctx });
     }
 
     // SEC: Strict Content-Type Validation
@@ -487,7 +487,7 @@ async function handleTrackRequest(request, env, ctx, url) {
       if (env.ENVIRONMENT !== 'production') {
         console.error(`Upstream Track Invalid Content-Type: ${contentType} (parsed: ${mime})`);
       }
-      return cacheAndReturnError(request, cache, cacheKey, 502, 'Invalid upstream content type', {}, ctx);
+      return cacheAndReturnError({ request, cache, cacheKey, status: 502, message: 'Invalid upstream content type', ctx });
     }
 
     // Bolt Optimization: Stream response instead of buffering text
