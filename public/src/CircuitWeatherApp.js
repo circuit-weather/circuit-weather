@@ -1133,7 +1133,9 @@ export class CircuitWeatherApp {
         // Rebuild Dashboard HTML
         // Note: We rebuild the entire dashboard here because renderForecastSkeleton() destroys
         // the internal structure (including IDs), causing cached references to become detached.
-        let currentHtml = '';
+
+        const dashboard = document.createElement('article');
+        dashboard.className = 'weather-dashboard';
 
         // Find the hourly forecast item closest to the session start time
         let sessionWeather = null;
@@ -1155,36 +1157,103 @@ export class CircuitWeatherApp {
             // Rotation: Input 0 (N) -> Blows South -> Arrow (Up) needs 180 deg rotation
             const rotation = windInfo.rotation;
 
-            currentHtml = `
-                <!-- Scout: Upgraded generic div/span wrappers to semantic description list (dl/dt/dd) to explicitly associate weather labels with their values for crawlers and assistive tech. -->
-                <dl class="weather-current">
-                    <div class="weather-metric">
-                        <dt class="weather-label" data-i18n="weather.temp">${escapeHtml(i18n.t('weather.temp'))}</dt>
-                        <dd class="weather-value" id="weatherTemp">${escapeHtml(temp)}${escapeHtml(weather.units.temperature_2m)}</dd>
-                    </div>
-                    <div class="weather-metric">
-                        <dt class="weather-label" data-i18n="weather.rain">${escapeHtml(i18n.t('weather.rain'))}</dt>
-                        <dd class="weather-value" id="weatherRain">${escapeHtml(maxPrecip)}%</dd>
-                    </div>
-                    <div class="weather-metric">
-                        <dt class="weather-label" data-i18n="weather.wind">${escapeHtml(i18n.t('weather.wind'))}</dt>
-                        <dd class="weather-value" id="weatherWind">${escapeHtml(wind)} ${escapeHtml(weather.units.wind_speed_10m)}</dd>
-                        <dd class="weather-sub" id="weatherWindDir" title="${escapeHtml(dir)}${escapeHtml(weather.units.wind_direction_10m)}" aria-label="${escapeHtml(i18n.t('weather.windDirection', { direction: windInfo.text, degrees: dir }))}">
-                            ${escapeHtml(windInfo.text)}
-                            <svg class="icon-wind-arrow" style="transform: rotate(${escapeHtml(rotation)}deg); width: 14px; height: 14px;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-                                <line x1="12" y1="19" x2="12" y2="5"></line>
-                                <polyline points="5 12 12 5 19 12"></polyline>
-                            </svg>
-                        </dd>
-                    </div>
-                </dl>
-            `;
+            const dl = document.createElement('dl');
+            dl.className = 'weather-current';
+
+            // Temperature metric
+            const divTemp = document.createElement('div');
+            divTemp.className = 'weather-metric';
+            const dtTemp = document.createElement('dt');
+            dtTemp.className = 'weather-label';
+            dtTemp.setAttribute('data-i18n', 'weather.temp');
+            dtTemp.textContent = i18n.t('weather.temp');
+            const ddTemp = document.createElement('dd');
+            ddTemp.className = 'weather-value';
+            ddTemp.id = 'weatherTemp';
+            ddTemp.textContent = `${temp}${weather.units.temperature_2m}`;
+            divTemp.appendChild(dtTemp);
+            divTemp.appendChild(ddTemp);
+            dl.appendChild(divTemp);
+
+            // Rain metric
+            const divRain = document.createElement('div');
+            divRain.className = 'weather-metric';
+            const dtRain = document.createElement('dt');
+            dtRain.className = 'weather-label';
+            dtRain.setAttribute('data-i18n', 'weather.rain');
+            dtRain.textContent = i18n.t('weather.rain');
+            const ddRain = document.createElement('dd');
+            ddRain.className = 'weather-value';
+            ddRain.id = 'weatherRain';
+            ddRain.textContent = `${maxPrecip}%`;
+            divRain.appendChild(dtRain);
+            divRain.appendChild(ddRain);
+            dl.appendChild(divRain);
+
+            // Wind metric
+            const divWind = document.createElement('div');
+            divWind.className = 'weather-metric';
+            const dtWind = document.createElement('dt');
+            dtWind.className = 'weather-label';
+            dtWind.setAttribute('data-i18n', 'weather.wind');
+            dtWind.textContent = i18n.t('weather.wind');
+            const ddWind = document.createElement('dd');
+            ddWind.className = 'weather-value';
+            ddWind.id = 'weatherWind';
+            ddWind.textContent = `${wind} ${weather.units.wind_speed_10m}`;
+            const ddWindDir = document.createElement('dd');
+            ddWindDir.className = 'weather-sub';
+            ddWindDir.id = 'weatherWindDir';
+            ddWindDir.title = `${dir}${weather.units.wind_direction_10m}`;
+            ddWindDir.setAttribute('aria-label', i18n.t('weather.windDirection', { direction: windInfo.text, degrees: dir }));
+
+            ddWindDir.appendChild(document.createTextNode(windInfo.text + ' '));
+
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.setAttribute('class', 'icon-wind-arrow');
+            svg.setAttribute('style', `transform: rotate(${rotation}deg); width: 14px; height: 14px;`);
+            svg.setAttribute('viewBox', '0 0 24 24');
+            svg.setAttribute('fill', 'none');
+            svg.setAttribute('stroke', 'currentColor');
+            svg.setAttribute('stroke-width', '2.5');
+            svg.setAttribute('stroke-linecap', 'round');
+            svg.setAttribute('stroke-linejoin', 'round');
+            svg.setAttribute('aria-hidden', 'true');
+
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.setAttribute('x1', '12');
+            line.setAttribute('y1', '19');
+            line.setAttribute('x2', '12');
+            line.setAttribute('y2', '5');
+            svg.appendChild(line);
+
+            const polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+            polyline.setAttribute('points', '5 12 12 5 19 12');
+            svg.appendChild(polyline);
+
+            ddWindDir.appendChild(svg);
+
+            divWind.appendChild(dtWind);
+            divWind.appendChild(ddWind);
+            divWind.appendChild(ddWindDir);
+            dl.appendChild(divWind);
+
+            dashboard.appendChild(dl);
         }
 
         // Timeline Logic
-        let timelineHtml = '';
         if (weather.hourly) {
-            const items = weather.hourly.map(hour => {
+            const section = document.createElement('section');
+            section.className = 'weather-timeline';
+            section.id = 'weatherTimeline';
+            section.tabIndex = 0;
+            section.setAttribute('data-i18n-attr', 'aria-label:forecast.hourlyForecast');
+            section.setAttribute('aria-label', i18n.t('forecast.hourlyForecast'));
+
+            const ol = document.createElement('ol');
+            ol.className = 'weather-timeline-list';
+
+            weather.hourly.forEach(hour => {
                 const relTime = this.weatherClient.getRelativeTime(hour.time, sessionTime);
                 const desc = this.weatherClient.getWeatherDescription(hour.code);
                 const a11yTime = this.weatherClient.getAccessibleRelativeTime(hour.time, sessionTime);
@@ -1198,46 +1267,55 @@ export class CircuitWeatherApp {
                     windUnit: weather.units.wind_speed_10m,
                 });
 
-                // Create a valid ISO string for the datetime attribute
                 const isoDateTime = new Date(hour.time * 1000).toISOString();
 
-                // Scout: Upgraded the timeline time element from a generic div to a semantic <time> tag
-                // and added a datetime attribute. This helps search engines and crawlers understand
-                // that this specific string represents a time duration/point in the forecast.
-                return `
-                    <li class="weather-timeline-item" aria-label="${escapeHtml(ariaLabel)}">
-                        <time datetime="${escapeHtml(isoDateTime)}" class="weather-timeline-time" aria-hidden="true">${escapeHtml(relTime)}</time>
-                        <div class="weather-timeline-condition" aria-hidden="true">
-                            ${escapeHtml(desc)}
-                            <div class="weather-timeline-wind">${escapeHtml(hour.windSpeed)} ${escapeHtml(weather.units.wind_speed_10m)}</div>
-                        </div>
-                        <div class="weather-timeline-temp" aria-hidden="true">
-                            <div>${escapeHtml(temp)}${escapeHtml(weather.units.temperature_2m)}</div>
-                            <div class="weather-timeline-precip">${escapeHtml(hour.precipProb)}%</div>
-                        </div>
-                    </li>
-                `;
-            }).join('');
+                const li = document.createElement('li');
+                li.className = 'weather-timeline-item';
+                li.setAttribute('aria-label', ariaLabel);
 
-            // Scout: Upgraded generic unordered list (ul) to an ordered list (ol) to semantically indicate to search engines and screen readers that the hourly forecast is a chronological, time-ordered sequence of events.
-            timelineHtml = `
-                <section class="weather-timeline" id="weatherTimeline" tabindex="0" data-i18n-attr="aria-label:forecast.hourlyForecast" aria-label="${escapeHtml(i18n.t('forecast.hourlyForecast'))}">
-                    <ol class="weather-timeline-list">
-                        ${items}
-                    </ol>
-                </section>
-            `;
+                const timeEl = document.createElement('time');
+                timeEl.setAttribute('datetime', isoDateTime);
+                timeEl.className = 'weather-timeline-time';
+                timeEl.setAttribute('aria-hidden', 'true');
+                timeEl.textContent = relTime;
+                li.appendChild(timeEl);
+
+                const conditionDiv = document.createElement('div');
+                conditionDiv.className = 'weather-timeline-condition';
+                conditionDiv.setAttribute('aria-hidden', 'true');
+                conditionDiv.appendChild(document.createTextNode(desc + ' '));
+
+                const windDiv = document.createElement('div');
+                windDiv.className = 'weather-timeline-wind';
+                windDiv.textContent = `${hour.windSpeed} ${weather.units.wind_speed_10m}`;
+                conditionDiv.appendChild(windDiv);
+                li.appendChild(conditionDiv);
+
+                const tempDiv = document.createElement('div');
+                tempDiv.className = 'weather-timeline-temp';
+                tempDiv.setAttribute('aria-hidden', 'true');
+
+                const tempValDiv = document.createElement('div');
+                tempValDiv.textContent = `${temp}${weather.units.temperature_2m}`;
+                tempDiv.appendChild(tempValDiv);
+
+                const precipDiv = document.createElement('div');
+                precipDiv.className = 'weather-timeline-precip';
+                precipDiv.textContent = `${hour.precipProb}%`;
+                tempDiv.appendChild(precipDiv);
+
+                li.appendChild(tempDiv);
+                ol.appendChild(li);
+            });
+
+            section.appendChild(ol);
+            dashboard.appendChild(section);
         }
 
         // Inject into content
         if (content) {
-            content.innerHTML = `
-                <!-- Scout: Upgraded generic div wrappers to semantic article and section for explicit document outline parsing -->
-                <article class="weather-dashboard">
-                    ${currentHtml}
-                    ${timelineHtml}
-                </article>
-            `;
+            content.innerHTML = '';
+            content.appendChild(dashboard);
         }
     }
 
