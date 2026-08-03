@@ -3,7 +3,9 @@ import {
   checkRequestSource,
   checkFetchDest,
   getAllowedOrigin,
-  VALID_API_PATH_REGEX
+  VALID_API_PATH_REGEX,
+  fullyDecodePath,
+  DOTFILE_REGEX
 } from '../src/worker-utils.js';
 import { PRODUCTION_DOMAIN } from './helpers/constants.js';
 
@@ -216,6 +218,45 @@ describe('Worker Security Utils', () => {
 
       expect(VALID_API_PATH_REGEX.test('invalid<script>')).toBe(false);
       expect(VALID_API_PATH_REGEX.test('drop table')).toBe(false);
+    });
+  });
+
+  describe('Integration: fullyDecodePath + Path Validation', () => {
+    // Tests based on how worker.js combines fullyDecodePath with validation
+    it('blocks double encoded directory traversal', () => {
+        const urlPathname = '/api/f1/%252e%252e/secrets';
+        let apiPath = urlPathname.slice('/api/f1/'.length);
+
+        apiPath = fullyDecodePath(apiPath);
+        expect(apiPath).toBe('../secrets');
+
+        // This is what the worker does next:
+        const isTraversal = apiPath.includes('..') || apiPath.includes('//') || apiPath.startsWith('/');
+        const hasDotfiles = DOTFILE_REGEX.test(apiPath);
+        const isValid = VALID_API_PATH_REGEX.test(apiPath) && !isTraversal && !hasDotfiles;
+
+        expect(isValid).toBe(false);
+    });
+
+    it('blocks multiple encoded path traversal up to depth', () => {
+        // %25252e -> %252e -> %2e -> .
+        const urlPathname = '/api/f1/%25252e%25252e/secrets';
+        let apiPath = urlPathname.slice('/api/f1/'.length);
+
+        apiPath = fullyDecodePath(apiPath);
+        expect(apiPath).toBe('../secrets');
+
+        const isTraversal = apiPath.includes('..');
+        expect(isTraversal).toBe(true);
+    });
+
+    it('rejects path traversal attempts encoded beyond depth limit', () => {
+        // 6 layers of encoding
+        const urlPathname = '/api/f1/%25252525252e%25252525252e/secrets';
+        let apiPath = urlPathname.slice('/api/f1/'.length);
+
+        apiPath = fullyDecodePath(apiPath);
+        expect(apiPath).toBeNull();
     });
   });
 });

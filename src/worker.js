@@ -22,6 +22,7 @@ import {
   checkFetchDest,
   calculateHash,
   RateLimiter,
+  fullyDecodePath,
   API_SECURITY_HEADERS,
   API_SECURITY_HEADERS_ENTRIES,
   getAllowedOrigin,
@@ -286,7 +287,12 @@ async function handleApiRequest(request, env, ctx, url) {
 
   // Extract path parameters after /api/f1/
   // e.g. /api/f1/current -> current
-  const apiPath = url.pathname.slice('/api/f1/'.length);
+  let apiPath = url.pathname.slice('/api/f1/'.length);
+  apiPath = fullyDecodePath(apiPath);
+
+  if (apiPath === null) {
+    return createErrorResponse(request, 400, 'Malformed path');
+  }
 
   // Validate apiPath: Strict whitelist + structure check
   // Allows: alphanumeric, dot, hyphen, underscore, slash
@@ -420,7 +426,12 @@ async function handleTrackRequest(request, env, ctx, url) {
 
 
   // Extract geoJsonId from /api/track/:id
-  const trackId = url.pathname.slice('/api/track/'.length);
+  let trackId = url.pathname.slice('/api/track/'.length);
+  trackId = fullyDecodePath(trackId);
+
+  if (trackId === null) {
+    return createErrorResponse(request, 400, 'Malformed track ID');
+  }
 
   // Validation
   // SEC: Check length (50 chars max) and format
@@ -540,7 +551,12 @@ async function handleTrackRequest(request, env, ctx, url) {
  */
 async function handleAssetRequest(request, env, ctx, url) {
 
-  const path = url.pathname.slice('/api/assets/'.length);
+  let path = url.pathname.slice('/api/assets/'.length);
+  path = fullyDecodePath(path);
+
+  if (path === null) {
+    return createErrorResponse(request, 400, 'Malformed asset path');
+  }
 
   const config = VENDOR_ASSETS.get(path);
   if (!config) {
@@ -758,7 +774,12 @@ async function handleHealthRequest(request, env, ctx, url) {
 async function handleTileRequest(request, env, ctx, url) {
 
   // Extract path suffix: /api/tiles/v2/radar/... -> /v2/radar/...
-  const tilePath = url.pathname.slice('/api/tiles'.length);
+  let tilePath = url.pathname.slice('/api/tiles'.length);
+  tilePath = fullyDecodePath(tilePath);
+
+  if (tilePath === null) {
+    return createErrorResponse(request, 400, 'Malformed tile path');
+  }
 
   // SEC: Validate tilePath (length and content) to prevent traversal/SSRF
   // SEC: Prevent access to hidden files/directories (dotfiles)
