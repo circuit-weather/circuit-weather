@@ -198,7 +198,7 @@ function handleOptions(request) {
 /**
  * Helper to cache and return an error response
  */
-function cacheAndReturnError(request, cache, cacheKey, status, message, extraDetails, ctx) {
+function cacheAndReturnError({ request, cache, cacheKey, status, message, extraDetails = {}, ctx }) {
   // Cache error response to prevent hammering upstream
   const errorCacheTTL = status === 429 ? 300 : 60;
 
@@ -333,7 +333,7 @@ async function handleApiRequest(request, env, ctx, url) {
     const status = upstreamResponse.status;
 
     if (!upstreamResponse.ok) {
-      return cacheAndReturnError(request, cache, cacheKey, status, 'Upstream API error', {}, ctx);
+      return cacheAndReturnError({ request, cache, cacheKey, status, message: 'Upstream API error', ctx });
     }
 
     // SEC: Strict Content-Type Validation
@@ -346,7 +346,7 @@ async function handleApiRequest(request, env, ctx, url) {
       if (env.ENVIRONMENT !== 'production') {
         console.error(`Upstream Invalid Content-Type: ${contentType} (parsed: ${mime})`);
       }
-      return cacheAndReturnError(request, cache, cacheKey, 502, 'Invalid upstream content type', {}, ctx);
+      return cacheAndReturnError({ request, cache, cacheKey, status: 502, message: 'Invalid upstream content type', ctx });
     }
 
     // Bolt Optimization: Stream response instead of buffering text
@@ -446,7 +446,7 @@ async function handleTrackRequest(request, env, ctx, url) {
 
     if (!upstreamResponse.ok) {
       const status = upstreamStatus === 404 ? 404 : 502;
-      return cacheAndReturnError(request, cache, cacheKey, status, 'Track not found', {}, ctx);
+      return cacheAndReturnError({ request, cache, cacheKey, status, message: 'Track not found', ctx });
     }
 
     // SEC: Strict Content-Type Validation
@@ -460,7 +460,7 @@ async function handleTrackRequest(request, env, ctx, url) {
       if (env.ENVIRONMENT !== 'production') {
         console.error(`Upstream Track Invalid Content-Type: ${contentType} (parsed: ${mime})`);
       }
-      return cacheAndReturnError(request, cache, cacheKey, 502, 'Invalid upstream content type', {}, ctx);
+      return cacheAndReturnError({ request, cache, cacheKey, status: 502, message: 'Invalid upstream content type', ctx });
     }
 
     // Bolt Optimization: Stream response instead of buffering text
@@ -532,6 +532,15 @@ async function handleAssetRequest(request, env, ctx, url) {
       headers
     });
   }
+
+  return await fetchAndCacheVendorAsset(request, env, ctx, path, config, cache, cacheKey);
+}
+
+/**
+ * Helper to fetch, validate, and cache vendor assets
+ */
+async function fetchAndCacheVendorAsset(request, env, ctx, path, config, cache, cacheKey) {
+  const upstreamUrl = config.upstream;
 
   try {
     const upstreamResponse = await fetch(upstreamUrl, {
@@ -699,14 +708,10 @@ async function handleHealthRequest(request, env, ctx, url) {
 }
 
 /**
- * Handle Radar Tile requests with robust caching
- * Route: /api/tiles/...
+ * Validates the tile path for security and format.
+ * Returns an error Response if invalid, or null if valid.
  */
-async function handleTileRequest(request, env, ctx, url) {
-
-  // Extract path suffix: /api/tiles/v2/radar/... -> /v2/radar/...
-  const tilePath = url.pathname.slice('/api/tiles'.length);
-
+function validateTilePath(request, tilePath) {
   // SEC: Validate tilePath (length and content) to prevent traversal/SSRF
   // SEC: Prevent access to hidden files/directories (dotfiles)
   // Bolt Optimization: Use regex instead of split/some for performance
@@ -722,9 +727,98 @@ async function handleTileRequest(request, env, ctx, url) {
     return createErrorResponse(request, 400, 'Invalid tile format');
   }
 
-  const upstreamUrl = `https://tilecache.rainviewer.com${tilePath}`;
+  return null;
+}
 
-  // Canonical cache key
+/**
+ * Creates and caches a safe JSON 404 response.
+ *
+ * SEC: Called when an upstream 404 is not an image (e.g. an HTML error page).
+ * We synthesise our own body rather than proxying theirs, so upstream markup
+ * can never reach the client. The safe response is cached so a miss does not
+ * hammer upstream on every retry.
+ */
+function handleSafe404TileResponse(request, ctx, cache, cacheKey, ttl) {
+  const safeBody = JSON.stringify({
+    error: {
+      message: 'Tile not found',
+      status: 404
+    }
+  });
+
+  const safeHeaders = new Headers({
+    'Content-Type': 'application/json',
+    'Cache-Control': `public, max-age=${ttl}`,
+    'X-Cache': 'MISS',
+    'X-Upstream-Status': '404',
+    'Access-Control-Allow-Origin': '*', // Store permissive, override on delivery
+    ...API_SECURITY_HEADERS
+  });
+
+  const safeResponse = new Response(safeBody, { status: 404, headers: safeHeaders });
+
+  // Cache the safe response
+  ctx.waitUntil(cache.put(cacheKey, safeResponse.clone()));
+
+  // Return to client (strict CORS)
+  const clientHeaders = new Headers(safeHeaders);
+  setCorsHeaders(clientHeaders, request);
+
+  return new Response(safeBody, { status: 404, headers: clientHeaders });
+}
+
+/**
+ * Processes, caches, and returns a valid tile response to the client.
+ */
+function handleCacheableTileResponse(request, ctx, cache, cacheKey, upstreamResponse, status, ttl) {
+  const [cacheBody, clientBody] = upstreamResponse.body.tee();
+
+  // SEC: Allowlist headers to prevent leaking sensitive upstream headers
+  const cacheHeaders = new Headers();
+  for (const header of ALLOWED_TILE_HEADERS) {
+    const value = upstreamResponse.headers.get(header);
+    if (value) cacheHeaders.set(header, value);
+  }
+
+  cacheHeaders.set('Cache-Control', `public, max-age=${ttl}`);
+  cacheHeaders.set('X-Cache', 'MISS');
+  cacheHeaders.set('X-Upstream-Status', status.toString());
+  cacheHeaders.set('Access-Control-Allow-Origin', '*');
+
+  // SEC: Add security headers
+  // Ensures X-Content-Type-Options: nosniff is set on cached tiles
+  API_SECURITY_HEADERS_ENTRIES.forEach(([key, value]) => {
+    cacheHeaders.set(key, value);
+  });
+
+  const cacheResponse = new Response(cacheBody, {
+    status: status,
+    headers: cacheHeaders
+  });
+
+  ctx.waitUntil(cache.put(cacheKey, cacheResponse));
+
+  // Return to Client
+  const clientHeaders = new Headers(cacheHeaders);
+  setCorsHeaders(clientHeaders, request);
+
+  return new Response(clientBody, {
+    status: status,
+    headers: clientHeaders
+  });
+}
+
+/**
+ * Handle Radar Tile requests with robust caching
+ * Route: /api/tiles/...
+ */
+async function handleTileRequest(request, env, ctx, url) {
+  const tilePath = url.pathname.slice('/api/tiles'.length);
+
+  const validationError = validateTilePath(request, tilePath);
+  if (validationError) return validationError;
+
+  const upstreamUrl = `https://tilecache.rainviewer.com${tilePath}`;
   const cacheKey = new Request(upstreamUrl);
   const cache = caches.default;
 
@@ -758,7 +852,6 @@ async function handleTileRequest(request, env, ctx, url) {
     const status = upstreamResponse.status;
 
     // Log outcomes (sampled for 2xx, 100% for errors)
-    // Bolt Optimization: Use fast bucket calculation
     const bucket = Math.floor(status / 100);
     if (bucket >= 4 || Math.random() < 0.05) {
       if (env.ENVIRONMENT !== 'production') {
@@ -773,13 +866,14 @@ async function handleTileRequest(request, env, ctx, url) {
 
     if (shouldCache) {
       const contentType = upstreamResponse.headers.get('Content-Type');
-      // Bolt Security: Use strict MIME comparison, not substring check
+      // SEC: Strict MIME comparison, not a substring check.
       const mime = contentType ? contentType.split(';')[0].trim().toLowerCase() : '';
       const isPng = mime === 'image/png';
 
-      // SEC: Strict Content-Type Validation (ONLY for success responses)
-      // Prevent XSS via MIME sniffing if upstream returns non-image content (e.g. HTML)
-      // Only allow PNG as we enforced .png extension in URL. Blocks image/svg+xml.
+      // SEC: Strict Content-Type validation (success responses only).
+      // Prevents XSS via MIME sniffing if upstream returns non-image content
+      // (e.g. HTML). Only PNG is allowed, since we enforce the .png extension
+      // in the URL — this also blocks image/svg+xml, which is scriptable.
       if (upstreamResponse.ok && !isPng) {
         if (env.ENVIRONMENT !== 'production') {
           console.error(`Upstream Tile Invalid Content-Type: ${contentType} (parsed: ${mime})`);
@@ -787,82 +881,21 @@ async function handleTileRequest(request, env, ctx, url) {
         return createErrorResponse(request, 502, 'Invalid upstream content type');
       }
 
-      // SEC: Safe 404 Handling
-      // If upstream 404 is not an image (e.g. HTML error page), generate a safe response
-      // to prevent XSS via proxy. We cache this safe 404 to prevent upstream hammering.
       if (status === 404 && !isPng) {
-        const safeBody = JSON.stringify({
-          error: {
-            message: 'Tile not found',
-            status: 404
-          }
-        });
-        const safeHeaders = new Headers({
-          'Content-Type': 'application/json',
-          'Cache-Control': `public, max-age=${ttl}`,
-          'X-Cache': 'MISS',
-          'X-Upstream-Status': '404',
-          'Access-Control-Allow-Origin': '*', // Store permissive, override on delivery
-          ...API_SECURITY_HEADERS
-        });
-
-        const safeResponse = new Response(safeBody, { status: 404, headers: safeHeaders });
-
-        // Cache the safe response
-        ctx.waitUntil(cache.put(cacheKey, safeResponse.clone()));
-
-        // Return to client (strict CORS)
-        const clientHeaders = new Headers(safeHeaders);
-        setCorsHeaders(clientHeaders, request);
-
-        return new Response(safeBody, { status: 404, headers: clientHeaders });
+        return handleSafe404TileResponse(request, ctx, cache, cacheKey, ttl);
       }
 
-      // 4. Cache Response
-      const [cacheBody, clientBody] = upstreamResponse.body.tee();
-
-      // SEC: Allowlist headers to prevent leaking sensitive upstream headers
-      const cacheHeaders = new Headers();
-      for (const header of ALLOWED_TILE_HEADERS) {
-        const value = upstreamResponse.headers.get(header);
-        if (value) cacheHeaders.set(header, value);
-      }
-
-      cacheHeaders.set('Cache-Control', `public, max-age=${ttl}`);
-      cacheHeaders.set('X-Cache', 'MISS');
-      cacheHeaders.set('X-Upstream-Status', status.toString());
-      cacheHeaders.set('Access-Control-Allow-Origin', '*');
-
-      // SEC: Add security headers
-      // Ensures X-Content-Type-Options: nosniff is set on cached tiles
-      API_SECURITY_HEADERS_ENTRIES.forEach(([key, value]) => {
-        cacheHeaders.set(key, value);
-      });
-
-      const cacheResponse = new Response(cacheBody, {
-        status: status,
-        headers: cacheHeaders
-      });
-
-      ctx.waitUntil(cache.put(cacheKey, cacheResponse));
-
-      // 5. Return to Client
-      const clientHeaders = new Headers(cacheHeaders);
-      setCorsHeaders(clientHeaders, request);
-
-      return new Response(clientBody, {
-        status: status,
-        headers: clientHeaders
-      });
+      return handleCacheableTileResponse(request, ctx, cache, cacheKey, upstreamResponse, status, ttl);
     }
 
-    // 6. Non-cacheable Error Handling (429, 5xx, etc)
-    // SEC: Consume body to prevent leaking upstream details (HTML, stack traces)
+    // 4. Non-cacheable Error Handling (429, 5xx, etc)
+    // SEC: The upstream body is never forwarded here — it could carry HTML or
+    // stack traces. createErrorResponse builds a fresh one.
     const errorDetails = {
       'X-Upstream-Status': status.toString()
     };
 
-    // Preserve Retry-After for rate limits
+    // Preserve Retry-After so the client can back off correctly on rate limits.
     if (status === 429) {
       const retryAfter = upstreamResponse.headers.get('Retry-After');
       if (retryAfter) {
@@ -876,7 +909,6 @@ async function handleTileRequest(request, env, ctx, url) {
     if (env.ENVIRONMENT !== 'production') {
       console.error('Tile Proxy Error:', error);
     }
-    // Return error to client, frontend will handle retries
     return createErrorResponse(request, 502, 'Tile proxy failed');
   }
 }

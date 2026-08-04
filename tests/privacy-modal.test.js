@@ -352,10 +352,10 @@ describe("PrivacyModal", () => {
       expect(html).toContain('rel="noopener noreferrer"');
     });
 
-    it("returns block unchanged if it starts with < but not h or ul", () => {
+    it("wraps inline tags like strong in <p>", () => {
       const md = "**bold**";
       const html = modal.parseMarkdown(md);
-      expect(html).toBe("<strong>bold</strong>");
+      expect(html).toBe("<p><strong>bold</strong></p>");
     });
 
     it("returns empty string for empty input", () => {

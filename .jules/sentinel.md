@@ -68,3 +68,8 @@
 **Vulnerability:** The `renderError` function in `CircuitWeatherApp.js` constructed its entire DOM structure by assigning a template string directly to `sidebarContent.innerHTML`. If the `message` string or translation strings ever contained unescaped input, it could expose a DOM-based Cross-Site Scripting (XSS) vulnerability.
 **Learning:** When refactoring `.innerHTML` to native DOM creation (`appendChild`) in vanilla JS components tested with a custom `documentMock` (e.g., `tests/circuit-weather-app.test.js`), update unit test assertions to inspect `.appendChild.mock.calls` rather than checking `.innerHTML`, as the mock document does not automatically serialize appended child nodes into an HTML string.
 **Prevention:** Construct UI widgets using standard DOM manipulation methods (`document.createElement`, `textContent`, `setAttribute`) by default to prevent XSS.
+
+## 2026-08-04 - [PrivacyModal block-wrapping fall-through]
+**Issue:** `parseMarkdown` decided whether to wrap a block in `<p>` using a negative check (`if (!block.startsWith("<")) ...`). Because the parser escapes its input before converting markdown, the only `<` in play at that point are tags the parser itself emitted — so the check was safe, but it also let inline-only blocks (`<strong>`, `<a>`) through unwrapped, emitting inline content with no block parent.
+**Learning:** Inferring a string's origin from its first character is fragile in a multi-stage parser (escape → convert inline → assemble blocks). It happened to be sound here only because escaping runs first; that invariant is easy to break later and hard to notice.
+**Prevention:** Wrap by positive allowlist of the block tags the parser generates (`<h`, `<ul`), and let everything else fall through to `<p>`.

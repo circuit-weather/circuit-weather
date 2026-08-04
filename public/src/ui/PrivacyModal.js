@@ -186,18 +186,9 @@ export class PrivacyModal {
           // we can trust lines starting with these tags.
           // The inputs $1, $2 are already escaped.
           if (block.startsWith("<h") || block.startsWith("<ul")) return block;
-          // If it doesn't start with a generated tag, wrap it in p
-          // Note: The original check `block.startsWith('<')` would fail for escaped content like &lt;
-          // so we just check against our known safe tags.
-          if (!block.startsWith("<")) return `<p>${block}</p>`;
-          // If it starts with < but isn't one of ours (shouldn't happen due to escape), treat as text?
-          // But wait, if I have `&lt;img...` it starts with `&`.
-          // So the `startsWith('<')` check is actually tricky now.
-          // Let's refine:
-          // If I escaped everything, the ONLY things starting with < are the ones I just replaced.
-          // So if it starts with <, it's safe.
-          // If it starts with &lt;, it's text.
-          return block;
+          // If it doesn't start with a generated block tag, wrap it in p.
+          // Note: inline tags like <strong> or <a> should also be wrapped in <p>.
+          return `<p>${block}</p>`;
         })
         .join("\n")
     );
