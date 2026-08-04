@@ -524,6 +524,21 @@ describe("Worker Logic", () => {
       const res = await worker.fetch(req, global.env, global.ctx);
       expect(res.status).toBe(400);
     });
+
+    it("returns 502 when upstream track fetch fails with an exception", async () => {
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      mockFetch.mockRejectedValueOnce(new Error("Network error"));
+
+      const req = createRequest("/api/track/monaco");
+      const res = await worker.fetch(req, global.env, global.ctx);
+
+      expect(res.status).toBe(502);
+      expect(await res.json()).toEqual({
+        error: { status: 502, message: "Failed to fetch track data" },
+      });
+
+      errorSpy.mockRestore();
+    });
   });
 
   describe("Vendor Assets Proxy (/api/assets/*)", () => {
