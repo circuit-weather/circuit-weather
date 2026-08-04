@@ -784,7 +784,12 @@ function validateTilePath(request, tilePath) {
 }
 
 /**
- * Creates and caches a safe JSON 404 response to prevent XSS via proxy.
+ * Creates and caches a safe JSON 404 response.
+ *
+ * SEC: Called when an upstream 404 is not an image (e.g. an HTML error page).
+ * We synthesise our own body rather than proxying theirs, so upstream markup
+ * can never reach the client. The safe response is cached so a miss does not
+ * hammer upstream on every retry.
  */
 function handleSafe404TileResponse(request, ctx, cache, cacheKey, ttl) {
   const safeBody = JSON.stringify({
@@ -916,6 +921,7 @@ async function handleTileRequest(request, env, ctx, url) {
 
     const status = upstreamResponse.status;
 
+    // Log outcomes (sampled for 2xx, 100% for errors)
     const bucket = Math.floor(status / 100);
     if (bucket >= 4 || Math.random() < 0.05) {
       if (env.ENVIRONMENT !== 'production') {
@@ -924,14 +930,20 @@ async function handleTileRequest(request, env, ctx, url) {
     }
 
     // 3. Cache Determination
+    // Cache success (2xx) or benign error (404). Do NOT cache 429/5xx.
     const shouldCache = upstreamResponse.ok || status === 404;
     const ttl = upstreamResponse.ok ? 7200 : 60;
 
     if (shouldCache) {
       const contentType = upstreamResponse.headers.get('Content-Type');
+      // SEC: Strict MIME comparison, not a substring check.
       const mime = contentType ? contentType.split(';')[0].trim().toLowerCase() : '';
       const isPng = mime === 'image/png';
 
+      // SEC: Strict Content-Type validation (success responses only).
+      // Prevents XSS via MIME sniffing if upstream returns non-image content
+      // (e.g. HTML). Only PNG is allowed, since we enforce the .png extension
+      // in the URL — this also blocks image/svg+xml, which is scriptable.
       if (upstreamResponse.ok && !isPng) {
         if (env.ENVIRONMENT !== 'production') {
           console.error(`Upstream Tile Invalid Content-Type: ${contentType} (parsed: ${mime})`);
@@ -947,10 +959,13 @@ async function handleTileRequest(request, env, ctx, url) {
     }
 
     // 4. Non-cacheable Error Handling (429, 5xx, etc)
+    // SEC: The upstream body is never forwarded here — it could carry HTML or
+    // stack traces. createErrorResponse builds a fresh one.
     const errorDetails = {
       'X-Upstream-Status': status.toString()
     };
 
+    // Preserve Retry-After so the client can back off correctly on rate limits.
     if (status === 429) {
       const retryAfter = upstreamResponse.headers.get('Retry-After');
       if (retryAfter) {
