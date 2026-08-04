@@ -366,13 +366,8 @@ export class WindOverlay {
         if (!this._infoToast) return;
         const zoom = this._getZoom();
         const zoomDisplay = zoom !== null ? Math.floor(zoom) : '?';
-        try {
-            this._infoToast.querySelector('.wind-toast-message').textContent =
-                i18n.t('controls.windZoomDisabled', { zoom: zoomDisplay });
-        } catch (_) {
-            this._infoToast.querySelector('.wind-toast-message').textContent =
-                `Wind overlay paused at zoom ${zoomDisplay} — zoom in to see wind`;
-        }
+        this._infoToast.querySelector('.wind-toast-message').textContent =
+            i18n.t('controls.windZoomDisabled', { zoom: zoomDisplay });
 
         if (this._toastHideTimer) clearTimeout(this._toastHideTimer);
         this._infoToast.classList.add('visible');
