@@ -24,7 +24,16 @@ const createMockElement = (id) => {
             if (sel === 'p') return el._p || (el._p = createMockElement('p'));
             return createMockElement('child');
         }),
-        appendChild: vi.fn(),
+        childNodes: [],
+        appendChild: vi.fn((child) => {
+            if (child) {
+                el.childNodes.push(child);
+            }
+            return child;
+        }),
+        replaceChildren: vi.fn((...children) => {
+            el.childNodes = children;
+        }),
         getBoundingClientRect: vi.fn(() => ({
             top: 0, left: 0, right: 0, bottom: 0, width: 0, height: 0
         })),
@@ -741,7 +750,10 @@ describe('CircuitWeatherApp Pure Methods', () => {
 
             expect(app.ui.forecastContent.style.display).toBe('block');
             expect(app.ui.forecastUnavailable.style.display).toBe('none');
-            expect(app.ui.forecastContent.innerHTML).toContain('weather-dashboard');
+
+            const dashboard = app.ui.forecastContent.childNodes[0];
+            expect(dashboard).toBeTruthy();
+            expect(dashboard.className).toContain('weather-dashboard');
         });
 
         it('escapes windInfo.text and rotation in the forecast dashboard', async () => {
@@ -762,10 +774,44 @@ describe('CircuitWeatherApp Pure Methods', () => {
             const sessionTime = new Date(1700000000 * 1000);
             app.renderForecast(weather, sessionTime, 'race');
 
-            expect(app.ui.forecastContent.innerHTML).toContain('&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt;');
-            expect(app.ui.forecastContent.innerHTML).toContain('&quot;&gt;&lt;img src=x onerror=alert(1)&gt;');
-            expect(app.ui.forecastContent.innerHTML).not.toContain('<script>alert("xss")</script>');
-            expect(app.ui.forecastContent.innerHTML).not.toContain('"><img src=x onerror=alert(1)>');
+            const dashboard = app.ui.forecastContent.childNodes[0];
+            const dl = dashboard.childNodes[0]; // dl
+            const windDiv = dl.childNodes[2]; // wind metric div
+            const ddWindDir = windDiv.childNodes[2]; // wind dir sub-element
+
+            // windInfo.text goes in as a text node, so the markup is inert regardless
+            // of content — it can only ever be displayed, never parsed.
+            expect(ddWindDir.childNodes[0]).toContain('<script>alert("xss")</script>');
+
+            // rotation is the one value that lands in an attribute rather than as
+            // text, so it must not carry the payload through at all.
+            const svg = ddWindDir.childNodes[1];
+            const styleCall = svg.setAttribute.mock.calls.find(([attr]) => attr === 'style');
+            expect(styleCall).toBeTruthy();
+            expect(styleCall[1]).toBe('transform: rotate(0deg); width: 14px; height: 14px;');
+            expect(styleCall[1]).not.toContain('<img');
+            expect(styleCall[1]).not.toContain('onerror');
+        });
+
+        it('renders a numeric wind rotation unchanged', async () => {
+            app.selectedSession = { id: 'race', name: 'Race' };
+            const windModule = await import('../public/src/utils/wind.js');
+            windModule.getWindDirection.mockReturnValue({ text: 'S', rotation: 270 });
+
+            const weather = {
+                available: true,
+                current: { temperature_2m: 28 },
+                hourly: [
+                    { time: 1700000000, temp: 28, humidity: 40, precipProb: 5, windSpeed: 12, windDir: 90, code: 0 },
+                ],
+                units: { temperature_2m: '°C', wind_speed_10m: 'km/h' },
+            };
+            app.renderForecast(weather, new Date(1700000000 * 1000), 'race');
+
+            const ddWindDir = app.ui.forecastContent.childNodes[0].childNodes[0].childNodes[2].childNodes[2];
+            const svg = ddWindDir.childNodes[1];
+            const styleCall = svg.setAttribute.mock.calls.find(([attr]) => attr === 'style');
+            expect(styleCall[1]).toBe('transform: rotate(270deg); width: 14px; height: 14px;');
         });
 
         it('skips rendering if session has changed', () => {
@@ -827,11 +873,21 @@ describe('CircuitWeatherApp Pure Methods', () => {
 
             app.renderForecast(weather, sessionTime, 'race');
 
+            const dashboard = app.ui.forecastContent.childNodes[0];
+            const dl = dashboard.childNodes[0];
+            const divTemp = dl.childNodes[0];
+            const ddTemp = divTemp.childNodes[1];
+
             // The closest point is 14:15 (26 degrees)
             // We check that the primary temperature value is 26
-            expect(app.ui.forecastContent.innerHTML).toContain('id="weatherTemp">26°C</dd>');
+            expect(ddTemp.textContent).toBe('26°C');
+
             // 24 should still be in the timeline, but not the primary temp
-            expect(app.ui.forecastContent.innerHTML).toContain('<div>24°C</div>');
+            const section = dashboard.childNodes[1];
+            const ol = section.childNodes[0];
+            const firstHourLi = ol.childNodes[0];
+            const firstHourTempDiv = firstHourLi.childNodes[2];
+            expect(firstHourTempDiv.childNodes[0].textContent).toBe('24°C');
         });
     });
 
