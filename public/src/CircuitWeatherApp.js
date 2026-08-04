@@ -197,6 +197,8 @@ export class CircuitWeatherApp {
             errorIcon.appendChild(svg);
             errorState.appendChild(errorIcon);
 
+            // h2, not h3: this replaces the sidebar content, which sits directly
+            // under the h1 sidebar-header, so anything deeper skips a level.
             const h2 = document.createElement('h2');
             h2.setAttribute('data-i18n', 'errors.connectionFailed');
             h2.textContent = i18n.t('errors.connectionFailed');
