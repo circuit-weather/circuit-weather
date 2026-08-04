@@ -1155,7 +1155,11 @@ export class CircuitWeatherApp {
             // Wind Direction Logic
             const windInfo = getWindDirection(dir);
             // Rotation: Input 0 (N) -> Blows South -> Arrow (Up) needs 180 deg rotation
-            const rotation = windInfo.rotation;
+            // Coerced to a number: this is the one value here that lands in a style
+            // attribute rather than as text, and `getWindDirection` derives it with
+            // `degrees + 180` — a non-numeric windDir from upstream would concatenate
+            // instead of add and carry arbitrary text into the CSS.
+            const rotation = Number(windInfo.rotation) || 0;
 
             const dl = document.createElement('dl');
             dl.className = 'weather-current';

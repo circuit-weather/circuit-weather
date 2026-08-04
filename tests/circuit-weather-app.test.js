@@ -779,12 +779,39 @@ describe('CircuitWeatherApp Pure Methods', () => {
             const windDiv = dl.childNodes[2]; // wind metric div
             const ddWindDir = windDiv.childNodes[2]; // wind dir sub-element
 
-            // XSS Check: Ensure the unescaped script tags are inserted safely as raw text
+            // windInfo.text goes in as a text node, so the markup is inert regardless
+            // of content — it can only ever be displayed, never parsed.
             expect(ddWindDir.childNodes[0]).toContain('<script>alert("xss")</script>');
 
-            // XSS Check: Ensure rotation is properly set on SVG style without breaking out
+            // rotation is the one value that lands in an attribute rather than as
+            // text, so it must not carry the payload through at all.
             const svg = ddWindDir.childNodes[1];
-            expect(svg.setAttribute).toHaveBeenCalledWith('style', expect.stringContaining('\"><img src=x onerror=alert(1)>'));
+            const styleCall = svg.setAttribute.mock.calls.find(([attr]) => attr === 'style');
+            expect(styleCall).toBeTruthy();
+            expect(styleCall[1]).toBe('transform: rotate(0deg); width: 14px; height: 14px;');
+            expect(styleCall[1]).not.toContain('<img');
+            expect(styleCall[1]).not.toContain('onerror');
+        });
+
+        it('renders a numeric wind rotation unchanged', async () => {
+            app.selectedSession = { id: 'race', name: 'Race' };
+            const windModule = await import('../public/src/utils/wind.js');
+            windModule.getWindDirection.mockReturnValue({ text: 'S', rotation: 270 });
+
+            const weather = {
+                available: true,
+                current: { temperature_2m: 28 },
+                hourly: [
+                    { time: 1700000000, temp: 28, humidity: 40, precipProb: 5, windSpeed: 12, windDir: 90, code: 0 },
+                ],
+                units: { temperature_2m: '°C', wind_speed_10m: 'km/h' },
+            };
+            app.renderForecast(weather, new Date(1700000000 * 1000), 'race');
+
+            const ddWindDir = app.ui.forecastContent.childNodes[0].childNodes[0].childNodes[2].childNodes[2];
+            const svg = ddWindDir.childNodes[1];
+            const styleCall = svg.setAttribute.mock.calls.find(([attr]) => attr === 'style');
+            expect(styleCall[1]).toBe('transform: rotate(270deg); width: 14px; height: 14px;');
         });
 
         it('skips rendering if session has changed', () => {
