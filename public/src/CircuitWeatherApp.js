@@ -275,6 +275,8 @@ export class CircuitWeatherApp {
                 writable: true,
                 configurable: true
             });
+        } else {
+            delete race._endTimeMs;
         }
         return end;
     }
