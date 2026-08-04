@@ -18,6 +18,7 @@ import {
   VALID_API_PATH_REGEX,
   VALID_TRACK_ID_REGEX,
   DOTFILE_REGEX,
+  recursivelyDecodePath,
   checkRequestSource,
   checkFetchDest,
   calculateHash,
@@ -277,7 +278,13 @@ async function handleApiRequest(request, env, ctx, url) {
 
   // Extract path parameters after /api/f1/
   // e.g. /api/f1/current -> current
-  const apiPath = url.pathname.slice('/api/f1/'.length);
+  let apiPath = url.pathname.slice('/api/f1/'.length);
+
+  // SEC: Recursively decode path to prevent multiple-encoding bypasses
+  apiPath = recursivelyDecodePath(apiPath);
+  if (apiPath === null) {
+    return createErrorResponse(request, 400, 'Invalid API path encoding');
+  }
 
   // Validate apiPath: Strict whitelist + structure check
   // Allows: alphanumeric, dot, hyphen, underscore, slash
@@ -709,25 +716,31 @@ async function handleHealthRequest(request, env, ctx, url) {
 
 /**
  * Validates the tile path for security and format.
- * Returns an error Response if invalid, or null if valid.
+ * Returns an error Response if invalid, or a valid decoded path string.
  */
 function validateTilePath(request, tilePath) {
+  // SEC: Recursively decode path to prevent multiple-encoding bypasses
+  let decodedPath = recursivelyDecodePath(tilePath);
+  if (decodedPath === null) {
+    return createErrorResponse(request, 400, 'Invalid tile path encoding');
+  }
+
   // SEC: Validate tilePath (length and content) to prevent traversal/SSRF
   // SEC: Prevent access to hidden files/directories (dotfiles)
   // Bolt Optimization: Use regex instead of split/some for performance
-  const hasDotfiles = DOTFILE_REGEX.test(tilePath);
+  const hasDotfiles = DOTFILE_REGEX.test(decodedPath);
 
-  if (tilePath.length > 255 || !VALID_API_PATH_REGEX.test(tilePath) || tilePath.includes('..') || tilePath.includes('//') || hasDotfiles) {
+  if (decodedPath.length > 255 || !VALID_API_PATH_REGEX.test(decodedPath) || decodedPath.includes('..') || decodedPath.includes('//') || hasDotfiles) {
     return createErrorResponse(request, 400, 'Invalid tile path');
   }
 
   // SEC: Strict Extension Validation
   // Ensure we only proxy PNG images as expected by the frontend
-  if (!tilePath.endsWith('.png')) {
+  if (!decodedPath.endsWith('.png')) {
     return createErrorResponse(request, 400, 'Invalid tile format');
   }
 
-  return null;
+  return decodedPath;
 }
 
 /**
@@ -815,10 +828,11 @@ function handleCacheableTileResponse(request, ctx, cache, cacheKey, upstreamResp
 async function handleTileRequest(request, env, ctx, url) {
   const tilePath = url.pathname.slice('/api/tiles'.length);
 
-  const validationError = validateTilePath(request, tilePath);
-  if (validationError) return validationError;
+  const validatedOrError = validateTilePath(request, tilePath);
+  if (validatedOrError instanceof Response) return validatedOrError;
+  const decodedTilePath = validatedOrError;
 
-  const upstreamUrl = `https://tilecache.rainviewer.com${tilePath}`;
+  const upstreamUrl = `https://tilecache.rainviewer.com${decodedTilePath}`;
   const cacheKey = new Request(upstreamUrl);
   const cache = caches.default;
 
@@ -855,7 +869,7 @@ async function handleTileRequest(request, env, ctx, url) {
     const bucket = Math.floor(status / 100);
     if (bucket >= 4 || Math.random() < 0.05) {
       if (env.ENVIRONMENT !== 'production') {
-        console.log(`Tile Proxy Bucket: ${bucket}xx (Status: ${status}) Path: ${tilePath}`);
+        console.log(`Tile Proxy Bucket: ${bucket}xx (Status: ${status}) Path: ${decodedTilePath}`);
       }
     }
 

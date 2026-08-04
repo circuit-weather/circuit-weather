@@ -8,6 +8,36 @@ const ALLOWED_ORIGIN_127_REGEX = /^http:\/\/127\.0\.0\.1(:\d+)?(\/|$)/;
 const ALLOWED_PREVIEW_REGEX = /^https:\/\/(?:[a-zA-Z0-9-]+\.)*circuit-weather\.pages\.dev(?:\/|$)/;
 export const DOTFILE_REGEX = /(?:^|\/)\./;
 
+/**
+ * Helper to recursively decode a path to prevent multiple-encoding bypasses
+ * (e.g. %252e%252e/ for ../). Returns null if max depth is exceeded, meaning
+ * the path is likely malicious.
+ */
+export function recursivelyDecodePath(path) {
+  let decoded = path;
+  let previous = '';
+  let depth = 0;
+  const MAX_DEPTH = 5;
+
+  while (decoded !== previous && depth < MAX_DEPTH) {
+    previous = decoded;
+    try {
+      decoded = decodeURIComponent(decoded);
+    } catch (e) {
+      // Catch URIError for partially decoded string (legit '%' chars)
+      return decoded;
+    }
+    depth++;
+  }
+
+  // If depth limit is reached, it might be a multiple encoding attack
+  if (depth >= MAX_DEPTH && decoded !== previous) {
+    return null;
+  }
+
+  return decoded;
+}
+
 // Bolt Optimization: Reduced header set for API responses (removed HTML-specific headers)
 // Removed: Permissions-Policy (~240 bytes), X-Frame-Options (redundant with CSP), X-XSS-Protection (deprecated)
 export const API_SECURITY_HEADERS = {

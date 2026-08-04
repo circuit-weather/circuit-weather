@@ -3,7 +3,8 @@ import {
   checkRequestSource,
   checkFetchDest,
   getAllowedOrigin,
-  VALID_API_PATH_REGEX
+  VALID_API_PATH_REGEX,
+  recursivelyDecodePath
 } from '../src/worker-utils.js';
 import { PRODUCTION_DOMAIN } from './helpers/constants.js';
 
@@ -205,6 +206,30 @@ describe('Worker Security Utils', () => {
       // Oh wait, checkRequestSource checks Origin against ALLOWED_PREVIEW_REGEX, so it returns true!
       expect(checkRequestSource(req, targetUrl)).toBe(true);
       expect(getAllowedOrigin(req)).toBe(origin);
+    });
+  });
+
+  describe('recursivelyDecodePath (SSRF/Traversal Protection)', () => {
+    it('decodes standard url encoding', () => {
+      expect(recursivelyDecodePath('%2e%2e/')).toBe('../');
+      expect(recursivelyDecodePath('test%20path')).toBe('test path');
+    });
+
+    it('decodes multiple encodings', () => {
+      // Double encoded ../
+      expect(recursivelyDecodePath('%252e%252e/')).toBe('../');
+      // Triple encoded ../
+      expect(recursivelyDecodePath('%25252e%25252e/')).toBe('../');
+    });
+
+    it('handles legitimate % characters safely', () => {
+      expect(recursivelyDecodePath('invalid%')).toBe('invalid%');
+      expect(recursivelyDecodePath('test%25')).toBe('test%');
+    });
+
+    it('returns null if max depth is exceeded', () => {
+      // 6 times encoded
+      expect(recursivelyDecodePath('%2525252525252e/')).toBeNull();
     });
   });
 
