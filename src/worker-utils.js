@@ -50,6 +50,20 @@ export function getAllowedOrigin(request) {
 }
 
 /**
+ * Helper to apply CORS headers
+ * Sets or deletes Access-Control-Allow-Origin on the given Headers object
+ */
+export function setCorsHeaders(headers, request) {
+  const allowedOrigin = getAllowedOrigin(request);
+  if (allowedOrigin) {
+    headers.set('Access-Control-Allow-Origin', allowedOrigin);
+    headers.set('Vary', 'Origin');
+  } else {
+    headers.delete('Access-Control-Allow-Origin');
+  }
+}
+
+/**
  * Helper to validate request source (Hotlink Protection)
  * Checks Origin and Referer headers against allowlist.
  * Returns true if allowed, false if blocked.

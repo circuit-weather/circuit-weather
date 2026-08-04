@@ -25,6 +25,7 @@ import {
   API_SECURITY_HEADERS,
   API_SECURITY_HEADERS_ENTRIES,
   getAllowedOrigin,
+  setCorsHeaders,
   getEmptyRadarResponse,
   createErrorResponse
 } from './worker-utils.js';
@@ -228,13 +229,7 @@ function cacheAndReturnError({ request, cache, cacheKey, status, message, extraD
 
   // Prepare response for client with strict CORS
   const clientErrorHeaders = new Headers(errorHeaders);
-  const allowedOrigin = getAllowedOrigin(request);
-  if (allowedOrigin) {
-    clientErrorHeaders.set('Access-Control-Allow-Origin', allowedOrigin);
-    clientErrorHeaders.set('Vary', 'Origin');
-  } else {
-    clientErrorHeaders.delete('Access-Control-Allow-Origin');
-  }
+  setCorsHeaders(clientErrorHeaders, request);
 
   return new Response(errorBody, {
     status: status,
@@ -262,11 +257,7 @@ function handleConfigRequest(request, env) {
     ...API_SECURITY_HEADERS
   });
 
-  const allowedOrigin = getAllowedOrigin(request);
-  if (allowedOrigin) {
-    headers.set('Access-Control-Allow-Origin', allowedOrigin);
-    headers.set('Vary', 'Origin');
-  }
+  setCorsHeaders(headers, request);
 
   return new Response(configBody, {
     status: 200,
@@ -321,13 +312,7 @@ async function handleApiRequest(request, env, ctx, url) {
     headers.set('X-Cache', 'HIT');
 
     // Apply strict CORS
-    const allowedOrigin = getAllowedOrigin(request);
-    if (allowedOrigin) {
-      headers.set('Access-Control-Allow-Origin', allowedOrigin);
-      headers.set('Vary', 'Origin');
-    } else {
-      headers.delete('Access-Control-Allow-Origin');
-    }
+    setCorsHeaders(headers, request);
 
     return new Response(response.body, {
       status: response.status,
@@ -388,13 +373,7 @@ async function handleApiRequest(request, env, ctx, url) {
 
     // Prepare response for client with strict CORS
     const clientHeaders = new Headers(cacheHeaders);
-    const allowedOrigin = getAllowedOrigin(request);
-    if (allowedOrigin) {
-      clientHeaders.set('Access-Control-Allow-Origin', allowedOrigin);
-      clientHeaders.set('Vary', 'Origin');
-    } else {
-      clientHeaders.delete('Access-Control-Allow-Origin');
-    }
+    setCorsHeaders(clientHeaders, request);
 
     return new Response(clientBody, {
       status: 200,
@@ -443,13 +422,7 @@ async function handleTrackRequest(request, env, ctx, url) {
     headers.set('X-Cache', 'HIT');
 
     // Apply strict CORS
-    const allowedOrigin = getAllowedOrigin(request);
-    if (allowedOrigin) {
-      headers.set('Access-Control-Allow-Origin', allowedOrigin);
-      headers.set('Vary', 'Origin');
-    } else {
-      headers.delete('Access-Control-Allow-Origin');
-    }
+    setCorsHeaders(headers, request);
 
     // Ensure client caches this for a long time too (24h)
     headers.set('Cache-Control', 'public, max-age=86400');
@@ -513,13 +486,7 @@ async function handleTrackRequest(request, env, ctx, url) {
 
     // Prepare response for client with strict CORS
     const clientHeaders = new Headers(cacheHeaders);
-    const allowedOrigin = getAllowedOrigin(request);
-    if (allowedOrigin) {
-      clientHeaders.set('Access-Control-Allow-Origin', allowedOrigin);
-      clientHeaders.set('Vary', 'Origin');
-    } else {
-      clientHeaders.delete('Access-Control-Allow-Origin');
-    }
+    setCorsHeaders(clientHeaders, request);
 
     return new Response(clientBody, {
       status: 200,
@@ -558,13 +525,7 @@ async function handleAssetRequest(request, env, ctx, url) {
     headers.set('X-Cache', 'HIT');
 
     // Apply strict CORS
-    const allowedOrigin = getAllowedOrigin(request);
-    if (allowedOrigin) {
-      headers.set('Access-Control-Allow-Origin', allowedOrigin);
-      headers.set('Vary', 'Origin');
-    } else {
-      headers.delete('Access-Control-Allow-Origin');
-    }
+    setCorsHeaders(headers, request);
 
     return new Response(response.body, {
       status: response.status,
@@ -641,11 +602,7 @@ async function fetchAndCacheVendorAsset(request, env, ctx, path, config, cache, 
     ctx.waitUntil(cache.put(cacheKey, new Response(buffer, { headers: cacheHeaders })));
 
     const clientHeaders = new Headers(cacheHeaders);
-    const allowedOrigin = getAllowedOrigin(request);
-    if (allowedOrigin) {
-      clientHeaders.set('Access-Control-Allow-Origin', allowedOrigin);
-      clientHeaders.set('Vary', 'Origin');
-    }
+    setCorsHeaders(clientHeaders, request);
 
     // Return to client (from buffer)
     return new Response(buffer, {
@@ -684,13 +641,7 @@ async function handleHealthRequest(request, env, ctx, url) {
     headers.set('X-Cache', 'HIT');
 
     // Apply strict CORS
-    const allowedOrigin = getAllowedOrigin(request);
-    if (allowedOrigin) {
-      headers.set('Access-Control-Allow-Origin', allowedOrigin);
-      headers.set('Vary', 'Origin');
-    } else {
-      headers.delete('Access-Control-Allow-Origin');
-    }
+    setCorsHeaders(headers, request);
 
     return new Response(response.body, {
       status: response.status,
@@ -748,11 +699,7 @@ async function handleHealthRequest(request, env, ctx, url) {
 
   // Return to client (strict CORS)
   const clientHeaders = new Headers(headers);
-  const allowedOrigin = getAllowedOrigin(request);
-  if (allowedOrigin) {
-    clientHeaders.set('Access-Control-Allow-Origin', allowedOrigin);
-    clientHeaders.set('Vary', 'Origin');
-  }
+  setCorsHeaders(clientHeaders, request);
 
   return new Response(body, {
     status: 200,
@@ -815,13 +762,7 @@ function handleSafe404TileResponse(request, ctx, cache, cacheKey, ttl) {
 
   // Return to client (strict CORS)
   const clientHeaders = new Headers(safeHeaders);
-  const allowedOrigin = getAllowedOrigin(request);
-  if (allowedOrigin) {
-    clientHeaders.set('Access-Control-Allow-Origin', allowedOrigin);
-    clientHeaders.set('Vary', 'Origin');
-  } else {
-    clientHeaders.delete('Access-Control-Allow-Origin');
-  }
+  setCorsHeaders(clientHeaders, request);
 
   return new Response(safeBody, { status: 404, headers: clientHeaders });
 }
@@ -859,13 +800,7 @@ function handleCacheableTileResponse(request, ctx, cache, cacheKey, upstreamResp
 
   // Return to Client
   const clientHeaders = new Headers(cacheHeaders);
-  const allowedOrigin = getAllowedOrigin(request);
-  if (allowedOrigin) {
-    clientHeaders.set('Access-Control-Allow-Origin', allowedOrigin);
-    clientHeaders.set('Vary', 'Origin');
-  } else {
-    clientHeaders.delete('Access-Control-Allow-Origin');
-  }
+  setCorsHeaders(clientHeaders, request);
 
   return new Response(clientBody, {
     status: status,
@@ -894,13 +829,8 @@ async function handleTileRequest(request, env, ctx, url) {
     const headers = new Headers(response.headers);
     headers.set('X-Cache', 'HIT');
 
-    const allowedOrigin = getAllowedOrigin(request);
-    if (allowedOrigin) {
-      headers.set('Access-Control-Allow-Origin', allowedOrigin);
-      headers.set('Vary', 'Origin');
-    } else {
-      headers.delete('Access-Control-Allow-Origin');
-    }
+    // Apply strict CORS
+    setCorsHeaders(headers, request);
 
     return new Response(response.body, {
       status: response.status,
@@ -1006,13 +936,7 @@ async function handleRadarRequest(request, env, ctx) {
     headers.set('X-Cache', 'HIT');
 
     // Apply strict CORS
-    const allowedOrigin = getAllowedOrigin(request);
-    if (allowedOrigin) {
-      headers.set('Access-Control-Allow-Origin', allowedOrigin);
-      headers.set('Vary', 'Origin');
-    } else {
-      headers.delete('Access-Control-Allow-Origin');
-    }
+    setCorsHeaders(headers, request);
 
     // Override Cache-Control for the client to ensure frequent checks (1 min)
     headers.set('Cache-Control', 'public, max-age=60');
@@ -1086,13 +1010,7 @@ async function handleRadarRequest(request, env, ctx) {
 
     // 2. Prepare Response for Client (1 minute)
     const clientHeaders = new Headers(cacheHeaders);
-    const allowedOrigin = getAllowedOrigin(request);
-    if (allowedOrigin) {
-      clientHeaders.set('Access-Control-Allow-Origin', allowedOrigin);
-      clientHeaders.set('Vary', 'Origin');
-    } else {
-      clientHeaders.delete('Access-Control-Allow-Origin');
-    }
+    setCorsHeaders(clientHeaders, request);
     // Set client cache control
     clientHeaders.set('Cache-Control', 'public, max-age=60');
 
