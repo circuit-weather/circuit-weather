@@ -331,6 +331,20 @@ describe('CircuitWeatherApp Pure Methods', () => {
                 ],
             });
         });
+
+        it('leaves unparseable date uncached so a later fix to the schedule data is picked up', () => {
+            const race = {
+                date: 'invalid',
+                sessions: [
+                    { id: 'race', name: 'Race', date: 'invalid', time: 'invalid' },
+                ],
+            };
+
+            const result = app.getRaceEndTime(race);
+
+            expect(Number.isNaN(result.getTime())).toBe(true);
+            expect(race._endTimeMs).toBeUndefined();
+        });
     });
 
     // ---------------------------------------------------------------
