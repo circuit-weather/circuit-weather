@@ -358,7 +358,7 @@ export class CircuitWeatherApp {
         });
 
         // Watch for dynamically added map controls (common with Mapbox)
-        const controlClasses = bottomControls.map(selector => selector.replace('.', ''));
+        const controlSelector = bottomControls.join(', ');
         const mutationObserver = new MutationObserver((mutations) => {
             let shouldUpdate = false;
             for (let i = 0; i < mutations.length; i++) {
@@ -366,27 +366,7 @@ export class CircuitWeatherApp {
                 for (let j = 0; j < addedNodes.length; j++) {
                     const node = addedNodes[j];
                     if (node.nodeType === Node.ELEMENT_NODE) {
-                        let isControl = false;
-
-                        // Fast path: direct class check
-                        for (let c = 0; c < controlClasses.length; c++) {
-                            if (node.classList.contains(controlClasses[c])) {
-                                isControl = true;
-                                break;
-                            }
-                        }
-
-                        // Fallback: search children using faster getElementsByClassName
-                        if (!isControl) {
-                            for (let c = 0; c < controlClasses.length; c++) {
-                                if (node.getElementsByClassName(controlClasses[c]).length > 0) {
-                                    isControl = true;
-                                    break;
-                                }
-                            }
-                        }
-
-                        if (isControl) {
+                        if (node.matches(controlSelector) || node.querySelector(controlSelector) !== null) {
                             observer.observe(node);
                             shouldUpdate = true;
                         }
