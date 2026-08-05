@@ -287,7 +287,27 @@ export class CircuitWeatherApp {
      * @returns {Object|null} - { round, sessionId } or null.
      */
     getGloballyNextSession(now) {
-        for (const race of this.races) {
+        // Optimization: Races are chronologically ordered, use binary search
+        // to find the first race that hasn't ended yet to skip O(N) iteration
+        // and Date object instantiation for races entirely in the past.
+        let low = 0;
+        let high = this.races.length - 1;
+        let firstActiveIndex = this.races.length;
+
+        while (low <= high) {
+            const mid = Math.floor((low + high) / 2);
+            if (this.getRaceEndTime(this.races[mid]) > now) {
+                firstActiveIndex = mid;
+                // Keep searching left for potentially earlier active races
+                high = mid - 1;
+            } else {
+                // Race has ended, search right
+                low = mid + 1;
+            }
+        }
+
+        for (let i = firstActiveIndex; i < this.races.length; i++) {
+            const race = this.races[i];
             const next = race.sessions.find(s => getSessionStatus(s, now) === 'FUTURE');
             if (next) {
                 return { round: race.round, sessionId: next.id };
