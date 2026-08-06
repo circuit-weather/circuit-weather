@@ -113,10 +113,12 @@ describe('WeatherRadar Timer Logic', () => {
     });
 
     it('should correctly calculate duration in updateErrorUI', () => {
+        vi.useFakeTimers();
         // Mock rate limit
         const now = 1000000;
         vi.setSystemTime(now);
 
+        radar.errorToast.retryTimer = 1;
         radar.errorToast.rateLimitResetTime = now + 45000; // 45s in future
         radar.errorToast.failedTiles = new Set(['tile1']);
 
