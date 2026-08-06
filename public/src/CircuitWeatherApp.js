@@ -282,14 +282,11 @@ export class CircuitWeatherApp {
     }
 
     /**
-     * Finds the overall next session in the entire season across all rounds.
+     * Finds the index of the first race that has not yet ended.
      * @param {Date} now - The current date/time.
-     * @returns {Object|null} - { round, sessionId } or null.
+     * @returns {number} - The index of the first active race, or this.races.length if none.
      */
-    getGloballyNextSession(now) {
-        // Optimization: Races are chronologically ordered, use binary search
-        // to find the first race that hasn't ended yet to skip O(N) iteration
-        // and Date object instantiation for races entirely in the past.
+    _findFirstActiveRaceIndex(now) {
         let low = 0;
         let high = this.races.length - 1;
         let firstActiveIndex = this.races.length;
@@ -305,6 +302,19 @@ export class CircuitWeatherApp {
                 low = mid + 1;
             }
         }
+        return firstActiveIndex;
+    }
+
+    /**
+     * Finds the overall next session in the entire season across all rounds.
+     * @param {Date} now - The current date/time.
+     * @returns {Object|null} - { round, sessionId } or null.
+     */
+    getGloballyNextSession(now) {
+        // Optimization: Races are chronologically ordered, use binary search
+        // to find the first race that hasn't ended yet to skip O(N) iteration
+        // and Date object instantiation for races entirely in the past.
+        const firstActiveIndex = this._findFirstActiveRaceIndex(now);
 
         for (let i = firstActiveIndex; i < this.races.length; i++) {
             const race = this.races[i];
@@ -318,10 +328,9 @@ export class CircuitWeatherApp {
 
     autoSelectNextRound() {
         const now = new Date();
-        // Find next race with a session in the future
-        const nextRace = this.races.find(race => {
-            return this.getRaceEndTime(race) > now;
-        });
+        // Optimization: use binary search since races are chronologically ordered
+        const firstActiveIndex = this._findFirstActiveRaceIndex(now);
+        const nextRace = firstActiveIndex < this.races.length ? this.races[firstActiveIndex] : undefined;
 
         if (nextRace) {
             if (this.ui.roundSelect) this.ui.roundSelect.value = nextRace.round;
