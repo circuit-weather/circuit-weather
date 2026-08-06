@@ -869,7 +869,7 @@ async function handleTileRequest(request, env, ctx, url) {
     const bucket = Math.floor(status / 100);
     if (bucket >= 4 || Math.random() < 0.05) {
       if (env.ENVIRONMENT !== 'production') {
-        console.log(`Tile Proxy Bucket: ${bucket}xx (Status: ${status}) Path: ${decodedTilePath}`);
+        console.info(`Tile Proxy Bucket: ${bucket}xx (Status: ${status}) Path: ${decodedTilePath}`);
       }
     }
 
