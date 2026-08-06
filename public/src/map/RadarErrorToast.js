@@ -106,7 +106,7 @@ export class RadarErrorToast {
 
             // Fix Timer Sync: Use actual remaining time if a retry cooldown is active
             let duration = 0;
-            if (this.rateLimitResetTime > Date.now()) {
+            if (this.retryTimer && this.rateLimitResetTime > Date.now()) {
                 duration = Math.ceil((this.rateLimitResetTime - Date.now()) / 1000);
                 duration = Math.max(1, duration); // Ensure at least 1s
             }
@@ -115,7 +115,7 @@ export class RadarErrorToast {
                 this.activeErrorTitle || i18n.t('radar.connectionInstability'),
                 message,
                 duration,
-                this.rateLimitResetTime > Date.now() ? this.rateLimitResetTime : null
+                this.retryTimer && this.rateLimitResetTime > Date.now() ? this.rateLimitResetTime : null
             );
         } else {
             // DEBOUNCE HIDE: Wait 1s before hiding to prevent "popping" during redraws
