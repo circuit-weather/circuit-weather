@@ -153,6 +153,7 @@ mode = "smart"
 - Environment variables:
   - `MAPBOX_ACCESS_TOKEN` (optional): Required to use the primary Mapbox GL JS renderer. If omitted, the app falls back to Leaflet.js.
   - `ENVIRONMENT` (optional): Defaults to 'production'.
+  - `DEBUG` (optional): Set to 'true' to enable detailed debug logging (e.g., exposing unredacted tile proxy paths in logs) when not in production.
 - **Note:** An `.env.example` file is intentionally omitted. This project is standalone and does not intend to onboard human developers, so it doesn't require others to know how to configure or run it.
 - No build step required (vanilla JS)
 
