@@ -37,10 +37,17 @@ describe('SafeStorage', () => {
     expect(result).toBeNull();
   });
 
-  it('fails silently when localStorage.setItem throws', () => {
+  it('fails silently and logs warning when localStorage.setItem throws', () => {
+    const error = new Error('Quota Exceeded');
     mockLocalStorage.setItem.mockImplementation(() => {
-      throw new Error('Quota Exceeded');
+      throw error;
     });
+
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
     expect(() => SafeStorage.setItem('key', 'value')).not.toThrow();
+    expect(warnSpy).toHaveBeenCalledWith('Storage write error:', error);
+
+    warnSpy.mockRestore();
   });
 });

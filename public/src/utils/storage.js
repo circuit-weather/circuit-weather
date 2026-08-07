@@ -17,6 +17,7 @@ export const SafeStorage = {
             localStorage.setItem(key, value);
         } catch (e) {
             // SEC: Fail securely if storage is disabled/blocked
+            console.warn('Storage write error:', e);
         }
     }
 };
