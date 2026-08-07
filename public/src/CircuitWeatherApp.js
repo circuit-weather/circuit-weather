@@ -165,7 +165,7 @@ export class CircuitWeatherApp {
     renderError(message) {
         const sidebarContent = document.querySelector('.sidebar-content');
         if (sidebarContent) {
-            sidebarContent.innerHTML = '';
+            sidebarContent.textContent = '';
             const errorState = document.createElement('div');
             errorState.className = 'error-state';
 
@@ -222,7 +222,7 @@ export class CircuitWeatherApp {
                 btn.disabled = true;
                 btn.setAttribute('aria-disabled', 'true');
                 // Palette UX: Add loading spinner to async submit button
-                btn.innerHTML = '';
+                btn.textContent = '';
                 const btnSvg = document.createElementNS(svgNS, "svg");
                 btnSvg.setAttribute("aria-hidden", "true");
                 btnSvg.setAttribute("style", "width: 1rem; height: 1rem; margin-right: 0.5rem; animation: spin 1s linear infinite;");
@@ -970,7 +970,7 @@ export class CircuitWeatherApp {
 
             // Clear skeleton and show error state in the forecast panel
             if (this.ui.forecastContent) {
-                this.ui.forecastContent.innerHTML = '';
+                this.ui.forecastContent.textContent = '';
                 this.ui.forecastContent.removeAttribute('aria-busy');
                 this.ui.forecastContent.style.display = 'none';
             }
@@ -1075,7 +1075,7 @@ export class CircuitWeatherApp {
             // Palette A11y: Mark region as busy during loading
             content.setAttribute('aria-busy', 'true');
             content.style.display = 'block';
-            content.innerHTML = '';
+            content.textContent = '';
             const template = document.getElementById('forecast-skeleton-template');
             if (template && typeof template.cloneNode === 'function') {
                  if (template.content) {
@@ -1329,7 +1329,7 @@ export class CircuitWeatherApp {
 
         // Inject into content
         if (content) {
-            content.innerHTML = '';
+            content.textContent = '';
             content.appendChild(dashboard);
         }
     }
