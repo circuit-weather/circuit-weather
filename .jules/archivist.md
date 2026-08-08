@@ -285,3 +285,8 @@ Prevention: Avoid duplicating configuration values in documentation; reference t
 
 **Learning:** When core infrastructure components change, such as correcting the documented CDN provider for Leaflet assets from `Mapbox CDN` to `Unpkg` in the English `PRIVACY.md`, developers often forget to apply the corresponding translation to all localized privacy policies (`public/privacy/PRIVACY.*.md`). This results in privacy policy drift across different languages, causing inaccuracies regarding data flow.
 **Action:** When updating or reviewing `public/PRIVACY.md` for infrastructure changes, ensure that modifications to specific services (like `Leaflet (via Unpkg)`) are faithfully replicated and accurately translated across all localized files. Use automated scripts with regex parsing to reliably apply these localized updates and maintain consistency.
+
+## 2026-06-25 - Drift in Documenting Optional Environment Variables
+
+**Learning:** When optional environment variables (like `DEBUG` for detailed logging) are implemented in the code (e.g., `src/worker.js`), they are sometimes omitted from the central project documentation (`AGENTS.md`) since they aren't strictly required for the application to function. This creates ambiguity and makes the system harder to debug for others.
+**Action:** Always verify that all environment variables accessed in the codebase (using `env.VARIABLENAME`) are explicitly documented in `AGENTS.md`, properly labeling optional ones as such.
