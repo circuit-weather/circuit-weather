@@ -285,3 +285,7 @@ Prevention: Avoid duplicating configuration values in documentation; reference t
 
 **Learning:** When core infrastructure components change, such as correcting the documented CDN provider for Leaflet assets from `Mapbox CDN` to `Unpkg` in the English `PRIVACY.md`, developers often forget to apply the corresponding translation to all localized privacy policies (`public/privacy/PRIVACY.*.md`). This results in privacy policy drift across different languages, causing inaccuracies regarding data flow.
 **Action:** When updating or reviewing `public/PRIVACY.md` for infrastructure changes, ensure that modifications to specific services (like `Leaflet (via Unpkg)`) are faithfully replicated and accurately translated across all localized files. Use automated scripts with regex parsing to reliably apply these localized updates and maintain consistency.
+
+## 2026-02-09 - Environment Variable Drift: DEBUG flag
+**Learning:** Environment variables frequently drift without doc updates. The `DEBUG` environment variable was used in `worker.js` for unredacted logging but was missing from `AGENTS.md`'s environment variable list.
+**Action:** Updated `AGENTS.md` to properly document the `DEBUG` environment variable. Ensure environment variable usage in `worker.js` is verified against documentation in the future.
