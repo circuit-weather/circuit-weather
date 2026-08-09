@@ -75,6 +75,7 @@ circuit-weather/
 ├── public/           # Static assets (served by Cloudflare)
 │   ├── index.html
 │   ├── styles.css
+│   ├── privacy/      # Localized privacy policies
 │   ├── src/          # Frontend ES modules (no build step)
 │   │   ├── main.js   # Entry point
 │   │   └── ...
