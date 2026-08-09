@@ -290,3 +290,8 @@ Prevention: Avoid duplicating configuration values in documentation; reference t
 
 **Learning:** When optional environment variables (like `DEBUG` for detailed logging) are implemented in the code (e.g., `src/worker.js`), they are sometimes omitted from the central project documentation (`AGENTS.md`) since they aren't strictly required for the application to function. This creates ambiguity and makes the system harder to debug for others.
 **Action:** Always verify that all environment variables accessed in the codebase (using `env.VARIABLENAME`) are explicitly documented in `AGENTS.md`, properly labeling optional ones as such.
+
+2026-06-25 - Missing Directory in File Tree
+
+**Learning:** The project's structure includes a significant directory (`public/privacy/`) containing localized privacy policies, but this was omitted from the "Repository Structure" file tree documented in `AGENTS.md`.
+**Action:** Always ensure that significant, long-standing directories (like `public/privacy/`) are explicitly represented in architectural file trees (like the one in `AGENTS.md`) so agents and developers understand the repository layout accurately.
