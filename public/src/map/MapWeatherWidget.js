@@ -7,19 +7,16 @@ import { getWindDirection } from "../utils/wind.js";
  */
 class MapWeatherWidgetClass {
   constructor() {
+    this._initDOM();
+  }
+
+  _initDOM() {
     // Scout: Upgraded generic div to semantic section to improve document outline and explicitly signal this standalone widget region to search engines.
     this._div = document.createElement("section");
-    this._div.className =
-      "leaflet-control-weather mapboxgl-ctrl mapboxgl-ctrl-group";
+    this._div.className = "leaflet-control-weather mapboxgl-ctrl mapboxgl-ctrl-group";
     this._div.setAttribute("role", "region");
-    this._div.setAttribute(
-      "aria-label",
-      i18n.t("weather.currentCircuitWeather"),
-    );
-    this._div.setAttribute(
-      "data-i18n-attr",
-      "aria-label:weather.currentCircuitWeather",
-    );
+    this._div.setAttribute("aria-label", i18n.t("weather.currentCircuitWeather"));
+    this._div.setAttribute("data-i18n-attr", "aria-label:weather.currentCircuitWeather");
     this._div.setAttribute("tabindex", "0");
 
     const heading = document.createElement("h2");
@@ -34,108 +31,12 @@ class MapWeatherWidgetClass {
     dl.style.padding = "0";
     this._div.appendChild(dl);
 
-    const createMetric = (key, iconSvgPath, valueClass, extraSpans = []) => {
-      const wrapper = document.createElement("div");
-      wrapper.className = "weather-widget-metric";
-      wrapper.setAttribute("role", "group");
-      wrapper.setAttribute("aria-label", i18n.t(key));
-      wrapper.setAttribute("title", i18n.t(key));
+    dl.appendChild(this._createMetric("weather.temperature", `<path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z" />`, "temp-value"));
+    dl.appendChild(this._createMetric("weather.rainChance", `<path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M16 14v6"/><path d="M8 14v6"/><path d="M12 16v6"/>`, "rain-value"));
+    dl.appendChild(this._createMetric("weather.humidity", `<path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />`, "humid-value"));
 
-      let attrKey = key;
-      if (key === "weather.windSpeed") attrKey = "weather.wind";
-      wrapper.setAttribute("data-i18n-attr", `aria-label:${key},title:${attrKey}`);
-
-      const dt = document.createElement("dt");
-      dt.className = "sr-only";
-      dt.textContent = i18n.t(key);
-      wrapper.appendChild(dt);
-
-      const dd = document.createElement("dd");
-      dd.style.display = "flex";
-      dd.style.alignItems = "center";
-      dd.style.margin = "0";
-
-      const svgNS = "http://www.w3.org/2000/svg";
-      const svg = document.createElementNS(svgNS, "svg");
-      svg.setAttribute("class", `icon-weather icon-${valueClass.split('-')[0]}`);
-      svg.setAttribute("aria-hidden", "true");
-      svg.setAttribute("viewBox", "0 0 24 24");
-      svg.setAttribute("fill", "none");
-      svg.setAttribute("stroke", "currentColor");
-      svg.setAttribute("stroke-width", "2");
-
-      if (valueClass.includes("rain")) {
-        svg.setAttribute("stroke-linecap", "round");
-        svg.setAttribute("stroke-linejoin", "round");
-      }
-
-      // Parse paths
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(`<svg xmlns="http://www.w3.org/2000/svg">${iconSvgPath}</svg>`, "image/svg+xml");
-      const childNodes = doc.documentElement.childNodes;
-      childNodes.forEach(node => {
-        if (node.nodeType === 1) { // ELEMENT_NODE
-          const newNode = document.createElementNS(svgNS, node.tagName);
-          Array.from(node.attributes).forEach(attr => newNode.setAttribute(attr.name, attr.value));
-          svg.appendChild(newNode);
-        }
-      });
-
-      dd.appendChild(svg);
-
-      const valueSpan = document.createElement("span");
-      valueSpan.className = valueClass;
-      valueSpan.textContent = valueClass.includes("temp") || valueClass.includes("wind") ? "--" : "--%";
-      dd.appendChild(valueSpan);
-
-      extraSpans.forEach(spanFn => {
-        dd.appendChild(spanFn());
-      });
-
-      wrapper.appendChild(dd);
-      return wrapper;
-    };
-
-    dl.appendChild(createMetric("weather.temperature", `<path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4.5 4.5 0 1 0 5 0z" />`, "temp-value"));
-    dl.appendChild(createMetric("weather.rainChance", `<path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M16 14v6"/><path d="M8 14v6"/><path d="M12 16v6"/>`, "rain-value"));
-    dl.appendChild(createMetric("weather.humidity", `<path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z" />`, "humid-value"));
-
-    dl.appendChild(createMetric("weather.windSpeed", `<path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2" />`, "wind-value", [
-        () => {
-            const windDirSpan = document.createElement("span");
-            windDirSpan.className = "wind-dir";
-
-            const windDirTextSpan = document.createElement("span");
-            windDirTextSpan.className = "wind-dir-text";
-            windDirSpan.appendChild(windDirTextSpan);
-
-            const svgNS = "http://www.w3.org/2000/svg";
-            const svg = document.createElementNS(svgNS, "svg");
-            svg.setAttribute("class", "icon-wind-arrow");
-            svg.setAttribute("aria-hidden", "true");
-            svg.setAttribute("style", "visibility: hidden;");
-            svg.setAttribute("viewBox", "0 0 24 24");
-            svg.setAttribute("fill", "none");
-            svg.setAttribute("stroke", "currentColor");
-            svg.setAttribute("stroke-width", "2.5");
-            svg.setAttribute("stroke-linecap", "round");
-            svg.setAttribute("stroke-linejoin", "round");
-
-            const line = document.createElementNS(svgNS, "line");
-            line.setAttribute("x1", "12");
-            line.setAttribute("y1", "19");
-            line.setAttribute("x2", "12");
-            line.setAttribute("y2", "5");
-            svg.appendChild(line);
-
-            const polyline = document.createElementNS(svgNS, "polyline");
-            polyline.setAttribute("points", "5 12 12 5 19 12");
-            svg.appendChild(polyline);
-
-            windDirSpan.appendChild(svg);
-
-            return windDirSpan;
-        }
+    dl.appendChild(this._createMetric("weather.windSpeed", `<path d="M9.59 4.59A2 2 0 1 1 11 8H2m10.59 11.41A2 2 0 1 0 14 16H2m15.73-8.27A2.5 2.5 0 1 1 19.5 12H2" />`, "wind-value", [
+      () => this._createWindDirectionSpan()
     ]));
 
     this._ui = {
@@ -146,6 +47,104 @@ class MapWeatherWidgetClass {
       windDirText: this._div.querySelector(".wind-dir-text"),
       windArrow: this._div.querySelector(".icon-wind-arrow"),
     };
+  }
+
+  _createMetric(key, iconSvgPath, valueClass, extraSpans = []) {
+    const wrapper = document.createElement("div");
+    wrapper.className = "weather-widget-metric";
+    wrapper.setAttribute("role", "group");
+    wrapper.setAttribute("aria-label", i18n.t(key));
+    wrapper.setAttribute("title", i18n.t(key));
+
+    let attrKey = key;
+    if (key === "weather.windSpeed") attrKey = "weather.wind";
+    wrapper.setAttribute("data-i18n-attr", `aria-label:${key},title:${attrKey}`);
+
+    const dt = document.createElement("dt");
+    dt.className = "sr-only";
+    dt.textContent = i18n.t(key);
+    wrapper.appendChild(dt);
+
+    const dd = document.createElement("dd");
+    dd.style.display = "flex";
+    dd.style.alignItems = "center";
+    dd.style.margin = "0";
+
+    const svgNS = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(svgNS, "svg");
+    svg.setAttribute("class", `icon-weather icon-${valueClass.split('-')[0]}`);
+    svg.setAttribute("aria-hidden", "true");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.setAttribute("fill", "none");
+    svg.setAttribute("stroke", "currentColor");
+    svg.setAttribute("stroke-width", "2");
+
+    if (valueClass.includes("rain")) {
+      svg.setAttribute("stroke-linecap", "round");
+      svg.setAttribute("stroke-linejoin", "round");
+    }
+
+    // Parse paths
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(`<svg xmlns="http://www.w3.org/2000/svg">${iconSvgPath}</svg>`, "image/svg+xml");
+    const childNodes = doc.documentElement.childNodes;
+    childNodes.forEach(node => {
+      if (node.nodeType === 1) { // ELEMENT_NODE
+        const newNode = document.createElementNS(svgNS, node.tagName);
+        Array.from(node.attributes).forEach(attr => newNode.setAttribute(attr.name, attr.value));
+        svg.appendChild(newNode);
+      }
+    });
+
+    dd.appendChild(svg);
+
+    const valueSpan = document.createElement("span");
+    valueSpan.className = valueClass;
+    valueSpan.textContent = valueClass.includes("temp") || valueClass.includes("wind") ? "--" : "--%";
+    dd.appendChild(valueSpan);
+
+    extraSpans.forEach(spanFn => {
+      dd.appendChild(spanFn());
+    });
+
+    wrapper.appendChild(dd);
+    return wrapper;
+  }
+
+  _createWindDirectionSpan() {
+    const windDirSpan = document.createElement("span");
+    windDirSpan.className = "wind-dir";
+
+    const windDirTextSpan = document.createElement("span");
+    windDirTextSpan.className = "wind-dir-text";
+    windDirSpan.appendChild(windDirTextSpan);
+
+    const svgNS = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(svgNS, "svg");
+    svg.setAttribute("class", "icon-wind-arrow");
+    svg.setAttribute("aria-hidden", "true");
+    svg.setAttribute("style", "visibility: hidden;");
+    svg.setAttribute("viewBox", "0 0 24 24");
+    svg.setAttribute("fill", "none");
+    svg.setAttribute("stroke", "currentColor");
+    svg.setAttribute("stroke-width", "2.5");
+    svg.setAttribute("stroke-linecap", "round");
+    svg.setAttribute("stroke-linejoin", "round");
+
+    const line = document.createElementNS(svgNS, "line");
+    line.setAttribute("x1", "12");
+    line.setAttribute("y1", "19");
+    line.setAttribute("x2", "12");
+    line.setAttribute("y2", "5");
+    svg.appendChild(line);
+
+    const polyline = document.createElementNS(svgNS, "polyline");
+    polyline.setAttribute("points", "5 12 12 5 19 12");
+    svg.appendChild(polyline);
+
+    windDirSpan.appendChild(svg);
+
+    return windDirSpan;
   }
 
   // Leaflet interface
