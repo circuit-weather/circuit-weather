@@ -104,7 +104,7 @@ export class RadarErrorToast {
             // Persistent toast while errors exist
             const message = this.retryingTilesMessage(count);
 
-            // Fix Timer Sync: Use actual remaining time if a retry cooldown is active
+            // Timer sync is maintained by using the actual remaining time if a retry cooldown is active
             let duration = 0;
             if (this.retryTimer && this.rateLimitResetTime > Date.now()) {
                 duration = Math.ceil((this.rateLimitResetTime - Date.now()) / 1000);
