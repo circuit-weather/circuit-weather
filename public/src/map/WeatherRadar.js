@@ -604,9 +604,20 @@ export class WeatherRadar {
         let relativeText = '';
         let accessibleText = ''; // Palette A11y: New variable for screen reader text
 
-        // Show relative to session if available
-        if (this.ui.relative && this.sessionTime) {
-            const diff = (effectiveTimeMs - this.sessionTime.getTime()) / CONFIG.ONE_MINUTE_MS; // minutes
+        // Show relative to session if available and within a 7-day window of the radar time
+        const hasSession = this.sessionTime !== null;
+        let showSessionRelative = false;
+        let diff = 0;
+
+        if (hasSession) {
+            diff = (effectiveTimeMs - this.sessionTime.getTime()) / CONFIG.ONE_MINUTE_MS; // minutes
+            // Only show session-relative if the session is within 7 days (10080 minutes) of the frame's effective time
+            if (Math.abs(diff) <= 7 * 24 * 60) {
+                showSessionRelative = true;
+            }
+        }
+
+        if (this.ui.relative && showSessionRelative) {
             const absDiff = Math.abs(Math.round(diff));
             const durationText = this.formatDuration(absDiff);
 

@@ -824,6 +824,11 @@ export class CircuitWeatherApp {
         // Hide countdown until session selected (radar always shows)
         this.countdown.show(false);
 
+        // Clear previous session time on the radar
+        if (this.radar) {
+            this.radar.setSessionTime(null);
+        }
+
         // Hide forecast section since no session is selected yet
         if (this.ui.forecastSection) {
             this.ui.forecastSection.style.display = 'none';
