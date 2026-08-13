@@ -294,4 +294,35 @@ describe('WeatherRadar Live Countdown', () => {
         radar.updateTimeDisplay(1000 - 120);
         expect(radar.ui.relative.textContent).toBe('2 mins ago');
     });
+
+    it('falls back to standard relative display when the session is far in the future', () => {
+        // Session starts in 90 days
+        const sessionTime = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000);
+        radar.setSessionTime(sessionTime);
+
+        const frameTime = Math.floor(Date.now() / 1000);
+        radar.frames = [{ time: frameTime }];
+        radar.pastFrameCount = 1;
+        radar.visibleLayerIndex = 0;
+
+        radar.updateTimeDisplay(frameTime);
+
+        // Standard relative text for current frame should be "Live" (diffMin < 1)
+        expect(radar.ui.relative.textContent).toBe('Live');
+    });
+
+    it('falls back to standard relative display when the session is far in the past', () => {
+        // Session started 90 days ago
+        const sessionTime = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000);
+        radar.setSessionTime(sessionTime);
+
+        const frameTime = Math.floor(Date.now() / 1000);
+        radar.frames = [{ time: frameTime }];
+        radar.pastFrameCount = 1;
+        radar.visibleLayerIndex = 0;
+
+        radar.updateTimeDisplay(frameTime);
+
+        expect(radar.ui.relative.textContent).toBe('Live');
+    });
 });
