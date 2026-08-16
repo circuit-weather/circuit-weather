@@ -663,20 +663,22 @@ async function handleHealthRequest(request, env, ctx, url) {
   };
 
   const results = {};
-  const checks = Object.entries(upstreams).map(async ([name, url]) => {
-    try {
-      const res = await fetch(url, {
-        method: 'HEAD',
-        headers: { 'User-Agent': 'CircuitWeather-Health/1.0' },
-        signal: AbortSignal.timeout(2000)
+  const checks = Object.keys(upstreams).map((name) => {
+    const url = upstreams[name];
+    return fetch(url, {
+      method: 'HEAD',
+      headers: { 'User-Agent': 'CircuitWeather-Health/1.0' },
+      signal: AbortSignal.timeout(2000)
+    })
+      .then((res) => {
+        results[name] = res.status;
+      })
+      .catch((e) => {
+        if (env.ENVIRONMENT !== 'production') {
+          console.error(`Health check failed for ${name}:`, e);
+        }
+        results[name] = 'unreachable';
       });
-      results[name] = res.status;
-    } catch (e) {
-      if (env.ENVIRONMENT !== 'production') {
-        console.error(`Health check failed for ${name}:`, e);
-      }
-      results[name] = 'unreachable';
-    }
   });
 
   await Promise.all(checks);
