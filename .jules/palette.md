@@ -42,3 +42,8 @@
 
 **Learning:** When implementing custom UI controls that are compatible with both Leaflet and Mapbox GL JS (like `MapWeatherWidget`), the controls are wrapped in renderer-specific container classes. Writing CSS (like `:focus-visible` for accessibility) that targets only one of these classes (e.g., `.leaflet-control-weather`) will cause the style to fail when the other renderer (e.g., Mapbox) is active.
 **Action:** Always ensure CSS styles explicitly target both renderer-specific container classes (e.g., `.leaflet-control-weather:focus-visible` and `.mapboxgl-ctrl-group:focus-visible`) to maintain consistent styling and accessibility across both map engines.
+
+## 2024-12-07 - Dynamic Content Announcement
+
+**Learning:** When content is injected dynamically via JavaScript (like the skeleton loader or the final forecast data in `forecastContent`), screen readers will not announce it unless the container is explicitly marked as a live region.
+**Action:** Always add `aria-live="polite"` (or `assertive` for critical alerts) to containers that will receive dynamically injected content that users need to be aware of without explicit focus.
