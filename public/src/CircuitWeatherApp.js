@@ -318,9 +318,11 @@ export class CircuitWeatherApp {
 
         for (let i = firstActiveIndex; i < this.races.length; i++) {
             const race = this.races[i];
-            const next = race.sessions.find(s => getSessionStatus(s, now) === 'FUTURE');
-            if (next) {
-                return { round: race.round, sessionId: next.id };
+            for (let j = 0; j < race.sessions.length; j++) {
+                const s = race.sessions[j];
+                if (getSessionStatus(s, now) === 'FUTURE') {
+                    return { round: race.round, sessionId: s.id };
+                }
             }
         }
         return null;
@@ -338,9 +340,17 @@ export class CircuitWeatherApp {
 
             // Find next upcoming session within this round
             // Priority: LIVE > FUTURE
-            let targetSession = nextRace.sessions.find(session => getSessionStatus(session, now) === 'LIVE');
-            if (!targetSession) {
-                targetSession = nextRace.sessions.find(session => getSessionStatus(session, now) === 'FUTURE');
+            let targetSession = null;
+            for (let i = 0; i < nextRace.sessions.length; i++) {
+                const session = nextRace.sessions[i];
+                const status = getSessionStatus(session, now);
+                if (status === 'LIVE') {
+                    targetSession = session;
+                    break;
+                }
+                if (!targetSession && status === 'FUTURE') {
+                    targetSession = session;
+                }
             }
 
             if (targetSession) {
