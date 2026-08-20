@@ -20,7 +20,8 @@ export class RadarReconcile {
         // Current visible layer (reference)
         const visibleLayer = visibleLayerIndex >= 0 ? currentLayers[visibleLayerIndex] : null;
 
-        newFrames.forEach((frame, index) => {
+        let index = 0;
+        for (const frame of newFrames) {
             const key = `${frame.time}-${frame.path}`;
             if (existingLayerMap.has(key)) {
                 // Reuse existing layer
@@ -40,7 +41,8 @@ export class RadarReconcile {
                 // Layer will be created by getLayer() when needed (e.g. by showFrame or preloading).
                 newLayers[index] = null;
             }
-        });
+            index++;
+        }
 
         // Remove unused layers
         existingLayerMap.forEach(layer => {
