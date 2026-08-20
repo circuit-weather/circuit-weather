@@ -57,7 +57,7 @@ function openF1ToErgastDateTime(dateStr, gmtOffset) {
     if (!dateStr) return null;
 
     // If date_start already carries a timezone (trailing Z, or ±HH:MM after the time),
-    // let Date parse it directly — it resolves to the correct UTC instant on its own.
+    // allow Date to parse it directly — it resolves to the correct UTC instant on its own.
     const hasTz = /(Z|[+-]\d{2}:?\d{2})$/.test(dateStr);
     let utcMs;
     if (hasTz) {
