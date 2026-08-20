@@ -7,12 +7,12 @@ export class RadarReconcile {
         const existingLayerMap = new Map();
 
         // Populate map with existing valid layers
-        currentLayers.forEach(layer => {
+        for (const layer of currentLayers) {
             if (layer) {
                 const key = `${layer.frameTime}-${layer.framePath}`;
                 existingLayerMap.set(key, layer);
             }
-        });
+        }
 
         const newLayers = new Array(newFrames.length).fill(null);
         let newVisibleIndex = -1;
@@ -20,7 +20,8 @@ export class RadarReconcile {
         // Current visible layer (reference)
         const visibleLayer = visibleLayerIndex >= 0 ? currentLayers[visibleLayerIndex] : null;
 
-        newFrames.forEach((frame, index) => {
+        for (let index = 0; index < newFrames.length; index++) {
+            const frame = newFrames[index];
             const key = `${frame.time}-${frame.path}`;
             if (existingLayerMap.has(key)) {
                 // Reuse existing layer
@@ -40,17 +41,17 @@ export class RadarReconcile {
                 // Layer will be created by getLayer() when needed (e.g. by showFrame or preloading).
                 newLayers[index] = null;
             }
-        });
+        }
 
         // Remove unused layers
-        existingLayerMap.forEach(layer => {
+        for (const layer of existingLayerMap.values()) {
             if (isMapbox) {
                 if (map.getLayer(layer.id)) map.removeLayer(layer.id);
                 if (map.getSource(layer.sourceId)) map.removeSource(layer.sourceId);
             } else {
                 map.removeLayer(layer);
             }
-        });
+        }
 
         return { newLayers, newVisibleIndex };
     }
