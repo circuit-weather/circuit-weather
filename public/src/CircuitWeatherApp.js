@@ -1283,7 +1283,7 @@ export class CircuitWeatherApp {
             const ol = document.createElement('ol');
             ol.className = 'weather-timeline-list';
 
-            weather.hourly.forEach(hour => {
+            for (const hour of weather.hourly) {
                 const relTime = this.weatherClient.getRelativeTime(hour.time, sessionTime);
                 const desc = this.weatherClient.getWeatherDescription(hour.code);
                 const a11yTime = this.weatherClient.getAccessibleRelativeTime(hour.time, sessionTime);
@@ -1336,7 +1336,7 @@ export class CircuitWeatherApp {
 
                 li.appendChild(tempDiv);
                 ol.appendChild(li);
-            });
+            }
 
             section.appendChild(ol);
             dashboard.appendChild(section);
