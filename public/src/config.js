@@ -30,11 +30,8 @@ export const CONFIG = {
     // Time Constants
     ONE_MINUTE_MS: 60000,
     RACE_DURATION_BUFFER_HOURS: 4, // Assume race + podium + post-race takes ~4 hours
-    // The value '23' represents setting the time to the 23rd hour of the day,
-    // effectively marking the end of the race day when no specific session
-    // time is available. This is used as a fallback calculation when the
-    // race session data is incomplete. This keeps the timestamp on the same
-    // calendar date rather than rolling over to midnight of the next day.
+    // Fallback when a race has no session time: getRaceEndTime() adds this many hours
+    // to the parsed race date, keeping the round "current" for nearly a full day
     RACE_DAY_END_HOUR: 23,
     // 5 minutes: keeps live weather fresh without hitting Open-Meteo rate limits
     WEATHER_REFRESH_INTERVAL_MS: 300000,
