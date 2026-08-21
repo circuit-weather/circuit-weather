@@ -350,6 +350,8 @@ async function handleApiRequest(request, env, ctx, url) {
     const mime = contentType ? contentType.split(';')[0].trim().toLowerCase() : '';
 
     if (mime !== 'application/json') {
+      // Invalid Content-Type responses are only logged in development mode to prevent
+      // exposing sensitive information, impacting performance, or creating noise in production logs.
       if (env.ENVIRONMENT !== 'production') {
         console.error(`Upstream Invalid Content-Type: ${contentType} (parsed: ${mime})`);
       }
