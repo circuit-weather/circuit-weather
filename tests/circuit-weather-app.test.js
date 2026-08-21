@@ -211,6 +211,7 @@ vi.mock('../public/src/ui/SidebarManager.js', () => ({
     SidebarManager: vi.fn()
 }));
 
+const { CONFIG } = await import('../public/src/config.js');
 const { CircuitWeatherApp } = await import('../public/src/CircuitWeatherApp.js');
 const { RangeCircles } = await import('../public/src/map/RangeCircles.js');
 const { TrackLayer } = await import('../public/src/map/TrackLayer.js');
@@ -1160,11 +1161,11 @@ describe('CircuitWeatherApp Pure Methods', () => {
             expect(app.updateLiveWeatherForCircuit).not.toHaveBeenCalled();
 
             // Advance 5 minutes
-            vi.advanceTimersByTime(300000);
+            vi.advanceTimersByTime(CONFIG.WEATHER_REFRESH_INTERVAL_MS);
             expect(app.updateLiveWeatherForCircuit).toHaveBeenCalledTimes(1);
 
             // Advance another 5 minutes
-            vi.advanceTimersByTime(300000);
+            vi.advanceTimersByTime(CONFIG.WEATHER_REFRESH_INTERVAL_MS);
             expect(app.updateLiveWeatherForCircuit).toHaveBeenCalledTimes(2);
         });
 
@@ -1326,21 +1327,21 @@ describe('CircuitWeatherApp Pure Methods', () => {
             expect(app.updateSessionForecast).not.toHaveBeenCalled();
 
             // Advance 15 minutes
-            vi.advanceTimersByTime(900000);
+            vi.advanceTimersByTime(CONFIG.SESSION_FORECAST_REFRESH_INTERVAL_MS);
             expect(app.updateSessionForecast).toHaveBeenCalledTimes(1);
 
             // Advance another 15 minutes
-            vi.advanceTimersByTime(900000);
+            vi.advanceTimersByTime(CONFIG.SESSION_FORECAST_REFRESH_INTERVAL_MS);
             expect(app.updateSessionForecast).toHaveBeenCalledTimes(2);
         });
 
         it('stops the interval when requested', () => {
             app.startSessionForecastInterval();
-            vi.advanceTimersByTime(900000);
+            vi.advanceTimersByTime(CONFIG.SESSION_FORECAST_REFRESH_INTERVAL_MS);
             expect(app.updateSessionForecast).toHaveBeenCalledTimes(1);
 
             app.stopSessionForecastInterval();
-            vi.advanceTimersByTime(900000);
+            vi.advanceTimersByTime(CONFIG.SESSION_FORECAST_REFRESH_INTERVAL_MS);
             // Should still be 1
             expect(app.updateSessionForecast).toHaveBeenCalledTimes(1);
         });
@@ -1379,7 +1380,7 @@ describe('CircuitWeatherApp Pure Methods', () => {
         it('does not update if no session is selected', () => {
              app.selectedSession = null;
              app.startSessionForecastInterval();
-             vi.advanceTimersByTime(900000);
+             vi.advanceTimersByTime(CONFIG.SESSION_FORECAST_REFRESH_INTERVAL_MS);
              expect(app.updateSessionForecast).not.toHaveBeenCalled();
         });
     });
