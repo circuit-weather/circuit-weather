@@ -385,13 +385,14 @@ export class WeatherRadar {
             let closestIndex = 0;
             let minDiff = Infinity;
 
-            this.frames.forEach((frame, i) => {
+            for (let i = 0; i < this.frames.length; i++) {
+                const frame = this.frames[i];
                 const diff = Math.abs(frame.time - currentTimestamp);
                 if (diff < minDiff) {
                     minDiff = diff;
                     closestIndex = i;
                 }
-            });
+            }
             this.currentFrame = closestIndex;
         } else {
             this.currentFrame = 0;
