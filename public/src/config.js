@@ -30,7 +30,9 @@ export const CONFIG = {
     // Time Constants
     ONE_MINUTE_MS: 60000,
     RACE_DURATION_BUFFER_HOURS: 4, // Assume race + podium + post-race takes ~4 hours
-    RACE_DAY_END_HOUR: 23, // Fallback to end of day if session time is missing
+    // Fallback when a race has no session time: getRaceEndTime() adds this many hours
+    // to the parsed race date, keeping the round "current" for nearly a full day
+    RACE_DAY_END_HOUR: 23,
     // 5 minutes: keeps live weather fresh without hitting Open-Meteo rate limits
     WEATHER_REFRESH_INTERVAL_MS: 300000,
     // 15 minutes: forecasts move slower than live weather. WeatherClient reads this same
