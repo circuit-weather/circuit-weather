@@ -27,7 +27,12 @@ export class WeatherClient {
 
         const cached = this.windFieldCache.get(cacheKey);
         if (cached && Date.now() - cached.timestamp < this.cacheTTL) {
+            // Move to most recently used
+            this.windFieldCache.delete(cacheKey);
+            this.windFieldCache.set(cacheKey, cached);
             return cached.field;
+        } else if (cached) {
+            this.windFieldCache.delete(cacheKey);
         }
 
         const n = CONFIG.WIND_FIELD_GRID;
