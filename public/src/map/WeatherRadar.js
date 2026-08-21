@@ -509,7 +509,9 @@ export class WeatherRadar {
             layer.on('load', onComplete);
             layer.on('tileerror', onComplete);
 
-            // Timeout to prevent stuck queue
+            // Timeout to prevent the preload queue from becoming stuck if a tile
+            // frame never completes loading. Uses a shared constant to maintain
+            // consistency with the fallback in waitForTilesToLoad().
             setTimeout(() => {
                 cleanup();
                 resolve();
