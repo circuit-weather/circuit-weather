@@ -49,7 +49,9 @@ export class RadarPolling {
             delay -= updateIntervalMs;
         }
 
-        // Minimum delay of 30 seconds to avoid tight loops on clock edge cases
+        // Minimum polling delay of 30 seconds, used as a floor to prevent tight
+        // polling loops if the calculated delay comes out unexpectedly small due
+        // to clock edge cases or arithmetic rounding.
         delay = Math.max(delay, CONFIG.MIN_POLL_DELAY_MS);
 
         this.pollingTimeout = setTimeout(async () => {
