@@ -669,9 +669,13 @@ describe('CircuitWeatherApp Pure Methods', () => {
             app.radar.load = vi.fn().mockRejectedValue(new Error('Radar Error'));
             app.radar.showErrorToast = vi.fn();
 
+            // Make forecast update fail as well to cover both branches
+            app.weatherClient.getForecast = vi.fn().mockRejectedValue(new Error('Forecast Error'));
+
             await app.selectSession('race');
 
-            expect(consoleSpy).toHaveBeenCalledWith('Error selecting session:', expect.any(Error));
+            expect(consoleSpy).toHaveBeenCalledWith('Radar load failed:', expect.any(Error));
+            expect(consoleSpy).toHaveBeenCalledWith('Session forecast update failed:', expect.any(Error));
             expect(app.radar.showErrorToast).toHaveBeenCalledWith('Session Error', 'Failed to load session forecast or radar data.', 5);
             expect(app.ui.forecastContent.innerHTML).toBe('');
             expect(app.ui.forecastContent.removeAttribute).toHaveBeenCalledWith('aria-busy');
