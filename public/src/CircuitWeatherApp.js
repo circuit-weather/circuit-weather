@@ -197,7 +197,7 @@ export class CircuitWeatherApp {
             errorIcon.appendChild(svg);
             errorState.appendChild(errorIcon);
 
-            // Scout: Upgraded from h3 to h2 to fix broken heading hierarchy. When connection fails, this replaces the sidebar content which sits directly under the h1 sidebar-header.
+            // Scout: Upgraded from h3 to h2 to repair broken heading hierarchy. When connection fails, this replaces the sidebar content which sits directly under the h1 sidebar-header.
             const h2 = document.createElement('h2');
             h2.setAttribute('data-i18n', 'errors.connectionFailed');
             h2.textContent = i18n.t('errors.connectionFailed');
@@ -266,7 +266,7 @@ export class CircuitWeatherApp {
             end.setHours(end.getHours() + CONFIG.RACE_DAY_END_HOUR);
         }
 
-        // An unparseable date yields NaN; leave it uncached so a later fix to
+        // An unparseable date yields NaN; leave it uncached so a later update to
         // the schedule data is picked up rather than frozen in.
         if (!Number.isNaN(end.getTime())) {
             Object.defineProperty(race, '_endTimeMs', {
