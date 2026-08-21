@@ -822,7 +822,7 @@ body {
     -webkit-backdrop-filter: var(--glass-blur);
     color: var(--color-text) !important;
     border: 1px solid var(--color-border) !important;
-    border-radius: var(--radius-md) !important;
+    border-radius: var(--radius-md);
     width: 2.75rem !important;
     height: 2.75rem !important;
     line-height: 2.75rem !important;
@@ -844,7 +844,7 @@ body {
     -webkit-backdrop-filter: var(--glass-blur);
     color: var(--color-primary) !important;
     border: 1px solid var(--color-border) !important;
-    border-radius: var(--radius-md) !important;
+    border-radius: var(--radius-md);
     width: 2.75rem !important;
     height: 2.75rem !important;
     line-height: 2.75rem !important;
