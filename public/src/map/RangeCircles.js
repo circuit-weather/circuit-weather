@@ -74,7 +74,9 @@ export class RangeCircles {
         const metricLabel = i18n.t('controls.metricLabel');
         const imperialLabel = i18n.t('controls.imperialLabel');
 
-        document.querySelectorAll('.unit-option').forEach(opt => {
+        const options = document.querySelectorAll('.unit-option');
+        for (let i = 0; i < options.length; i++) {
+            const opt = options[i];
             const isActive = opt.dataset.unit === this.unit;
             opt.classList.toggle('active', isActive);
             opt.setAttribute('aria-pressed', isActive);
@@ -86,7 +88,7 @@ export class RangeCircles {
                 opt.setAttribute('aria-label', imperialLabel);
                 opt.setAttribute('title', imperialLabel);
             }
-        });
+        }
     }
 
     resolveRangeColor() {
@@ -136,7 +138,8 @@ export class RangeCircles {
     drawLeaflet(center, steps, rangeColor) {
         const multiplier = this.unit === 'metric' ? 1000 : 1609.34;
 
-        steps.forEach((distance, index) => {
+        for (let index = 0; index < steps.length; index++) {
+            const distance = steps[index];
             const radius = distance * multiplier;
 
             // 1. Rings
@@ -196,7 +199,7 @@ export class RangeCircles {
                 labelMarker.setZIndexOffset(1000);
                 this.labels.push(labelMarker);
             }
-        });
+        }
 
         // Cleanup extras
         while (this.circles.length > steps.length) {
@@ -215,7 +218,8 @@ export class RangeCircles {
         const features = [];
 
         // Rings & Labels
-        steps.forEach((distance, index) => {
+        for (let index = 0; index < steps.length; index++) {
+            const distance = steps[index];
             const radius = distance * multiplier;
             // Generate circle polygon
             const circleCoords = this.generateCirclePolygon(center, radius, 64);
@@ -245,7 +249,7 @@ export class RangeCircles {
                     text: distance.toString()
                 }
             });
-        });
+        }
 
         const geojson = {
             type: 'FeatureCollection',
@@ -407,8 +411,12 @@ export class RangeCircles {
             if (this.map.getLayer('range-labels')) this.map.removeLayer('range-labels');
             if (this.map.getSource('range-circles')) this.map.removeSource('range-circles');
         } else {
-            this.circles.forEach(c => this.map.removeLayer(c));
-            this.labels.forEach(l => this.map.removeLayer(l));
+            for (let i = 0; i < this.circles.length; i++) {
+                this.map.removeLayer(this.circles[i]);
+            }
+            for (let i = 0; i < this.labels.length; i++) {
+                this.map.removeLayer(this.labels[i]);
+            }
         }
 
         this.circles = [];
