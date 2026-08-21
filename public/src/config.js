@@ -31,8 +31,11 @@ export const CONFIG = {
     ONE_MINUTE_MS: 60000,
     RACE_DURATION_BUFFER_HOURS: 4, // Assume race + podium + post-race takes ~4 hours
     RACE_DAY_END_HOUR: 23, // Fallback to end of day if session time is missing
-    WEATHER_REFRESH_INTERVAL_MS: 300000, // 5 minutes
-    SESSION_FORECAST_REFRESH_INTERVAL_MS: 900000, // 15 minutes
+    // 5 minutes: keeps live weather fresh without hitting Open-Meteo rate limits
+    WEATHER_REFRESH_INTERVAL_MS: 300000,
+    // 15 minutes: forecasts move slower than live weather. WeatherClient reads this same
+    // constant as its cacheTTL, so a scheduled refresh never lands on a still-cached entry
+    SESSION_FORECAST_REFRESH_INTERVAL_MS: 900000,
     LIVE_WEATHER_DEBOUNCE_MS: 400, // Collapse rapid circuit changes into one Open-Meteo request
     TILE_LOAD_TIMEOUT_MS: 3000, // 3 seconds
     MIN_POLL_DELAY_MS: 30000, // 30 seconds
