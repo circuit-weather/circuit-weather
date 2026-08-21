@@ -909,7 +909,7 @@ export class CircuitWeatherApp {
         const now = new Date();
         const globalNext = this.getGloballyNextSession(now);
 
-        sessions.forEach(session => {
+        for (const session of sessions) {
             const option = document.createElement('option');
             option.value = session.id;
 
@@ -933,7 +933,7 @@ export class CircuitWeatherApp {
 
             option.textContent = formatStatusLabel(label, status, isNext);
             fragment.appendChild(option);
-        });
+        }
 
         select.appendChild(fragment);
     }
