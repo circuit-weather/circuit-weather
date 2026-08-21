@@ -1218,7 +1218,7 @@ describe('CircuitWeatherApp Pure Methods', () => {
 
             expect(app.updateLiveWeatherForCircuit).not.toHaveBeenCalled();
 
-            vi.advanceTimersByTime(400);
+            vi.advanceTimersByTime(CONFIG.LIVE_WEATHER_DEBOUNCE_MS);
 
             expect(app.updateLiveWeatherForCircuit).toHaveBeenCalledTimes(1);
         });
