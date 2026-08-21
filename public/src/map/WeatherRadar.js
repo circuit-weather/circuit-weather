@@ -66,7 +66,7 @@ export class WeatherRadar {
         this.handleLanguageChange = this.handleLanguageChange.bind(this);
         this.bindEvents();
 
-        // Palette UX: Start a 1-minute timer to keep the relative time updated
+        // Timer sync is maintained by a 1-minute interval that keeps the relative time updated
         this.relativeTimeInterval = setInterval(() => {
             if (this.visibleLayerIndex >= 0) {
                 this.updateTimeDisplay(this.frames[this.visibleLayerIndex]?.time);
