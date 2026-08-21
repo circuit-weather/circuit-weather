@@ -966,34 +966,38 @@ export class CircuitWeatherApp {
             // Load radar and session forecast in parallel
             // Note: We don't force a "Live" weather update here, as that's handled by selectRound
             // or by the initial load. However, we could refresh it if needed.
-            await Promise.all([
+            const [radarResult, forecastResult] = await Promise.allSettled([
                 this.radar.load(),
                 this.updateSessionForecast(sessionTime, session.id)
             ]);
+
+            if (radarResult.status === 'rejected') {
+                console.error('Radar load failed:', radarResult.reason);
+                if (this.radar && typeof this.radar.showErrorToast === 'function') {
+                    this.radar.showErrorToast(i18n.t('errors.sessionError'), i18n.t('errors.sessionLoadFailed'), 5);
+                }
+            }
+
+            if (forecastResult.status === 'rejected') {
+                console.error('Session forecast update failed:', forecastResult.reason);
+                if (this.ui.forecastContent) {
+                    this.ui.forecastContent.textContent = '';
+                    this.ui.forecastContent.removeAttribute('aria-busy');
+                    this.ui.forecastContent.style.display = 'none';
+                }
+                if (this.ui.forecastUnavailable) {
+                    this.ui.forecastUnavailable.style.display = 'block';
+                    const p = this.ui.forecastUnavailable.querySelector('p');
+                    if (p) p.textContent = i18n.t('forecast.failedTryAgain');
+                }
+            }
 
             // Ensure mobile elements are visible
             this.updateMobileVisibility();
 
             this.router.navigate('f1', this.selectedRace.round, sessionId);
         } catch (error) {
-            console.error('Error selecting session:', error);
-
-            // Palette UX: Provide visual feedback when session data fails to load
-            if (this.radar && typeof this.radar.showErrorToast === 'function') {
-                this.radar.showErrorToast(i18n.t('errors.sessionError'), i18n.t('errors.sessionLoadFailed'), 5);
-            }
-
-            // Clear skeleton and show error state in the forecast panel
-            if (this.ui.forecastContent) {
-                this.ui.forecastContent.textContent = '';
-                this.ui.forecastContent.removeAttribute('aria-busy');
-                this.ui.forecastContent.style.display = 'none';
-            }
-            if (this.ui.forecastUnavailable) {
-                this.ui.forecastUnavailable.style.display = 'block';
-                const p = this.ui.forecastUnavailable.querySelector('p');
-                if (p) p.textContent = i18n.t('forecast.failedTryAgain');
-            }
+            console.error('Error selecting session (synchronous):', error);
         } finally {
             this.showLoading(false);
         }
