@@ -1,5 +1,4 @@
 import { CONFIG, COUNTRY_CODES } from './config.js';
-import { escapeHtml } from './utils/escapeHtml.js';
 import { F1API } from './api/F1API.js';
 import { WeatherClient } from './api/WeatherClient.js';
 import { TrackLayer } from './map/TrackLayer.js';
