@@ -84,6 +84,8 @@ export class WeatherRadar {
         }
 
         // Global shortcut: Space to toggle play/pause
+        // The event listener is safely cleaned up in the destroy() method to prevent memory leaks
+        // and duplicate triggers when WeatherRadar instances are created and destroyed.
         document.addEventListener('keydown', this.handleSpaceKey);
 
         // Listen for language changes
