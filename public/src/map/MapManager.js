@@ -103,6 +103,9 @@ export class MapManager {
   }
 
   setupResizeObserver() {
+    if (this.resizeObserver) {
+      this.resizeObserver.disconnect();
+    }
     const mapContainer = document.getElementById("map");
     if (mapContainer && window.ResizeObserver) {
       let rafId = null;

@@ -106,6 +106,9 @@ export class WeatherRadar {
     }
 
     destroy() {
+        if (this._isCleaningUp) return;
+        this._isCleaningUp = true;
+
         document.removeEventListener('keydown', this.handleSpaceKey);
         document.removeEventListener('i18n:change', this.handleLanguageChange);
         this.errorToast.destroy();
@@ -115,6 +118,8 @@ export class WeatherRadar {
             clearInterval(this.relativeTimeInterval);
             this.relativeTimeInterval = null;
         }
+
+        this.clearLayers();
     }
 
     setSessionTime(sessionTime) {
@@ -164,15 +169,11 @@ export class WeatherRadar {
     checkForUpdates() { return this.polling.checkForUpdates(); }
 
 
-    createLayers() {
-        if (!this.map) return;
-
-        // Reset error tracking on full layer rebuild
-        this.errorToast.reset();
+    clearLayers() {
+        if (!this.map || !this.layers) return;
 
         const isMapbox = !this.map.hasLayer;
 
-        // Clear existing layers if any (full reset)
         this.layers.forEach(layer => {
             if (layer) {
                 if (isMapbox) {
@@ -183,6 +184,17 @@ export class WeatherRadar {
                 }
             }
         });
+    }
+
+    createLayers() {
+        if (!this.map) return;
+
+        // Reset error tracking on full layer rebuild
+        this.errorToast.reset();
+
+        // Clear existing layers if any (full reset)
+        this.clearLayers();
+
         // Bolt Optimization: Lazy initialize layers array with nulls
         // We only create the Leaflet layer when it's needed (or preloaded)
         this.layers = new Array(this.frames.length).fill(null);
