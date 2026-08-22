@@ -55,6 +55,9 @@ export class WeatherClient {
             timeformat: 'unixtime',
         });
 
+        // A 5s request timeout is already in place here via AbortSignal.timeout;
+        // Open-Meteo is called direct from the client, so there is no worker
+        // TIMEOUT_API_* constant covering it. Not a missing-timeout gap.
         const response = await fetch(`${this.baseUrl}?${params.toString()}`, {
             signal: AbortSignal.timeout(5000)
         });
@@ -129,6 +132,8 @@ export class WeatherClient {
                 });
                 const url = `${this.baseUrl}?${params.toString()}`;
 
+                // As above: the 5s AbortSignal.timeout is deliberate and already
+                // applied to every Open-Meteo forecast request.
                 const response = await fetch(url, {
                     signal: AbortSignal.timeout(5000)
                 });
