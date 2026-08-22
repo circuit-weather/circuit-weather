@@ -96,8 +96,8 @@ describe('F1API', () => {
             vi.clearAllMocks();
             mockFetch = vi.fn();
             vi.stubGlobal('fetch', mockFetch);
-            vi.spyOn(SafeStorage, 'getItem');
-            vi.spyOn(SafeStorage, 'setItem');
+            vi.spyOn(SafeStorage, 'getItem').mockImplementation(() => null);
+            vi.spyOn(SafeStorage, 'setItem').mockImplementation(() => {});
             api = new F1API();
         });
 
@@ -190,6 +190,19 @@ describe('F1API', () => {
 
             expect(result).toHaveLength(1);
             expect(result[0].raceName).toBe('Bahrain Grand Prix');
+            warnSpy.mockRestore();
+        });
+
+        it('observes fallback openF1 logic for F1API current season fallback when global fetch fails once', async () => {
+            const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+            mockFetch.mockRejectedValueOnce(new TypeError('Failed to fetch')); // Jolpica fails once
+            mockOpenF1Success();
+
+            const result = await api.getSchedule();
+
+            expect(result).toHaveLength(1);
+            expect(result[0].raceName).toBe('Bahrain Grand Prix');
+            expect(mockFetch).toHaveBeenCalledTimes(3); // 1 failed Jolpica + 2 OpenF1
             warnSpy.mockRestore();
         });
 
