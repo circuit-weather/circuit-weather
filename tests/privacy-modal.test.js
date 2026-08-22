@@ -227,7 +227,10 @@ describe("PrivacyModal", () => {
       const md = "[link](https://example.com/&quot;onmouseover=&quot;alert=1)";
       const html = modal.parseMarkdown(md);
       const href = extractHref(html);
-      expect(href === "https://example.com/&quot;onmouseover=&quot;alert=1" || href === "https://example.com/\"onmouseover=\"alert=1").toBeTruthy();
+      // href is now set as a property, not interpolated into markup, so the
+      // decoded quote is inert. What matters is that it stays inside the value.
+      expect(href).toContain("onmouseover");
+      expect(href.startsWith("https://example.com/")).toBe(true);
     });
 
     it("fails securely and blocks URL if DOMParser fails", () => {
@@ -376,12 +379,21 @@ describe("PrivacyModal", () => {
       expect(html).toContain("</ul>");
     });
 
-    it("escapes HTML to prevent XSS", () => {
+    it("routes raw HTML through createTextNode rather than creating elements", () => {
       const md = '<script>alert("xss")</script>';
-      const html = renderNode(modal.parseMarkdown(md));
-      // By using document.createTextNode, characters like < and > are safe natively.
-      // Therefore, they shouldn't render as active HTML nodes in serialization.
-      expect(html).toContain("<script>alert(\"xss\")</script>");
+      modal.parseMarkdown(md);
+
+      // The markup must arrive as inert text, never as a constructed element.
+      // renderNode() below is a stub serialiser, so asserting on its output
+      // would prove nothing about escaping — assert on the DOM calls instead.
+      const textNodeArgs = document.createTextNode.mock.calls.map((c) => c[0]);
+      expect(textNodeArgs.join("")).toContain('<script>alert("xss")</script>');
+
+      const createdTags = document.createElement.mock.calls.map((c) => c[0].toLowerCase());
+      expect(createdTags).not.toContain("script");
+
+      // See tests/privacy-modal-dom.test.js for the real-DOM proof that this
+      // renders no executable node.
     });
 
     it("wraps plain text blocks in <p> tags", () => {
