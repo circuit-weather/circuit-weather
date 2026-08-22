@@ -100,7 +100,8 @@ export class PrivacyModal {
       }
 
       if (this.content) {
-        this.content.innerHTML = this.parseMarkdown(markdown);
+        this.content.textContent = '';
+        this.content.appendChild(this.parseMarkdown(markdown));
       }
       this.loaded = true;
     } catch (error) {
@@ -145,53 +146,120 @@ export class PrivacyModal {
       if (/^[a-z][a-z0-9+.-]*:/i.test(clean)) {
         // If scheme exists, it MUST be in our allowlist
         if (/^(?:https?|mailto):/i.test(clean)) {
-          // SEC: Return the original (encoded) string if it's safe, or the decoded one?
-          // Safe to return the decoded one since it's verified.
-          return escapeHtml(clean);
+          return clean; // Safely return the decoded link
         }
         // Block file:, javascript:, vbscript:, data:, blob:, etc.
         return "#unsafe-url";
       }
       // No scheme (relative URL), allow
-      return escapeHtml(clean);
+      return clean; // Safely return the decoded link
     };
 
-    return (
-      escapeHtml(md)
-        // Remove the top-level title (we have it in the header)
-        .replace(/^#\s+.+\s*\n*/m, "")
-        // Headers (Escaped chars mean we look for escaped # if they were escaped, but # is safe)
-        // Note: Since we escaped first, we must match safe content.
-        // Standard markdown # is safe from escapeHtml unless it was &#... but # is not escaped.
-        .replace(/^### (.+)$/gm, "<h3>$1</h3>")
-        .replace(/^## (.+)$/gm, "<h2>$1</h2>")
-        // Bold
-        .replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>")
-        // Links
-        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, (match, text, url) => {
+    const fragment = document.createDocumentFragment();
+
+    // Remove the top-level title (we have it in the header)
+    md = md.replace(/^#\s+.+\s*\n*/m, "");
+    const blocks = md.split("\n\n");
+
+    const parseInline = (text, container) => {
+      const regex = /\*\*([^*]+)\*\*|\[([^\]]+)\]\(([^)]+)\)/g;
+      let lastIndex = 0;
+      let match;
+
+      while ((match = regex.exec(text)) !== null) {
+        if (match.index > lastIndex) {
+          container.appendChild(document.createTextNode(text.substring(lastIndex, match.index)));
+        }
+
+        if (match[1]) {
+          // Bold
+          const strong = document.createElement('strong');
+          strong.textContent = match[1];
+          container.appendChild(strong);
+        } else if (match[2]) {
+          // Link
+          const a = document.createElement('a');
+          a.href = sanitizeUrl(match[3]);
+          a.target = '_blank';
+          a.rel = 'noopener noreferrer';
+          a.className = 'external-link';
+          a.textContent = match[2] + ' ';
+
           // Palette A11y: Add external link indicator and SR text
-          const icon = `<svg class="icon-external" aria-hidden="true" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>`;
-          return `<a href="${sanitizeUrl(url)}" target="_blank" rel="noopener noreferrer" class="external-link">${text} ${icon}<span class="sr-only">(${escapeHtml(i18n.t('privacy.opensInNewTab'))})</span></a>`;
-        })
-        // List items
-        .replace(/^- (.+)$/gm, "<li>$1</li>")
-        // Wrap consecutive list items in ul
-        .replace(/(<li>.*<\/li>\n?)+/g, "<ul>$&</ul>")
-        // Paragraphs (lines that aren't headers, lists, or empty)
-        .split("\n\n")
-        .map((block) => {
-          block = block.trim();
-          if (!block) return "";
-          // Since we generate safe HTML tags above (h3, h2, strong, a, li, ul)
-          // we can trust lines starting with these tags.
-          // The inputs $1, $2 are already escaped.
-          if (block.startsWith("<h") || block.startsWith("<ul")) return block;
-          // If it doesn't start with a generated block tag, wrap it in p.
-          // Note: inline tags like <strong> or <a> should also be wrapped in <p>.
-          return `<p>${block}</p>`;
-        })
-        .join("\n")
-    );
+          const svgNS = 'http://www.w3.org/2000/svg';
+          const svg = document.createElementNS(svgNS, 'svg');
+          svg.setAttribute('class', 'icon-external');
+          svg.setAttribute('aria-hidden', 'true');
+          svg.setAttribute('viewBox', '0 0 24 24');
+          svg.setAttribute('fill', 'none');
+          svg.setAttribute('stroke', 'currentColor');
+          svg.setAttribute('stroke-width', '2');
+          svg.setAttribute('stroke-linecap', 'round');
+          svg.setAttribute('stroke-linejoin', 'round');
+
+          const path = document.createElementNS(svgNS, 'path');
+          path.setAttribute('d', 'M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6');
+          svg.appendChild(path);
+
+          const polyline = document.createElementNS(svgNS, 'polyline');
+          polyline.setAttribute('points', '15 3 21 3 21 9');
+          svg.appendChild(polyline);
+
+          const line = document.createElementNS(svgNS, 'line');
+          line.setAttribute('x1', '10');
+          line.setAttribute('y1', '14');
+          line.setAttribute('x2', '21');
+          line.setAttribute('y2', '3');
+          svg.appendChild(line);
+
+          a.appendChild(svg);
+
+          const sr = document.createElement('span');
+          sr.className = 'sr-only';
+          sr.textContent = '(' + i18n.t('privacy.opensInNewTab') + ')';
+          a.appendChild(sr);
+
+          container.appendChild(a);
+        }
+        lastIndex = regex.lastIndex;
+      }
+
+      if (lastIndex < text.length) {
+        container.appendChild(document.createTextNode(text.substring(lastIndex)));
+      }
+    };
+
+    for (let block of blocks) {
+      block = block.trim();
+      if (!block) continue;
+
+      if (block.startsWith('### ')) {
+        const h3 = document.createElement('h3');
+        parseInline(block.substring(4), h3);
+        fragment.appendChild(h3);
+      } else if (block.startsWith('## ')) {
+        const h2 = document.createElement('h2');
+        parseInline(block.substring(3), h2);
+        fragment.appendChild(h2);
+      } else if (block.startsWith('- ')) {
+        const ul = document.createElement('ul');
+        const items = block.split('\n');
+        for (const item of items) {
+          if (item.trim().startsWith('- ')) {
+            const li = document.createElement('li');
+            parseInline(item.trim().substring(2), li);
+            ul.appendChild(li);
+          }
+        }
+        fragment.appendChild(ul);
+      } else {
+        const p = document.createElement('p');
+        parseInline(block, p);
+        fragment.appendChild(p);
+      }
+    }
+
+    return fragment;
   }
 
   getPrivacyPolicyPaths() {
