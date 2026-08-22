@@ -827,6 +827,41 @@ function handleCacheableTileResponse(request, ctx, cache, cacheKey, upstreamResp
  * Handle Radar Tile requests with robust caching
  * Route: /api/tiles/...
  */
+async function checkTileCache(request, cache, cacheKey) {
+  const response = await cache.match(cacheKey);
+  if (!response) return null;
+
+  const headers = new Headers(response.headers);
+  headers.set('X-Cache', 'HIT');
+
+  // Apply strict CORS
+  setCorsHeaders(headers, request);
+
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers
+  });
+}
+
+function handleNonCacheableTileError(request, status, upstreamResponse) {
+  // SEC: The upstream body is never forwarded here — it could carry HTML or
+  // stack traces. createErrorResponse builds a fresh one.
+  const errorDetails = {
+    'X-Upstream-Status': status.toString()
+  };
+
+  // Preserve Retry-After so the client can back off correctly on rate limits.
+  if (status === 429) {
+    const retryAfter = upstreamResponse.headers.get('Retry-After');
+    if (retryAfter) {
+      errorDetails['Retry-After'] = retryAfter;
+    }
+  }
+
+  return createErrorResponse(request, status, 'Upstream tile error', errorDetails);
+}
+
 async function handleTileRequest(request, env, ctx, url) {
   const tilePath = url.pathname.slice('/api/tiles'.length);
 
@@ -839,21 +874,8 @@ async function handleTileRequest(request, env, ctx, url) {
   const cache = caches.default;
 
   // 1. Check Cache
-  let response = await cache.match(cacheKey);
-
-  if (response) {
-    const headers = new Headers(response.headers);
-    headers.set('X-Cache', 'HIT');
-
-    // Apply strict CORS
-    setCorsHeaders(headers, request);
-
-    return new Response(response.body, {
-      status: response.status,
-      statusText: response.statusText,
-      headers
-    });
-  }
+  const cachedResponse = await checkTileCache(request, cache, cacheKey);
+  if (cachedResponse) return cachedResponse;
 
   // 2. Fetch Upstream
   try {
@@ -906,21 +928,7 @@ async function handleTileRequest(request, env, ctx, url) {
     }
 
     // 4. Non-cacheable Error Handling (429, 5xx, etc)
-    // SEC: The upstream body is never forwarded here — it could carry HTML or
-    // stack traces. createErrorResponse builds a fresh one.
-    const errorDetails = {
-      'X-Upstream-Status': status.toString()
-    };
-
-    // Preserve Retry-After so the client can back off correctly on rate limits.
-    if (status === 429) {
-      const retryAfter = upstreamResponse.headers.get('Retry-After');
-      if (retryAfter) {
-        errorDetails['Retry-After'] = retryAfter;
-      }
-    }
-
-    return createErrorResponse(request, status, 'Upstream tile error', errorDetails);
+    return handleNonCacheableTileError(request, status, upstreamResponse);
 
   } catch (error) {
     if (env.ENVIRONMENT !== 'production') {
