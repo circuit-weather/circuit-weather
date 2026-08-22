@@ -252,6 +252,32 @@ describe('Worker Edge Cases', () => {
     });
 
     // ---------------------------------------------------------------
+    // Unhandled Exceptions
+    // ---------------------------------------------------------------
+    describe('Unhandled Exceptions', () => {
+        it('returns 500 Internal Server Error when internal routing throws', async () => {
+            // Create a request with an invalid URL structure that will cause new URL() to throw
+            const request = {
+                url: 'invalid-url',
+                method: 'GET',
+                headers: new Headers({
+                    'CF-Connecting-IP': '127.0.0.1'
+                })
+            };
+
+            const response = await workerModule.fetch(request, env, ctx);
+
+            expect(response.status).toBe(500);
+            expect(response.headers.get('Access-Control-Allow-Origin')).toBe('*');
+
+            const body = await response.json();
+            expect(body.error.message).toBe('Internal Server Error');
+            expect(body.error.details.name).toBe('TypeError');
+            expect(body.error.details.message).toContain('Invalid URL');
+        });
+    });
+
+    // ---------------------------------------------------------------
     // Tile endpoint validation
     // ---------------------------------------------------------------
     describe('/api/tiles validation', () => {
