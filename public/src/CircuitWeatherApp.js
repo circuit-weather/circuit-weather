@@ -45,7 +45,7 @@ export class CircuitWeatherApp {
         this.handleLanguageChange = this.handleLanguageChange.bind(this);
     }
 
-    async init() {
+    initUIElements() {
         // Bolt Optimization: Cache frequently accessed DOM elements
         this.ui = {
             loadingOverlay: document.getElementById('loadingOverlay'),
@@ -72,50 +72,58 @@ export class CircuitWeatherApp {
             mapContainer: document.getElementById('map'),
             dataSourceNotice: document.getElementById('dataSourceNotice'),
         };
+    }
+
+    async initMapComponents() {
+        const map = await this.mapManager.init();
+        this.map = map;
+
+        // Sidebar manager for mobile
+        this.sidebarManager = new SidebarManager();
+
+        // Handle resize events for mobile visibility
+        this.bindResizeHandler();
+        this.initResizeObserver();
+
+        // Recentre control (added to zoom control container)
+        this.recentreControl = new RecentreControl(map);
+
+        this.rangeCircles = new RangeCircles(map);
+        this.trackLayer = new TrackLayer(map);
+        this.radar = new WeatherRadar(map);
+        this.windOverlay = new WindOverlay(map, {
+            onToggle: (enabled) => { if (enabled) this.updateWindField(); },
+            onViewChange: () => { this.updateWindField(); },
+        });
+
+        // Theme manager with callback to update map tiles and overlays
+        // Bolt Optimization: Initialized after overlays so they can respond to the initial theme apply
+        this.themeManager = new ThemeManager(this.handleThemeChange.bind(this));
+
+        // Map weather widget (Leaflet/Mapbox control)
+        this.mapWeatherWidget = new MapWeatherWidget();
+
+        const isMapbox = !map.hasLayer;
+        if (isMapbox) {
+            map.addControl(this.mapWeatherWidget, 'top-right');
+        } else {
+            // Safely wrap the widget in a native Leaflet control to avoid recursive addTo calls
+            const WeatherControl = L.Control.extend({
+                options: { position: 'topright' },
+                onAdd: () => this.mapWeatherWidget.onAdd(map),
+                onRemove: () => this.mapWeatherWidget.onRemove(map)
+            });
+            map.addControl(new WeatherControl());
+        }
+    }
+
+    async init() {
+        this.initUIElements();
 
         this.showLoading(true, i18n.t('loading.schedule'));
 
         try {
-            const map = await this.mapManager.init();
-            this.map = map;
-
-            // Sidebar manager for mobile
-            this.sidebarManager = new SidebarManager();
-
-            // Handle resize events for mobile visibility
-            this.bindResizeHandler();
-            this.initResizeObserver();
-
-            // Recentre control (added to zoom control container)
-            this.recentreControl = new RecentreControl(map);
-
-            this.rangeCircles = new RangeCircles(map);
-            this.trackLayer = new TrackLayer(map);
-            this.radar = new WeatherRadar(map);
-            this.windOverlay = new WindOverlay(map, {
-                onToggle: (enabled) => { if (enabled) this.updateWindField(); },
-                onViewChange: () => { this.updateWindField(); },
-            });
-
-            // Theme manager with callback to update map tiles and overlays
-            // Bolt Optimization: Initialized after overlays so they can respond to the initial theme apply
-            this.themeManager = new ThemeManager(this.handleThemeChange.bind(this));
-
-            // Map weather widget (Leaflet/Mapbox control)
-            this.mapWeatherWidget = new MapWeatherWidget();
-
-            const isMapbox = !map.hasLayer;
-            if (isMapbox) {
-                map.addControl(this.mapWeatherWidget, 'top-right');
-            } else {
-                // Safely wrap the widget in a native Leaflet control to avoid recursive addTo calls
-                const WeatherControl = L.Control.extend({
-                    options: { position: 'topright' },
-                    onAdd: () => this.mapWeatherWidget.onAdd(map),
-                    onRemove: () => this.mapWeatherWidget.onRemove(map)
-                });
-                map.addControl(new WeatherControl());
-            }
+            await this.initMapComponents();
 
             this.bindEvents();
 
