@@ -1,5 +1,4 @@
 import { CONFIG, COUNTRY_CODES } from './config.js';
-import { escapeHtml } from './utils/escapeHtml.js';
 import { F1API } from './api/F1API.js';
 import { WeatherClient } from './api/WeatherClient.js';
 import { TrackLayer } from './map/TrackLayer.js';
@@ -547,7 +546,12 @@ export class CircuitWeatherApp {
                         this.ui.sessionSelect.disabled = true;
                         this.ui.sessionSelect.setAttribute('aria-disabled', 'true');
                         this.ui.sessionSelect.title = i18n.t('controls.selectRoundFirst');
-                        this.ui.sessionSelect.innerHTML = `<option value="">${escapeHtml(i18n.t('controls.selectRoundFirst'))}</option>`;
+
+                        const option = document.createElement('option');
+                        option.value = '';
+                        option.textContent = i18n.t('controls.selectRoundFirst');
+                        this.ui.sessionSelect.textContent = '';
+                        this.ui.sessionSelect.appendChild(option);
                     }
                     this.selectedSession = null;
                     this.selectedRace = null;
@@ -584,7 +588,11 @@ export class CircuitWeatherApp {
         const select = this.ui.roundSelect;
         if (!select) return;
 
-        select.innerHTML = `<option value="">${escapeHtml(i18n.t('controls.selectRound'))}</option>`;
+        const defaultOption = document.createElement('option');
+        defaultOption.value = '';
+        defaultOption.textContent = i18n.t('controls.selectRound');
+        select.textContent = '';
+        select.appendChild(defaultOption);
 
         // Bolt Optimization: Use DocumentFragment to batch DOM insertions
         // Reduces reflows when populating the race list (~24 items)
@@ -909,7 +917,12 @@ export class CircuitWeatherApp {
         select.disabled = false;
         select.setAttribute('aria-disabled', 'false');
         select.removeAttribute('title');
-        select.innerHTML = `<option value="">${escapeHtml(i18n.t('controls.selectSession'))}</option>`;
+
+        const defaultOption = document.createElement('option');
+        defaultOption.value = '';
+        defaultOption.textContent = i18n.t('controls.selectSession');
+        select.textContent = '';
+        select.appendChild(defaultOption);
 
         // Bolt Optimization: Use DocumentFragment to batch DOM insertions
         const fragment = document.createDocumentFragment();
@@ -1423,7 +1436,11 @@ export class CircuitWeatherApp {
         } else {
             if (this.ui.sessionSelect) {
                 this.ui.sessionSelect.title = i18n.t('controls.selectRoundFirst');
-                this.ui.sessionSelect.innerHTML = `<option value="">${escapeHtml(i18n.t('controls.selectRoundFirst'))}</option>`;
+                const option = document.createElement('option');
+                option.value = '';
+                option.textContent = i18n.t('controls.selectRoundFirst');
+                this.ui.sessionSelect.textContent = '';
+                this.ui.sessionSelect.appendChild(option);
             }
         }
 
