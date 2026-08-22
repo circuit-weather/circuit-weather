@@ -611,9 +611,9 @@ describe('CircuitWeatherApp Pure Methods', () => {
             const optionCreations = documentMock.createElement.mock.calls.filter(
                 ([tag]) => tag === 'option'
             );
-            expect(optionCreations).toHaveLength(sessions.length);
-            expect(app.ui.sessionSelect.appendChild).toHaveBeenCalledTimes(1);
-            expect(app.ui.sessionSelect.innerHTML).toContain('Select session...');
+            expect(optionCreations).toHaveLength(sessions.length + 1); // sessions + default
+            expect(app.ui.sessionSelect.appendChild).toHaveBeenCalledTimes(2); // default option + fragment
+            expect(app.ui.sessionSelect.childNodes[0].textContent).toBe('Select session...');
         });
 
         it('marks the session as (Next) if it matches the globally next session', () => {
@@ -622,15 +622,20 @@ describe('CircuitWeatherApp Pure Methods', () => {
             ];
             app.getGloballyNextSession.mockReturnValue({ round: '1', sessionId: 'race' });
 
-            let createdOption = null;
-            documentMock.createElement.mockImplementationOnce((tag) => {
-                createdOption = { value: '', textContent: '' };
-                return createdOption;
+            let options = [];
+            documentMock.createElement.mockImplementation((tag) => {
+                const opt = createMockElement(tag);
+                options.push(opt);
+                return opt;
             });
 
             app.populateSessionSelect(sessions);
 
-            expect(createdOption.textContent).toContain('(Next)');
+            // options[0] is the default "Select session...", options[1] is the first session
+            expect(options[1].textContent).toContain('(Next)');
+
+            // Restore original mock
+            documentMock.createElement.mockImplementation((tag) => createMockElement(tag));
         });
     });
 
@@ -1423,7 +1428,8 @@ describe('CircuitWeatherApp Pure Methods', () => {
 
             expect(app.populateRoundSelect).toHaveBeenCalled();
             expect(app.ui.sessionSelect.title).toBeTruthy();
-            expect(app.ui.sessionSelect.innerHTML).toContain('<option');
+            expect(app.ui.sessionSelect.childNodes.length).toBeGreaterThan(0);
+            expect(app.ui.sessionSelect.childNodes[0].textContent).toBe('Select a round first');
             expect(app.updatePageMetadata).toHaveBeenCalled();
         });
     });
@@ -1547,7 +1553,7 @@ describe('CircuitWeatherApp Pure Methods', () => {
             expect(app.updatePageMetadata).toHaveBeenCalled();
             expect(app.ui.sessionSelect.disabled).toBe(true);
             expect(app.ui.sessionSelect.title).toBe('Select a round first');
-            expect(app.ui.sessionSelect.innerHTML).toBe('<option value="">Select a round first</option>');
+            expect(app.ui.sessionSelect.childNodes[0].textContent).toBe('Select a round first');
         });
     });
 
