@@ -268,12 +268,15 @@ describe('Worker Edge Cases', () => {
             const response = await workerModule.fetch(request, env, ctx);
 
             expect(response.status).toBe(500);
-            expect(response.headers.get('Access-Control-Allow-Origin')).toBe('*');
 
             const body = await response.json();
             expect(body.error.message).toBe('Internal Server Error');
-            expect(body.error.details.name).toBe('TypeError');
-            expect(body.error.details.message).toContain('Invalid URL');
+            expect(body.error.status).toBe(500);
+
+            // SEC: internal error detail must never reach the client
+            expect(body.error.details).toBeUndefined();
+            expect(JSON.stringify(body)).not.toContain('Invalid URL');
+            expect(JSON.stringify(body)).not.toContain('TypeError');
         });
     });
 

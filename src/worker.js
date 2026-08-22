@@ -174,17 +174,15 @@ export default {
       // For any other /api/* routes, return 404
       return createErrorResponse(request, 404, 'API endpoint not found');
     } catch (error) {
-      console.error('Worker error:', error);
-      const corsHeaders = {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, HEAD, OPTIONS',
-      };
-      return createErrorResponse(request, 500, 'Internal Server Error', corsHeaders, {
-        details: {
-          name: error.name,
-          message: error.message
-        }
-      });
+      // Last-resort net for anything the route handlers did not catch, so the
+      // worker returns a structured 500 instead of a raw runtime failure.
+      if (env.ENVIRONMENT !== 'production') {
+        console.error('Worker error:', error);
+      }
+      // SEC: the error name/message are never returned to the client — they can
+      // carry internal paths or upstream detail. createErrorResponse applies the
+      // strict per-origin CORS from getErrorHeaders(); do not widen it here.
+      return createErrorResponse(request, 500, 'Internal Server Error');
     }
   }
 };
