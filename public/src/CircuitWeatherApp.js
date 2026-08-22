@@ -45,7 +45,7 @@ export class CircuitWeatherApp {
         this.handleLanguageChange = this.handleLanguageChange.bind(this);
     }
 
-    async init() {
+    initUIElements() {
         // Bolt Optimization: Cache frequently accessed DOM elements
         this.ui = {
             loadingOverlay: document.getElementById('loadingOverlay'),
@@ -72,50 +72,58 @@ export class CircuitWeatherApp {
             mapContainer: document.getElementById('map'),
             dataSourceNotice: document.getElementById('dataSourceNotice'),
         };
+    }
+
+    async initMapComponents() {
+        const map = await this.mapManager.init();
+        this.map = map;
+
+        // Sidebar manager for mobile
+        this.sidebarManager = new SidebarManager();
+
+        // Handle resize events for mobile visibility
+        this.bindResizeHandler();
+        this.initResizeObserver();
+
+        // Recentre control (added to zoom control container)
+        this.recentreControl = new RecentreControl(map);
+
+        this.rangeCircles = new RangeCircles(map);
+        this.trackLayer = new TrackLayer(map);
+        this.radar = new WeatherRadar(map);
+        this.windOverlay = new WindOverlay(map, {
+            onToggle: (enabled) => { if (enabled) this.updateWindField(); },
+            onViewChange: () => { this.updateWindField(); },
+        });
+
+        // Theme manager with callback to update map tiles and overlays
+        // Bolt Optimization: Initialized after overlays so they can respond to the initial theme apply
+        this.themeManager = new ThemeManager(this.handleThemeChange.bind(this));
+
+        // Map weather widget (Leaflet/Mapbox control)
+        this.mapWeatherWidget = new MapWeatherWidget();
+
+        const isMapbox = !map.hasLayer;
+        if (isMapbox) {
+            map.addControl(this.mapWeatherWidget, 'top-right');
+        } else {
+            // Safely wrap the widget in a native Leaflet control to avoid recursive addTo calls
+            const WeatherControl = L.Control.extend({
+                options: { position: 'topright' },
+                onAdd: () => this.mapWeatherWidget.onAdd(map),
+                onRemove: () => this.mapWeatherWidget.onRemove(map)
+            });
+            map.addControl(new WeatherControl());
+        }
+    }
+
+    async init() {
+        this.initUIElements();
 
         this.showLoading(true, i18n.t('loading.schedule'));
 
         try {
-            const map = await this.mapManager.init();
-            this.map = map;
-
-            // Sidebar manager for mobile
-            this.sidebarManager = new SidebarManager();
-
-            // Handle resize events for mobile visibility
-            this.bindResizeHandler();
-            this.initResizeObserver();
-
-            // Recentre control (added to zoom control container)
-            this.recentreControl = new RecentreControl(map);
-
-            this.rangeCircles = new RangeCircles(map);
-            this.trackLayer = new TrackLayer(map);
-            this.radar = new WeatherRadar(map);
-            this.windOverlay = new WindOverlay(map, {
-                onToggle: (enabled) => { if (enabled) this.updateWindField(); },
-                onViewChange: () => { this.updateWindField(); },
-            });
-
-            // Theme manager with callback to update map tiles and overlays
-            // Bolt Optimization: Initialized after overlays so they can respond to the initial theme apply
-            this.themeManager = new ThemeManager(this.handleThemeChange.bind(this));
-
-            // Map weather widget (Leaflet/Mapbox control)
-            this.mapWeatherWidget = new MapWeatherWidget();
-
-            const isMapbox = !map.hasLayer;
-            if (isMapbox) {
-                map.addControl(this.mapWeatherWidget, 'top-right');
-            } else {
-                // Safely wrap the widget in a native Leaflet control to avoid recursive addTo calls
-                const WeatherControl = L.Control.extend({
-                    options: { position: 'topright' },
-                    onAdd: () => this.mapWeatherWidget.onAdd(map),
-                    onRemove: () => this.mapWeatherWidget.onRemove(map)
-                });
-                map.addControl(new WeatherControl());
-            }
+            await this.initMapComponents();
 
             this.bindEvents();
 
@@ -1191,172 +1199,13 @@ export class CircuitWeatherApp {
         }
 
         if (sessionWeather) {
-            const temp = Math.round(sessionWeather.temp);
-            const wind = Math.round(sessionWeather.windSpeed);
-            const dir = sessionWeather.windDir;
-            const maxPrecip = Math.max(...weather.hourly.map(h => h.precipProb));
-
-            // Wind Direction Logic
-            const windInfo = getWindDirection(dir);
-            // Rotation: Input 0 (N) -> Blows South -> Arrow (Up) needs 180 deg rotation
-            // Coerced to a number: this is the one value here that lands in a style
-            // attribute rather than as text, and `getWindDirection` derives it with
-            // `degrees + 180` — a non-numeric windDir from upstream would concatenate
-            // instead of add and carry arbitrary text into the CSS.
-            const rotation = Number(windInfo.rotation) || 0;
-
-            const dl = document.createElement('dl');
-            dl.className = 'weather-current';
-
-            // Temperature metric
-            const divTemp = document.createElement('div');
-            divTemp.className = 'weather-metric';
-            const dtTemp = document.createElement('dt');
-            dtTemp.className = 'weather-label';
-            dtTemp.setAttribute('data-i18n', 'weather.temp');
-            dtTemp.textContent = i18n.t('weather.temp');
-            const ddTemp = document.createElement('dd');
-            ddTemp.className = 'weather-value';
-            ddTemp.id = 'weatherTemp';
-            ddTemp.textContent = `${temp}${weather.units.temperature_2m}`;
-            divTemp.appendChild(dtTemp);
-            divTemp.appendChild(ddTemp);
-            dl.appendChild(divTemp);
-
-            // Rain metric
-            const divRain = document.createElement('div');
-            divRain.className = 'weather-metric';
-            const dtRain = document.createElement('dt');
-            dtRain.className = 'weather-label';
-            dtRain.setAttribute('data-i18n', 'weather.rain');
-            dtRain.textContent = i18n.t('weather.rain');
-            const ddRain = document.createElement('dd');
-            ddRain.className = 'weather-value';
-            ddRain.id = 'weatherRain';
-            ddRain.textContent = `${maxPrecip}%`;
-            divRain.appendChild(dtRain);
-            divRain.appendChild(ddRain);
-            dl.appendChild(divRain);
-
-            // Wind metric
-            const divWind = document.createElement('div');
-            divWind.className = 'weather-metric';
-            const dtWind = document.createElement('dt');
-            dtWind.className = 'weather-label';
-            dtWind.setAttribute('data-i18n', 'weather.wind');
-            dtWind.textContent = i18n.t('weather.wind');
-            const ddWind = document.createElement('dd');
-            ddWind.className = 'weather-value';
-            ddWind.id = 'weatherWind';
-            ddWind.textContent = `${wind} ${weather.units.wind_speed_10m}`;
-            const ddWindDir = document.createElement('dd');
-            ddWindDir.className = 'weather-sub';
-            ddWindDir.id = 'weatherWindDir';
-            ddWindDir.title = `${dir}${weather.units.wind_direction_10m}`;
-            ddWindDir.setAttribute('aria-label', i18n.t('weather.windDirection', { direction: windInfo.text, degrees: dir }));
-
-            ddWindDir.appendChild(document.createTextNode(windInfo.text + ' '));
-
-            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-            svg.setAttribute('class', 'icon-wind-arrow');
-            svg.setAttribute('style', `transform: rotate(${rotation}deg); width: 14px; height: 14px;`);
-            svg.setAttribute('viewBox', '0 0 24 24');
-            svg.setAttribute('fill', 'none');
-            svg.setAttribute('stroke', 'currentColor');
-            svg.setAttribute('stroke-width', '2.5');
-            svg.setAttribute('stroke-linecap', 'round');
-            svg.setAttribute('stroke-linejoin', 'round');
-            svg.setAttribute('aria-hidden', 'true');
-
-            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-            line.setAttribute('x1', '12');
-            line.setAttribute('y1', '19');
-            line.setAttribute('x2', '12');
-            line.setAttribute('y2', '5');
-            svg.appendChild(line);
-
-            const polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
-            polyline.setAttribute('points', '5 12 12 5 19 12');
-            svg.appendChild(polyline);
-
-            ddWindDir.appendChild(svg);
-
-            divWind.appendChild(dtWind);
-            divWind.appendChild(ddWind);
-            divWind.appendChild(ddWindDir);
-            dl.appendChild(divWind);
-
+            const dl = this._createCurrentWeatherElement(sessionWeather, weather.units, weather.hourly);
             dashboard.appendChild(dl);
         }
 
         // Timeline Logic
         if (weather.hourly) {
-            const section = document.createElement('section');
-            section.className = 'weather-timeline';
-            section.id = 'weatherTimeline';
-            section.tabIndex = 0;
-            section.setAttribute('data-i18n-attr', 'aria-label:forecast.hourlyForecast');
-            section.setAttribute('aria-label', i18n.t('forecast.hourlyForecast'));
-
-            const ol = document.createElement('ol');
-            ol.className = 'weather-timeline-list';
-
-            for (const hour of weather.hourly) {
-                const relTime = this.weatherClient.getRelativeTime(hour.time, sessionTime);
-                const desc = this.weatherClient.getWeatherDescription(hour.code);
-                const a11yTime = this.weatherClient.getAccessibleRelativeTime(hour.time, sessionTime);
-                const temp = Math.round(hour.temp);
-                const ariaLabel = i18n.t('weather.timelineAria', {
-                    time: a11yTime,
-                    description: desc,
-                    temp,
-                    rain: hour.precipProb,
-                    wind: hour.windSpeed,
-                    windUnit: weather.units.wind_speed_10m,
-                });
-
-                const isoDateTime = new Date(hour.time * 1000).toISOString();
-
-                const li = document.createElement('li');
-                li.className = 'weather-timeline-item';
-                li.setAttribute('aria-label', ariaLabel);
-
-                const timeEl = document.createElement('time');
-                timeEl.setAttribute('datetime', isoDateTime);
-                timeEl.className = 'weather-timeline-time';
-                timeEl.setAttribute('aria-hidden', 'true');
-                timeEl.textContent = relTime;
-                li.appendChild(timeEl);
-
-                const conditionDiv = document.createElement('div');
-                conditionDiv.className = 'weather-timeline-condition';
-                conditionDiv.setAttribute('aria-hidden', 'true');
-                conditionDiv.appendChild(document.createTextNode(desc + ' '));
-
-                const windDiv = document.createElement('div');
-                windDiv.className = 'weather-timeline-wind';
-                windDiv.textContent = `${hour.windSpeed} ${weather.units.wind_speed_10m}`;
-                conditionDiv.appendChild(windDiv);
-                li.appendChild(conditionDiv);
-
-                const tempDiv = document.createElement('div');
-                tempDiv.className = 'weather-timeline-temp';
-                tempDiv.setAttribute('aria-hidden', 'true');
-
-                const tempValDiv = document.createElement('div');
-                tempValDiv.textContent = `${temp}${weather.units.temperature_2m}`;
-                tempDiv.appendChild(tempValDiv);
-
-                const precipDiv = document.createElement('div');
-                precipDiv.className = 'weather-timeline-precip';
-                precipDiv.textContent = `${hour.precipProb}%`;
-                tempDiv.appendChild(precipDiv);
-
-                li.appendChild(tempDiv);
-                ol.appendChild(li);
-            }
-
-            section.appendChild(ol);
+            const section = this._createTimelineElement(weather.hourly, sessionTime, weather.units);
             dashboard.appendChild(section);
         }
 
@@ -1365,6 +1214,175 @@ export class CircuitWeatherApp {
             content.textContent = '';
             content.appendChild(dashboard);
         }
+    }
+
+    _createCurrentWeatherElement(sessionWeather, units, hourlyData) {
+        const temp = Math.round(sessionWeather.temp);
+        const wind = Math.round(sessionWeather.windSpeed);
+        const dir = sessionWeather.windDir;
+        const maxPrecip = Math.max(...hourlyData.map(h => h.precipProb));
+
+        // Wind Direction Logic
+        const windInfo = getWindDirection(dir);
+        // Rotation: Input 0 (N) -> Blows South -> Arrow (Up) needs 180 deg rotation
+        // Coerced to a number: this is the one value here that lands in a style
+        // attribute rather than as text, and `getWindDirection` derives it with
+        // `degrees + 180` — a non-numeric windDir from upstream would concatenate
+        // instead of add and carry arbitrary text into the CSS.
+        const rotation = Number(windInfo.rotation) || 0;
+
+        const dl = document.createElement('dl');
+        dl.className = 'weather-current';
+
+        // Temperature metric
+        const divTemp = document.createElement('div');
+        divTemp.className = 'weather-metric';
+        const dtTemp = document.createElement('dt');
+        dtTemp.className = 'weather-label';
+        dtTemp.setAttribute('data-i18n', 'weather.temp');
+        dtTemp.textContent = i18n.t('weather.temp');
+        const ddTemp = document.createElement('dd');
+        ddTemp.className = 'weather-value';
+        ddTemp.id = 'weatherTemp';
+        ddTemp.textContent = `${temp}${units.temperature_2m}`;
+        divTemp.appendChild(dtTemp);
+        divTemp.appendChild(ddTemp);
+        dl.appendChild(divTemp);
+
+        // Rain metric
+        const divRain = document.createElement('div');
+        divRain.className = 'weather-metric';
+        const dtRain = document.createElement('dt');
+        dtRain.className = 'weather-label';
+        dtRain.setAttribute('data-i18n', 'weather.rain');
+        dtRain.textContent = i18n.t('weather.rain');
+        const ddRain = document.createElement('dd');
+        ddRain.className = 'weather-value';
+        ddRain.id = 'weatherRain';
+        ddRain.textContent = `${maxPrecip}%`;
+        divRain.appendChild(dtRain);
+        divRain.appendChild(ddRain);
+        dl.appendChild(divRain);
+
+        // Wind metric
+        const divWind = document.createElement('div');
+        divWind.className = 'weather-metric';
+        const dtWind = document.createElement('dt');
+        dtWind.className = 'weather-label';
+        dtWind.setAttribute('data-i18n', 'weather.wind');
+        dtWind.textContent = i18n.t('weather.wind');
+        const ddWind = document.createElement('dd');
+        ddWind.className = 'weather-value';
+        ddWind.id = 'weatherWind';
+        ddWind.textContent = `${wind} ${units.wind_speed_10m}`;
+        const ddWindDir = document.createElement('dd');
+        ddWindDir.className = 'weather-sub';
+        ddWindDir.id = 'weatherWindDir';
+        ddWindDir.title = `${dir}${units.wind_direction_10m}`;
+        ddWindDir.setAttribute('aria-label', i18n.t('weather.windDirection', { direction: windInfo.text, degrees: dir }));
+
+        ddWindDir.appendChild(document.createTextNode(windInfo.text + ' '));
+
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('class', 'icon-wind-arrow');
+        svg.setAttribute('style', `transform: rotate(${rotation}deg); width: 14px; height: 14px;`);
+        svg.setAttribute('viewBox', '0 0 24 24');
+        svg.setAttribute('fill', 'none');
+        svg.setAttribute('stroke', 'currentColor');
+        svg.setAttribute('stroke-width', '2.5');
+        svg.setAttribute('stroke-linecap', 'round');
+        svg.setAttribute('stroke-linejoin', 'round');
+        svg.setAttribute('aria-hidden', 'true');
+
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', '12');
+        line.setAttribute('y1', '19');
+        line.setAttribute('x2', '12');
+        line.setAttribute('y2', '5');
+        svg.appendChild(line);
+
+        const polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
+        polyline.setAttribute('points', '5 12 12 5 19 12');
+        svg.appendChild(polyline);
+
+        ddWindDir.appendChild(svg);
+
+        divWind.appendChild(dtWind);
+        divWind.appendChild(ddWind);
+        divWind.appendChild(ddWindDir);
+        dl.appendChild(divWind);
+
+        return dl;
+    }
+
+    _createTimelineElement(hourlyWeather, sessionTime, units) {
+        const section = document.createElement('section');
+        section.className = 'weather-timeline';
+        section.id = 'weatherTimeline';
+        section.tabIndex = 0;
+        section.setAttribute('data-i18n-attr', 'aria-label:forecast.hourlyForecast');
+        section.setAttribute('aria-label', i18n.t('forecast.hourlyForecast'));
+
+        const ol = document.createElement('ol');
+        ol.className = 'weather-timeline-list';
+
+        for (const hour of hourlyWeather) {
+            const relTime = this.weatherClient.getRelativeTime(hour.time, sessionTime);
+            const desc = this.weatherClient.getWeatherDescription(hour.code);
+            const a11yTime = this.weatherClient.getAccessibleRelativeTime(hour.time, sessionTime);
+            const temp = Math.round(hour.temp);
+            const ariaLabel = i18n.t('weather.timelineAria', {
+                time: a11yTime,
+                description: desc,
+                temp,
+                rain: hour.precipProb,
+                wind: hour.windSpeed,
+                windUnit: units.wind_speed_10m,
+            });
+
+            const isoDateTime = new Date(hour.time * 1000).toISOString();
+
+            const li = document.createElement('li');
+            li.className = 'weather-timeline-item';
+            li.setAttribute('aria-label', ariaLabel);
+
+            const timeEl = document.createElement('time');
+            timeEl.setAttribute('datetime', isoDateTime);
+            timeEl.className = 'weather-timeline-time';
+            timeEl.setAttribute('aria-hidden', 'true');
+            timeEl.textContent = relTime;
+            li.appendChild(timeEl);
+
+            const conditionDiv = document.createElement('div');
+            conditionDiv.className = 'weather-timeline-condition';
+            conditionDiv.setAttribute('aria-hidden', 'true');
+            conditionDiv.appendChild(document.createTextNode(desc + ' '));
+
+            const windDiv = document.createElement('div');
+            windDiv.className = 'weather-timeline-wind';
+            windDiv.textContent = `${hour.windSpeed} ${units.wind_speed_10m}`;
+            conditionDiv.appendChild(windDiv);
+            li.appendChild(conditionDiv);
+
+            const tempDiv = document.createElement('div');
+            tempDiv.className = 'weather-timeline-temp';
+            tempDiv.setAttribute('aria-hidden', 'true');
+
+            const tempValDiv = document.createElement('div');
+            tempValDiv.textContent = `${temp}${units.temperature_2m}`;
+            tempDiv.appendChild(tempValDiv);
+
+            const precipDiv = document.createElement('div');
+            precipDiv.className = 'weather-timeline-precip';
+            precipDiv.textContent = `${hour.precipProb}%`;
+            tempDiv.appendChild(precipDiv);
+
+            li.appendChild(tempDiv);
+            ol.appendChild(li);
+        }
+
+        section.appendChild(ol);
+        return section;
     }
 
     async handleRoute({ series, round, session }) {
