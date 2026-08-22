@@ -105,6 +105,9 @@ export default {
     // SEC: Application Layer Rate Limiting
     const clientIp = request.headers.get('CF-Connecting-IP') || '127.0.0.1';
     if (!limiter.check(clientIp)) {
+      // Error responses are standardized using the createErrorResponse factory function.
+      // This ensures a consistent JSON structure with standardized fields (error, message, status, etc.)
+      // across all API endpoints, allowing the frontend to implement unified error handling predictably.
       return createErrorResponse(request, 429, 'Too many requests', {
         'Retry-After': '60',
       });
