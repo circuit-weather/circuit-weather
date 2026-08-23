@@ -585,7 +585,7 @@ describe("PrivacyModal", () => {
 
       expect(modal.loaded).toBe(false);
       expect(errorSpy).toHaveBeenCalledWith("Failed to load privacy policy:", expect.any(Error));
-      const appendedP = modal.content.appendChild.mock.calls[0][0];
+      const appendedP = modal.content.appendChild.mock.calls.find(call => call[0].tagName === 'P')[0];
       expect(appendedP.textContent).toContain("Failed to load privacy policy");
       errorSpy.mockRestore();
     });
@@ -596,7 +596,7 @@ describe("PrivacyModal", () => {
 
       await modal.open();
 
-      const appendedP = modal.content.appendChild.mock.calls[0][0];
+      const appendedP = modal.content.appendChild.mock.calls.find(call => call[0].tagName === 'P')[0];
       expect(appendedP.textContent).toContain(
         "Failed to load privacy policy",
       );
