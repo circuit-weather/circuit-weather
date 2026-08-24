@@ -58,16 +58,28 @@ export class PrivacyModal {
     if (!this.loaded) {
       // Palette UX: Show skeleton loading state while fetching
       if (this.content) {
-        this.content.innerHTML = `
-                    <div class="skeleton" style="height: 1.5rem; width: 30%; margin-bottom: 1rem; border-radius: var(--radius-sm);"></div>
-                    <div class="skeleton" style="height: 1rem; width: 100%; margin-bottom: 0.5rem; border-radius: var(--radius-sm);"></div>
-                    <div class="skeleton" style="height: 1rem; width: 95%; margin-bottom: 0.5rem; border-radius: var(--radius-sm);"></div>
-                    <div class="skeleton" style="height: 1rem; width: 90%; margin-bottom: 1.5rem; border-radius: var(--radius-sm);"></div>
+        this.content.textContent = '';
+        const fragment = document.createDocumentFragment();
 
-                    <div class="skeleton" style="height: 1.25rem; width: 25%; margin-bottom: 0.75rem; border-radius: var(--radius-sm);"></div>
-                    <div class="skeleton" style="height: 1rem; width: 100%; margin-bottom: 0.5rem; border-radius: var(--radius-sm);"></div>
-                    <div class="skeleton" style="height: 1rem; width: 85%; margin-bottom: 0.5rem; border-radius: var(--radius-sm);"></div>
-                `;
+        const skeletonStyles = [
+          "height: 1.5rem; width: 30%; margin-bottom: 1rem; border-radius: var(--radius-sm);",
+          "height: 1rem; width: 100%; margin-bottom: 0.5rem; border-radius: var(--radius-sm);",
+          "height: 1rem; width: 95%; margin-bottom: 0.5rem; border-radius: var(--radius-sm);",
+          "height: 1rem; width: 90%; margin-bottom: 1.5rem; border-radius: var(--radius-sm);",
+          "height: 1.25rem; width: 25%; margin-bottom: 0.75rem; border-radius: var(--radius-sm);",
+          "height: 1rem; width: 100%; margin-bottom: 0.5rem; border-radius: var(--radius-sm);",
+          "height: 1rem; width: 85%; margin-bottom: 0.5rem; border-radius: var(--radius-sm);"
+        ];
+
+        for (const style of skeletonStyles) {
+          const div = document.createElement("div");
+          div.className = "skeleton";
+          // Use cssText or standard style properties
+          div.style.cssText = style;
+          fragment.appendChild(div);
+        }
+
+        this.content.appendChild(fragment);
       }
       await this.loadContent();
     }
