@@ -1,4 +1,3 @@
-import { escapeHtml } from "../utils/escapeHtml.js";
 import { i18n } from '../i18n/index.js';
 
 export class PrivacyModal {
