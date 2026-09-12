@@ -99,7 +99,7 @@ export class LanguageManager extends BaseToggleable {
         });
 
         // Palette A11y: Close when focus moves outside the menu (e.g., tabbing away)
-        this.menu.addEventListener('focusout', (e) => {
+        this.menu.addEventListener('focusout', () => {
             if (!this.isOpen) return;
 
             // Wait a tick to let the browser update document.activeElement
