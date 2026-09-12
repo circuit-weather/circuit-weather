@@ -331,6 +331,22 @@ describe('WeatherClient', () => {
             errorSpy.mockRestore();
         });
 
+        it('returns error result when response json parsing throws', async () => {
+            const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+            const sessionTime = new Date(Date.now() + 1 * 24 * 60 * 60 * 1000);
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: () => Promise.reject(new SyntaxError('Invalid JSON'))
+            });
+
+            const result = await client.getForecast(0, 0, sessionTime);
+
+            expect(result.available).toBe(false);
+            expect(result.reason).toBe('error');
+            expect(errorSpy).toHaveBeenCalledWith('Weather fetch failed:', expect.any(SyntaxError));
+            errorSpy.mockRestore();
+        });
+
         it('returns too_far when hourly data is empty after filtering', async () => {
             const sessionTime = new Date(Date.now() + 1 * 24 * 60 * 60 * 1000);
 
@@ -542,6 +558,19 @@ describe('WeatherClient cache edge cases', () => {
         it('throws when the upstream response is not ok', async () => {
             vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 500 }));
             await expect(client.getWindField(minLat, maxLat, minLon, maxLon)).rejects.toThrow('Wind field API error');
+        });
+
+        it('re-throws network error when fetch fails', async () => {
+            vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('Network error')));
+            await expect(client.getWindField(minLat, maxLat, minLon, maxLon)).rejects.toThrow('Network error');
+        });
+
+        it('re-throws error when json parsing fails', async () => {
+            vi.stubGlobal('fetch', vi.fn().mockResolvedValue({
+                ok: true,
+                json: () => Promise.reject(new SyntaxError('Unexpected token'))
+            }));
+            await expect(client.getWindField(minLat, maxLat, minLon, maxLon)).rejects.toThrow(SyntaxError);
         });
     });
 });
