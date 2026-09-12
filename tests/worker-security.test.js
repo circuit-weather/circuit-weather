@@ -197,13 +197,38 @@ describe('Worker Security Utils', () => {
       expect(getAllowedOrigin(req)).toBe(null);
     });
 
+    it('rejects attacker origins appending malicious hostname suffixes without trailing slash', () => {
+      const attackerOrigin = 'https://circuit-weather.pages.dev.malicious.com';
+      const targetUrl = PROD_URL;
+      const req = createRequest({ 'Origin': attackerOrigin });
+
+      expect(checkRequestSource(req, targetUrl)).toBe(false);
+      expect(getAllowedOrigin(req)).toBe(null);
+    });
+
+    it('rejects attacker origins hyphenating preview domain', () => {
+      const attackerOrigin = 'https://circuit-weather.pages.dev-malicious.com';
+      const targetUrl = PROD_URL;
+      const req = createRequest({ 'Origin': attackerOrigin });
+
+      expect(checkRequestSource(req, targetUrl)).toBe(false);
+      expect(getAllowedOrigin(req)).toBe(null);
+    });
+
     it('allows legitimate preview domains', () => {
       const origin = 'https://feature-branch.circuit-weather.pages.dev';
       const targetUrl = PROD_URL;
       const req = createRequest({ 'Origin': origin });
 
-      // In checkRequestSource, cross-origin requests matching preview regex without same-origin check:
-      // Oh wait, checkRequestSource checks Origin against ALLOWED_PREVIEW_REGEX, so it returns true!
+      expect(checkRequestSource(req, targetUrl)).toBe(true);
+      expect(getAllowedOrigin(req)).toBe(origin);
+    });
+
+    it('allows legitimate preview domains with custom ports', () => {
+      const origin = 'https://feature-branch.circuit-weather.pages.dev:8443';
+      const targetUrl = PROD_URL;
+      const req = createRequest({ 'Origin': origin });
+
       expect(checkRequestSource(req, targetUrl)).toBe(true);
       expect(getAllowedOrigin(req)).toBe(origin);
     });

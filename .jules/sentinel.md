@@ -83,6 +83,12 @@
 **Learning:** Replaced `innerHTML` usage with `document.createElement`, `textContent`, and `appendChild` across UI initialization routines. When updating these usages, I noticed that `innerHTML` checks in unit tests fail because Vitest's internal custom `documentMock` implementation does not stringify nested nodes when they're appended. Instead of checking `.innerHTML`, the tests should check `.childNodes` or `textContent` directly to verify elements have been correctly appended.
 **Prevention:** Construct UI widgets using standard DOM manipulation methods by default. When replacing `innerHTML` and verifying logic, ensure tests are querying the `childNodes` array or `textContent` of the custom mock document nodes, not expecting `innerHTML` to populate automatically.
 
+## 2026-09-09 - [Preview Domain Regex Host Boundary Anchoring]
+
+**Vulnerability:** Potential CORS bypass or origin spoofing via unanchored preview domain regular expressions.
+**Learning:** When matching Origin or Referer HTTP headers against dynamic host patterns (such as Cloudflare Pages preview domains `*.pages.dev`), standard host boundaries must explicitly account for optional port numbers (`(?::\d+)?`) followed by path or end-of-string boundaries (`(?:\/|$)`). Origin headers sent by browsers never contain trailing slashes or path segments (only `<scheme>://<host>[:<port>]`), so omitting port or path boundary checks can lead to subtle parsing errors or origin validation gaps.
+**Prevention:** Always anchor domain-matching regexes for CORS and hotlink protection using `(?::\d+)?(?:\/|$)` to strictly validate hostnames across both Origin and Referer headers.
+
 ## 2026-09-08 - [Remove innerHTML from PrivacyModal Skeleton]
 **Vulnerability:** The `PrivacyModal` used `this.content.innerHTML` to inject a large template string of HTML elements for its skeleton loading state. While this string contained only hardcoded HTML tags and no variables, relying on `innerHTML` is a discouraged practice that violates strict defense-in-depth principles.
 **Learning:** Even when `innerHTML` contains no dynamic data, it is best practice to construct UI widgets using standard DOM manipulation methods (`document.createElement`, `DocumentFragment`, `appendChild`). When refactoring, pay close attention to test assertions. The mocked `appendChild` in custom Vitest environments doesn't serialize HTML strings, so checking `.textContent` of the appended node is required rather than checking the inner HTML representation of the parent node.
