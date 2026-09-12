@@ -263,7 +263,7 @@ export class MapManager {
       if (fieldStr.includes('"name') || fieldStr.includes("'name")) {
         try {
           this.map.setLayoutProperty(layer.id, 'text-field', textField);
-        } catch (_) {
+        } catch {
           // Some layers in the Standard style are slot-managed and cannot be updated directly
         }
       }
