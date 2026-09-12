@@ -231,15 +231,14 @@ export class RateLimiter {
       const refill = elapsed * this.rate;
       record.tokens = Math.min(this.limit, record.tokens + refill);
       record.lastCheck = now;
-
-      if (!promoted) {
-        // Just move to end (LRU update)
-        this.activeStore.delete(ip);
-      }
-      // If promoted, it wasn't in activeStore yet, so we don't need to delete from activeStore.
     } else {
       // Start with full tokens
       record = { tokens: this.limit, lastCheck: now };
+    }
+
+    if (this.activeStore.has(ip)) {
+      // Move to end to maintain LRU access order
+      this.activeStore.delete(ip);
     }
 
     this.activeStore.set(ip, record);
