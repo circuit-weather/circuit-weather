@@ -408,51 +408,53 @@ async function handleApiRequest(request, env, ctx, url) {
 }
 
 /**
- * Handle Track GeoJSON requests with caching
+ * Extracts and validates track ID from request URL
+ * @param {URL} url
+ * @returns {string|null} trackId or null if invalid
  */
-async function handleTrackRequest(request, env, ctx, url) {
-  // SEC: Ensure request is not from a script tag (XSSI protection)
-  if (!checkFetchDest(request)) {
-    return createErrorResponse(request, 403, 'Invalid fetch destination');
-  }
-
-
-  // Extract geoJsonId from /api/track/:id
+function extractAndValidateTrackId(url) {
   const trackId = url.pathname.slice('/api/track/'.length);
-
-  // Validation
   // SEC: Check length (50 chars max) and format
-  // Bolt Optimization: Remove redundant string scans (includes) covered by regex
   if (!trackId || trackId.length > 50 || !VALID_TRACK_ID_REGEX.test(trackId)) {
-    return createErrorResponse(request, 400, 'Invalid track ID');
+    return null;
   }
+  return trackId;
+}
 
-  const upstreamUrl = `https://raw.githubusercontent.com/bacinger/f1-circuits/master/circuits/${trackId}.geojson`;
+/**
+ * Creates response for cached track hit
+ * @param {Response} response
+ * @param {Request} request
+ * @returns {Response}
+ */
+function createTrackCacheHitResponse(response, request) {
+  const headers = new Headers(response.headers);
+  headers.set('X-Cache', 'HIT');
 
-  // Use a canonical cache key based on the upstream URL
-  const cacheKey = new Request(upstreamUrl);
+  // Apply strict CORS
+  setCorsHeaders(headers, request);
+
+  // Ensure client caches this for a long time too (24h)
+  headers.set('Cache-Control', 'public, max-age=86400');
+
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers
+  });
+}
+
+/**
+ * Fetches track data from upstream GitHub repository and caches it
+ * @param {string} upstreamUrl
+ * @param {Request} cacheKey
+ * @param {Request} request
+ * @param {object} env
+ * @param {object} ctx
+ * @returns {Promise<Response>}
+ */
+async function fetchAndCacheTrack(upstreamUrl, cacheKey, request, env, ctx) {
   const cache = caches.default;
-
-  // Check cache match
-  let response = await cache.match(cacheKey);
-
-  if (response) {
-    const headers = new Headers(response.headers);
-    headers.set('X-Cache', 'HIT');
-
-    // Apply strict CORS
-    setCorsHeaders(headers, request);
-
-    // Ensure client caches this for a long time too (24h)
-    headers.set('Cache-Control', 'public, max-age=86400');
-
-    return new Response(response.body, {
-      status: response.status,
-      statusText: response.statusText,
-      headers
-    });
-  }
-
   try {
     const upstreamResponse = await fetch(upstreamUrl, {
       headers: {
@@ -518,6 +520,35 @@ async function handleTrackRequest(request, env, ctx, url) {
     }
     return createErrorResponse(request, 502, 'Failed to fetch track data');
   }
+}
+
+/**
+ * Handle Track GeoJSON requests with caching
+ */
+async function handleTrackRequest(request, env, ctx, url) {
+  // SEC: Ensure request is not from a script tag (XSSI protection)
+  if (!checkFetchDest(request)) {
+    return createErrorResponse(request, 403, 'Invalid fetch destination');
+  }
+
+  const trackId = extractAndValidateTrackId(url);
+  if (!trackId) {
+    return createErrorResponse(request, 400, 'Invalid track ID');
+  }
+
+  const upstreamUrl = `https://raw.githubusercontent.com/bacinger/f1-circuits/master/circuits/${trackId}.geojson`;
+
+  // Use a canonical cache key based on the upstream URL
+  const cacheKey = new Request(upstreamUrl);
+  const cache = caches.default;
+
+  // Check cache match
+  const cachedResponse = await cache.match(cacheKey);
+  if (cachedResponse) {
+    return createTrackCacheHitResponse(cachedResponse, request);
+  }
+
+  return fetchAndCacheTrack(upstreamUrl, cacheKey, request, env, ctx);
 }
 
 /**
