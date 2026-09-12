@@ -543,5 +543,10 @@ describe('WeatherClient cache edge cases', () => {
             vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 500 }));
             await expect(client.getWindField(minLat, maxLat, minLon, maxLon)).rejects.toThrow('Wind field API error');
         });
+
+        it('throws when fetch fails with a network error', async () => {
+            vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('Network error')));
+            await expect(client.getWindField(minLat, maxLat, minLon, maxLon)).rejects.toThrow('Network error');
+        });
     });
 });
