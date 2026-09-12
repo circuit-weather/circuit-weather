@@ -153,7 +153,7 @@ export class WindOverlay {
             if (document.documentElement.getAttribute('data-theme') === 'dark') {
                 return 'rgba(125, 211, 252, 0.85)';
             }
-        } catch (_) {
+        } catch {
             // Non-browser / mocked environment — fall through to the default.
         }
         return 'rgba(2, 132, 199, 0.7)';
@@ -168,7 +168,7 @@ export class WindOverlay {
             }
             const p = this.map.latLngToContainerPoint([lat, lon]);
             return p ? { x: p.x, y: p.y } : null;
-        } catch (_) {
+        } catch {
             return null;
         }
     }
@@ -177,7 +177,7 @@ export class WindOverlay {
         if (!this.map) return null;
         try {
             return this.map.getZoom();
-        } catch (_) {
+        } catch {
             return null;
         }
     }
