@@ -311,3 +311,16 @@ export function createErrorResponse(request, status, message, additionalHeaders 
     }
   });
 }
+
+/**
+ * Returns a cryptographically secure random float in [0, 1).
+ * Uses crypto.getRandomValues if available, falling back to Math.random().
+ */
+export function getSecureRandom() {
+  if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+    const array = new Uint32Array(1);
+    crypto.getRandomValues(array);
+    return array[0] / 4294967296;
+  }
+  return Math.random();
+}
