@@ -327,7 +327,85 @@ describe('F1API', () => {
             expect(result).toEqual(mockRaces);
             expect(mockFetch).toHaveBeenCalledTimes(1);
             expect(SafeStorage.setItem).toHaveBeenCalledWith('f1_schedule_cache', expect.any(String));
+            expect(warnSpy).toHaveBeenCalledWith('Failed to parse cached schedule:', expect.any(SyntaxError));
             warnSpy.mockRestore();
+        });
+
+        it('bypasses localStorage cache if races is not an array (poisoned cache)', async () => {
+            const mockRaces = [{ round: '6', raceName: 'Fresh After Poison GP' }];
+            SafeStorage.getItem.mockReturnValueOnce(JSON.stringify({
+                timestamp: Date.now(),
+                races: 'not-an-array'
+            }));
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: () => Promise.resolve({
+                    MRData: { RaceTable: { Races: mockRaces } }
+                }),
+            });
+
+            const result = await api.getSchedule();
+
+            expect(result).toEqual(mockRaces);
+            expect(mockFetch).toHaveBeenCalledTimes(1);
+        });
+
+        it('logs warnings when Jolpica fails and errors when OpenF1 fallback also fails', async () => {
+            const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+            const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+            mockFetch
+                .mockResolvedValueOnce({ ok: false, status: 500 }) // Jolpica HTTP error
+                .mockResolvedValueOnce({ ok: false, status: 500 }); // OpenF1 fallback failure
+
+            await expect(api.getSchedule()).rejects.toThrow('F1_SCHEDULE_UNAVAILABLE:jolpica,openf1:ALL_SOURCES_FAILED');
+
+            expect(warnSpy).toHaveBeenCalledWith(
+                'Jolpica schedule fetch failed, trying OpenF1 fallback:',
+                expect.any(Error)
+            );
+            expect(errorSpy).toHaveBeenCalledWith(
+                'OpenF1 fallback also failed:',
+                expect.any(Error)
+            );
+
+            warnSpy.mockRestore();
+            errorSpy.mockRestore();
+        });
+    });
+
+    describe('fetchFromJolpica', () => {
+        let api;
+        let mockFetch;
+
+        beforeEach(() => {
+            vi.clearAllMocks();
+            mockFetch = vi.fn();
+            vi.stubGlobal('fetch', mockFetch);
+            api = new F1API();
+        });
+
+        afterEach(() => {
+            vi.restoreAllMocks();
+        });
+
+        it('throws an error if response is not ok', async () => {
+            mockFetch.mockResolvedValueOnce({
+                ok: false,
+                status: 404,
+            });
+
+            await expect(api.fetchFromJolpica()).rejects.toThrow('HTTP 404');
+        });
+
+        it('returns empty array if MRData or RaceTable or Races are undefined', async () => {
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: () => Promise.resolve({ MRData: {} }),
+            });
+
+            const races = await api.fetchFromJolpica();
+            expect(races).toEqual([]);
         });
     });
 });
