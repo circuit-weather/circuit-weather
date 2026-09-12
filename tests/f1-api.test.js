@@ -326,8 +326,43 @@ describe('F1API', () => {
 
             expect(result).toEqual(mockRaces);
             expect(mockFetch).toHaveBeenCalledTimes(1);
+            expect(warnSpy).toHaveBeenCalledWith('Failed to parse cached schedule:', expect.any(SyntaxError));
             expect(SafeStorage.setItem).toHaveBeenCalledWith('f1_schedule_cache', expect.any(String));
             warnSpy.mockRestore();
+        });
+
+        it('fetches fresh data if cached races is not an array (poisoned cache)', async () => {
+            const mockRaces = [{ round: '6', raceName: 'Poisoned Cache GP' }];
+            SafeStorage.getItem.mockReturnValueOnce(JSON.stringify({
+                timestamp: Date.now(),
+                races: 'not-an-array'
+            }));
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: () => Promise.resolve({
+                    MRData: { RaceTable: { Races: mockRaces } }
+                }),
+            });
+
+            const result = await api.getSchedule();
+
+            expect(result).toEqual(mockRaces);
+            expect(mockFetch).toHaveBeenCalledTimes(1);
+            expect(SafeStorage.setItem).toHaveBeenCalledWith('f1_schedule_cache', expect.any(String));
+        });
+
+        it('defaults scheduleSource to jolpica when cached data omits source', async () => {
+            const mockRaces = [{ round: '7', raceName: 'Legacy Cache GP' }];
+            SafeStorage.getItem.mockReturnValueOnce(JSON.stringify({
+                timestamp: Date.now(),
+                races: mockRaces
+            }));
+
+            const result = await api.getSchedule();
+
+            expect(result).toEqual(mockRaces);
+            expect(api.scheduleSource).toBe('jolpica');
+            expect(mockFetch).not.toHaveBeenCalled();
         });
     });
 });
