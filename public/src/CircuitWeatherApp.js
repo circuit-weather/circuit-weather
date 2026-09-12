@@ -1219,7 +1219,13 @@ export class CircuitWeatherApp {
         const temp = Math.round(sessionWeather.temp);
         const wind = Math.round(sessionWeather.windSpeed);
         const dir = sessionWeather.windDir;
-        const maxPrecip = Math.max(...hourlyData.map(h => h.precipProb));
+        let maxPrecip = 0;
+        if (Array.isArray(hourlyData)) {
+            for (let i = 0; i < hourlyData.length; i++) {
+                const prob = hourlyData[i]?.precipProb || 0;
+                if (prob > maxPrecip) maxPrecip = prob;
+            }
+        }
 
         // Wind Direction Logic
         const windInfo = getWindDirection(dir);
