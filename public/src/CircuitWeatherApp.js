@@ -643,6 +643,7 @@ export class CircuitWeatherApp {
         let desc = defaultDesc;
 
         if (this.selectedRace && this.selectedSession) {
+            // Specific session page: "Bahrain GP Qualifying Weather - Circuit Weather"
             title = i18n.t('meta.sessionTitle', {
                 raceName: this.selectedRace.name,
                 sessionName: this.selectedSession.name,
@@ -652,9 +653,11 @@ export class CircuitWeatherApp {
                 sessionName: this.selectedSession.name,
             });
         } else if (this.selectedRace) {
+            // Race page: "Bahrain GP Weather - Circuit Weather"
             title = i18n.t('meta.raceTitle', { raceName: this.selectedRace.name });
             desc = i18n.t('meta.raceDesc', { raceName: this.selectedRace.name });
         }
+        // If neither, defaults are preserved
 
         return { title, desc };
     }
@@ -666,6 +669,7 @@ export class CircuitWeatherApp {
      * @param {string} desc
      */
     _updateMetaTags(title, desc) {
+        // Update Title: Crucial for primary SERP display and browser history
         document.title = title;
 
         // Bolt Optimization: Batch metadata updates in a single DOM traversal
@@ -693,6 +697,8 @@ export class CircuitWeatherApp {
 
     /**
      * Injects dynamic BreadcrumbList JSON-LD structured data.
+     * Scout: Improves SERP display by giving search engines clear navigational
+     * context for nested routes.
      * @private
      */
     _updateBreadcrumbJsonLd() {
@@ -745,6 +751,8 @@ export class CircuitWeatherApp {
 
     /**
      * Injects or removes SportsEvent JSON-LD structured data for selected session.
+     * Scout: Improves rich snippets in SERP by providing explicit event details
+     * (SportsEvent) to search engines.
      * @private
      * @param {string} desc
      */
@@ -760,9 +768,14 @@ export class CircuitWeatherApp {
 
             const startObj = new Date(`${this.selectedSession.date}T${this.selectedSession.time}`);
             const sessionStart = startObj.toISOString();
+
+            // Scout: Calculate an estimated end time (2 hours after start) to satisfy search engine
+            // requirements for Event schema, preventing 'Missing field "endDate"' warnings in Rich Results.
             const endObj = new Date(startObj.getTime() + 2 * 60 * 60 * 1000);
             const sessionEnd = endObj.toISOString();
 
+            // Scout: sport, url and image give search engines richer context about the
+            // entity for better indexing.
             const schema = {
                 "@context": "https://schema.org",
                 "@type": "SportsEvent",
@@ -774,6 +787,7 @@ export class CircuitWeatherApp {
                 "eventStatus": "https://schema.org/EventScheduled",
                 "url": window.location.href,
                 "image": "https://circuit-weather.racing/icon-512.png",
+                // Scout: Added organizer entity to explicitly link the event to Formula 1 for knowledge graph integration.
                 "organizer": {
                     "@type": "Organization",
                     "name": "Formula 1",
@@ -786,6 +800,8 @@ export class CircuitWeatherApp {
                         "@type": "PostalAddress",
                         "addressCountry": this.selectedRace.location ? this.selectedRace.location.country : ""
                     },
+                    // Scout: Injected precise GeoCoordinates into the Place schema.
+                    // Value: Helps search engines exactly geolocate the event for better local search relevance and map integrations.
                     "geo": {
                         "@type": "GeoCoordinates",
                         "latitude": this.selectedRace.location ? this.selectedRace.location.lat : "",
