@@ -42,6 +42,7 @@ const createMockElement = (tag, className) => {
             if (idx !== -1) el.children.splice(idx, 1);
             return child;
         }),
+        cloneNode: vi.fn((deep) => createMockElement(tag, className)),
         parentNode: {
             removeChild: vi.fn()
         }
