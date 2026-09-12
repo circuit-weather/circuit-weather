@@ -204,7 +204,7 @@ export class CircuitWeatherApp {
             errorIcon.appendChild(svg);
             errorState.appendChild(errorIcon);
 
-            // Scout: Upgraded from h3 to h2 to fix broken heading hierarchy. When connection fails, this replaces the sidebar content which sits directly under the h1 sidebar-header.
+            // Heading uses h2 to maintain proper heading hierarchy directly under h1 sidebar-header when replacing sidebar content.
             const h2 = document.createElement('h2');
             h2.setAttribute('data-i18n', 'errors.connectionFailed');
             h2.textContent = i18n.t('errors.connectionFailed');
