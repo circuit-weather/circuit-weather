@@ -93,10 +93,43 @@ describe('Locale helpers', () => {
         const originalNavigator = globalThis.navigator;
         Object.defineProperty(globalThis, 'navigator', { value: undefined, configurable: true });
 
-
         expect(getUserLocale()).toBe('en-NZ');
 
         Object.defineProperty(globalThis, 'navigator', { value: originalNavigator, configurable: true });
     });
 
+    it('handles navigator.languages edge cases in getUserLocale', () => {
+        // Empty navigator.languages array falls back to navigator.language
+        Object.defineProperty(navigator, 'language', { value: 'fr-FR', configurable: true });
+        Object.defineProperty(navigator, 'languages', { value: [], configurable: true });
+        expect(getUserLocale()).toBe('fr-FR');
+
+        // First element in navigator.languages is empty string/falsy
+        Object.defineProperty(navigator, 'languages', { value: [''], configurable: true });
+        expect(getUserLocale()).toBe('fr-FR');
+
+        // navigator.languages is not an array
+        Object.defineProperty(navigator, 'languages', { value: null, configurable: true });
+        expect(getUserLocale()).toBe('fr-FR');
+
+        // Both navigator.languages and navigator.language are empty/falsy
+        Object.defineProperty(navigator, 'language', { value: '', configurable: true });
+        Object.defineProperty(navigator, 'languages', { value: [], configurable: true });
+        expect(getUserLocale()).toBe('en-NZ');
+    });
+
+    it('uses default getUserLocale parameter in usesImperialUnits when called with no arguments', () => {
+        Object.defineProperty(navigator, 'language', { value: 'en-US', configurable: true });
+        Object.defineProperty(navigator, 'languages', { value: ['en-US'], configurable: true });
+        expect(usesImperialUnits()).toBe(true);
+
+        Object.defineProperty(navigator, 'language', { value: 'en-GB', configurable: true });
+        Object.defineProperty(navigator, 'languages', { value: ['en-GB'], configurable: true });
+        expect(usesImperialUnits()).toBe(false);
+    });
+
+    it('handles locales without region in usesImperialUnits', () => {
+        expect(usesImperialUnits('en')).toBe(false);
+        expect(usesImperialUnits('')).toBe(false);
+    });
 });
