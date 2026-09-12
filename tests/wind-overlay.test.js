@@ -187,6 +187,13 @@ describe('WindOverlay', async () => {
             expect(map.on).toHaveBeenCalledWith('zoomend', expect.any(Function));
         });
 
+        it('handles null map or map without options gracefully', () => {
+            const overlay = new WindOverlay(null);
+            expect(overlay.map).toBeNull();
+            expect(overlay.container).toBeNull();
+            expect(overlay.isMapbox).toBe(false);
+        });
+
         it('binds toggle button listeners and sets initial aria-checked', () => {
             const map = createMockMap();
             const overlay = new WindOverlay(map);
@@ -212,6 +219,11 @@ describe('WindOverlay', async () => {
             const spaceEvent = { key: ' ', preventDefault: vi.fn(), type: 'keydown' };
             mockToggle.dispatchEvent(spaceEvent);
             expect(setEnabledSpy).toHaveBeenCalledWith(false);
+
+            // Other keys should not trigger setEnabled
+            const otherEvent = { key: 'Escape', preventDefault: vi.fn(), type: 'keydown' };
+            mockToggle.dispatchEvent(otherEvent);
+            expect(otherEvent.preventDefault).not.toHaveBeenCalled();
         });
 
         it('starts enabled if SafeStorage has windOverlay = true and zoom is adequate', () => {
@@ -287,6 +299,19 @@ describe('WindOverlay', async () => {
             expect(requestAnimationFrame).toHaveBeenCalled();
         });
 
+        it('empties particles when _seedParticles() is called with null field', () => {
+            const map = createMockMap({ zoom: 10 });
+            const overlay = new WindOverlay(map);
+            overlay.setEnabled(true);
+
+            overlay.setField(sampleField);
+            expect(overlay.particles.length).toBe(CONFIG.WIND_FIELD_PARTICLES);
+
+            overlay.field = null;
+            overlay._seedParticles();
+            expect(overlay.particles.length).toBe(0);
+        });
+
         it('does not start loop if field is set while zoom is too low', () => {
             const map = createMockMap({ zoom: 3 });
             const overlay = new WindOverlay(map);
@@ -331,9 +356,35 @@ describe('WindOverlay', async () => {
             expect(overlay._zoomSuppressed).toBe(true);
             expect(overlay._infoToast.classList.contains('visible')).toBe(true);
         });
+
+        it('does not reshow zoom toast on moveend if already zoom suppressed', () => {
+            const map = createMockMap({ zoom: 4 });
+            const overlay = new WindOverlay(map);
+            overlay.setEnabled(true); // First time showing toast
+            const showToastSpy = vi.spyOn(overlay, '_showZoomToast');
+
+            map._triggerMapEvent('moveend'); // already suppressed
+            expect(showToastSpy).not.toHaveBeenCalled();
+        });
+
+        it('does nothing on resume if disabled', () => {
+            const map = createMockMap({ zoom: 10 });
+            const overlay = new WindOverlay(map);
+            overlay.setEnabled(false);
+
+            map._triggerMapEvent('moveend');
+            expect(overlay._interacting).toBe(false);
+        });
     });
 
-    describe('Projection Logic', () => {
+    describe('Projection & Zoom Logic Edge Cases', () => {
+        it('returns null for project/getZoom when map is missing or throws', () => {
+            const overlay = new WindOverlay(null);
+            expect(overlay._project(15, 35)).toBeNull();
+            expect(overlay._getZoom()).toBeNull();
+            expect(overlay._isZoomTooLow()).toBe(false);
+        });
+
         it('projects using map.project in Mapbox mode', () => {
             const map = createMockMap({ isLeaflet: false });
             const overlay = new WindOverlay(map);
@@ -352,18 +403,32 @@ describe('WindOverlay', async () => {
             expect(p).toEqual({ x: 350, y: 150 });
         });
 
-        it('handles projection errors gracefully', () => {
+        it('handles projection errors or null return gracefully', () => {
             const map = createMockMap();
-            map.project.mockImplementation(() => {
-                throw new Error('Projection error');
-            });
+            map.project.mockReturnValue(null);
             const overlay = new WindOverlay(map);
 
             expect(overlay._project(15, 35)).toBeNull();
+
+            map.project.mockImplementation(() => {
+                throw new Error('Projection error');
+            });
+            expect(overlay._project(15, 35)).toBeNull();
+        });
+
+        it('handles map.getZoom throwing error gracefully', () => {
+            const map = createMockMap();
+            map.getZoom.mockImplementation(() => {
+                throw new Error('Zoom error');
+            });
+            const overlay = new WindOverlay(map);
+
+            expect(overlay._getZoom()).toBeNull();
+            expect(overlay._isZoomTooLow()).toBe(false);
         });
     });
 
-    describe('Frame Rendering & Animation', () => {
+    describe('Frame Rendering & Animation Edge Cases', () => {
         it('advances particles during animation frame', () => {
             const map = createMockMap({ zoom: 10 });
             const overlay = new WindOverlay(map);
@@ -378,6 +443,17 @@ describe('WindOverlay', async () => {
             expect(overlay.lastTime).toBe(1050);
         });
 
+        it('returns early in _frame if ctx or field is missing', () => {
+            const map = createMockMap();
+            const overlay = new WindOverlay(map);
+            overlay.ctx = null;
+            expect(() => overlay._frame(1000)).not.toThrow();
+
+            overlay.ctx = createMockElement('canvas').getContext('2d');
+            overlay.field = null;
+            expect(() => overlay._frame(1000)).not.toThrow();
+        });
+
         it('respawns expired or out-of-bounds particles during frame', () => {
             const map = createMockMap({ zoom: 10 });
             const overlay = new WindOverlay(map);
@@ -389,6 +465,50 @@ describe('WindOverlay', async () => {
             overlay._frame(1100);
 
             expect(overlay.particles[0].age).toBeLessThan(CONFIG.WIND_FIELD_PARTICLE_LIFE);
+        });
+
+        it('handles null projection points in _frame', () => {
+            const map = createMockMap({ zoom: 10 });
+            map.project.mockReturnValue(null);
+            const overlay = new WindOverlay(map);
+            overlay.setField(sampleField);
+            overlay.setEnabled(true);
+
+            expect(() => overlay._frame(1100)).not.toThrow();
+        });
+    });
+
+    describe('Toast & Timer Edge Cases', () => {
+        it('displays "?" in zoom toast if zoom level is null', () => {
+            const map = createMockMap();
+            map.getZoom.mockReturnValue(null);
+            const overlay = new WindOverlay(map);
+
+            overlay._showZoomToast();
+            const toastMsg = overlay._infoToast.querySelector('.wind-toast-message');
+            expect(toastMsg.textContent).toContain('?');
+        });
+
+        it('auto-hides toast after timer expires', () => {
+            vi.useFakeTimers();
+            const map = createMockMap({ zoom: 4 });
+            const overlay = new WindOverlay(map);
+
+            overlay._showZoomToast();
+            expect(overlay._infoToast.classList.contains('visible')).toBe(true);
+
+            vi.advanceTimersByTime(4500);
+            expect(overlay._infoToast.classList.contains('visible')).toBe(false);
+            vi.useRealTimers();
+        });
+
+        it('handles toast functions when _infoToast is null', () => {
+            const map = createMockMap();
+            const overlay = new WindOverlay(map);
+            overlay._infoToast = null;
+
+            expect(() => overlay._showZoomToast()).not.toThrow();
+            expect(() => overlay._hideZoomToast()).not.toThrow();
         });
     });
 
@@ -417,6 +537,18 @@ describe('WindOverlay', async () => {
 
             overlay.updateTheme();
             expect(overlay.color).toBe('rgba(125, 211, 252, 0.85)');
+        });
+
+        it('falls back to default color when getComputedStyle throws', () => {
+            const map = createMockMap();
+            const overlay = new WindOverlay(map);
+
+            mockGetComputedStyle.mockImplementation(() => {
+                throw new Error('Style error');
+            });
+
+            overlay.updateTheme();
+            expect(overlay.color).toBe('rgba(2, 132, 199, 0.7)');
         });
 
         it('destroys and cleans up map listeners, DOM nodes, and timers', () => {
