@@ -552,13 +552,13 @@ async function handleAssetRequest(request, env, ctx, url) {
     });
   }
 
-  return await fetchAndCacheVendorAsset(request, env, ctx, path, config, cache, cacheKey);
+  return await fetchAndCacheVendorAsset({ request, env, ctx, path, config, cache, cacheKey });
 }
 
 /**
  * Helper to fetch, validate, and cache vendor assets
  */
-async function fetchAndCacheVendorAsset(request, env, ctx, path, config, cache, cacheKey) {
+async function fetchAndCacheVendorAsset({ request, env, ctx, path, config, cache, cacheKey }) {
   const upstreamUrl = config.upstream;
 
   try {
