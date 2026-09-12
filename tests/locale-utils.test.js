@@ -99,4 +99,46 @@ describe('Locale helpers', () => {
         Object.defineProperty(globalThis, 'navigator', { value: originalNavigator, configurable: true });
     });
 
+    it('falls back to navigator.language when navigator.languages is empty or invalid', () => {
+        Object.defineProperty(navigator, 'language', {
+            value: 'fr-FR',
+            configurable: true,
+        });
+        Object.defineProperty(navigator, 'languages', {
+            value: [],
+            configurable: true,
+        });
+
+        expect(getUserLocale()).toBe('fr-FR');
+
+        Object.defineProperty(navigator, 'languages', {
+            value: null,
+            configurable: true,
+        });
+
+        expect(getUserLocale()).toBe('fr-FR');
+    });
+
+    it('falls back to default locale en-NZ when navigator language properties are empty', () => {
+        Object.defineProperty(navigator, 'language', {
+            value: '',
+            configurable: true,
+        });
+        Object.defineProperty(navigator, 'languages', {
+            value: [],
+            configurable: true,
+        });
+
+        expect(getUserLocale()).toBe('en-NZ');
+    });
+
+    it('uses default getUserLocale parameter when no argument is passed to usesImperialUnits', () => {
+        Object.defineProperty(navigator, 'languages', {
+            value: ['en-US'],
+            configurable: true,
+        });
+
+        expect(usesImperialUnits()).toBe(true);
+    });
+
 });
