@@ -23,7 +23,7 @@ export function recursivelyDecodePath(path) {
     previous = decoded;
     try {
       decoded = decodeURIComponent(decoded);
-    } catch (e) {
+    } catch {
       // Catch URIError for partially decoded string (legit '%' chars)
       return decoded;
     }
