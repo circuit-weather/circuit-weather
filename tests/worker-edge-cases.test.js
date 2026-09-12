@@ -69,39 +69,105 @@ describe('Worker Edge Cases', () => {
     });
 
     // ---------------------------------------------------------------
-    // OPTIONS (CORS preflight)
+    // OPTIONS (CORS preflight - handleOptions)
     // ---------------------------------------------------------------
-    describe('CORS preflight (OPTIONS)', () => {
-        it('returns 204 with CORS headers', async () => {
+    describe('CORS preflight (handleOptions)', () => {
+        it('returns status 204 No Content with empty body', async () => {
             const request = createRequest('/api/f1/current', { method: 'OPTIONS' });
             const response = await workerModule.fetch(request, env, ctx);
 
             expect(response.status).toBe(204);
-            expect(response.headers.get('Access-Control-Allow-Methods')).toContain('GET');
-            expect(response.headers.get('Access-Control-Max-Age')).toBe('86400');
+            const body = await response.text();
+            expect(body).toBe('');
         });
 
-        it('reflects allowed origin', async () => {
+        it('includes exact CORS preflight control headers', async () => {
             const request = createRequest('/api/f1/current', { method: 'OPTIONS' });
             const response = await workerModule.fetch(request, env, ctx);
 
-            // Must echo the exact request origin, not a wildcard or arbitrary
-            // truthy value — a `*` regression would weaken CORS and still pass
-            // a toBeTruthy() check.
-            const origin = response.headers.get('Access-Control-Allow-Origin');
-            expect(origin).toBe('https://circuit-weather.pages.dev');
-            expect(response.headers.get('Vary')).toContain('Origin');
+            expect(response.headers.get('Access-Control-Allow-Methods')).toBe('GET, HEAD, OPTIONS');
+            expect(response.headers.get('Access-Control-Allow-Headers')).toBe('Content-Type');
+            expect(response.headers.get('Access-Control-Max-Age')).toBe('86400');
         });
 
-        it('does not reflect a disallowed origin', async () => {
+        it('includes API security headers on preflight responses', async () => {
+            const request = createRequest('/api/f1/current', { method: 'OPTIONS' });
+            const response = await workerModule.fetch(request, env, ctx);
+
+            expect(response.headers.get('X-Content-Type-Options')).toBe('nosniff');
+            expect(response.headers.get('X-Frame-Options')).toBe('DENY');
+            expect(response.headers.get('Referrer-Policy')).toBe('strict-origin-when-cross-origin');
+        });
+
+        it('reflects production allowed origin and sets Vary header', async () => {
+            const request = createRequest('/api/f1/current', {
+                method: 'OPTIONS',
+                headers: { Origin: 'https://circuit-weather.racing' },
+            });
+            const response = await workerModule.fetch(request, env, ctx);
+
+            expect(response.headers.get('Access-Control-Allow-Origin')).toBe('https://circuit-weather.racing');
+            expect(response.headers.get('Vary')).toBe('Origin');
+        });
+
+        it('reflects localhost and preview allowed origins', async () => {
+            const localhostReq = createRequest('/api/f1/current', {
+                method: 'OPTIONS',
+                headers: { Origin: 'http://localhost:3000' },
+            });
+            const localhostRes = await workerModule.fetch(localhostReq, env, ctx);
+            expect(localhostRes.headers.get('Access-Control-Allow-Origin')).toBe('http://localhost:3000');
+            expect(localhostRes.headers.get('Vary')).toBe('Origin');
+
+            const previewReq = createRequest('/api/f1/current', {
+                method: 'OPTIONS',
+                headers: { Origin: 'https://preview-123.circuit-weather.pages.dev' },
+            });
+            const previewRes = await workerModule.fetch(previewReq, env, ctx);
+            expect(previewRes.headers.get('Access-Control-Allow-Origin')).toBe('https://preview-123.circuit-weather.pages.dev');
+            expect(previewRes.headers.get('Vary')).toBe('Origin');
+        });
+
+        it('does not set CORS headers for disallowed origins', async () => {
             const request = createRequest('/api/f1/current', {
                 method: 'OPTIONS',
                 headers: { Origin: 'https://evil.example' },
             });
             const response = await workerModule.fetch(request, env, ctx);
 
-            expect(response.headers.get('Access-Control-Allow-Origin')).not.toBe('https://evil.example');
-            expect(response.headers.get('Access-Control-Allow-Origin')).not.toBe('*');
+            expect(response.headers.get('Access-Control-Allow-Origin')).toBeNull();
+            expect(response.headers.get('Vary')).toBeNull();
+        });
+
+        it('does not set CORS headers when Origin header is missing', async () => {
+            const request = new Request('https://circuit-weather.pages.dev/api/f1/current', {
+                method: 'OPTIONS',
+            });
+            const response = await workerModule.fetch(request, env, ctx);
+
+            expect(response.headers.get('Access-Control-Allow-Origin')).toBeNull();
+            expect(response.headers.get('Vary')).toBeNull();
+        });
+
+        it('handles preflight OPTIONS across various API routes', async () => {
+            const routes = [
+                '/api/f1/current',
+                '/api/tiles/v2/radar/1.png',
+                '/api/assets/leaflet.js',
+                '/api/track/bahrain',
+            ];
+
+            for (const route of routes) {
+                const request = createRequest(route, {
+                    method: 'OPTIONS',
+                    headers: { Origin: 'https://circuit-weather.racing' },
+                });
+                const response = await workerModule.fetch(request, env, ctx);
+
+                expect(response.status).toBe(204);
+                expect(response.headers.get('Access-Control-Allow-Origin')).toBe('https://circuit-weather.racing');
+                expect(response.headers.get('Access-Control-Allow-Methods')).toBe('GET, HEAD, OPTIONS');
+            }
         });
     });
 
