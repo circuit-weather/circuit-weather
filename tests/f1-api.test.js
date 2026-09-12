@@ -327,6 +327,71 @@ describe('F1API', () => {
             expect(result).toEqual(mockRaces);
             expect(mockFetch).toHaveBeenCalledTimes(1);
             expect(SafeStorage.setItem).toHaveBeenCalledWith('f1_schedule_cache', expect.any(String));
+            expect(warnSpy).toHaveBeenCalledWith('Failed to parse cached schedule:', expect.any(SyntaxError));
+            warnSpy.mockRestore();
+        });
+
+        it('bypasses cache and fetches fresh data if cached races is not an array', async () => {
+            const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+            const mockRaces = [{ round: '6', raceName: 'Poisoned Cache GP' }];
+            SafeStorage.getItem.mockReturnValueOnce(JSON.stringify({
+                timestamp: Date.now(),
+                races: { not: 'an array' } // Poisoned cache structure
+            }));
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: () => Promise.resolve({
+                    MRData: { RaceTable: { Races: mockRaces } }
+                }),
+            });
+
+            const result = await api.getSchedule();
+
+            expect(result).toEqual(mockRaces);
+            expect(mockFetch).toHaveBeenCalledTimes(1);
+            // Non-array races does not throw a JSON parse error, so console.warn is not called
+            expect(warnSpy).not.toHaveBeenCalled();
+            warnSpy.mockRestore();
+        });
+
+        it('defaults scheduleSource to jolpica when cached data lacks a source property', async () => {
+            const mockRaces = [{ round: '7', raceName: 'Legacy Cache GP' }];
+            SafeStorage.getItem.mockReturnValueOnce(JSON.stringify({
+                timestamp: Date.now(),
+                races: mockRaces
+                // source property omitted (legacy cache)
+            }));
+
+            const result = await api.getSchedule();
+
+            expect(result).toEqual(mockRaces);
+            expect(mockFetch).not.toHaveBeenCalled();
+            expect(api.scheduleSource).toBe('jolpica');
+        });
+
+        it('handles exceptions thrown during cached schedule parsing and fetches fresh schedule', async () => {
+            const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+            const mockRaces = [{ round: '8', raceName: 'Parse Error GP' }];
+            // Simulate SafeStorage returning valid JSON string for an object whose timestamp getter throws during evaluation
+            const throwingObj = {};
+            Object.defineProperty(throwingObj, 'timestamp', {
+                get() { throw new Error('Property evaluation error'); }
+            });
+            vi.spyOn(JSON, 'parse').mockReturnValueOnce(throwingObj);
+            SafeStorage.getItem.mockReturnValueOnce('{"timestamp": 123}');
+
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: () => Promise.resolve({
+                    MRData: { RaceTable: { Races: mockRaces } }
+                }),
+            });
+
+            const result = await api.getSchedule();
+
+            expect(result).toEqual(mockRaces);
+            expect(mockFetch).toHaveBeenCalledTimes(1);
+            expect(warnSpy).toHaveBeenCalledWith('Failed to parse cached schedule:', expect.any(Error));
             warnSpy.mockRestore();
         });
     });
