@@ -46,4 +46,27 @@ describe('RateLimiter LRU Eviction', () => {
     // If IP1 was evicted, it is re-initialized with (limit - 1) tokens.
     expect(limiter.check('1.1.1.1')).toBe(true);
   });
+
+  it('refreshes LRU order upon re-accessing an existing IP', () => {
+    const MAX_IPS = 2;
+    limiter = new RateLimiter(2, 1000, MAX_IPS);
+
+    // Fill map: [IP1, IP2] (IP1 inserted first)
+    limiter.check('1.1.1.1');
+    limiter.check('2.2.2.2');
+
+    // Re-access IP1 -> updates IP1 to MRU position.
+    // Map order becomes: [IP2, IP1]
+    limiter.check('1.1.1.1');
+
+    // Add IP3 -> should evict IP2 (least recently used)
+    limiter.check('3.3.3.3');
+
+    // IP2 should have been evicted and thus re-initialized as a new user with full tokens
+    let ip2AllowedCount = 0;
+    while (limiter.check('2.2.2.2')) {
+      ip2AllowedCount++;
+    }
+    expect(ip2AllowedCount).toBe(2);
+  });
 });
