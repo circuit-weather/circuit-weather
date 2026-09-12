@@ -498,11 +498,47 @@ describe("Worker Logic", () => {
       expect(res.status).toBe(403);
     });
 
-    it("fetches geojson from github", async () => {
+    it("fetches geojson from github with application/json and caches response", async () => {
       const mockGeoJson = { type: "FeatureCollection", features: [] };
       mockFetch.mockResolvedValueOnce(
         new Response(JSON.stringify(mockGeoJson), {
           status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      );
+
+      const req = createRequest("/api/track/monaco", {
+        headers: { Origin: "https://circuit-weather.racing" },
+      });
+      const res = await worker.fetch(req, global.env, global.ctx);
+
+      expect(res.status).toBe(200);
+      expect(res.headers.get("X-Cache")).toBe("MISS");
+      expect(res.headers.get("Access-Control-Allow-Origin")).toBe("https://circuit-weather.racing");
+      expect(await res.json()).toEqual(mockGeoJson);
+      expect(mockFetch).toHaveBeenCalledWith(
+        expect.stringContaining(
+          "bacinger/f1-circuits/master/circuits/monaco.geojson",
+        ),
+        expect.objectContaining({
+          headers: { "User-Agent": "CircuitWeather/1.0" },
+        }),
+      );
+      expect(global.ctx.waitUntil).toHaveBeenCalled();
+      expect(mockCache.put).toHaveBeenCalledWith(
+        expect.objectContaining({
+          url: "https://raw.githubusercontent.com/bacinger/f1-circuits/master/circuits/monaco.geojson",
+        }),
+        expect.any(Object),
+      );
+    });
+
+    it("fetches geojson from github with text/plain content-type", async () => {
+      const mockGeoJsonText = '{"type":"FeatureCollection","features":[]}';
+      mockFetch.mockResolvedValueOnce(
+        new Response(mockGeoJsonText, {
+          status: 200,
+          headers: { "Content-Type": "text/plain; charset=utf-8" },
         }),
       );
 
@@ -510,19 +546,96 @@ describe("Worker Logic", () => {
       const res = await worker.fetch(req, global.env, global.ctx);
 
       expect(res.status).toBe(200);
-      expect(await res.json()).toEqual(mockGeoJson);
-      expect(mockFetch).toHaveBeenCalledWith(
-        expect.stringContaining(
-          "bacinger/f1-circuits/master/circuits/monaco.geojson",
-        ),
-        expect.any(Object),
-      );
+      expect(await res.text()).toBe(mockGeoJsonText);
     });
 
-    it("validates track ID", async () => {
-      const req = createRequest("/api/track/invalid<script>");
+    it("returns cached response when cache hit occurs", async () => {
+      const upstreamUrl = "https://raw.githubusercontent.com/bacinger/f1-circuits/master/circuits/monaco.geojson";
+      const cachedResponse = new Response('{"type":"FeatureCollection","features":[]}', {
+        status: 200,
+        statusText: "OK",
+        headers: { "Content-Type": "application/json" },
+      });
+      cacheStore.set(upstreamUrl, cachedResponse);
+
+      const req = createRequest("/api/track/monaco", {
+        headers: { Origin: "https://circuit-weather.racing" },
+      });
       const res = await worker.fetch(req, global.env, global.ctx);
-      expect(res.status).toBe(400);
+
+      expect(res.status).toBe(200);
+      expect(res.headers.get("X-Cache")).toBe("HIT");
+      expect(res.headers.get("Cache-Control")).toBe("public, max-age=86400");
+      expect(res.headers.get("Access-Control-Allow-Origin")).toBe("https://circuit-weather.racing");
+      expect(await res.json()).toEqual({ type: "FeatureCollection", features: [] });
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it("returns 404 when upstream track returns 404 and caches error", async () => {
+      mockFetch.mockResolvedValueOnce(
+        new Response("Not Found", { status: 404 }),
+      );
+
+      const req = createRequest("/api/track/unknown-track");
+      const res = await worker.fetch(req, global.env, global.ctx);
+
+      expect(res.status).toBe(404);
+      expect(await res.json()).toEqual({
+        error: { status: 404, message: "Track not found" },
+      });
+      expect(global.ctx.waitUntil).toHaveBeenCalled();
+    });
+
+    it("returns 502 when upstream track returns 500 status", async () => {
+      mockFetch.mockResolvedValueOnce(
+        new Response("Server Error", { status: 500 }),
+      );
+
+      const req = createRequest("/api/track/monaco");
+      const res = await worker.fetch(req, global.env, global.ctx);
+
+      expect(res.status).toBe(502);
+      expect(await res.json()).toEqual({
+        error: { status: 502, message: "Track not found" },
+      });
+      expect(global.ctx.waitUntil).toHaveBeenCalled();
+    });
+
+    it("rejects invalid upstream content type with 502", async () => {
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      mockFetch.mockResolvedValueOnce(
+        new Response("<html>Error</html>", {
+          status: 200,
+          headers: { "Content-Type": "text/html" },
+        }),
+      );
+
+      const req = createRequest("/api/track/monaco");
+      const res = await worker.fetch(req, global.env, global.ctx);
+
+      expect(res.status).toBe(502);
+      expect(await res.json()).toEqual({
+        error: { status: 502, message: "Invalid upstream content type" },
+      });
+      errorSpy.mockRestore();
+    });
+
+    it("validates track ID (empty, excessive length, invalid characters)", async () => {
+      // Invalid chars
+      const req1 = createRequest("/api/track/invalid<script>");
+      const res1 = await worker.fetch(req1, global.env, global.ctx);
+      expect(res1.status).toBe(400);
+
+      // Excessive length (>50 chars)
+      const longTrackId = "a".repeat(51);
+      const req2 = createRequest(`/api/track/${longTrackId}`);
+      const res2 = await worker.fetch(req2, global.env, global.ctx);
+      expect(res2.status).toBe(400);
+
+      // Empty track ID
+      const req3 = createRequest("/api/track/");
+      const res3 = await worker.fetch(req3, global.env, global.ctx);
+      expect(res3.status).toBe(400);
     });
 
     it("returns 502 when upstream track fetch fails with an exception", async () => {
