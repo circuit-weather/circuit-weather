@@ -31,7 +31,8 @@ Object.defineProperty(global, 'crypto', {
       digest: vi.fn(async (algo, buffer) => {
         return new ArrayBuffer(32);
       })
-    }
+    },
+    getRandomValues: (arr) => arr
   },
   writable: true
 });
@@ -182,7 +183,10 @@ describe('Worker Security: Strict Content-Type Validation', () => {
         const buffer = Uint8Array.from(atob(hash), c => c.charCodeAt(0)).buffer;
 
         Object.defineProperty(global, 'crypto', {
-            value: { subtle: { digest: vi.fn(async () => buffer) } },
+            value: {
+                subtle: { digest: vi.fn(async () => buffer) },
+                getRandomValues: (arr) => arr
+            },
             writable: true
         });
 
@@ -203,7 +207,10 @@ describe('Worker Security: Strict Content-Type Validation', () => {
         const buffer = Uint8Array.from(atob(hash), c => c.charCodeAt(0)).buffer;
 
         Object.defineProperty(global, 'crypto', {
-            value: { subtle: { digest: vi.fn(async () => buffer) } },
+            value: {
+                subtle: { digest: vi.fn(async () => buffer) },
+                getRandomValues: (arr) => arr
+            },
             writable: true
         });
 

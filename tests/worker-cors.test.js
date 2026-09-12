@@ -35,7 +35,10 @@ vi.stubGlobal("caches", { default: mockCache });
 // Some asset MISS paths verify SRI; cache-hit paths return before reaching it,
 // but stub crypto defensively to match the original per-handler setups.
 Object.defineProperty(global, "crypto", {
-  value: { subtle: { digest: vi.fn(async () => new ArrayBuffer(32)) } },
+  value: {
+    subtle: { digest: vi.fn(async () => new ArrayBuffer(32)) },
+    getRandomValues: (arr) => arr,
+  },
   writable: true,
 });
 

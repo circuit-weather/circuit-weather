@@ -22,7 +22,7 @@ vi.stubGlobal("caches", {
   default: mockCache,
 });
 
-// Mock Crypto for SRI checks
+// Mock Crypto for SRI checks and getRandomValues
 // Use vi.stubGlobal or defineProperty since global.crypto is read-only in some envs
 Object.defineProperty(global, "crypto", {
   value: {
@@ -31,6 +31,7 @@ Object.defineProperty(global, "crypto", {
         return new ArrayBuffer(32);
       }),
     },
+    getRandomValues: (arr) => arr,
   },
   writable: true,
 });
@@ -556,6 +557,7 @@ describe("Worker Logic", () => {
           subtle: {
             digest: vi.fn(async () => buffer),
           },
+          getRandomValues: (arr) => arr,
         },
         writable: true,
       });

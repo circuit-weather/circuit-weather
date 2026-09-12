@@ -903,7 +903,8 @@ async function handleTileRequest(request, env, ctx, url) {
 
     // Log outcomes (sampled for 2xx, 100% for errors)
     const bucket = Math.floor(status / 100);
-    if (bucket >= 4 || Math.random() < 0.05) {
+    const sampleRandom = crypto.getRandomValues(new Uint32Array(1))[0] / 4294967296;
+    if (bucket >= 4 || sampleRandom < 0.05) {
       if (env.ENVIRONMENT !== 'production') {
         const logPath = env.DEBUG === 'true' ? decodedTilePath : '[REDACTED]';
         console.info(`Tile Proxy Bucket: ${bucket}xx (Status: ${status}) Path: ${logPath}`);
