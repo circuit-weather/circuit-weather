@@ -323,10 +323,13 @@ export class CircuitWeatherApp {
         // and Date object instantiation for races entirely in the past.
         const firstActiveIndex = this._findFirstActiveRaceIndex(now);
 
-        for (let i = firstActiveIndex; i < this.races.length; i++) {
+        const totalRaces = this.races.length;
+        for (let i = firstActiveIndex; i < totalRaces; i++) {
             const race = this.races[i];
-            for (let j = 0; j < race.sessions.length; j++) {
-                const s = race.sessions[j];
+            const sessions = race.sessions;
+            const totalSessions = sessions.length;
+            for (let j = 0; j < totalSessions; j++) {
+                const s = sessions[j];
                 if (getSessionStatus(s, now) === 'FUTURE') {
                     return { round: race.round, sessionId: s.id };
                 }
