@@ -1033,9 +1033,10 @@ async function checkRadarCache(request, cache, cacheKey) {
 
 /**
  * Perform upstream fetch to RainViewer API.
+ * Takes the URL from the caller so the fetch target and the cache key
+ * cannot drift apart.
  */
-async function fetchRadarData() {
-  const upstreamUrl = 'https://api.rainviewer.com/public/weather-maps.json';
+async function fetchRadarData(upstreamUrl) {
   return await fetch(upstreamUrl, {
     headers: {
       'Accept': 'application/json',
@@ -1142,7 +1143,7 @@ async function handleRadarRequest(request, env, ctx) {
   }
 
   try {
-    const upstreamResponse = await fetchRadarData();
+    const upstreamResponse = await fetchRadarData(upstreamUrl);
 
     const upstreamErrorResponse = handleRadarUpstreamError(request, env, upstreamResponse);
     if (upstreamErrorResponse) {
