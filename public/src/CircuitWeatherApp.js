@@ -631,10 +631,11 @@ export class CircuitWeatherApp {
     }
 
     /**
-     * Updates the document title and metadata for SEO and browser history context.
-     * Dynamic titles and meta tags improve SERP visibility and rich social sharing.
+     * Determines page title and description based on selected race and session.
+     * @private
+     * @returns {{title: string, desc: string}}
      */
-    updatePageMetadata() {
+    _getPageTitleAndDesc() {
         const defaultTitle = i18n.t('meta.defaultTitle');
         const defaultDesc = i18n.t('meta.defaultDesc');
 
@@ -658,6 +659,16 @@ export class CircuitWeatherApp {
         }
         // If neither, defaults are preserved
 
+        return { title, desc };
+    }
+
+    /**
+     * Updates document title and meta/canonical tags in head.
+     * @private
+     * @param {string} title
+     * @param {string} desc
+     */
+    _updateMetaTags(title, desc) {
         // Update Title: Crucial for primary SERP display and browser history
         document.title = title;
 
@@ -682,9 +693,15 @@ export class CircuitWeatherApp {
             }
             child = child.nextElementSibling;
         }
+    }
 
-        // Scout: Inject dynamic BreadcrumbList JSON-LD
-        // Value: Improves SERP display by providing search engines with clear navigational context for nested routes.
+    /**
+     * Injects dynamic BreadcrumbList JSON-LD structured data.
+     * Scout: Improves SERP display by giving search engines clear navigational
+     * context for nested routes.
+     * @private
+     */
+    _updateBreadcrumbJsonLd() {
         let breadcrumbScript = document.getElementById('dynamic-breadcrumb-ld');
         if (!breadcrumbScript) {
             breadcrumbScript = document.createElement('script');
@@ -724,14 +741,22 @@ export class CircuitWeatherApp {
                 });
             }
         }
+
         // SEC: Sanitize JSON string for inline script injection to prevent XSS
         breadcrumbScript.textContent = JSON.stringify(breadcrumbs)
             .replace(/</g, '\\u003c')
             .replace(/>/g, '\\u003e')
             .replace(/&/g, '\\u0026');
+    }
 
-        // Scout: Inject dynamic JSON-LD structured data for the selected session
-        // Value: Improves rich snippets in SERP by providing explicit event details (SportsEvent) to search engines.
+    /**
+     * Injects or removes SportsEvent JSON-LD structured data for selected session.
+     * Scout: Improves rich snippets in SERP by providing explicit event details
+     * (SportsEvent) to search engines.
+     * @private
+     * @param {string} desc
+     */
+    _updateEventJsonLd(desc) {
         if (this.selectedRace && this.selectedSession && this.selectedSession.date && this.selectedSession.time) {
             let jsonLdScript = document.getElementById('dynamic-json-ld');
             if (!jsonLdScript) {
@@ -749,9 +774,8 @@ export class CircuitWeatherApp {
             const endObj = new Date(startObj.getTime() + 2 * 60 * 60 * 1000);
             const sessionEnd = endObj.toISOString();
 
-            // Scout: Inject dynamic JSON-LD structured data for the selected session
-            // Value: Improves rich snippets in SERP by providing explicit event details (SportsEvent) to search engines.
-            // Scout: Added sport, url, and image to the SportsEvent schema to provide search engines with richer context about the entity for better indexing.
+            // Scout: sport, url and image give search engines richer context about the
+            // entity for better indexing.
             const schema = {
                 "@context": "https://schema.org",
                 "@type": "SportsEvent",
@@ -785,6 +809,7 @@ export class CircuitWeatherApp {
                     }
                 }
             };
+
             // SEC: Sanitize JSON string for inline script injection to prevent XSS
             jsonLdScript.textContent = JSON.stringify(schema)
                 .replace(/</g, '\\u003c')
@@ -797,6 +822,17 @@ export class CircuitWeatherApp {
                 existingScript.parentNode.removeChild(existingScript);
             }
         }
+    }
+
+    /**
+     * Updates the document title and metadata for SEO and browser history context.
+     * Dynamic titles and meta tags improve SERP visibility and rich social sharing.
+     */
+    updatePageMetadata() {
+        const { title, desc } = this._getPageTitleAndDesc();
+        this._updateMetaTags(title, desc);
+        this._updateBreadcrumbJsonLd();
+        this._updateEventJsonLd(desc);
     }
 
     centreOnCircuit(lat, lng) {
