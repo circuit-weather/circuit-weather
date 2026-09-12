@@ -1009,6 +1009,120 @@ async function handleTileRequest(request, env, ctx, url) {
 
 
 /**
+ * Check if the radar request key matches cached response.
+ */
+async function checkRadarCache(request, cache, cacheKey) {
+  const response = await cache.match(cacheKey);
+  if (!response) return null;
+
+  const headers = new Headers(response.headers);
+  headers.set('X-Cache', 'HIT');
+
+  // Apply strict CORS
+  setCorsHeaders(headers, request);
+
+  // Override Cache-Control for the client to ensure frequent checks (1 min)
+  headers.set('Cache-Control', 'public, max-age=60');
+
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers
+  });
+}
+
+/**
+ * Perform upstream fetch to RainViewer API.
+ * Takes the URL from the caller so the fetch target and the cache key
+ * cannot drift apart.
+ */
+async function fetchRadarData(upstreamUrl) {
+  return await fetch(upstreamUrl, {
+    headers: {
+      'Accept': 'application/json',
+      'User-Agent': 'CircuitWeather/1.0',
+    },
+    signal: AbortSignal.timeout(TIMEOUT_API_RADAR),
+  });
+}
+
+/**
+ * Validate upstream radar response status and Content-Type.
+ * Returns an error Response if invalid, or null if response is valid.
+ */
+function handleRadarUpstreamError(request, env, upstreamResponse) {
+  const status = upstreamResponse.status;
+
+  if (!upstreamResponse.ok) {
+    if (env.ENVIRONMENT !== 'production') {
+      console.error(`Upstream Radar API Error: Status ${status}`);
+    }
+    if (status === 429) {
+      return createErrorResponse(request, 429, 'Upstream Rate Limit', {
+        'X-Upstream-Status': '429',
+        'Retry-After': '60'
+      });
+    }
+    const emptyResponse = getEmptyRadarResponse(request);
+    emptyResponse.headers.set('X-Upstream-Status', status.toString());
+    return emptyResponse;
+  }
+
+  // SEC: Strict Content-Type Validation
+  // Prevent cache poisoning if upstream returns HTML error page (e.g. WAF/Maintenance) with 200 OK
+  // Bolt Security: Use strict MIME comparison, not substring check
+  const contentType = upstreamResponse.headers.get('Content-Type');
+  const mime = contentType ? contentType.split(';')[0].trim().toLowerCase() : '';
+
+  if (mime !== 'application/json') {
+    if (env.ENVIRONMENT !== 'production') {
+      console.error(`Upstream Radar Invalid Content-Type: ${contentType} (parsed: ${mime})`);
+    }
+    return getEmptyRadarResponse(request);
+  }
+
+  return null;
+}
+
+/**
+ * Format and cache successful radar API response.
+ */
+function formatCacheableRadarResponse(request, ctx, cache, cacheKey, upstreamResponse) {
+  const status = upstreamResponse.status;
+
+  // Bolt Optimization: Stream response instead of buffering text
+  const [cacheBody, clientBody] = upstreamResponse.body.tee();
+
+  // 1. Prepare Response for Cache (1 minute)
+  const cacheHeaders = new Headers({
+    'Content-Type': 'application/json',
+    'Cache-Control': 'public, max-age=60', // Worker Cache TTL
+    'X-Cache': 'MISS',
+    'X-Upstream-Status': status.toString(),
+    'Access-Control-Allow-Origin': '*',
+    ...API_SECURITY_HEADERS
+  });
+
+  const cacheResponse = new Response(cacheBody, {
+    status: 200,
+    headers: cacheHeaders,
+  });
+
+  // Save to cache
+  ctx.waitUntil(cache.put(cacheKey, cacheResponse));
+
+  // 2. Prepare Response for Client (1 minute)
+  const clientHeaders = new Headers(cacheHeaders);
+  setCorsHeaders(clientHeaders, request);
+  clientHeaders.set('Cache-Control', 'public, max-age=60');
+
+  return new Response(clientBody, {
+    status: 200,
+    headers: clientHeaders
+  });
+}
+
+/**
  * Handle RainViewer API requests with caching
  */
 async function handleRadarRequest(request, env, ctx) {
@@ -1023,95 +1137,20 @@ async function handleRadarRequest(request, env, ctx) {
   const cache = caches.default;
 
   // Check cache match
-  let response = await cache.match(cacheKey);
-
-  if (response) {
-    const headers = new Headers(response.headers);
-    headers.set('X-Cache', 'HIT');
-
-    // Apply strict CORS
-    setCorsHeaders(headers, request);
-
-    // Override Cache-Control for the client to ensure frequent checks (1 min)
-    headers.set('Cache-Control', 'public, max-age=60');
-
-    return new Response(response.body, {
-      status: response.status,
-      statusText: response.statusText,
-      headers
-    });
+  const cachedResponse = await checkRadarCache(request, cache, cacheKey);
+  if (cachedResponse) {
+    return cachedResponse;
   }
 
   try {
-    const upstreamResponse = await fetch(upstreamUrl, {
-      headers: {
-        'Accept': 'application/json',
-        'User-Agent': 'CircuitWeather/1.0',
-      },
-      signal: AbortSignal.timeout(TIMEOUT_API_RADAR),
-    });
+    const upstreamResponse = await fetchRadarData(upstreamUrl);
 
-    const status = upstreamResponse.status;
-
-    if (!upstreamResponse.ok) {
-      if (env.ENVIRONMENT !== 'production') {
-        console.error(`Upstream Radar API Error: Status ${status}`);
-      }
-      if (status === 429) {
-        return createErrorResponse(request, 429, 'Upstream Rate Limit', {
-          'X-Upstream-Status': '429',
-          'Retry-After': '60'
-        });
-      }
-      const emptyResponse = getEmptyRadarResponse(request);
-      emptyResponse.headers.set('X-Upstream-Status', status.toString());
-      return emptyResponse;
+    const upstreamErrorResponse = handleRadarUpstreamError(request, env, upstreamResponse);
+    if (upstreamErrorResponse) {
+      return upstreamErrorResponse;
     }
 
-    // SEC: Strict Content-Type Validation
-    // Prevent cache poisoning if upstream returns HTML error page (e.g. WAF/Maintenance) with 200 OK
-    // Bolt Security: Use strict MIME comparison, not substring check
-    const contentType = upstreamResponse.headers.get('Content-Type');
-    const mime = contentType ? contentType.split(';')[0].trim().toLowerCase() : '';
-
-    if (mime !== 'application/json') {
-      if (env.ENVIRONMENT !== 'production') {
-        console.error(`Upstream Radar Invalid Content-Type: ${contentType} (parsed: ${mime})`);
-      }
-      return getEmptyRadarResponse(request);
-    }
-
-    // Bolt Optimization: Stream response instead of buffering text
-    const [cacheBody, clientBody] = upstreamResponse.body.tee();
-
-    // 1. Prepare Response for Cache (1 minute)
-    const cacheHeaders = new Headers({
-      'Content-Type': 'application/json',
-      'Cache-Control': 'public, max-age=60', // Worker Cache TTL
-      'X-Cache': 'MISS',
-      'X-Upstream-Status': status.toString(),
-      'Access-Control-Allow-Origin': '*',
-      ...API_SECURITY_HEADERS
-    });
-
-    const cacheResponse = new Response(cacheBody, {
-      status: 200,
-      headers: cacheHeaders,
-    });
-
-    // Save to cache
-    ctx.waitUntil(cache.put(cacheKey, cacheResponse));
-
-    // 2. Prepare Response for Client (1 minute)
-    const clientHeaders = new Headers(cacheHeaders);
-    setCorsHeaders(clientHeaders, request);
-    // Set client cache control
-    clientHeaders.set('Cache-Control', 'public, max-age=60');
-
-    return new Response(clientBody, {
-      status: 200,
-      headers: clientHeaders
-    });
+    return formatCacheableRadarResponse(request, ctx, cache, cacheKey, upstreamResponse);
 
   } catch (error) {
     if (env.ENVIRONMENT !== 'production') {
