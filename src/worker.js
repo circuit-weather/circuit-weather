@@ -797,7 +797,7 @@ function handleSafe404TileResponse(request, ctx, cache, cacheKey, ttl) {
 /**
  * Processes, caches, and returns a valid tile response to the client.
  */
-function handleCacheableTileResponse(request, ctx, cache, cacheKey, upstreamResponse, status, ttl) {
+function handleCacheableTileResponse({ request, ctx, cache, cacheKey, upstreamResponse, status, ttl }) {
   const [cacheBody, clientBody] = upstreamResponse.body.tee();
 
   // SEC: Allowlist headers to prevent leaking sensitive upstream headers
@@ -936,7 +936,7 @@ async function handleTileRequest(request, env, ctx, url) {
         return handleSafe404TileResponse(request, ctx, cache, cacheKey, ttl);
       }
 
-      return handleCacheableTileResponse(request, ctx, cache, cacheKey, upstreamResponse, status, ttl);
+      return handleCacheableTileResponse({ request, ctx, cache, cacheKey, upstreamResponse, status, ttl });
     }
 
     // 4. Non-cacheable Error Handling (429, 5xx, etc)
