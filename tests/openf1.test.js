@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { fetchOpenF1Schedule } from '../public/src/api/openf1.js';
+import { fetchOpenF1Schedule, openF1ToErgastDateTime } from '../public/src/api/openf1.js';
 
 describe('openf1', () => {
     let mockFetch;
@@ -21,6 +21,48 @@ describe('openf1', () => {
             .mockResolvedValueOnce({ ok: true, json: () => Promise.resolve(sessions) });
         return fetchOpenF1Schedule();
     };
+
+    describe('openF1ToErgastDateTime (direct unit tests)', () => {
+        it('returns null when dateStr is absent, null, or empty', () => {
+            expect(openF1ToErgastDateTime(null, '03:00:00')).toBeNull();
+            expect(openF1ToErgastDateTime(undefined, '03:00:00')).toBeNull();
+            expect(openF1ToErgastDateTime('', '03:00:00')).toBeNull();
+        });
+
+        it('parses embedded timezone offset directly and ignores gmtOffset', () => {
+            const res = openF1ToErgastDateTime('2026-03-22T15:00:00+03:00', '-05:00:00');
+            expect(res).toEqual({ date: '2026-03-22', time: '12:00:00Z' });
+        });
+
+        it('parses trailing Z timezone indicator', () => {
+            const res = openF1ToErgastDateTime('2026-03-22T12:00:00Z', null);
+            expect(res).toEqual({ date: '2026-03-22', time: '12:00:00Z' });
+        });
+
+        it('applies positive gmtOffset when no timezone is embedded in dateStr', () => {
+            const res = openF1ToErgastDateTime('2026-03-22T15:00:00', '03:00:00');
+            expect(res).toEqual({ date: '2026-03-22', time: '12:00:00Z' });
+        });
+
+        it('applies negative gmtOffset when no timezone is embedded in dateStr', () => {
+            const res = openF1ToErgastDateTime('2026-10-19T14:00:00', '-05:00:00');
+            expect(res).toEqual({ date: '2026-10-19', time: '19:00:00Z' });
+        });
+
+        it('handles date rollover when offset pushes UTC time past midnight', () => {
+            const res = openF1ToErgastDateTime('2026-10-19T23:00:00', '-05:00:00');
+            expect(res).toEqual({ date: '2026-10-20', time: '04:00:00Z' });
+        });
+
+        it('returns null if dateStr has no timezone and gmtOffset is missing', () => {
+            expect(openF1ToErgastDateTime('2026-03-22T15:00:00', null)).toBeNull();
+            expect(openF1ToErgastDateTime('2026-03-22T15:00:00', '')).toBeNull();
+        });
+
+        it('returns null if dateStr is invalid', () => {
+            expect(openF1ToErgastDateTime('invalid-date-string', '03:00:00')).toBeNull();
+        });
+    });
 
     // The datetime conversion is an internal helper, exercised here through the
     // Race session of a minimal one-meeting schedule.
