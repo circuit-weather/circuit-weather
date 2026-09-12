@@ -46,4 +46,42 @@ describe('RateLimiter LRU Eviction', () => {
     // If IP1 was evicted, it is re-initialized with (limit - 1) tokens.
     expect(limiter.check('1.1.1.1')).toBe(true);
   });
+
+  it('moves a re-checked IP to the MRU position so it survives eviction', () => {
+    // Map.set() on an existing key updates the value in place without moving
+    // the key in iteration order, so check() must delete before it sets for
+    // eviction to pick the genuinely least-recently-used entry. This pins that
+    // ordering: without the delete, IP1 would stay oldest and be evicted here.
+    const MAX_IPS = 2;
+    limiter = new RateLimiter(1, 1000, MAX_IPS);
+
+    limiter.check('1.1.1.1'); // order: [IP1]
+    limiter.check('2.2.2.2'); // order: [IP1, IP2] — IP1 oldest
+    limiter.check('1.1.1.1'); // order: [IP2, IP1] — IP2 now oldest
+    limiter.check('3.3.3.3'); // evicts IP2, not IP1
+
+    expect(limiter.activeStore.has('1.1.1.1')).toBe(true);
+    expect(limiter.activeStore.has('2.2.2.2')).toBe(false);
+    expect(limiter.activeStore.has('3.3.3.3')).toBe(true);
+  });
+
+  it('keeps LRU order correct for a record promoted from the previous window', () => {
+    // A record promoted out of previousStore was never in activeStore, so
+    // check() skips the delete for it. It must still land at the MRU end.
+    const MAX_IPS = 2;
+    limiter = new RateLimiter(2, 1000, MAX_IPS);
+
+    limiter.check('1.1.1.1');
+
+    // Cross the window boundary: activeStore rotates into previousStore.
+    vi.setSystemTime(1000000 + 1001);
+
+    limiter.check('2.2.2.2'); // fresh entry     -> order: [IP2]
+    limiter.check('1.1.1.1'); // promoted record -> order: [IP2, IP1]
+    limiter.check('3.3.3.3'); // evicts IP2, the oldest
+
+    expect(limiter.activeStore.has('1.1.1.1')).toBe(true);
+    expect(limiter.activeStore.has('2.2.2.2')).toBe(false);
+    expect(limiter.activeStore.has('3.3.3.3')).toBe(true);
+  });
 });
