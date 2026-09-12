@@ -162,4 +162,53 @@ describe('Worker Logic - Tile Errors', () => {
     expect(errorSpy).toHaveBeenCalled();
     errorSpy.mockRestore();
   });
+
+  it('rejects upstream 200 OK tile response with non-PNG content-type', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    mockFetch.mockResolvedValueOnce(new Response('<html>Error</html>', {
+      status: 200,
+      headers: { 'Content-Type': 'text/html' }
+    }));
+
+    const req = createRequest('/api/tiles/v2/radar/1/2/3/512/1/1_1.png');
+    const res = await worker.fetch(req, global.env, global.ctx);
+
+    expect(res.status).toBe(502);
+    const data = await res.json();
+    expect(data.error.message).toBe('Invalid upstream content type');
+    expect(errorSpy).toHaveBeenCalledWith('Upstream Tile Invalid Content-Type: text/html (parsed: text/html)');
+    expect(mockCache.put).not.toHaveBeenCalled();
+    errorSpy.mockRestore();
+  });
+
+  it('handles 404 tile response with non-PNG content-type using safe 404 handler', async () => {
+    mockFetch.mockResolvedValueOnce(new Response('<html>Not Found</html>', {
+      status: 404,
+      headers: { 'Content-Type': 'text/html' }
+    }));
+
+    const req = createRequest('/api/tiles/v2/radar/1/2/3/512/1/1_1.png');
+    const res = await worker.fetch(req, global.env, global.ctx);
+
+    expect(res.status).toBe(404);
+    expect(res.headers.get('X-Upstream-Status')).toBe('404');
+    const data = await res.json();
+    expect(data.error.message).toBe('Tile not found');
+    expect(global.ctx.waitUntil).toHaveBeenCalled();
+  });
+
+  it('suppresses console.error on network exception in production environment', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    mockFetch.mockRejectedValueOnce(new Error('Network error in production'));
+
+    const req = createRequest('/api/tiles/v2/radar/1/2/3/512/1/1_1.png');
+    const prodEnv = { ENVIRONMENT: 'production' };
+    const res = await worker.fetch(req, prodEnv, global.ctx);
+
+    expect(res.status).toBe(502);
+    const data = await res.json();
+    expect(data.error.message).toBe('Tile proxy failed');
+    expect(errorSpy).not.toHaveBeenCalled();
+    errorSpy.mockRestore();
+  });
 });

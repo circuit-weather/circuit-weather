@@ -1,8 +1,9 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import {
     createErrorResponse,
     getEmptyRadarResponse,
     calculateHash,
+    getSecureRandom,
     API_SECURITY_HEADERS
 } from '../src/worker-utils.js';
 import { PRODUCTION_DOMAIN } from './helpers/constants.js';
@@ -118,6 +119,62 @@ describe('Worker Utils Helpers', () => {
             const hash2 = await calculateHash(new TextEncoder().encode('test').buffer);
 
             expect(hash1).toBe(hash2);
+        });
+    });
+
+    describe('getSecureRandom', () => {
+        it('returns a number in [0, 1)', () => {
+            const val = getSecureRandom();
+            expect(typeof val).toBe('number');
+            expect(val).toBeGreaterThanOrEqual(0);
+            expect(val).toBeLessThan(1);
+        });
+
+        it('uses crypto.getRandomValues when available', () => {
+            const spy = vi.fn((arr) => {
+                arr[0] = 2147483648; // 0.5 * 4294967296
+                return arr;
+            });
+            const originalCrypto = globalThis.crypto;
+            try {
+                Object.defineProperty(globalThis, 'crypto', {
+                    value: { getRandomValues: spy },
+                    configurable: true,
+                    writable: true
+                });
+
+                const val = getSecureRandom();
+                expect(spy).toHaveBeenCalledTimes(1);
+                expect(val).toBe(0.5);
+            } finally {
+                Object.defineProperty(globalThis, 'crypto', {
+                    value: originalCrypto,
+                    configurable: true,
+                    writable: true
+                });
+            }
+        });
+
+        it('falls back to Math.random when crypto.getRandomValues is not available', () => {
+            const originalCrypto = globalThis.crypto;
+            try {
+                Object.defineProperty(globalThis, 'crypto', {
+                    value: undefined,
+                    configurable: true,
+                    writable: true
+                });
+
+                const val = getSecureRandom();
+                expect(typeof val).toBe('number');
+                expect(val).toBeGreaterThanOrEqual(0);
+                expect(val).toBeLessThan(1);
+            } finally {
+                Object.defineProperty(globalThis, 'crypto', {
+                    value: originalCrypto,
+                    configurable: true,
+                    writable: true
+                });
+            }
         });
     });
 });

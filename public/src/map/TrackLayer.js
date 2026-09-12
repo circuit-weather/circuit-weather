@@ -114,6 +114,100 @@ export class TrackLayer {
     }
 
     /**
+     * Fetch GeoJSON track data from API/proxy.
+     */
+    async fetchTrackData(geoJsonId) {
+        const url = CONFIG.trackApi.startsWith('/')
+            ? `${CONFIG.trackApi}/${geoJsonId}`
+            : `${CONFIG.trackApi}/${geoJsonId}.geojson`;
+
+        const response = await fetch(url, {
+            signal: AbortSignal.timeout(5000)
+        });
+
+        if (!response.ok) {
+            throw new Error(`Track fetch failed: ${response.status}`);
+        }
+
+        return await response.json();
+    }
+
+    /**
+     * Render track overlay for Mapbox.
+     */
+    renderMapboxTrack(circuitId, data) {
+        this.cache.set(circuitId, data);
+
+        const sourceId = `track-source-${circuitId}`;
+        const layerId = `track-layer-${circuitId}`;
+
+        if (!this.map.getSource(sourceId)) {
+            this.map.addSource(sourceId, {
+                type: 'geojson',
+                data: data
+            });
+        }
+
+        if (!this.map.getLayer(layerId)) {
+            this.map.addLayer({
+                id: layerId,
+                type: 'line',
+                source: sourceId,
+                layout: {
+                    'line-join': 'round',
+                    'line-cap': 'round'
+                },
+                paint: {
+                    'line-color': this.trackColor,
+                    'line-width': 4,
+                    'line-opacity': 0.8
+                }
+            });
+        }
+    }
+
+    /**
+     * Render track overlay for Leaflet.
+     */
+    renderLeafletTrack(circuitId, data) {
+        this.layer = L.geoJSON(data, {
+            style: {
+                interactive: false,
+                color: this.trackColor,
+                weight: 4, // Initial, will be updated immediately
+                opacity: 0.8,
+                fillOpacity: 0,
+                lineCap: 'round',
+                lineJoin: 'round',
+                className: 'track-path'
+            }
+        });
+
+        this.cache.set(circuitId, this.layer);
+        this.layer.addTo(this.map);
+        this.layer.bringToBack();
+    }
+
+    /**
+     * Render track overlay from cached data (GeoJSON for Mapbox, Layer for Leaflet).
+     */
+    renderCachedTrack(circuitId, isMapbox) {
+        const cachedItem = this.cache.get(circuitId);
+        if (isMapbox) {
+            this.renderMapboxTrack(circuitId, cachedItem);
+        } else {
+            this.layer = cachedItem;
+            if (!this.map.hasLayer(this.layer)) {
+                this.layer.addTo(this.map);
+            }
+            this.layer.bringToBack();
+        }
+
+        this.updateStyle();
+        return this.centerCache.get(circuitId) ?? null;
+    }
+
+    /**
      * Load a circuit's track overlay.
      * Returns the geometry's [lat, lng] centre (or null) so callers can place the
      * map when the schedule itself carries no coordinates.
@@ -130,127 +224,23 @@ export class TrackLayer {
         try {
             const isMapbox = !this.map.hasLayer;
 
-            // Check cache first
             if (this.cache.has(circuitId)) {
-                // Check if this is still the requested circuit
                 if (this.currentCircuitId !== circuitId) return null;
-
-                if (isMapbox) {
-                    const sourceId = `track-source-${circuitId}`;
-                    const layerId = `track-layer-${circuitId}`;
-
-                    if (!this.map.getSource(sourceId)) {
-                        this.map.addSource(sourceId, {
-                            type: 'geojson',
-                            data: this.cache.get(circuitId)
-                        });
-                    }
-
-                    if (!this.map.getLayer(layerId)) {
-                        this.map.addLayer({
-                            id: layerId,
-                            type: 'line',
-                            source: sourceId,
-                            layout: {
-                                'line-join': 'round',
-                                'line-cap': 'round'
-                            },
-                            paint: {
-                                'line-color': this.trackColor,
-                                'line-width': 4,
-                                'line-opacity': 0.8
-                            }
-                        });
-                    }
-                } else {
-                    this.layer = this.cache.get(circuitId);
-                    if (!this.map.hasLayer(this.layer)) {
-                        this.layer.addTo(this.map);
-                    }
-                    this.layer.bringToBack();
-                }
-
-                this.updateStyle();
-                return this.centerCache.get(circuitId) ?? null;
+                return this.renderCachedTrack(circuitId, isMapbox);
             }
 
-            let url;
-            if (CONFIG.trackApi.startsWith('/')) {
-                // Worker proxy (no extension)
-                url = `${CONFIG.trackApi}/${geoJsonId}`;
-            } else {
-                // Direct GitHub (needs extension)
-                url = `${CONFIG.trackApi}/${geoJsonId}.geojson`;
-            }
-
-            const response = await fetch(url, {
-                signal: AbortSignal.timeout(5000)
-            });
-
-            if (!response.ok) throw new Error(`Track fetch failed: ${response.status}`);
+            const data = await this.fetchTrackData(geoJsonId);
 
             // Check if this is still the requested circuit
-            if (this.currentCircuitId !== circuitId) return null;
-
-            const data = await response.json();
-
-            // Double check before rendering
             if (this.currentCircuitId !== circuitId) return null;
 
             const center = TrackLayer.computeCenter(data);
             if (center) this.centerCache.set(circuitId, center);
 
-            const trackColor = this.trackColor;
-
             if (isMapbox) {
-                // Cache raw GeoJSON for Mapbox
-                this.cache.set(circuitId, data);
-
-                const sourceId = `track-source-${circuitId}`;
-                const layerId = `track-layer-${circuitId}`;
-
-                if (!this.map.getSource(sourceId)) {
-                    this.map.addSource(sourceId, {
-                        type: 'geojson',
-                        data: data
-                    });
-                }
-
-                if (!this.map.getLayer(layerId)) {
-                    this.map.addLayer({
-                        id: layerId,
-                        type: 'line',
-                        source: sourceId,
-                        layout: {
-                            'line-join': 'round',
-                            'line-cap': 'round'
-                        },
-                        paint: {
-                            'line-color': trackColor,
-                            'line-width': 4,
-                            'line-opacity': 0.8
-                        }
-                    });
-                }
+                this.renderMapboxTrack(circuitId, data);
             } else {
-                this.layer = L.geoJSON(data, {
-                    style: {
-                        interactive: false,
-                        color: trackColor,
-                        weight: 4, // Initial, will be updated immediately
-                        opacity: 0.8,
-                        fillOpacity: 0,
-                        lineCap: 'round',
-                        lineJoin: 'round',
-                        className: 'track-path'
-                    }
-                });
-
-                // Cache the created Leaflet layer
-                this.cache.set(circuitId, this.layer);
-
-                this.layer.addTo(this.map);
-                this.layer.bringToBack();
+                this.renderLeafletTrack(circuitId, data);
             }
 
             // Apply correct weight for current zoom

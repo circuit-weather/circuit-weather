@@ -28,7 +28,8 @@ import {
   getAllowedOrigin,
   setCorsHeaders,
   getEmptyRadarResponse,
-  createErrorResponse
+  createErrorResponse,
+  getSecureRandom
 } from './worker-utils.js';
 
 // Per-upstream timeouts to prevent resource exhaustion while allowing for slow upstreams
@@ -279,21 +280,12 @@ function handleConfigRequest(request, env) {
 }
 
 /**
- * Handle F1 API requests with caching
+ * Validates the API path for security and format.
+ * Returns an error Response if invalid, or a valid decoded path string.
  */
-async function handleApiRequest(request, env, ctx, url) {
-  // SEC: Ensure request is not from a script tag (XSSI protection)
-  if (!checkFetchDest(request)) {
-    return createErrorResponse(request, 403, 'Invalid fetch destination');
-  }
-
-
-  // Extract path parameters after /api/f1/
-  // e.g. /api/f1/current -> current
-  let apiPath = url.pathname.slice('/api/f1/'.length);
-
+function validateApiPath(request, rawPath) {
   // SEC: Recursively decode path to prevent multiple-encoding bypasses
-  apiPath = recursivelyDecodePath(apiPath);
+  let apiPath = recursivelyDecodePath(rawPath);
   if (apiPath === null) {
     return createErrorResponse(request, 400, 'Invalid API path encoding');
   }
@@ -315,31 +307,33 @@ async function handleApiRequest(request, env, ctx, url) {
     return createErrorResponse(request, 400, 'Invalid API path');
   }
 
-  // Build upstream URL
-  const upstreamUrl = `https://api.jolpi.ca/ergast/f1/${apiPath}`;
+  return apiPath;
+}
 
-  // Cache key based on the full upstream URL
-  // SEC: Normalize cache key to URL only to prevent cache busting via headers
-  const cacheKey = new Request(upstreamUrl);
-  const cache = caches.default;
+/**
+ * Checks cache for F1 API response and returns hit Response if found.
+ */
+async function checkApiCache(request, cache, cacheKey) {
+  const response = await cache.match(cacheKey);
+  if (!response) return null;
 
-  // Check cache match
-  let response = await cache.match(cacheKey);
+  const headers = new Headers(response.headers);
+  headers.set('X-Cache', 'HIT');
 
-  if (response) {
-    const headers = new Headers(response.headers);
-    headers.set('X-Cache', 'HIT');
+  // Apply strict CORS
+  setCorsHeaders(headers, request);
 
-    // Apply strict CORS
-    setCorsHeaders(headers, request);
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers
+  });
+}
 
-    return new Response(response.body, {
-      status: response.status,
-      statusText: response.statusText,
-      headers
-    });
-  }
-
+/**
+ * Fetches F1 API data from upstream, validates response, caches it, and returns it to client.
+ */
+async function fetchAndCacheApiRequest(request, env, ctx, upstreamUrl, cache, cacheKey) {
   try {
     const upstreamResponse = await fetch(upstreamUrl, {
       headers: {
@@ -408,51 +402,85 @@ async function handleApiRequest(request, env, ctx, url) {
 }
 
 /**
- * Handle Track GeoJSON requests with caching
+ * Handle F1 API requests with caching
  */
-async function handleTrackRequest(request, env, ctx, url) {
+async function handleApiRequest(request, env, ctx, url) {
   // SEC: Ensure request is not from a script tag (XSSI protection)
   if (!checkFetchDest(request)) {
     return createErrorResponse(request, 403, 'Invalid fetch destination');
   }
 
+  // Extract path parameters after /api/f1/
+  // e.g. /api/f1/current -> current
+  const rawPath = url.pathname.slice('/api/f1/'.length);
 
-  // Extract geoJsonId from /api/track/:id
-  const trackId = url.pathname.slice('/api/track/'.length);
+  const validatedOrError = validateApiPath(request, rawPath);
+  if (validatedOrError instanceof Response) return validatedOrError;
+  const apiPath = validatedOrError;
 
-  // Validation
-  // SEC: Check length (50 chars max) and format
-  // Bolt Optimization: Remove redundant string scans (includes) covered by regex
-  if (!trackId || trackId.length > 50 || !VALID_TRACK_ID_REGEX.test(trackId)) {
-    return createErrorResponse(request, 400, 'Invalid track ID');
-  }
+  // Build upstream URL
+  const upstreamUrl = `https://api.jolpi.ca/ergast/f1/${apiPath}`;
 
-  const upstreamUrl = `https://raw.githubusercontent.com/bacinger/f1-circuits/master/circuits/${trackId}.geojson`;
-
-  // Use a canonical cache key based on the upstream URL
+  // Cache key based on the full upstream URL
+  // SEC: Normalize cache key to URL only to prevent cache busting via headers
   const cacheKey = new Request(upstreamUrl);
   const cache = caches.default;
 
   // Check cache match
-  let response = await cache.match(cacheKey);
+  const cachedResponse = await checkApiCache(request, cache, cacheKey);
+  if (cachedResponse) return cachedResponse;
 
-  if (response) {
-    const headers = new Headers(response.headers);
-    headers.set('X-Cache', 'HIT');
+  return await fetchAndCacheApiRequest(request, env, ctx, upstreamUrl, cache, cacheKey);
+}
 
-    // Apply strict CORS
-    setCorsHeaders(headers, request);
-
-    // Ensure client caches this for a long time too (24h)
-    headers.set('Cache-Control', 'public, max-age=86400');
-
-    return new Response(response.body, {
-      status: response.status,
-      statusText: response.statusText,
-      headers
-    });
+/**
+ * Extracts and validates track ID from request URL
+ * @param {URL} url
+ * @returns {string|null} trackId or null if invalid
+ */
+function extractAndValidateTrackId(url) {
+  const trackId = url.pathname.slice('/api/track/'.length);
+  // SEC: Check length (50 chars max) and format
+  if (!trackId || trackId.length > 50 || !VALID_TRACK_ID_REGEX.test(trackId)) {
+    return null;
   }
+  return trackId;
+}
 
+/**
+ * Creates response for cached track hit
+ * @param {Response} response
+ * @param {Request} request
+ * @returns {Response}
+ */
+function createTrackCacheHitResponse(response, request) {
+  const headers = new Headers(response.headers);
+  headers.set('X-Cache', 'HIT');
+
+  // Apply strict CORS
+  setCorsHeaders(headers, request);
+
+  // Ensure client caches this for a long time too (24h)
+  headers.set('Cache-Control', 'public, max-age=86400');
+
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers
+  });
+}
+
+/**
+ * Fetches track data from upstream GitHub repository and caches it
+ * @param {string} upstreamUrl
+ * @param {Request} cacheKey
+ * @param {Request} request
+ * @param {object} env
+ * @param {object} ctx
+ * @returns {Promise<Response>}
+ */
+async function fetchAndCacheTrack(upstreamUrl, cacheKey, request, env, ctx) {
+  const cache = caches.default;
   try {
     const upstreamResponse = await fetch(upstreamUrl, {
       headers: {
@@ -521,6 +549,35 @@ async function handleTrackRequest(request, env, ctx, url) {
 }
 
 /**
+ * Handle Track GeoJSON requests with caching
+ */
+async function handleTrackRequest(request, env, ctx, url) {
+  // SEC: Ensure request is not from a script tag (XSSI protection)
+  if (!checkFetchDest(request)) {
+    return createErrorResponse(request, 403, 'Invalid fetch destination');
+  }
+
+  const trackId = extractAndValidateTrackId(url);
+  if (!trackId) {
+    return createErrorResponse(request, 400, 'Invalid track ID');
+  }
+
+  const upstreamUrl = `https://raw.githubusercontent.com/bacinger/f1-circuits/master/circuits/${trackId}.geojson`;
+
+  // Use a canonical cache key based on the upstream URL
+  const cacheKey = new Request(upstreamUrl);
+  const cache = caches.default;
+
+  // Check cache match
+  const cachedResponse = await cache.match(cacheKey);
+  if (cachedResponse) {
+    return createTrackCacheHitResponse(cachedResponse, request);
+  }
+
+  return fetchAndCacheTrack(upstreamUrl, cacheKey, request, env, ctx);
+}
+
+/**
  * Handle Vendor Assets proxy to enable strict CSP and bypass tracking blockers
  * Proxies JS, CSS, and images from unpkg and Mapbox CDNs
  */
@@ -552,13 +609,13 @@ async function handleAssetRequest(request, env, ctx, url) {
     });
   }
 
-  return await fetchAndCacheVendorAsset(request, env, ctx, path, config, cache, cacheKey);
+  return await fetchAndCacheVendorAsset({ request, env, ctx, path, config, cache, cacheKey });
 }
 
 /**
  * Helper to fetch, validate, and cache vendor assets
  */
-async function fetchAndCacheVendorAsset(request, env, ctx, path, config, cache, cacheKey) {
+async function fetchAndCacheVendorAsset({ request, env, ctx, path, config, cache, cacheKey }) {
   const upstreamUrl = config.upstream;
 
   try {
@@ -797,7 +854,7 @@ function handleSafe404TileResponse(request, ctx, cache, cacheKey, ttl) {
 /**
  * Processes, caches, and returns a valid tile response to the client.
  */
-function handleCacheableTileResponse(request, ctx, cache, cacheKey, upstreamResponse, status, ttl) {
+function handleCacheableTileResponse({ request, ctx, cache, cacheKey, upstreamResponse, status, ttl }) {
   const [cacheBody, clientBody] = upstreamResponse.body.tee();
 
   // SEC: Allowlist headers to prevent leaking sensitive upstream headers
@@ -903,7 +960,7 @@ async function handleTileRequest(request, env, ctx, url) {
 
     // Log outcomes (sampled for 2xx, 100% for errors)
     const bucket = Math.floor(status / 100);
-    if (bucket >= 4 || Math.random() < 0.05) {
+    if (bucket >= 4 || getSecureRandom() < 0.05) {
       if (env.ENVIRONMENT !== 'production') {
         const logPath = env.DEBUG === 'true' ? decodedTilePath : '[REDACTED]';
         console.info(`Tile Proxy Bucket: ${bucket}xx (Status: ${status}) Path: ${logPath}`);
@@ -936,7 +993,7 @@ async function handleTileRequest(request, env, ctx, url) {
         return handleSafe404TileResponse(request, ctx, cache, cacheKey, ttl);
       }
 
-      return handleCacheableTileResponse(request, ctx, cache, cacheKey, upstreamResponse, status, ttl);
+      return handleCacheableTileResponse({ request, ctx, cache, cacheKey, upstreamResponse, status, ttl });
     }
 
     // 4. Non-cacheable Error Handling (429, 5xx, etc)
@@ -950,6 +1007,120 @@ async function handleTileRequest(request, env, ctx, url) {
   }
 }
 
+
+/**
+ * Check if the radar request key matches cached response.
+ */
+async function checkRadarCache(request, cache, cacheKey) {
+  const response = await cache.match(cacheKey);
+  if (!response) return null;
+
+  const headers = new Headers(response.headers);
+  headers.set('X-Cache', 'HIT');
+
+  // Apply strict CORS
+  setCorsHeaders(headers, request);
+
+  // Override Cache-Control for the client to ensure frequent checks (1 min)
+  headers.set('Cache-Control', 'public, max-age=60');
+
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers
+  });
+}
+
+/**
+ * Perform upstream fetch to RainViewer API.
+ * Takes the URL from the caller so the fetch target and the cache key
+ * cannot drift apart.
+ */
+async function fetchRadarData(upstreamUrl) {
+  return await fetch(upstreamUrl, {
+    headers: {
+      'Accept': 'application/json',
+      'User-Agent': 'CircuitWeather/1.0',
+    },
+    signal: AbortSignal.timeout(TIMEOUT_API_RADAR),
+  });
+}
+
+/**
+ * Validate upstream radar response status and Content-Type.
+ * Returns an error Response if invalid, or null if response is valid.
+ */
+function handleRadarUpstreamError(request, env, upstreamResponse) {
+  const status = upstreamResponse.status;
+
+  if (!upstreamResponse.ok) {
+    if (env.ENVIRONMENT !== 'production') {
+      console.error(`Upstream Radar API Error: Status ${status}`);
+    }
+    if (status === 429) {
+      return createErrorResponse(request, 429, 'Upstream Rate Limit', {
+        'X-Upstream-Status': '429',
+        'Retry-After': '60'
+      });
+    }
+    const emptyResponse = getEmptyRadarResponse(request);
+    emptyResponse.headers.set('X-Upstream-Status', status.toString());
+    return emptyResponse;
+  }
+
+  // SEC: Strict Content-Type Validation
+  // Prevent cache poisoning if upstream returns HTML error page (e.g. WAF/Maintenance) with 200 OK
+  // Bolt Security: Use strict MIME comparison, not substring check
+  const contentType = upstreamResponse.headers.get('Content-Type');
+  const mime = contentType ? contentType.split(';')[0].trim().toLowerCase() : '';
+
+  if (mime !== 'application/json') {
+    if (env.ENVIRONMENT !== 'production') {
+      console.error(`Upstream Radar Invalid Content-Type: ${contentType} (parsed: ${mime})`);
+    }
+    return getEmptyRadarResponse(request);
+  }
+
+  return null;
+}
+
+/**
+ * Format and cache successful radar API response.
+ */
+function formatCacheableRadarResponse(request, ctx, cache, cacheKey, upstreamResponse) {
+  const status = upstreamResponse.status;
+
+  // Bolt Optimization: Stream response instead of buffering text
+  const [cacheBody, clientBody] = upstreamResponse.body.tee();
+
+  // 1. Prepare Response for Cache (1 minute)
+  const cacheHeaders = new Headers({
+    'Content-Type': 'application/json',
+    'Cache-Control': 'public, max-age=60', // Worker Cache TTL
+    'X-Cache': 'MISS',
+    'X-Upstream-Status': status.toString(),
+    'Access-Control-Allow-Origin': '*',
+    ...API_SECURITY_HEADERS
+  });
+
+  const cacheResponse = new Response(cacheBody, {
+    status: 200,
+    headers: cacheHeaders,
+  });
+
+  // Save to cache
+  ctx.waitUntil(cache.put(cacheKey, cacheResponse));
+
+  // 2. Prepare Response for Client (1 minute)
+  const clientHeaders = new Headers(cacheHeaders);
+  setCorsHeaders(clientHeaders, request);
+  clientHeaders.set('Cache-Control', 'public, max-age=60');
+
+  return new Response(clientBody, {
+    status: 200,
+    headers: clientHeaders
+  });
+}
 
 /**
  * Handle RainViewer API requests with caching
@@ -966,95 +1137,20 @@ async function handleRadarRequest(request, env, ctx) {
   const cache = caches.default;
 
   // Check cache match
-  let response = await cache.match(cacheKey);
-
-  if (response) {
-    const headers = new Headers(response.headers);
-    headers.set('X-Cache', 'HIT');
-
-    // Apply strict CORS
-    setCorsHeaders(headers, request);
-
-    // Override Cache-Control for the client to ensure frequent checks (1 min)
-    headers.set('Cache-Control', 'public, max-age=60');
-
-    return new Response(response.body, {
-      status: response.status,
-      statusText: response.statusText,
-      headers
-    });
+  const cachedResponse = await checkRadarCache(request, cache, cacheKey);
+  if (cachedResponse) {
+    return cachedResponse;
   }
 
   try {
-    const upstreamResponse = await fetch(upstreamUrl, {
-      headers: {
-        'Accept': 'application/json',
-        'User-Agent': 'CircuitWeather/1.0',
-      },
-      signal: AbortSignal.timeout(TIMEOUT_API_RADAR),
-    });
+    const upstreamResponse = await fetchRadarData(upstreamUrl);
 
-    const status = upstreamResponse.status;
-
-    if (!upstreamResponse.ok) {
-      if (env.ENVIRONMENT !== 'production') {
-        console.error(`Upstream Radar API Error: Status ${status}`);
-      }
-      if (status === 429) {
-        return createErrorResponse(request, 429, 'Upstream Rate Limit', {
-          'X-Upstream-Status': '429',
-          'Retry-After': '60'
-        });
-      }
-      const emptyResponse = getEmptyRadarResponse(request);
-      emptyResponse.headers.set('X-Upstream-Status', status.toString());
-      return emptyResponse;
+    const upstreamErrorResponse = handleRadarUpstreamError(request, env, upstreamResponse);
+    if (upstreamErrorResponse) {
+      return upstreamErrorResponse;
     }
 
-    // SEC: Strict Content-Type Validation
-    // Prevent cache poisoning if upstream returns HTML error page (e.g. WAF/Maintenance) with 200 OK
-    // Bolt Security: Use strict MIME comparison, not substring check
-    const contentType = upstreamResponse.headers.get('Content-Type');
-    const mime = contentType ? contentType.split(';')[0].trim().toLowerCase() : '';
-
-    if (mime !== 'application/json') {
-      if (env.ENVIRONMENT !== 'production') {
-        console.error(`Upstream Radar Invalid Content-Type: ${contentType} (parsed: ${mime})`);
-      }
-      return getEmptyRadarResponse(request);
-    }
-
-    // Bolt Optimization: Stream response instead of buffering text
-    const [cacheBody, clientBody] = upstreamResponse.body.tee();
-
-    // 1. Prepare Response for Cache (1 minute)
-    const cacheHeaders = new Headers({
-      'Content-Type': 'application/json',
-      'Cache-Control': 'public, max-age=60', // Worker Cache TTL
-      'X-Cache': 'MISS',
-      'X-Upstream-Status': status.toString(),
-      'Access-Control-Allow-Origin': '*',
-      ...API_SECURITY_HEADERS
-    });
-
-    const cacheResponse = new Response(cacheBody, {
-      status: 200,
-      headers: cacheHeaders,
-    });
-
-    // Save to cache
-    ctx.waitUntil(cache.put(cacheKey, cacheResponse));
-
-    // 2. Prepare Response for Client (1 minute)
-    const clientHeaders = new Headers(cacheHeaders);
-    setCorsHeaders(clientHeaders, request);
-    // Set client cache control
-    clientHeaders.set('Cache-Control', 'public, max-age=60');
-
-    return new Response(clientBody, {
-      status: 200,
-      headers: clientHeaders
-    });
+    return formatCacheableRadarResponse(request, ctx, cache, cacheKey, upstreamResponse);
 
   } catch (error) {
     if (env.ENVIRONMENT !== 'production') {

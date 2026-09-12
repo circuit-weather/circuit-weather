@@ -25,6 +25,12 @@ vi.stubGlobal("caches", {
 // Mock Crypto (needed for worker imports)
 Object.defineProperty(global, "crypto", {
   value: {
+    getRandomValues: (arr) => {
+      for (let i = 0; i < arr.length; i++) {
+        arr[i] = Math.floor(Math.random() * 4294967296);
+      }
+      return arr;
+    },
     subtle: {
       digest: vi.fn(async () => new ArrayBuffer(32)),
     },

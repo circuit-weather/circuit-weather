@@ -27,6 +27,12 @@ vi.stubGlobal('caches', {
 // Use vi.stubGlobal or defineProperty since global.crypto is read-only in some envs
 Object.defineProperty(global, 'crypto', {
   value: {
+    getRandomValues: (arr) => {
+      for (let i = 0; i < arr.length; i++) {
+        arr[i] = Math.floor(Math.random() * 4294967296);
+      }
+      return arr;
+    },
     subtle: {
       digest: vi.fn(async (algo, buffer) => {
         return new ArrayBuffer(32);
@@ -182,7 +188,15 @@ describe('Worker Security: Strict Content-Type Validation', () => {
         const buffer = Uint8Array.from(atob(hash), c => c.charCodeAt(0)).buffer;
 
         Object.defineProperty(global, 'crypto', {
-            value: { subtle: { digest: vi.fn(async () => buffer) } },
+            value: {
+                getRandomValues: (arr) => {
+                    for (let i = 0; i < arr.length; i++) {
+                        arr[i] = Math.floor(Math.random() * 4294967296);
+                    }
+                    return arr;
+                },
+                subtle: { digest: vi.fn(async () => buffer) }
+            },
             writable: true
         });
 
@@ -203,7 +217,15 @@ describe('Worker Security: Strict Content-Type Validation', () => {
         const buffer = Uint8Array.from(atob(hash), c => c.charCodeAt(0)).buffer;
 
         Object.defineProperty(global, 'crypto', {
-            value: { subtle: { digest: vi.fn(async () => buffer) } },
+            value: {
+                getRandomValues: (arr) => {
+                    for (let i = 0; i < arr.length; i++) {
+                        arr[i] = Math.floor(Math.random() * 4294967296);
+                    }
+                    return arr;
+                },
+                subtle: { digest: vi.fn(async () => buffer) }
+            },
             writable: true
         });
 
