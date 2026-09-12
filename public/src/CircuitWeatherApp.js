@@ -1325,6 +1325,8 @@ export class CircuitWeatherApp {
         const ol = document.createElement('ol');
         ol.className = 'weather-timeline-list';
 
+        const dateObj = new Date();
+
         for (const hour of hourlyWeather) {
             const relTime = this.weatherClient.getRelativeTime(hour.time, sessionTime);
             const desc = this.weatherClient.getWeatherDescription(hour.code);
@@ -1339,7 +1341,8 @@ export class CircuitWeatherApp {
                 windUnit: units.wind_speed_10m,
             });
 
-            const isoDateTime = new Date(hour.time * 1000).toISOString();
+            dateObj.setTime(hour.time * 1000);
+            const isoDateTime = dateObj.toISOString();
 
             const li = document.createElement('li');
             li.className = 'weather-timeline-item';
