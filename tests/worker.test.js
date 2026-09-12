@@ -239,6 +239,39 @@ describe("Worker Logic", () => {
       );
     });
 
+    it("returns 502 when upstream returns non-JSON content type for F1 API", async () => {
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      mockFetch.mockResolvedValueOnce(
+        new Response("<html>Bad Gateway</html>", {
+          status: 200,
+          headers: { "Content-Type": "text/html" },
+        }),
+      );
+
+      const req = createRequest("/api/f1/current");
+      const res = await worker.fetch(req, global.env, global.ctx);
+
+      expect(res.status).toBe(502);
+      const data = await res.json();
+      expect(data.error.message).toBe("Invalid upstream content type");
+      expect(errorSpy).toHaveBeenCalled();
+      errorSpy.mockRestore();
+    });
+
+    it("returns 502 when fetch throws network error for F1 API", async () => {
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      mockFetch.mockRejectedValueOnce(new Error("Network failure"));
+
+      const req = createRequest("/api/f1/current");
+      const res = await worker.fetch(req, global.env, global.ctx);
+
+      expect(res.status).toBe(502);
+      const data = await res.json();
+      expect(data.error.message).toBe("Failed to fetch from upstream");
+      expect(errorSpy).toHaveBeenCalledWith("API Fetch Error:", expect.any(Error));
+      errorSpy.mockRestore();
+    });
+
     it("returns cached response if available", async () => {
       const cachedData = { cached: true };
       const cacheResponse = new Response(JSON.stringify(cachedData), {
