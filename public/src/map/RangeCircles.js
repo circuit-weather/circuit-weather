@@ -347,9 +347,9 @@ export class RangeCircles {
         ];
 
         if (isMapbox) {
-            visibleRadiusMeters = Math.max(...corners.map(c => this.getDistance(center[0], center[1], c[0], c[1])));
+            visibleRadiusMeters = corners.reduce((max, c) => Math.max(max, this.getDistance(center[0], center[1], c[0], c[1])), 0);
         } else {
-            visibleRadiusMeters = Math.max(...corners.map(c => this.map.distance(center, L.latLng(c[0], c[1]))));
+            visibleRadiusMeters = corners.reduce((max, c) => Math.max(max, this.map.distance(center, L.latLng(c[0], c[1]))), 0);
         }
 
         // Convert to current unit
