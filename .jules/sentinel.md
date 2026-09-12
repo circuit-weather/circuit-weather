@@ -87,3 +87,8 @@
 **Vulnerability:** The `PrivacyModal` used `this.content.innerHTML` to inject a large template string of HTML elements for its skeleton loading state. While this string contained only hardcoded HTML tags and no variables, relying on `innerHTML` is a discouraged practice that violates strict defense-in-depth principles.
 **Learning:** Even when `innerHTML` contains no dynamic data, it is best practice to construct UI widgets using standard DOM manipulation methods (`document.createElement`, `DocumentFragment`, `appendChild`). When refactoring, pay close attention to test assertions. The mocked `appendChild` in custom Vitest environments doesn't serialize HTML strings, so checking `.textContent` of the appended node is required rather than checking the inner HTML representation of the parent node.
 **Prevention:** Construct UI widgets using standard DOM manipulation methods by default. Ensure test suites properly inspect `appendChild.mock.calls` or query child nodes when verifying DOM generation.
+
+## 2026-10-15 - [Loose CORS Regex Anchoring for Preview Domains]
+**Vulnerability:** Preview domain CORS origin regexes without strict non-capturing port anchors and host termination boundaries could potentially allow origin validation bypasses or unexpected domain matches.
+**Learning:** Origin regexes matching subdomain structures (e.g. `*.pages.dev`) must strictly enforce non-capturing port specification groups `(?::\d+)?` prior to path/end-of-string boundaries `(?:\/|$)` to prevent regex misinterpretations while supporting valid custom ports.
+**Prevention:** Always validate CORS and hotlink origin regexes with explicit non-capturing groups for optional ports `(?::\d+)?` and strict termination anchors `(?:\/|$)`.
