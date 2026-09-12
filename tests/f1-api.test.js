@@ -329,5 +329,65 @@ describe('F1API', () => {
             expect(SafeStorage.setItem).toHaveBeenCalledWith('f1_schedule_cache', expect.any(String));
             warnSpy.mockRestore();
         });
+
+        it('fetches fresh data if localStorage cache contains races that is not an array', async () => {
+            const mockRaces = [{ round: '6', raceName: 'Poisoned Cache GP' }];
+            SafeStorage.getItem.mockReturnValueOnce(JSON.stringify({
+                timestamp: Date.now(),
+                races: 'not-an-array'
+            }));
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: () => Promise.resolve({
+                    MRData: { RaceTable: { Races: mockRaces } }
+                }),
+            });
+
+            const result = await api.getSchedule();
+
+            expect(result).toEqual(mockRaces);
+            expect(mockFetch).toHaveBeenCalledTimes(1);
+            expect(SafeStorage.setItem).toHaveBeenCalledWith('f1_schedule_cache', expect.any(String));
+        });
+
+        it('logs console warning when Jolpica fetch fails and falls back to OpenF1', async () => {
+            const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+            const jolpicaErr = new Error('Jolpica HTTP 500');
+            mockFetch.mockRejectedValueOnce(jolpicaErr);
+            mockOpenF1Success();
+
+            await api.getSchedule();
+
+            expect(warnSpy).toHaveBeenCalledWith(
+                'Jolpica schedule fetch failed, trying OpenF1 fallback:',
+                jolpicaErr
+            );
+            warnSpy.mockRestore();
+        });
+    });
+
+    describe('fetchFromJolpica', () => {
+        let api;
+        let mockFetch;
+
+        beforeEach(() => {
+            vi.clearAllMocks();
+            mockFetch = vi.fn();
+            vi.stubGlobal('fetch', mockFetch);
+            api = new F1API();
+        });
+
+        afterEach(() => {
+            vi.restoreAllMocks();
+        });
+
+        it('throws an error when HTTP response is not OK', async () => {
+            mockFetch.mockResolvedValueOnce({
+                ok: false,
+                status: 500
+            });
+
+            await expect(api.fetchFromJolpica()).rejects.toThrow('HTTP 500');
+        });
     });
 });
