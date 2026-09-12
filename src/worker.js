@@ -279,21 +279,12 @@ function handleConfigRequest(request, env) {
 }
 
 /**
- * Handle F1 API requests with caching
+ * Validates the API path for security and format.
+ * Returns an error Response if invalid, or a valid decoded path string.
  */
-async function handleApiRequest(request, env, ctx, url) {
-  // SEC: Ensure request is not from a script tag (XSSI protection)
-  if (!checkFetchDest(request)) {
-    return createErrorResponse(request, 403, 'Invalid fetch destination');
-  }
-
-
-  // Extract path parameters after /api/f1/
-  // e.g. /api/f1/current -> current
-  let apiPath = url.pathname.slice('/api/f1/'.length);
-
+function validateApiPath(request, rawPath) {
   // SEC: Recursively decode path to prevent multiple-encoding bypasses
-  apiPath = recursivelyDecodePath(apiPath);
+  let apiPath = recursivelyDecodePath(rawPath);
   if (apiPath === null) {
     return createErrorResponse(request, 400, 'Invalid API path encoding');
   }
@@ -315,31 +306,33 @@ async function handleApiRequest(request, env, ctx, url) {
     return createErrorResponse(request, 400, 'Invalid API path');
   }
 
-  // Build upstream URL
-  const upstreamUrl = `https://api.jolpi.ca/ergast/f1/${apiPath}`;
+  return apiPath;
+}
 
-  // Cache key based on the full upstream URL
-  // SEC: Normalize cache key to URL only to prevent cache busting via headers
-  const cacheKey = new Request(upstreamUrl);
-  const cache = caches.default;
+/**
+ * Checks cache for F1 API response and returns hit Response if found.
+ */
+async function checkApiCache(request, cache, cacheKey) {
+  const response = await cache.match(cacheKey);
+  if (!response) return null;
 
-  // Check cache match
-  let response = await cache.match(cacheKey);
+  const headers = new Headers(response.headers);
+  headers.set('X-Cache', 'HIT');
 
-  if (response) {
-    const headers = new Headers(response.headers);
-    headers.set('X-Cache', 'HIT');
+  // Apply strict CORS
+  setCorsHeaders(headers, request);
 
-    // Apply strict CORS
-    setCorsHeaders(headers, request);
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers
+  });
+}
 
-    return new Response(response.body, {
-      status: response.status,
-      statusText: response.statusText,
-      headers
-    });
-  }
-
+/**
+ * Fetches F1 API data from upstream, validates response, caches it, and returns it to client.
+ */
+async function fetchAndCacheApiRequest(request, env, ctx, upstreamUrl, cache, cacheKey) {
   try {
     const upstreamResponse = await fetch(upstreamUrl, {
       headers: {
@@ -405,6 +398,38 @@ async function handleApiRequest(request, env, ctx, url) {
     }
     return createErrorResponse(request, 502, 'Failed to fetch from upstream');
   }
+}
+
+/**
+ * Handle F1 API requests with caching
+ */
+async function handleApiRequest(request, env, ctx, url) {
+  // SEC: Ensure request is not from a script tag (XSSI protection)
+  if (!checkFetchDest(request)) {
+    return createErrorResponse(request, 403, 'Invalid fetch destination');
+  }
+
+  // Extract path parameters after /api/f1/
+  // e.g. /api/f1/current -> current
+  const rawPath = url.pathname.slice('/api/f1/'.length);
+
+  const validatedOrError = validateApiPath(request, rawPath);
+  if (validatedOrError instanceof Response) return validatedOrError;
+  const apiPath = validatedOrError;
+
+  // Build upstream URL
+  const upstreamUrl = `https://api.jolpi.ca/ergast/f1/${apiPath}`;
+
+  // Cache key based on the full upstream URL
+  // SEC: Normalize cache key to URL only to prevent cache busting via headers
+  const cacheKey = new Request(upstreamUrl);
+  const cache = caches.default;
+
+  // Check cache match
+  const cachedResponse = await checkApiCache(request, cache, cacheKey);
+  if (cachedResponse) return cachedResponse;
+
+  return await fetchAndCacheApiRequest(request, env, ctx, upstreamUrl, cache, cacheKey);
 }
 
 /**
