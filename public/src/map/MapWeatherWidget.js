@@ -90,9 +90,7 @@ class MapWeatherWidgetClass {
     const childNodes = doc.documentElement.childNodes;
     childNodes.forEach(node => {
       if (node.nodeType === 1) { // ELEMENT_NODE
-        const newNode = document.createElementNS(svgNS, node.tagName);
-        Array.from(node.attributes).forEach(attr => newNode.setAttribute(attr.name, attr.value));
-        svg.appendChild(newNode);
+        svg.appendChild(node.cloneNode(true));
       }
     });
 
