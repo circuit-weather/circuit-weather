@@ -329,5 +329,61 @@ describe('F1API', () => {
             expect(SafeStorage.setItem).toHaveBeenCalledWith('f1_schedule_cache', expect.any(String));
             warnSpy.mockRestore();
         });
+
+        it('ignores localStorage cache and fetches fresh data when cached races is not an array', async () => {
+            const mockRaces = [{ round: '6', raceName: 'Non-Array Cache GP' }];
+            SafeStorage.getItem.mockReturnValueOnce(JSON.stringify({
+                timestamp: Date.now(),
+                races: 'not-an-array'
+            }));
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: () => Promise.resolve({
+                    MRData: { RaceTable: { Races: mockRaces } }
+                }),
+            });
+
+            const result = await api.getSchedule();
+
+            expect(result).toEqual(mockRaces);
+            expect(mockFetch).toHaveBeenCalledTimes(1);
+        });
+
+        it('ignores localStorage cache and fetches fresh data when cached timestamp is missing or invalid', async () => {
+            const mockRaces = [{ round: '7', raceName: 'No Timestamp GP' }];
+            SafeStorage.getItem.mockReturnValueOnce(JSON.stringify({
+                races: mockRaces
+            }));
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: () => Promise.resolve({
+                    MRData: { RaceTable: { Races: mockRaces } }
+                }),
+            });
+
+            const result = await api.getSchedule();
+
+            expect(result).toEqual(mockRaces);
+            expect(mockFetch).toHaveBeenCalledTimes(1);
+        });
+
+        it('logs a warning and falls back to OpenF1 when fetchFromJolpica response.json throws an error', async () => {
+            const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: () => Promise.reject(new SyntaxError('Unexpected token < in JSON'))
+            });
+            mockOpenF1Success();
+
+            const result = await api.getSchedule();
+
+            expect(result).toHaveLength(1);
+            expect(result[0].raceName).toBe('Bahrain Grand Prix');
+            expect(warnSpy).toHaveBeenCalledWith(
+                'Jolpica schedule fetch failed, trying OpenF1 fallback:',
+                expect.any(SyntaxError)
+            );
+            warnSpy.mockRestore();
+        });
     });
 });
