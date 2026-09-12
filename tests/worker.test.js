@@ -26,6 +26,12 @@ vi.stubGlobal("caches", {
 // Use vi.stubGlobal or defineProperty since global.crypto is read-only in some envs
 Object.defineProperty(global, "crypto", {
   value: {
+    getRandomValues: (arr) => {
+      for (let i = 0; i < arr.length; i++) {
+        arr[i] = Math.floor(Math.random() * 4294967296);
+      }
+      return arr;
+    },
     subtle: {
       digest: vi.fn(async (algo, buffer) => {
         return new ArrayBuffer(32);
@@ -237,6 +243,39 @@ describe("Worker Logic", () => {
         expect.stringContaining("api.jolpi.ca/ergast/f1/current"),
         expect.any(Object),
       );
+    });
+
+    it("returns 502 when upstream returns non-JSON content type for F1 API", async () => {
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      mockFetch.mockResolvedValueOnce(
+        new Response("<html>Bad Gateway</html>", {
+          status: 200,
+          headers: { "Content-Type": "text/html" },
+        }),
+      );
+
+      const req = createRequest("/api/f1/current");
+      const res = await worker.fetch(req, global.env, global.ctx);
+
+      expect(res.status).toBe(502);
+      const data = await res.json();
+      expect(data.error.message).toBe("Invalid upstream content type");
+      expect(errorSpy).toHaveBeenCalled();
+      errorSpy.mockRestore();
+    });
+
+    it("returns 502 when fetch throws network error for F1 API", async () => {
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      mockFetch.mockRejectedValueOnce(new Error("Network failure"));
+
+      const req = createRequest("/api/f1/current");
+      const res = await worker.fetch(req, global.env, global.ctx);
+
+      expect(res.status).toBe(502);
+      const data = await res.json();
+      expect(data.error.message).toBe("Failed to fetch from upstream");
+      expect(errorSpy).toHaveBeenCalledWith("API Fetch Error:", expect.any(Error));
+      errorSpy.mockRestore();
     });
 
     it("returns cached response if available", async () => {
@@ -503,6 +542,7 @@ describe("Worker Logic", () => {
       mockFetch.mockResolvedValueOnce(
         new Response(JSON.stringify(mockGeoJson), {
           status: 200,
+          headers: { "Content-Type": "application/json" },
         }),
       );
 
@@ -519,10 +559,172 @@ describe("Worker Logic", () => {
       );
     });
 
-    it("validates track ID", async () => {
-      const req = createRequest("/api/track/invalid<script>");
+    it("validates track ID (rejects invalid characters, empty track ID, and track ID > 50 chars)", async () => {
+      // Invalid characters
+      const reqInvalidChars = createRequest("/api/track/invalid<script>");
+      const resInvalidChars = await worker.fetch(reqInvalidChars, global.env, global.ctx);
+      expect(resInvalidChars.status).toBe(400);
+      expect(await resInvalidChars.json()).toEqual({
+        error: { status: 400, message: "Invalid track ID" },
+      });
+
+      // Empty track ID
+      const reqEmpty = createRequest("/api/track/");
+      const resEmpty = await worker.fetch(reqEmpty, global.env, global.ctx);
+      expect(resEmpty.status).toBe(400);
+      expect(await resEmpty.json()).toEqual({
+        error: { status: 400, message: "Invalid track ID" },
+      });
+
+      // Track ID > 50 chars
+      const longTrackId = "a".repeat(51);
+      const reqLong = createRequest(`/api/track/${longTrackId}`);
+      const resLong = await worker.fetch(reqLong, global.env, global.ctx);
+      expect(resLong.status).toBe(400);
+      expect(await resLong.json()).toEqual({
+        error: { status: 400, message: "Invalid track ID" },
+      });
+    });
+
+    it("serves cached track response when cache hit occurs", async () => {
+      const mockGeoJson = { type: "FeatureCollection", features: [{ type: "Feature" }] };
+      const cacheResponse = new Response(JSON.stringify(mockGeoJson), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+      cacheStore.set(
+        "https://raw.githubusercontent.com/bacinger/f1-circuits/master/circuits/monaco.geojson",
+        cacheResponse,
+      );
+
+      const req = createRequest("/api/track/monaco", {
+        headers: { Origin: "https://circuit-weather.racing" },
+      });
       const res = await worker.fetch(req, global.env, global.ctx);
-      expect(res.status).toBe(400);
+
+      expect(res.status).toBe(200);
+      expect(await res.json()).toEqual(mockGeoJson);
+      expect(res.headers.get("X-Cache")).toBe("HIT");
+      expect(res.headers.get("Cache-Control")).toBe("public, max-age=86400");
+      expect(res.headers.get("Access-Control-Allow-Origin")).toBe(
+        "https://circuit-weather.racing",
+      );
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it("serves cached track response without CORS when Origin is omitted", async () => {
+      const mockGeoJson = { type: "FeatureCollection", features: [] };
+      const cacheResponse = new Response(JSON.stringify(mockGeoJson), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+      cacheStore.set(
+        "https://raw.githubusercontent.com/bacinger/f1-circuits/master/circuits/monaco.geojson",
+        cacheResponse,
+      );
+
+      const req = createRequest("/api/track/monaco");
+      const res = await worker.fetch(req, global.env, global.ctx);
+
+      expect(res.status).toBe(200);
+      expect(await res.json()).toEqual(mockGeoJson);
+      expect(res.headers.get("X-Cache")).toBe("HIT");
+      expect(res.headers.get("Access-Control-Allow-Origin")).toBeNull();
+      expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it("allows text/plain and text/plain; charset=utf-8 content types from upstream GitHub raw", async () => {
+      const mockGeoJson = { type: "FeatureCollection", features: [] };
+      mockFetch.mockResolvedValueOnce(
+        new Response(JSON.stringify(mockGeoJson), {
+          status: 200,
+          headers: { "Content-Type": "text/plain; charset=utf-8" },
+        }),
+      );
+
+      const req = createRequest("/api/track/silverstone");
+      const res = await worker.fetch(req, global.env, global.ctx);
+
+      expect(res.status).toBe(200);
+      expect(await res.json()).toEqual(mockGeoJson);
+      expect(mockCache.put).toHaveBeenCalled();
+    });
+
+    it("blocks invalid upstream content type (e.g. text/html) and caches error response", async () => {
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      mockFetch.mockResolvedValueOnce(
+        new Response("<html>404 Not Found</html>", {
+          status: 200,
+          headers: { "Content-Type": "text/html" },
+        }),
+      );
+
+      const req = createRequest("/api/track/spa");
+      const res = await worker.fetch(req, global.env, global.ctx);
+
+      expect(res.status).toBe(502);
+      const data = await res.json();
+      expect(data.error.message).toBe("Invalid upstream content type");
+      expect(mockCache.put).toHaveBeenCalled();
+      expect(errorSpy).toHaveBeenCalled();
+      errorSpy.mockRestore();
+    });
+
+    it("handles upstream 404 response by caching and returning 404 error", async () => {
+      mockFetch.mockResolvedValueOnce(
+        new Response("404: Not Found", {
+          status: 404,
+          headers: { "Content-Type": "text/plain" },
+        }),
+      );
+
+      const req = createRequest("/api/track/unknown-circuit");
+      const res = await worker.fetch(req, global.env, global.ctx);
+
+      expect(res.status).toBe(404);
+      const data = await res.json();
+      expect(data.error.message).toBe("Track not found");
+      expect(data.error.status).toBe(404);
+      expect(mockCache.put).toHaveBeenCalled();
+    });
+
+    it("handles upstream 500 response by caching and returning 502 error", async () => {
+      mockFetch.mockResolvedValueOnce(
+        new Response("Internal Server Error", {
+          status: 500,
+          headers: { "Content-Type": "text/plain" },
+        }),
+      );
+
+      const req = createRequest("/api/track/monaco");
+      const res = await worker.fetch(req, global.env, global.ctx);
+
+      expect(res.status).toBe(502);
+      const data = await res.json();
+      expect(data.error.message).toBe("Track not found");
+      expect(data.error.status).toBe(502);
+      expect(mockCache.put).toHaveBeenCalled();
+    });
+
+    it("sets CORS headers on cache miss when valid Origin is provided", async () => {
+      const mockGeoJson = { type: "FeatureCollection", features: [] };
+      mockFetch.mockResolvedValueOnce(
+        new Response(JSON.stringify(mockGeoJson), {
+          status: 200,
+          headers: { "Content-Type": "application/json" },
+        }),
+      );
+
+      const req = createRequest("/api/track/monaco", {
+        headers: { Origin: "https://circuit-weather.racing" },
+      });
+      const res = await worker.fetch(req, global.env, global.ctx);
+
+      expect(res.status).toBe(200);
+      expect(res.headers.get("Access-Control-Allow-Origin")).toBe(
+        "https://circuit-weather.racing",
+      );
+      expect(res.headers.get("Vary")).toBe("Origin");
     });
 
     it("returns 502 when upstream track fetch fails with an exception", async () => {
@@ -553,6 +755,12 @@ describe("Worker Logic", () => {
 
       Object.defineProperty(global, "crypto", {
         value: {
+          getRandomValues: (arr) => {
+            for (let i = 0; i < arr.length; i++) {
+              arr[i] = Math.floor(Math.random() * 4294967296);
+            }
+            return arr;
+          },
           subtle: {
             digest: vi.fn(async () => buffer),
           },

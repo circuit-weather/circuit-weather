@@ -126,148 +126,159 @@ export class PrivacyModal {
     }
   }
 
+  // SEC: Sanitize URLs to prevent XSS (e.g. javascript: links)
+  sanitizeUrl(url) {
+    // SEC: Remove all whitespace/control chars to prevent scheme bypass (e.g. java\nscript:)
+    let clean = String(url).replace(/[\s\x00-\x1F\x7F-\x9F]/g, "");
+
+    // SEC: Decode ALL HTML entities that could bypass the scheme check (e.g. j&#x61;vascript:alert(1))
+    // The browser decodes entities in the href attribute before parsing the URL scheme,
+    // so we must check the fully decoded value.
+    try {
+      const doc = new DOMParser().parseFromString(clean, "text/html");
+      if (doc && doc.documentElement) {
+        clean = doc.documentElement.textContent || clean;
+      } else {
+        return "#unsafe-url";
+      }
+    } catch {
+      // Fallback if DOMParser fails
+      return "#unsafe-url";
+    }
+
+    // Remove control characters and whitespace AGAIN after decoding, as entities might decode to them
+    clean = clean.replace(/[\s\x00-\x1F\x7F-\x9F]/g, "");
+
+    // Allowlist approach: Check for protocol scheme
+    // Regex: Start with letter, followed by valid scheme chars, then colon
+    if (/^[a-z][a-z0-9+.-]*:/i.test(clean)) {
+      // If scheme exists, it MUST be in our allowlist
+      if (/^(?:https?|mailto):/i.test(clean)) {
+        return clean; // Safely return the decoded link
+      }
+      // Block file:, javascript:, vbscript:, data:, blob:, etc.
+      return "#unsafe-url";
+    }
+    // No scheme (relative URL), allow
+    return clean; // Safely return the decoded link
+  }
+
+  createLinkElement(text, rawUrl) {
+    const a = document.createElement('a');
+    a.href = this.sanitizeUrl(rawUrl);
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    a.className = 'external-link';
+    a.textContent = text + ' ';
+
+    // Palette A11y: Add external link indicator and SR text
+    const svgNS = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(svgNS, 'svg');
+    svg.setAttribute('class', 'icon-external');
+    svg.setAttribute('aria-hidden', 'true');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('fill', 'none');
+    svg.setAttribute('stroke', 'currentColor');
+    svg.setAttribute('stroke-width', '2');
+    svg.setAttribute('stroke-linecap', 'round');
+    svg.setAttribute('stroke-linejoin', 'round');
+
+    const path = document.createElementNS(svgNS, 'path');
+    path.setAttribute('d', 'M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6');
+    svg.appendChild(path);
+
+    const polyline = document.createElementNS(svgNS, 'polyline');
+    polyline.setAttribute('points', '15 3 21 3 21 9');
+    svg.appendChild(polyline);
+
+    const line = document.createElementNS(svgNS, 'line');
+    line.setAttribute('x1', '10');
+    line.setAttribute('y1', '14');
+    line.setAttribute('x2', '21');
+    line.setAttribute('y2', '3');
+    svg.appendChild(line);
+
+    a.appendChild(svg);
+
+    const sr = document.createElement('span');
+    sr.className = 'sr-only';
+    sr.textContent = '(' + i18n.t('privacy.opensInNewTab') + ')';
+    a.appendChild(sr);
+
+    return a;
+  }
+
+  parseInline(text, container) {
+    const regex = /\*\*([^*]+)\*\*|\[([^\]]+)\]\(([^)]+)\)/g;
+    let lastIndex = 0;
+    let match;
+
+    while ((match = regex.exec(text)) !== null) {
+      if (match.index > lastIndex) {
+        container.appendChild(document.createTextNode(text.substring(lastIndex, match.index)));
+      }
+
+      if (match[1]) {
+        // Bold
+        const strong = document.createElement('strong');
+        strong.textContent = match[1];
+        container.appendChild(strong);
+      } else if (match[2]) {
+        // Link
+        container.appendChild(this.createLinkElement(match[2], match[3]));
+      }
+      lastIndex = regex.lastIndex;
+    }
+
+    if (lastIndex < text.length) {
+      container.appendChild(document.createTextNode(text.substring(lastIndex)));
+    }
+  }
+
+  parseListBlock(block) {
+    const ul = document.createElement('ul');
+    const items = block.split('\n');
+    for (const item of items) {
+      if (item.trim().startsWith('- ')) {
+        const li = document.createElement('li');
+        this.parseInline(item.trim().substring(2), li);
+        ul.appendChild(li);
+      }
+    }
+    return ul;
+  }
+
+  parseBlock(block) {
+    if (block.startsWith('### ')) {
+      const h3 = document.createElement('h3');
+      this.parseInline(block.substring(4), h3);
+      return h3;
+    }
+    if (block.startsWith('## ')) {
+      const h2 = document.createElement('h2');
+      this.parseInline(block.substring(3), h2);
+      return h2;
+    }
+    if (block.startsWith('- ')) {
+      return this.parseListBlock(block);
+    }
+    const p = document.createElement('p');
+    this.parseInline(block, p);
+    return p;
+  }
+
   parseMarkdown(md) {
     // Simple markdown parser for privacy policy content
-
-    // SEC: Sanitize URLs to prevent XSS (e.g. javascript: links)
-    const sanitizeUrl = (url) => {
-      // SEC: Remove all whitespace/control chars to prevent scheme bypass (e.g. java\nscript:)
-      let clean = String(url).replace(/[\s\x00-\x1F\x7F-\x9F]/g, "");
-
-      // SEC: Decode ALL HTML entities that could bypass the scheme check (e.g. j&#x61;vascript:alert(1))
-      // The browser decodes entities in the href attribute before parsing the URL scheme,
-      // so we must check the fully decoded value.
-      try {
-        const doc = new DOMParser().parseFromString(clean, "text/html");
-        if (doc && doc.documentElement) {
-          clean = doc.documentElement.textContent || clean;
-        } else {
-          return "#unsafe-url";
-        }
-      } catch {
-        // Fallback if DOMParser fails
-        return "#unsafe-url";
-      }
-
-      // Remove control characters and whitespace AGAIN after decoding, as entities might decode to them
-      clean = clean.replace(/[\s\x00-\x1F\x7F-\x9F]/g, "");
-
-      // Allowlist approach: Check for protocol scheme
-      // Regex: Start with letter, followed by valid scheme chars, then colon
-      if (/^[a-z][a-z0-9+.-]*:/i.test(clean)) {
-        // If scheme exists, it MUST be in our allowlist
-        if (/^(?:https?|mailto):/i.test(clean)) {
-          return clean; // Safely return the decoded link
-        }
-        // Block file:, javascript:, vbscript:, data:, blob:, etc.
-        return "#unsafe-url";
-      }
-      // No scheme (relative URL), allow
-      return clean; // Safely return the decoded link
-    };
-
     const fragment = document.createDocumentFragment();
 
     // Remove the top-level title (we have it in the header)
-    md = md.replace(/^#\s+.+\s*\n*/m, "");
-    const blocks = md.split("\n\n");
-
-    const parseInline = (text, container) => {
-      const regex = /\*\*([^*]+)\*\*|\[([^\]]+)\]\(([^)]+)\)/g;
-      let lastIndex = 0;
-      let match;
-
-      while ((match = regex.exec(text)) !== null) {
-        if (match.index > lastIndex) {
-          container.appendChild(document.createTextNode(text.substring(lastIndex, match.index)));
-        }
-
-        if (match[1]) {
-          // Bold
-          const strong = document.createElement('strong');
-          strong.textContent = match[1];
-          container.appendChild(strong);
-        } else if (match[2]) {
-          // Link
-          const a = document.createElement('a');
-          a.href = sanitizeUrl(match[3]);
-          a.target = '_blank';
-          a.rel = 'noopener noreferrer';
-          a.className = 'external-link';
-          a.textContent = match[2] + ' ';
-
-          // Palette A11y: Add external link indicator and SR text
-          const svgNS = 'http://www.w3.org/2000/svg';
-          const svg = document.createElementNS(svgNS, 'svg');
-          svg.setAttribute('class', 'icon-external');
-          svg.setAttribute('aria-hidden', 'true');
-          svg.setAttribute('viewBox', '0 0 24 24');
-          svg.setAttribute('fill', 'none');
-          svg.setAttribute('stroke', 'currentColor');
-          svg.setAttribute('stroke-width', '2');
-          svg.setAttribute('stroke-linecap', 'round');
-          svg.setAttribute('stroke-linejoin', 'round');
-
-          const path = document.createElementNS(svgNS, 'path');
-          path.setAttribute('d', 'M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6');
-          svg.appendChild(path);
-
-          const polyline = document.createElementNS(svgNS, 'polyline');
-          polyline.setAttribute('points', '15 3 21 3 21 9');
-          svg.appendChild(polyline);
-
-          const line = document.createElementNS(svgNS, 'line');
-          line.setAttribute('x1', '10');
-          line.setAttribute('y1', '14');
-          line.setAttribute('x2', '21');
-          line.setAttribute('y2', '3');
-          svg.appendChild(line);
-
-          a.appendChild(svg);
-
-          const sr = document.createElement('span');
-          sr.className = 'sr-only';
-          sr.textContent = '(' + i18n.t('privacy.opensInNewTab') + ')';
-          a.appendChild(sr);
-
-          container.appendChild(a);
-        }
-        lastIndex = regex.lastIndex;
-      }
-
-      if (lastIndex < text.length) {
-        container.appendChild(document.createTextNode(text.substring(lastIndex)));
-      }
-    };
+    const cleanedMd = md.replace(/^#\s+.+\s*\n*/m, "");
+    const blocks = cleanedMd.split("\n\n");
 
     for (let block of blocks) {
       block = block.trim();
       if (!block) continue;
-
-      if (block.startsWith('### ')) {
-        const h3 = document.createElement('h3');
-        parseInline(block.substring(4), h3);
-        fragment.appendChild(h3);
-      } else if (block.startsWith('## ')) {
-        const h2 = document.createElement('h2');
-        parseInline(block.substring(3), h2);
-        fragment.appendChild(h2);
-      } else if (block.startsWith('- ')) {
-        const ul = document.createElement('ul');
-        const items = block.split('\n');
-        for (const item of items) {
-          if (item.trim().startsWith('- ')) {
-            const li = document.createElement('li');
-            parseInline(item.trim().substring(2), li);
-            ul.appendChild(li);
-          }
-        }
-        fragment.appendChild(ul);
-      } else {
-        const p = document.createElement('p');
-        parseInline(block, p);
-        fragment.appendChild(p);
-      }
+      fragment.appendChild(this.parseBlock(block));
     }
 
     return fragment;

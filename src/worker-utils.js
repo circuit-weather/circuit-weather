@@ -3,9 +3,9 @@
 export const VALID_API_PATH_REGEX = /^[a-zA-Z0-9/._-]*$/;
 export const VALID_TRACK_ID_REGEX = /^[a-z0-9-]+$/;
 const PRODUCTION_DOMAIN = 'https://circuit-weather.racing';
-const ALLOWED_ORIGIN_LOCALHOST_REGEX = /^http:\/\/localhost(:\d+)?(\/|$)/;
-const ALLOWED_ORIGIN_127_REGEX = /^http:\/\/127\.0\.0\.1(:\d+)?(\/|$)/;
-const ALLOWED_PREVIEW_REGEX = /^https:\/\/(?:[a-zA-Z0-9-]+\.)*circuit-weather\.pages\.dev(?:\/|$)/;
+const ALLOWED_ORIGIN_LOCALHOST_REGEX = /^http:\/\/localhost(?::\d+)?(?:\/|$)/;
+const ALLOWED_ORIGIN_127_REGEX = /^http:\/\/127\.0\.0\.1(?::\d+)?(?:\/|$)/;
+const ALLOWED_PREVIEW_REGEX = /^https:\/\/(?:[a-zA-Z0-9-]+\.)*circuit-weather\.pages\.dev(?::\d+)?(?:\/|$)/;
 export const DOTFILE_REGEX = /(?:^|\/)\./;
 
 /**
@@ -23,7 +23,7 @@ export function recursivelyDecodePath(path) {
     previous = decoded;
     try {
       decoded = decodeURIComponent(decoded);
-    } catch (e) {
+    } catch {
       // Catch URIError for partially decoded string (legit '%' chars)
       return decoded;
     }
@@ -310,4 +310,17 @@ export function createErrorResponse(request, status, message, additionalHeaders 
       ...additionalHeaders
     }
   });
+}
+
+/**
+ * Returns a cryptographically secure random float in [0, 1).
+ * Uses crypto.getRandomValues if available, falling back to Math.random().
+ */
+export function getSecureRandom() {
+  if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+    const array = new Uint32Array(1);
+    crypto.getRandomValues(array);
+    return array[0] / 4294967296;
+  }
+  return Math.random();
 }
