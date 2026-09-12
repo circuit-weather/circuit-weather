@@ -144,7 +144,7 @@ export class PrivacyModal {
         } else {
           return "#unsafe-url";
         }
-      } catch (e) {
+      } catch {
         // Fallback if DOMParser fails
         return "#unsafe-url";
       }
