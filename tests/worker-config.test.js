@@ -25,7 +25,7 @@ describe("Worker Config Route (/api/config)", () => {
     });
   };
 
-  it("handles valid config request correctly", async () => {
+  it("handles valid config request correctly and includes security headers", async () => {
     const req = createRequest("/api/config");
     const res = await worker.fetch(req, global.env, global.ctx);
 
@@ -34,6 +34,10 @@ describe("Worker Config Route (/api/config)", () => {
     expect(data.mapboxToken).toBe("test-token");
     expect(res.headers.get("Content-Type")).toBe("application/json");
     expect(res.headers.get("Cache-Control")).toBe("public, max-age=86400");
+    expect(res.headers.get("X-Content-Type-Options")).toBe("nosniff");
+    expect(res.headers.get("X-Frame-Options")).toBe("DENY");
+    expect(res.headers.get("Referrer-Policy")).toBe("strict-origin-when-cross-origin");
+    expect(res.headers.get("Content-Security-Policy")).toBeTruthy();
   });
 
   it("rejects invalid fetch destination", async () => {
@@ -70,6 +74,16 @@ describe("Worker Config Route (/api/config)", () => {
 
   it("uses empty string for MAPBOX_ACCESS_TOKEN if not set in env", async () => {
     vi.stubGlobal("env", {}); // No MAPBOX_ACCESS_TOKEN
+    const req = createRequest("/api/config");
+    const res = await worker.fetch(req, global.env, global.ctx);
+
+    expect(res.status).toBe(200);
+    const data = await res.json();
+    expect(data.mapboxToken).toBe("");
+  });
+
+  it("uses empty string for MAPBOX_ACCESS_TOKEN if set to undefined", async () => {
+    vi.stubGlobal("env", { MAPBOX_ACCESS_TOKEN: undefined });
     const req = createRequest("/api/config");
     const res = await worker.fetch(req, global.env, global.ctx);
 
