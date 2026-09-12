@@ -7,7 +7,7 @@ export const SafeStorage = {
     getItem(key) {
         try {
             return localStorage.getItem(key);
-        } catch (e) {
+        } catch {
             // SEC: Fail securely if storage is disabled/blocked (e.g. privacy settings)
             return null;
         }
