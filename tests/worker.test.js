@@ -26,6 +26,12 @@ vi.stubGlobal("caches", {
 // Use vi.stubGlobal or defineProperty since global.crypto is read-only in some envs
 Object.defineProperty(global, "crypto", {
   value: {
+    getRandomValues: (arr) => {
+      for (let i = 0; i < arr.length; i++) {
+        arr[i] = Math.floor(Math.random() * 4294967296);
+      }
+      return arr;
+    },
     subtle: {
       digest: vi.fn(async (algo, buffer) => {
         return new ArrayBuffer(32);
@@ -553,6 +559,12 @@ describe("Worker Logic", () => {
 
       Object.defineProperty(global, "crypto", {
         value: {
+          getRandomValues: (arr) => {
+            for (let i = 0; i < arr.length; i++) {
+              arr[i] = Math.floor(Math.random() * 4294967296);
+            }
+            return arr;
+          },
           subtle: {
             digest: vi.fn(async () => buffer),
           },
