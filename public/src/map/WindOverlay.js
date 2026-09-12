@@ -168,7 +168,7 @@ export class WindOverlay {
             }
             const p = this.map.latLngToContainerPoint([lat, lon]);
             return p ? { x: p.x, y: p.y } : null;
-        } catch (_) {
+        } catch {
             return null;
         }
     }
