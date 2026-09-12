@@ -273,8 +273,8 @@ export class CircuitWeatherApp {
             end.setHours(end.getHours() + CONFIG.RACE_DAY_END_HOUR);
         }
 
-        // An unparseable date yields NaN; leave it uncached so a later fix to
-        // the schedule data is picked up rather than frozen in.
+        // An unparseable date yields NaN and is intentionally left uncached so
+        // dynamically updated schedule data can be re-evaluated if corrected.
         if (!Number.isNaN(end.getTime())) {
             Object.defineProperty(race, '_endTimeMs', {
                 value: end.getTime(),
