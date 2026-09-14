@@ -2,12 +2,13 @@
  * Determines the status of a session based on current time.
  * @param {Object} session - The session object (must have date and time).
  * @param {Date} now - The current date/time.
+ * @param {Date} [parsedStart] - Optional pre-parsed Date object for session start.
  * @returns {string} - 'LIVE', 'FUTURE', 'PAST', or 'UNKNOWN'.
  */
-export function getSessionStatus(session, now) {
+export function getSessionStatus(session, now, parsedStart) {
     if (!session || !session.date || !session.time) return 'UNKNOWN';
 
-    const start = new Date(`${session.date}T${session.time}`);
+    const start = parsedStart || new Date(`${session.date}T${session.time}`);
     // Assume 2 hours duration for most sessions, 3 hours for race.
     let durationHours = 2;
     if (session.id === 'race') {
