@@ -2,6 +2,8 @@
 
 **Utolsó frissítés:** 2026. Január
 
+**Megjegyzés:** Ez a fordítás gépi úton készült. Eltérés esetén az angol nyelvű változat az irányadó.
+
 ## Áttekintés
 
 A Circuit Weather egy nyílt forráskódú webalkalmazás, amely valós idejű időjárás radart jelenít meg a Forma-1-es versenypályákhoz. Elkötelezettek vagyunk az alkalmazásunk működésének és adatainak kezelésének átláthatósága mellett.

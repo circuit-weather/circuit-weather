@@ -2,6 +2,8 @@
 
 **Laatst bijgewerkt:** januari 2026
 
+**Let op:** Deze vertaling is automatisch gegenereerd. Bij verschillen is de Engelse versie doorslaggevend.
+
 ## Overzicht
 
 Circuit Weather is een open-source webapplicatie die realtime weerradar toont voor Formule 1-circuits. Wij streven naar transparantie over de werking van onze applicatie en over de manier waarop uw gegevens worden verwerkt.

@@ -2,9 +2,11 @@
 
 **Ultimo aggiornamento:** Gennaio 2026
 
+**Avviso:** Questa traduzione è stata generata automaticamente. In caso di discrepanze, prevale la versione inglese.
+
 ## Panoramica
 
-Circuit Weather e una web app open source che mostra radar meteo in tempo reale per i circuiti di Formula 1.
+Circuit Weather è una web app open source che mostra radar meteo in tempo reale per i circuiti di Formula 1.
 
 ## Raccolta dati
 
@@ -20,7 +22,7 @@ L'app usa servizi terzi che possono elaborare dati standard delle richieste web 
 
 ### Cloudflare
 
-Il sito e ospitato su **Cloudflare Workers**.
+Il sito è ospitato su **Cloudflare Workers**.
 
 - **Proxy privacy:** Calendario F1, tracciati, asset Leaflet, asset Mapbox GL JS e tile RainViewer passano dal nostro Worker.
 - **Cache edge:** Le risposte API vengono memorizzate in cache vicino all'utente.
@@ -29,7 +31,7 @@ Il sito e ospitato su **Cloudflare Workers**.
 
 ## Servizi di terze parti
 
-Il browser puo connettersi direttamente ad alcuni servizi per mappe, tile e widget.
+Il browser può connettersi direttamente ad alcuni servizi per mappe, tile e widget.
 
 ### Dati di pianificazione
 

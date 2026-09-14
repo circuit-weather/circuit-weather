@@ -1,35 +1,37 @@
-# Politica de privacidade
+# Política de privacidade
 
-**Ultima atualizacao:** Janeiro 2026
+**Última atualização:** Janeiro 2026
 
-## Visao geral
+**Aviso:** Esta tradução foi gerada automaticamente. Em caso de divergência, prevalece a versão em inglês.
 
-O Circuit Weather e uma aplicacao web open source que mostra radar meteorologico em tempo real para circuitos de Formula 1.
+## Visão geral
+
+O Circuit Weather é uma aplicação web open source que mostra radar meteorológico em tempo real para circuitos de Formula 1.
 
 ## Recolha de dados
 
-**O Circuit Weather nao recolhe, armazena ou processa dados pessoais.**
+**O Circuit Weather não recolhe, armazena ou processa dados pessoais.**
 
 - Sem contas de utilizador ou registo.
-- Sem rastreamento interno ou analytics proprietarios.
+- Sem rastreamento interno ou analytics proprietários.
 - Sem base de dados de utilizadores.
 
-A aplicacao depende de servicos de terceiros que podem processar dados web padrao (IP e User Agent).
+A aplicação depende de serviços de terceiros que podem processar dados web padrão (IP e User Agent).
 
 ## Infraestrutura e cache
 
 ### Cloudflare
 
-O website esta alojado em **Cloudflare Workers**.
+O website está alojado em **Cloudflare Workers**.
 
-- **Proxy de privacidade:** Calendario F1, tracados, assets Leaflet, assets Mapbox GL JS e tiles RainViewer passam pelo nosso Worker.
-- **Cache edge:** Respostas API sao guardadas em cache para melhor desempenho.
-- **Dados processados:** A Cloudflare processa IP e metadados de pedido para entrega e seguranca.
-- **Politica:** [cloudflare.com/privacypolicy](https://www.cloudflare.com/privacypolicy/)
+- **Proxy de privacidade:** Calendário F1, traçados, assets Leaflet, assets Mapbox GL JS e tiles RainViewer passam pelo nosso Worker.
+- **Cache edge:** Respostas API são guardadas em cache para melhor desempenho.
+- **Dados processados:** A Cloudflare processa IP e metadados de pedido para entrega e segurança.
+- **Política:** [cloudflare.com/privacypolicy](https://www.cloudflare.com/privacypolicy/)
 
-## Servicos de terceiros
+## Serviços de terceiros
 
-O navegador pode ligar-se diretamente a servicos terceiros para mapas, tiles e widgets.
+O navegador pode ligar-se diretamente a serviços terceiros para mapas, tiles e widgets.
 
 ### Dados de Agendamento
 
@@ -39,35 +41,35 @@ O navegador pode ligar-se diretamente a servicos terceiros para mapas, tiles e w
 - **Dados Enviados:** Seu navegador se conecta diretamente à API do OpenF1. Seu endereço IP é visível para o OpenF1 como parte dessa solicitação da web padrão.
 - **Política de Privacidade:** [openf1.org](https://openf1.org/)
 
-### Dados meteorologicos
+### Dados meteorológicos
 
 **Open-Meteo**
 
-- **Objetivo:** Previsoes de sessao.
+- **Objetivo:** Previsões de sessão.
 - **Dados enviados:** IP e coordenadas do circuito selecionado.
-- **Politica:** [open-meteo.com/en/features#terms](https://open-meteo.com/en/features#terms)
+- **Política:** [open-meteo.com/en/features#terms](https://open-meteo.com/en/features#terms)
 
 **RainViewer**
 
 - **Objetivo:** Camadas de radar.
 - **Dados enviados:** Nenhum diretamente; os dados passam por proxy.
-- **Politica:** [rainviewer.com/privacy](https://www.rainviewer.com/privacy.html)
+- **Política:** [rainviewer.com/privacy](https://www.rainviewer.com/privacy.html)
 
 ### Mapas e recursos
 
 **Mapbox**
 
-- **Proposito:** Fornece os blocos de fundo do mapa principal e renderizacao vetorial.
-- **Dados Enviados:** Seu navegador se conecta diretamente as APIs do Mapbox (`api.mapbox.com` e `events.mapbox.com`). Seu endereco IP e metadados de solicitacao sao visiveis para o Mapbox como parte de solicitacoes da web padrao.
-- **Politica de privacidade:** [mapbox.com/legal/privacy](https://www.mapbox.com/legal/privacy/)
+- **Propósito:** Fornece os blocos de fundo do mapa principal e renderização vetorial.
+- **Dados Enviados:** Seu navegador se conecta diretamente às APIs do Mapbox (`api.mapbox.com` e `events.mapbox.com`). Seu endereço IP e metadados de solicitação são visíveis para o Mapbox como parte de solicitações da web padrão.
+- **Política de privacidade:** [mapbox.com/legal/privacy](https://www.mapbox.com/legal/privacy/)
 
 **Carto (OpenStreetMap)**
 
 - **Objetivo:** Tiles de mapa base.
 - **Dados enviados:** O navegador pede imagens diretamente ao Carto.
-- **Politica:** [carto.com/privacy](https://carto.com/privacy/)
+- **Política:** [carto.com/privacy](https://carto.com/privacy/)
 
-**CDNs publicas**
+**CDNs públicas**
 
 - **Google Fonts**
 - **FlagCDN**
@@ -77,8 +79,8 @@ O navegador pode ligar-se diretamente a servicos terceiros para mapas, tiles e w
 **Buy Me a Coffee**
 
 - **Objetivo:** Donativos opcionais.
-- **Dados enviados:** Se usado, podem ser processados cookies e dados de pagamento/sessao.
-- **Politica:** [buymeacoffee.com/privacy-policy](https://www.buymeacoffee.com/privacy-policy)
+- **Dados enviados:** Se usado, podem ser processados cookies e dados de pagamento/sessão.
+- **Política:** [buymeacoffee.com/privacy-policy](https://www.buymeacoffee.com/privacy-policy)
 
 ## Fontes de dados (proxy)
 
@@ -90,7 +92,7 @@ O navegador pode ligar-se diretamente a servicos terceiros para mapas, tiles e w
 
 ## Armazenamento local
 
-Preferencias guardadas localmente no navegador:
+Preferências guardadas localmente no navegador:
 
 - **theme:** `light` ou `dark`
 - **unit:** `metric` ou `imperial`
@@ -104,4 +106,4 @@ Preferencias guardadas localmente no navegador:
 
 ## Contacto
 
-Para questoes de privacidade, abra um issue no GitHub.
+Para questões de privacidade, abra um issue no GitHub.

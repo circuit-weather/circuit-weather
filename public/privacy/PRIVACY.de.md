@@ -1,10 +1,12 @@
-# Datenschutzerklarung
+# Datenschutzerklärung
 
 **Zuletzt aktualisiert:** Januar 2026
 
-## Uberblick
+**Hinweis:** Diese Übersetzung wurde maschinell erstellt. Bei Abweichungen ist die englische Fassung maßgeblich.
 
-Circuit Weather ist eine Open-Source-Webanwendung mit Echtzeit-Wetterradar fur Formel-1-Strecken.
+## Überblick
+
+Circuit Weather ist eine Open-Source-Webanwendung mit Echtzeit-Wetterradar für Formel-1-Strecken.
 
 ## Datenerhebung
 
@@ -14,7 +16,7 @@ Circuit Weather ist eine Open-Source-Webanwendung mit Echtzeit-Wetterradar fur F
 - Kein internes Tracking oder eigene Analytics.
 - Keine Benutzerdatenbank.
 
-Zur Funktion nutzt die Anwendung Drittanbieter, die ubliche Webanfragedaten (z. B. IP und User Agent) verarbeiten konnen.
+Zur Funktion nutzt die Anwendung Drittanbieter, die übliche Webanfragedaten (z. B. IP und User Agent) verarbeiten können.
 
 ## Infrastruktur und Caching
 
@@ -22,14 +24,14 @@ Zur Funktion nutzt die Anwendung Drittanbieter, die ubliche Webanfragedaten (z. 
 
 Die Website wird auf **Cloudflare Workers** betrieben.
 
-- **Privacy-Proxy:** F1-Kalender, Streckenlayouts, Leaflet-Assets, Mapbox GL JS-Assets und RainViewer-Tiles laufen uber unseren Worker.
+- **Privacy-Proxy:** F1-Kalender, Streckenlayouts, Leaflet-Assets, Mapbox GL JS-Assets und RainViewer-Tiles laufen über unseren Worker.
 - **Edge-Cache:** API-Antworten werden am Edge zwischengespeichert.
-- **Verarbeitete Daten:** Cloudflare verarbeitet IP und Request-Metadaten fur Auslieferung und Sicherheit.
+- **Verarbeitete Daten:** Cloudflare verarbeitet IP und Request-Metadaten für Auslieferung und Sicherheit.
 - **Datenschutzrichtlinie:** [cloudflare.com/privacypolicy](https://www.cloudflare.com/privacypolicy/)
 
 ## Drittanbieter-Dienste
 
-Der Browser kann fur Karten, Tiles und Widgets direkt mit Drittanbietern kommunizieren.
+Der Browser kann für Karten, Tiles und Widgets direkt mit Drittanbietern kommunizieren.
 
 ### Zeitplandaten
 
@@ -43,14 +45,14 @@ Der Browser kann fur Karten, Tiles und Widgets direkt mit Drittanbietern kommuni
 
 **Open-Meteo**
 
-- **Zweck:** Wettervorhersagen fur Sessions.
-- **Gesendete Daten:** IP-Adresse und Koordinaten der gewahlten Strecke.
+- **Zweck:** Wettervorhersagen für Sessions.
+- **Gesendete Daten:** IP-Adresse und Koordinaten der gewählten Strecke.
 - **Datenschutz:** [open-meteo.com/en/features#terms](https://open-meteo.com/en/features#terms)
 
 **RainViewer**
 
 - **Zweck:** Radar-Layer.
-- **Gesendete Daten:** Keine direkte Verbindung; Daten werden uber unseren Worker bereitgestellt.
+- **Gesendete Daten:** Keine direkte Verbindung; Daten werden über unseren Worker bereitgestellt.
 - **Datenschutz:** [rainviewer.com/privacy](https://www.rainviewer.com/privacy.html)
 
 ### Karten und Assets
@@ -67,7 +69,7 @@ Der Browser kann fur Karten, Tiles und Widgets direkt mit Drittanbietern kommuni
 - **Gesendete Daten:** Der Browser lädt Kartenbilder direkt von Carto.
 - **Datenschutz:** [carto.com/privacy](https://carto.com/privacy/)
 
-**Offentliche CDNs**
+**Öffentliche CDNs**
 
 - **Google Fonts**
 - **FlagCDN**
@@ -76,8 +78,8 @@ Der Browser kann fur Karten, Tiles und Widgets direkt mit Drittanbietern kommuni
 
 **Buy Me a Coffee**
 
-- **Zweck:** Freiwillige Unterstutzung.
-- **Gesendete Daten:** Bei Nutzung konnen Cookies sowie Zahlungs-/Sitzungsdaten verarbeitet werden.
+- **Zweck:** Freiwillige Unterstützung.
+- **Gesendete Daten:** Bei Nutzung können Cookies sowie Zahlungs-/Sitzungsdaten verarbeitet werden.
 - **Datenschutz:** [buymeacoffee.com/privacy-policy](https://www.buymeacoffee.com/privacy-policy)
 
 ## Datenquellen (proxy)
@@ -104,4 +106,4 @@ Lokale Einstellungen im Browser:
 
 ## Kontakt
 
-Bei Datenschutzfragen bitte ein GitHub-Issue eroffnen.
+Bei Datenschutzfragen bitte ein GitHub-Issue eröffnen.
