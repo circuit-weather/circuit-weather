@@ -149,18 +149,26 @@ export class PrivacyModal {
     // Remove control characters and whitespace AGAIN after decoding, as entities might decode to them
     clean = clean.replace(/[\s\x00-\x1F\x7F-\x9F]/g, "");
 
-    // Allowlist approach: Check for protocol scheme
-    // Regex: Start with letter, followed by valid scheme chars, then colon
-    if (/^[a-z][a-z0-9+.-]*:/i.test(clean)) {
-      // If scheme exists, it MUST be in our allowlist
-      if (/^(?:https?|mailto):/i.test(clean)) {
+    // SEC: Use URL API for standard, robust URL parsing to avoid regex bypasses
+    try {
+      if (URL.canParse(clean)) {
+        const parsed = new URL(clean);
+        const protocol = parsed.protocol.toLowerCase();
+        if (protocol === "https:" || protocol === "http:" || protocol === "mailto:") {
+          return clean; // Safely return the decoded link
+        }
+        return "#unsafe-url";
+      }
+
+      // Check if URL is a valid relative URL
+      if (URL.canParse(clean, "https://dummy.invalid")) {
         return clean; // Safely return the decoded link
       }
-      // Block file:, javascript:, vbscript:, data:, blob:, etc.
+
+      return "#unsafe-url";
+    } catch {
       return "#unsafe-url";
     }
-    // No scheme (relative URL), allow
-    return clean; // Safely return the decoded link
   }
 
   createLinkElement(text, rawUrl) {
