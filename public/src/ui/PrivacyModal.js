@@ -348,6 +348,7 @@ export class PrivacyModal {
       'es',
       'fr',
       'de',
+      'hu',
       'it',
       'ja',
       'pt-BR',

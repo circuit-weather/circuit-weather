@@ -1,0 +1,53 @@
+import { describe, it, expect, vi } from 'vitest';
+import { readdirSync, existsSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { dirname, join } from 'node:path';
+
+// PrivacyModal's constructor only reaches for elements and wires listeners, so
+// a minimal document stub is enough to exercise the locale resolution logic.
+vi.stubGlobal('document', {
+    getElementById: vi.fn(() => null),
+    addEventListener: vi.fn(),
+});
+
+const { PrivacyModal } = await import('../public/src/ui/PrivacyModal.js');
+const { LANGUAGE_NAMES } = await import('../public/src/i18n/index.js');
+
+const PRIVACY_DIR = join(dirname(fileURLToPath(import.meta.url)), '..', 'public', 'privacy');
+
+// Derive the shipped policies from disk rather than restating them here, so a
+// new PRIVACY.<locale>.md is covered the moment it lands. `hu` previously
+// shipped a translation that resolvePrivacyLocale() did not list as supported,
+// silently serving Hungarian users the English policy.
+const shippedLocales = readdirSync(PRIVACY_DIR)
+    .map((file) => /^PRIVACY\.(.+)\.md$/.exec(file))
+    .filter(Boolean)
+    .map((match) => match[1])
+    .sort();
+
+describe('privacy policy locale coverage', () => {
+    const modal = new PrivacyModal();
+
+    it('finds the shipped privacy policy translations', () => {
+        expect(shippedLocales.length).toBeGreaterThan(0);
+    });
+
+    it.each(shippedLocales)('serves the %s translation to its own speakers', (locale) => {
+        expect(modal.resolvePrivacyLocale(locale)).toBe(locale);
+    });
+
+    it.each(Object.keys(LANGUAGE_NAMES))('resolves the %s UI language to a policy that exists', (locale) => {
+        const resolved = modal.resolvePrivacyLocale(locale);
+        expect(existsSync(join(PRIVACY_DIR, `PRIVACY.${resolved}.md`))).toBe(true);
+    });
+
+    it('never resolves to a policy that is missing from disk', () => {
+        const candidates = [...shippedLocales, ...Object.keys(LANGUAGE_NAMES),
+            'en-AU', 'pt-PT', 'zh-TW', 'fr-CA', 'de-AT', 'hu-HU', 'xx-YY', '', null, undefined];
+
+        for (const candidate of candidates) {
+            const resolved = modal.resolvePrivacyLocale(candidate);
+            expect(existsSync(join(PRIVACY_DIR, `PRIVACY.${resolved}.md`))).toBe(true);
+        }
+    });
+});
