@@ -666,7 +666,14 @@ describe("PrivacyModal", () => {
     });
 
     it("handles non-supported base languages", () => {
-      expect(modal.resolvePrivacyLocale("ko-KR")).toBe("en-NZ");
+      // sv ships no privacy translation, so it falls back to the default.
+      expect(modal.resolvePrivacyLocale("sv-SE")).toBe("en-NZ");
+    });
+
+    it("resolves regional variants onto their base translation", () => {
+      expect(modal.resolvePrivacyLocale("ko-KR")).toBe("ko");
+      expect(modal.resolvePrivacyLocale("nl-BE")).toBe("nl");
+      expect(modal.resolvePrivacyLocale("de-AT")).toBe("de");
     });
 
     it("handles en regional variations", () => {
