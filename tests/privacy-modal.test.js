@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { i18n } from "../public/src/i18n/index.js";
 
 // --- Global Mocks ---
@@ -149,6 +149,35 @@ describe("PrivacyModal", () => {
       const md = "[page](/about)";
       const html = modal.parseMarkdown(md);
       expect(extractHref(html)).toBe("/about");
+    });
+
+    describe("on engines without URL.canParse", () => {
+      let originalCanParse;
+
+      beforeEach(() => {
+        originalCanParse = URL.canParse;
+        // Older engines predate URL.canParse; sanitizeUrl must still work.
+        delete URL.canParse;
+      });
+
+      afterEach(() => {
+        URL.canParse = originalCanParse;
+      });
+
+      it("still allows https URLs", () => {
+        const html = modal.parseMarkdown("[link](https://example.com)");
+        expect(extractHref(html)).toBe("https://example.com");
+      });
+
+      it("still allows relative URLs", () => {
+        const html = modal.parseMarkdown("[page](/about)");
+        expect(extractHref(html)).toBe("/about");
+      });
+
+      it("still blocks javascript: URLs", () => {
+        const html = modal.parseMarkdown("[click](javascript:alert(1))");
+        expect(extractHref(html)).toBe("#unsafe-url");
+      });
     });
 
     it("blocks javascript: URLs", () => {
