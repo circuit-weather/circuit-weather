@@ -551,6 +551,39 @@ describe('WindOverlay', async () => {
             expect(overlay.color).toBe('rgba(2, 132, 199, 0.7)');
         });
 
+        it('uses crypto.getRandomValues when available for spawning particles', () => {
+            const getRandomValuesSpy = vi.fn((arr) => {
+                arr[0] = 2147483648; // Represents 0.5 when divided by 2^32
+                return arr;
+            });
+            vi.stubGlobal('crypto', { getRandomValues: getRandomValuesSpy });
+
+            const map = createMockMap({ zoom: 10 });
+            const overlay = new WindOverlay(map);
+            overlay.setEnabled(true);
+            overlay.setField(sampleField);
+
+            expect(getRandomValuesSpy).toHaveBeenCalled();
+            expect(overlay.particles.length).toBe(CONFIG.WIND_FIELD_PARTICLES);
+            // Verify spawned particle coordinates reflect 0.5 factor (10 + 0.5 * 10 = 15, 30 + 0.5 * 10 = 35)
+            expect(overlay.particles[0].lat).toBeCloseTo(15);
+            expect(overlay.particles[0].lon).toBeCloseTo(35);
+        });
+
+        it('falls back to Math.random when crypto.getRandomValues is undefined', () => {
+            vi.stubGlobal('crypto', undefined);
+            const mathRandomSpy = vi.spyOn(Math, 'random').mockReturnValue(0.25);
+
+            const map = createMockMap({ zoom: 10 });
+            const overlay = new WindOverlay(map);
+            overlay.setEnabled(true);
+            overlay.setField(sampleField);
+
+            expect(mathRandomSpy).toHaveBeenCalled();
+            expect(overlay.particles[0].lat).toBeCloseTo(12.5); // 10 + 0.25 * 10
+            expect(overlay.particles[0].lon).toBeCloseTo(32.5); // 30 + 0.25 * 10
+        });
+
         it('destroys and cleans up map listeners, DOM nodes, and timers', () => {
             vi.useFakeTimers();
             const map = createMockMap({ zoom: 10 });

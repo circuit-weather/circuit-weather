@@ -4,6 +4,19 @@ import { SafeStorage } from '../utils/storage.js';
 import { sampleWindField, windDisplacement, isWithinField } from '../utils/wind.js';
 
 /**
+ * Returns a cryptographically secure random float in [0, 1).
+ * Uses crypto.getRandomValues if available, falling back to Math.random().
+ */
+function getSecureRandom() {
+    if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+        const array = new Uint32Array(1);
+        crypto.getRandomValues(array);
+        return array[0] / 4294967296;
+    }
+    return Math.random();
+}
+
+/**
  * Animated wind overlay: draws flowing particles advected by a gridded wind
  * field on a canvas over the map. Works with both Mapbox GL JS and Leaflet by
  * projecting geo coordinates to container pixels each frame.
@@ -214,10 +227,13 @@ export class WindOverlay {
 
     _spawn(randomAge) {
         const f = this.field;
+        const rand1 = getSecureRandom();
+        const rand2 = getSecureRandom();
+        const rand3 = randomAge ? getSecureRandom() : 0;
         return {
-            lat: f.minLat + Math.random() * (f.maxLat - f.minLat),
-            lon: f.minLon + Math.random() * (f.maxLon - f.minLon),
-            age: randomAge ? Math.random() * CONFIG.WIND_FIELD_PARTICLE_LIFE : 0,
+            lat: f.minLat + rand1 * (f.maxLat - f.minLat),
+            lon: f.minLon + rand2 * (f.maxLon - f.minLon),
+            age: rand3 * CONFIG.WIND_FIELD_PARTICLE_LIFE,
         };
     }
 
