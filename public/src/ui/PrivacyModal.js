@@ -94,16 +94,27 @@ export class PrivacyModal {
     const paths = this.getPrivacyPolicyPaths();
 
     try {
-      let markdown = null;
+      // Fetch all fallback paths concurrently to eliminate sequential network blocking
+      const fetchPromises = paths.map((path) =>
+        fetch(path, {
+          signal: AbortSignal.timeout(3000),
+        })
+          .then(async (response) => {
+            if (!response.ok) return null;
+            return await response.text();
+          })
+          .catch(() => null)
+      );
 
-      for (const path of paths) {
-        // SEC: Add timeout to prevent hanging connections during document fetch
-        const response = await fetch(path, {
-            signal: AbortSignal.timeout(3000)
-        });
-        if (!response.ok) continue;
-        markdown = await response.text();
-        break;
+      const results = await Promise.all(fetchPromises);
+
+      // Preserve strict locale fallback priority order
+      let markdown = null;
+      for (const text of results) {
+        if (text) {
+          markdown = text;
+          break;
+        }
       }
 
       if (!markdown) {
