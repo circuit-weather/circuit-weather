@@ -36,10 +36,6 @@ export class RadarReconcile {
 
                 // Remove from map so we know what's left is unused
                 existingLayerMap.delete(key);
-            } else {
-                // Lazy Load: Leave as null.
-                // Layer will be created by getLayer() when needed (e.g. by showFrame or preloading).
-                newLayers[index] = null;
             }
             index++;
         }
