@@ -1,5 +1,25 @@
 import { i18n } from '../i18n/index.js';
 
+/**
+ * URL.canParse() is only available on newer engines. Without a fallback an
+ * older browser throws here and sanitizeUrl() fails closed, which would turn
+ * every link in the privacy policy into "#unsafe-url".
+ * @param {string} value - The URL to test.
+ * @param {string} [base] - Optional base for resolving relative URLs.
+ * @returns {boolean} Whether the value parses as a URL.
+ */
+function canParseUrl(value, base) {
+  if (typeof URL.canParse === 'function') {
+    return URL.canParse(value, base);
+  }
+  try {
+    new URL(value, base);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export class PrivacyModal {
   constructor() {
     this.modal = document.getElementById("privacyModal");
@@ -151,7 +171,7 @@ export class PrivacyModal {
 
     // SEC: Use URL API for standard, robust URL parsing to avoid regex bypasses
     try {
-      if (URL.canParse(clean)) {
+      if (canParseUrl(clean)) {
         const parsed = new URL(clean);
         const protocol = parsed.protocol.toLowerCase();
         if (protocol === "https:" || protocol === "http:" || protocol === "mailto:") {
@@ -161,7 +181,7 @@ export class PrivacyModal {
       }
 
       // Check if URL is a valid relative URL
-      if (URL.canParse(clean, "https://dummy.invalid")) {
+      if (canParseUrl(clean, "https://dummy.invalid")) {
         return clean; // Safely return the decoded link
       }
 
