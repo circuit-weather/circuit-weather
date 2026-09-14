@@ -333,7 +333,7 @@ async function checkApiCache(request, cache, cacheKey) {
 /**
  * Fetches F1 API data from upstream, validates response, caches it, and returns it to client.
  */
-async function fetchAndCacheApiRequest(request, env, ctx, upstreamUrl, cache, cacheKey) {
+async function fetchAndCacheApiRequest({ request, env, ctx, upstreamUrl, cache, cacheKey }) {
   try {
     const upstreamResponse = await fetch(upstreamUrl, {
       headers: {
@@ -430,7 +430,7 @@ async function handleApiRequest(request, env, ctx, url) {
   const cachedResponse = await checkApiCache(request, cache, cacheKey);
   if (cachedResponse) return cachedResponse;
 
-  return await fetchAndCacheApiRequest(request, env, ctx, upstreamUrl, cache, cacheKey);
+  return await fetchAndCacheApiRequest({ request, env, ctx, upstreamUrl, cache, cacheKey });
 }
 
 /**
