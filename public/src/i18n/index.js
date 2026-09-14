@@ -125,23 +125,33 @@ class I18n {
     apply(root = document) {
         if (!root || typeof root.querySelectorAll !== 'function') return;
 
-        root.querySelectorAll('[data-i18n]').forEach((element) => {
+        const elements = root.querySelectorAll('[data-i18n], [data-i18n-attr]');
+        for (let i = 0; i < elements.length; i++) {
+            const element = elements[i];
+
             const key = element.getAttribute('data-i18n');
-            if (!key) return;
-            element.textContent = this.t(key);
-        });
+            if (key) {
+                element.textContent = this.t(key);
+            }
 
-        root.querySelectorAll('[data-i18n-attr]').forEach((element) => {
             const rule = element.getAttribute('data-i18n-attr');
-            if (!rule) return;
+            if (rule) {
+                const mappings = rule.split(',');
+                for (let j = 0; j < mappings.length; j++) {
+                    const entry = mappings[j].trim();
+                    if (!entry) continue;
 
-            const mappings = rule.split(',').map((entry) => entry.trim()).filter(Boolean);
-            mappings.forEach((mapping) => {
-                const [attr, key] = mapping.split(':').map((part) => part.trim());
-                if (!attr || !key) return;
-                element.setAttribute(attr, this.t(key));
-            });
-        });
+                    const colonIdx = entry.indexOf(':');
+                    if (colonIdx <= 0) continue;
+
+                    const attr = entry.slice(0, colonIdx).trim();
+                    const attrKey = entry.slice(colonIdx + 1).trim();
+                    if (attr && attrKey) {
+                        element.setAttribute(attr, this.t(attrKey));
+                    }
+                }
+            }
+        }
     }
 }
 
