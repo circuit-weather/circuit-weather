@@ -211,11 +211,11 @@ export class PrivacyModal {
   parseInline(text, container) {
     const regex = /\*\*([^*]+)\*\*|\[([^\]]+)\]\(([^)]+)\)/g;
     let lastIndex = 0;
-    let match;
 
-    while ((match = regex.exec(text)) !== null) {
-      if (match.index > lastIndex) {
-        container.appendChild(document.createTextNode(text.substring(lastIndex, match.index)));
+    for (const match of text.matchAll(regex)) {
+      const matchIndex = match.index;
+      if (matchIndex > lastIndex) {
+        container.appendChild(document.createTextNode(text.substring(lastIndex, matchIndex)));
       }
 
       if (match[1]) {
@@ -227,7 +227,7 @@ export class PrivacyModal {
         // Link
         container.appendChild(this.createLinkElement(match[2], match[3]));
       }
-      lastIndex = regex.lastIndex;
+      lastIndex = matchIndex + match[0].length;
     }
 
     if (lastIndex < text.length) {
