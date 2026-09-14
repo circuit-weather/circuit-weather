@@ -16,6 +16,12 @@ import { getSessionStatus, getRoundStatus, formatStatusLabel } from './utils/sta
 import { i18n } from './i18n/index.js';
 import { getWindDirection } from './utils/wind.js';
 
+const sessionTimeFormatter = new Intl.DateTimeFormat(undefined, {
+    weekday: 'short',
+    hour: '2-digit',
+    minute: '2-digit',
+});
+
 /**
  * Main application orchestrator for Circuit Weather.
  */
@@ -971,17 +977,14 @@ export class CircuitWeatherApp {
             option.value = session.id;
 
             let timeStr = '';
+            let dt = null;
             if (session.date && session.time) {
-                const dt = new Date(`${session.date}T${session.time}`);
-                timeStr = ` - ${dt.toLocaleString(undefined, {
-                    weekday: 'short',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                })}`;
+                dt = new Date(`${session.date}T${session.time}`);
+                timeStr = ` - ${sessionTimeFormatter.format(dt)}`;
             }
 
             const label = session.name + timeStr;
-            const status = getSessionStatus(session, now);
+            const status = getSessionStatus(session, now, dt);
 
             // Only mark as "(Next)" if it is the absolute next session globally
             const isNext = !!(globalNext &&
