@@ -14,6 +14,9 @@ export class RadarReconcile {
             }
         });
 
+        // Lazy Load: entries start null. A frame with no reusable layer is left
+        // null here and its layer is created by getLayer() when needed (e.g. by
+        // showFrame or preloading).
         const newLayers = new Array(newFrames.length).fill(null);
         let newVisibleIndex = -1;
 
