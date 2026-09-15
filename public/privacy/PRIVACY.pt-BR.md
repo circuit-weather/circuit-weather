@@ -8,13 +8,13 @@
 
 O Circuit Weather é uma aplicação web open source que mostra radar meteorológico em tempo real para circuitos de Formula 1.
 
-## Recolha de dados
+## Coleta de dados
 
-**O Circuit Weather não recolhe, armazena ou processa dados pessoais.**
+**O Circuit Weather não coleta, armazena nem processa dados pessoais.**
 
-- Sem contas de utilizador ou registo.
+- Sem contas de usuário ou cadastro.
 - Sem rastreamento interno ou analytics proprietários.
-- Sem base de dados de utilizadores.
+- Sem banco de dados de usuários.
 
 A aplicação depende de serviços de terceiros que podem processar dados web padrão (IP e User Agent).
 
@@ -22,16 +22,16 @@ A aplicação depende de serviços de terceiros que podem processar dados web pa
 
 ### Cloudflare
 
-O website está alojado em **Cloudflare Workers**.
+O site está hospedado em **Cloudflare Workers**.
 
 - **Proxy de privacidade:** Calendário F1, traçados, assets Leaflet, assets Mapbox GL JS e tiles RainViewer passam pelo nosso Worker.
-- **Cache edge:** Respostas API são guardadas em cache para melhor desempenho.
-- **Dados processados:** A Cloudflare processa IP e metadados de pedido para entrega e segurança.
+- **Cache edge:** Respostas da API são armazenadas em cache para melhor desempenho.
+- **Dados processados:** A Cloudflare processa IP e metadados de solicitação para entrega e segurança.
 - **Política:** [cloudflare.com/privacypolicy](https://www.cloudflare.com/privacypolicy/)
 
 ## Serviços de terceiros
 
-O navegador pode ligar-se diretamente a serviços terceiros para mapas, tiles e widgets.
+O navegador pode se conectar diretamente a serviços de terceiros para mapas, tiles e widgets.
 
 ### Dados de Agendamento
 
@@ -78,7 +78,7 @@ O navegador pode ligar-se diretamente a serviços terceiros para mapas, tiles e 
 
 **Buy Me a Coffee**
 
-- **Objetivo:** Donativos opcionais.
+- **Objetivo:** Doações opcionais.
 - **Dados enviados:** Se usado, podem ser processados cookies e dados de pagamento/sessão.
 - **Política:** [buymeacoffee.com/privacy-policy](https://www.buymeacoffee.com/privacy-policy)
 
@@ -92,11 +92,11 @@ O navegador pode ligar-se diretamente a serviços terceiros para mapas, tiles e 
 
 ## Armazenamento local
 
-Preferências guardadas localmente no navegador:
+Preferências armazenadas localmente no navegador:
 
 - **theme:** `light` ou `dark`
 - **unit:** `metric` ou `imperial`
-- **language:** o seu idioma selecionado (ex. `pt-BR`, `en-US`)
+- **language:** seu idioma selecionado (ex. `pt-BR`, `en-US`)
 - **windOverlay:** `true` ou `false` (lembra se a camada de animação de vento está habilitada)
 - **f1_schedule_cache:** faz cache dos dados do calendário da F1 (cache de 7 dias)
 
@@ -104,6 +104,6 @@ Preferências guardadas localmente no navegador:
 
 [github.com/circuit-weather/circuit-weather](https://github.com/circuit-weather/circuit-weather)
 
-## Contacto
+## Contato
 
 Para questões de privacidade, abra um issue no GitHub.
