@@ -27,7 +27,7 @@ El sitio está alojado en **Cloudflare Workers**.
 - **Proxy de privacidad:** Las peticiones de calendario F1, trazados, recursos Leaflet, recursos Mapbox GL JS y tiles de RainViewer pasan por nuestro Worker.
 - **Caché avanzada:** Las respuestas API se cachean en el borde para reducir tráfico y carga en servicios externos.
 - **Datos procesados:** Cloudflare procesa IP y metadatos de petición para entregar y proteger el sitio.
-- **Política de privacidad:** [cloudflare.com/privacypolicy](https://www.cloudflare.com/privacypolicy/)
+- **Política:** [cloudflare.com/privacypolicy](https://www.cloudflare.com/privacypolicy/)
 
 ## Servicios de terceros
 
@@ -39,7 +39,7 @@ Tu navegador puede conectarse directamente a servicios de terceros para mapas, t
 
 - **Propósito:** Proporciona datos de calendario de F1 de respaldo cuando el proveedor principal no está disponible.
 - **Datos enviados:** Tu navegador se conecta directamente a la API de OpenF1. Tu dirección IP es visible para OpenF1 como parte de esta solicitud web estándar.
-- **Política de privacidad:** [openf1.org](https://openf1.org/)
+- **Política:** [openf1.org](https://openf1.org/)
 
 ### Datos meteorológicos
 
@@ -61,7 +61,7 @@ Tu navegador puede conectarse directamente a servicios de terceros para mapas, t
 
 - **Propósito:** Proporciona los tiles de mapa base principales y renderizado vectorial.
 - **Datos enviados:** Tu navegador se conecta directamente a las APIs de Mapbox (`api.mapbox.com` y `events.mapbox.com`). Tu dirección IP y los metadatos de la petición son visibles para Mapbox como parte de las peticiones web estándar.
-- **Política de privacidad:** [mapbox.com/legal/privacy](https://www.mapbox.com/legal/privacy/)
+- **Política:** [mapbox.com/legal/privacy](https://www.mapbox.com/legal/privacy/)
 
 **Carto (OpenStreetMap)**
 
@@ -82,7 +82,7 @@ Tu navegador puede conectarse directamente a servicios de terceros para mapas, t
 - **Datos enviados:** Si se usa el widget, Buy Me a Coffee puede usar cookies y datos de pago/sesión.
 - **Política:** [buymeacoffee.com/privacy-policy](https://www.buymeacoffee.com/privacy-policy)
 
-## Fuentes de datos (con proxy)
+### Fuentes de datos (con proxy)
 
 - **Jolpica F1:** Calendario F1 (caché de borde de 24 horas).
 - **GitHub (bacinger/f1-circuits):** Archivos GeoJSON de circuitos (caché de borde de 24 horas).
@@ -100,7 +100,7 @@ El navegador guarda preferencias locales:
 - **windOverlay:** `true` o `false` (recuerda si la capa de animación de viento está habilitada)
 - **f1_schedule_cache:** guarda en caché los datos del calendario de F1 (caché de 7 días)
 
-Estos datos permanecen en tu dispositivo.
+Estos datos permanecen en tu dispositivo y no se envían a nuestros servidores.
 
 ## Código abierto
 

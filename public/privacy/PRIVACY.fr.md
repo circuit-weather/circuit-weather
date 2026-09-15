@@ -37,9 +37,9 @@ Votre navigateur peut se connecter directement à certains services tiers.
 
 **OpenF1**
 
-- **Objectif :** Fournit des données de calendrier F1 de secours lorsque le fournisseur principal est indisponible.
+- **But :** Fournit des données de calendrier F1 de secours lorsque le fournisseur principal est indisponible.
 - **Données envoyées :** Votre navigateur se connecte directement à l'API OpenF1. Votre adresse IP est visible par OpenF1 dans le cadre de cette requête web standard.
-- **Politique de confidentialité :** [openf1.org](https://openf1.org/)
+- **Politique :** [openf1.org](https://openf1.org/)
 
 ### Données météo
 
@@ -82,7 +82,7 @@ Votre navigateur peut se connecter directement à certains services tiers.
 - **Données envoyées :** En cas d'utilisation, des cookies et données de paiement/session peuvent être traités.
 - **Politique :** [buymeacoffee.com/privacy-policy](https://www.buymeacoffee.com/privacy-policy)
 
-## Sources de données (proxyfiées)
+### Sources de données (proxyfiées)
 
 - **Jolpica F1 :** (cache edge de 24 heures).
 - **GitHub (bacinger/f1-circuits) :** (cache edge de 24 heures).
@@ -99,6 +99,8 @@ Les préférences sont stockées localement dans le navigateur :
 - **language:** votre langue sélectionnée (ex: `fr`, `en-US`)
 - **windOverlay:** `true` ou `false` (mémorise si le calque d'animation du vent est activé)
 - **f1_schedule_cache:** met en cache les données du calendrier de la F1 (cache de 7 jours)
+
+Ces données restent sur votre appareil et ne sont pas envoyées à nos serveurs.
 
 ## Open source
 

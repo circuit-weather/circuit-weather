@@ -27,7 +27,7 @@ Die Website wird auf **Cloudflare Workers** betrieben.
 - **Privacy-Proxy:** F1-Kalender, Streckenlayouts, Leaflet-Assets, Mapbox GL JS-Assets und RainViewer-Tiles laufen über unseren Worker.
 - **Edge-Cache:** API-Antworten werden am Edge zwischengespeichert.
 - **Verarbeitete Daten:** Cloudflare verarbeitet IP und Request-Metadaten für Auslieferung und Sicherheit.
-- **Datenschutzrichtlinie:** [cloudflare.com/privacypolicy](https://www.cloudflare.com/privacypolicy/)
+- **Datenschutz:** [cloudflare.com/privacypolicy](https://www.cloudflare.com/privacypolicy/)
 
 ## Drittanbieter-Dienste
 
@@ -39,7 +39,7 @@ Der Browser kann für Karten, Tiles und Widgets direkt mit Drittanbietern kommun
 
 - **Zweck:** Stellt Fallback-F1-Zeitplandaten bereit, wenn der primäre Anbieter nicht verfügbar ist.
 - **Gesendete Daten:** Ihr Browser verbindet sich direkt mit der OpenF1-API. Ihre IP-Adresse ist für OpenF1 als Teil dieser Standard-Webanfrage sichtbar.
-- **Datenschutzerklärung:** [openf1.org](https://openf1.org/)
+- **Datenschutz:** [openf1.org](https://openf1.org/)
 
 ### Wetterdaten
 
@@ -61,7 +61,7 @@ Der Browser kann für Karten, Tiles und Widgets direkt mit Drittanbietern kommun
 
 - **Zweck:** Bereitstellung der primären Hintergrundkarten und Vektordarstellung.
 - **Gesendete Daten:** Ihr Browser verbindet sich direkt mit den Mapbox-APIs (`api.mapbox.com` und `events.mapbox.com`). Ihre IP-Adresse und Anfrage-Metadaten sind für Mapbox im Rahmen standardmäßiger Webanfragen sichtbar.
-- **Datenschutzerklärung:** [mapbox.com/legal/privacy](https://www.mapbox.com/legal/privacy/)
+- **Datenschutz:** [mapbox.com/legal/privacy](https://www.mapbox.com/legal/privacy/)
 
 **Carto (OpenStreetMap)**
 
@@ -82,7 +82,7 @@ Der Browser kann für Karten, Tiles und Widgets direkt mit Drittanbietern kommun
 - **Gesendete Daten:** Bei Nutzung können Cookies sowie Zahlungs-/Sitzungsdaten verarbeitet werden.
 - **Datenschutz:** [buymeacoffee.com/privacy-policy](https://www.buymeacoffee.com/privacy-policy)
 
-## Datenquellen (proxy)
+### Datenquellen (proxy)
 
 - **Jolpica F1:** (24-Stunden-Edge-Cache).
 - **GitHub (bacinger/f1-circuits):** (24-Stunden-Edge-Cache).
@@ -99,6 +99,8 @@ Lokale Einstellungen im Browser:
 - **language:** Ihre ausgewählte Sprache (z. B. `de`, `en-US`)
 - **windOverlay:** `true` oder `false` (speichert, ob die Windanimations-Ebene aktiviert ist)
 - **f1_schedule_cache:** speichert die F1-Kalenderdaten zwischen (7-Tage-Cache)
+
+Diese Daten verbleiben auf Ihrem Gerät und werden nicht an unsere Server gesendet.
 
 ## Open Source
 

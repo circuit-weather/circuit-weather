@@ -38,7 +38,7 @@ A böngészője közvetlenül is csatlakozhat harmadik féltől származó szolg
 **OpenF1**
 
 - **Cél:** Tartalék F1 naptáradatokat biztosít, ha az elsődleges szolgáltató nem elérhető.
-- **Elküldött adatok:** A böngészője közvetlenül csatlakozik az OpenF1 API-hoz. Az Ön IP-címe látható az OpenF1 számára ennek a szabványos webes kérésnek a részeként.
+- **Küldött adatok:** A böngészője közvetlenül csatlakozik az OpenF1 API-hoz. Az Ön IP-címe látható az OpenF1 számára ennek a szabványos webes kérésnek a részeként.
 - **Adatvédelmi irányelvek:** [openf1.org](https://openf1.org/)
 
 ### Időjárási Adatok
@@ -59,9 +59,9 @@ A böngészője közvetlenül is csatlakozhat harmadik féltől származó szolg
 
 **Mapbox**
 
-- **Cel:** Biztositja az elsodleges terkephatter csempeket es a vektoros megjelenitest.
-- **Elkuldott Adatok:** A bongeszoje kozvetlenul csatlakozik a Mapbox API-khoz (`api.mapbox.com` es `events.mapbox.com`). Az IP-cime es a keres metaadatai a szokvanyos webes keresek reszekent lathatoak a Mapbox szamara.
-- **Adatvedelmi Iranyelvek:** [mapbox.com/legal/privacy](https://www.mapbox.com/legal/privacy/)
+- **Cél:** Biztosítja az elsődleges térképháttér csempéket és a vektoros megjelenítést.
+- **Küldött adatok:** A böngészője közvetlenül csatlakozik a Mapbox API-khoz (`api.mapbox.com` és `events.mapbox.com`). Az IP-címe és a kérés metaadatai a szokványos webes kérések részeként láthatóak a Mapbox számára.
+- **Adatvédelmi irányelvek:** [mapbox.com/legal/privacy](https://www.mapbox.com/legal/privacy/)
 
 **Carto (OpenStreetMap)**
 

@@ -33,13 +33,13 @@ O site está hospedado em **Cloudflare Workers**.
 
 O navegador pode se conectar diretamente a serviços de terceiros para mapas, tiles e widgets.
 
-### Dados de Agendamento
+### Dados de agendamento
 
 **OpenF1**
 
-- **Propósito:** Fornece dados alternativos do calendário da F1 quando o provedor principal está indisponível.
-- **Dados Enviados:** Seu navegador se conecta diretamente à API do OpenF1. Seu endereço IP é visível para o OpenF1 como parte dessa solicitação da web padrão.
-- **Política de Privacidade:** [openf1.org](https://openf1.org/)
+- **Objetivo:** Fornece dados alternativos do calendário da F1 quando o provedor principal está indisponível.
+- **Dados enviados:** Seu navegador se conecta diretamente à API do OpenF1. Seu endereço IP é visível para o OpenF1 como parte dessa solicitação da web padrão.
+- **Política:** [openf1.org](https://openf1.org/)
 
 ### Dados meteorológicos
 
@@ -59,9 +59,9 @@ O navegador pode se conectar diretamente a serviços de terceiros para mapas, ti
 
 **Mapbox**
 
-- **Propósito:** Fornece os blocos de fundo do mapa principal e renderização vetorial.
-- **Dados Enviados:** Seu navegador se conecta diretamente às APIs do Mapbox (`api.mapbox.com` e `events.mapbox.com`). Seu endereço IP e metadados de solicitação são visíveis para o Mapbox como parte de solicitações da web padrão.
-- **Política de privacidade:** [mapbox.com/legal/privacy](https://www.mapbox.com/legal/privacy/)
+- **Objetivo:** Fornece os tiles de fundo do mapa principal e renderização vetorial.
+- **Dados enviados:** Seu navegador se conecta diretamente às APIs do Mapbox (`api.mapbox.com` e `events.mapbox.com`). Seu endereço IP e metadados de solicitação são visíveis para o Mapbox como parte de solicitações da web padrão.
+- **Política:** [mapbox.com/legal/privacy](https://www.mapbox.com/legal/privacy/)
 
 **Carto (OpenStreetMap)**
 
@@ -82,7 +82,7 @@ O navegador pode se conectar diretamente a serviços de terceiros para mapas, ti
 - **Dados enviados:** Se usado, podem ser processados cookies e dados de pagamento/sessão.
 - **Política:** [buymeacoffee.com/privacy-policy](https://www.buymeacoffee.com/privacy-policy)
 
-## Fontes de dados (proxy)
+### Fontes de dados (proxy)
 
 - **Jolpica F1:** (cache de borda de 24 horas).
 - **GitHub (bacinger/f1-circuits):** (cache de borda de 24 horas).
@@ -99,6 +99,8 @@ Preferências armazenadas localmente no navegador:
 - **language:** seu idioma selecionado (ex. `pt-BR`, `en-US`)
 - **windOverlay:** `true` ou `false` (lembra se a camada de animação de vento está habilitada)
 - **f1_schedule_cache:** faz cache dos dados do calendário da F1 (cache de 7 dias)
+
+Esses dados permanecem no seu dispositivo e não são enviados aos nossos servidores.
 
 ## Open source
 
