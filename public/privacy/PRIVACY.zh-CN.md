@@ -2,6 +2,8 @@
 
 **最后更新:** 2026年1月
 
+**注意:** 本译文由机器翻译生成。如有歧义，以英文版本为准。
+
 ## 概述
 
 Circuit Weather 是一个开源网站应用，用于显示 Formula 1 赛道的实时天气雷达。
@@ -35,9 +37,9 @@ Circuit Weather 是一个开源网站应用，用于显示 Formula 1 赛道的�
 
 **OpenF1**
 
-- **目的：** 当主要提供商不可用时提供备用 F1 赛程数据。
-- **发送的数据：** 您的浏览器直接连接到 OpenF1 API。作为此标准网络请求的一部分，您的 IP 地址对 OpenF1 可见。
-- **隐私政策：** [openf1.org](https://openf1.org/)
+- **用途:** 当主要提供商不可用时提供备用 F1 赛程数据。
+- **发送数据:** 您的浏览器直接连接到 OpenF1 API。作为此标准网络请求的一部分，您的 IP 地址对 OpenF1 可见。
+- **隐私政策:** [openf1.org](https://openf1.org/)
 
 ### 天气数据
 
@@ -57,8 +59,8 @@ Circuit Weather 是一个开源网站应用，用于显示 Formula 1 赛道的�
 
 **Mapbox**
 
-- **目的:** 提供主要的地图背景瓦片和矢量渲染。
-- **发送的数据:** 您的浏览器直接连接到 Mapbox API（`api.mapbox.com` 和 `events.mapbox.com`）。您的 IP 地址和请求元数据作为标准 Web 请求的一部分对 Mapbox 可见。
+- **用途:** 提供主要的地图背景瓦片和矢量渲染。
+- **发送数据:** 您的浏览器直接连接到 Mapbox API（`api.mapbox.com` 和 `events.mapbox.com`）。您的 IP 地址和请求元数据作为标准 Web 请求的一部分对 Mapbox 可见。
 - **隐私政策:** [mapbox.com/legal/privacy](https://www.mapbox.com/legal/privacy/)
 
 **Carto (OpenStreetMap)**
@@ -80,7 +82,7 @@ Circuit Weather 是一个开源网站应用，用于显示 Formula 1 赛道的�
 - **发送数据:** 使用该组件时，可能会处理 Cookie 以及支付/会话数据。
 - **隐私政策:** [buymeacoffee.com/privacy-policy](https://www.buymeacoffee.com/privacy-policy)
 
-## 数据来源（代理）
+### 数据来源（代理）
 
 - **Jolpica F1:** (24 小时边缘缓存).
 - **GitHub (bacinger/f1-circuits):** (24 小时边缘缓存).
@@ -98,7 +100,7 @@ Circuit Weather 是一个开源网站应用，用于显示 Formula 1 赛道的�
 - **windOverlay:** `true` 或 `false` (记住风场动画图层是否启用)
 - **f1_schedule_cache:** 缓存 F1 赛程数据 (7天缓存)
 
-这些数据仅保存在你的设备上。
+这些数据仅保存在你的设备上，不会发送到我们的服务器。
 
 ## 开源
 

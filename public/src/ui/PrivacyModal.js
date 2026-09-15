@@ -351,6 +351,8 @@ export class PrivacyModal {
       'hu',
       'it',
       'ja',
+      'ko',
+      'nl',
       'pt-BR',
       'zh-CN',
     ]);

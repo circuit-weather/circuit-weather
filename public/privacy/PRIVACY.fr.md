@@ -1,56 +1,58 @@
-# Politique de confidentialite
+# Politique de confidentialité
 
-**Derniere mise a jour :** Janvier 2026
+**Dernière mise à jour :** Janvier 2026
+
+**Avis :** Cette traduction a été générée automatiquement. En cas de divergence, la version anglaise fait foi.
 
 ## Vue d'ensemble
 
-Circuit Weather est une application web open source qui affiche un radar meteo en temps reel pour les circuits de Formule 1.
+Circuit Weather est une application web open source qui affiche un radar météo en temps réel pour les circuits de Formule 1.
 
-## Collecte de donnees
+## Collecte de données
 
-**Circuit Weather ne collecte, ne stocke et ne traite aucune donnee personnelle.**
+**Circuit Weather ne collecte, ne stocke et ne traite aucune donnée personnelle.**
 
 - Aucun compte utilisateur ni inscription.
-- Aucun suivi interne ni analytics proprietaires.
-- Aucune base de donnees utilisateur.
+- Aucun suivi interne ni analytics propriétaires.
+- Aucune base de données utilisateur.
 
-L'application s'appuie toutefois sur des services tiers qui peuvent traiter des donnees web standard (IP, User Agent).
+L'application s'appuie toutefois sur des services tiers qui peuvent traiter des données web standard (IP, User Agent).
 
 ## Infrastructure et cache
 
 ### Cloudflare
 
-Le site est heberge sur **Cloudflare Workers**.
+Le site est hébergé sur **Cloudflare Workers**.
 
-- **Proxy de confidentialite :** Les requetes F1, traces, assets Leaflet, assets Mapbox GL JS et tuiles RainViewer passent par notre Worker.
-- **Cache avance :** Les reponses API sont mises en cache en edge.
-- **Donnees traitees :** Cloudflare traite IP et metadonnees de requete pour fournir et securiser le site.
+- **Proxy de confidentialité :** Les requêtes F1, tracés, assets Leaflet, assets Mapbox GL JS et tuiles RainViewer passent par notre Worker.
+- **Cache avancé :** Les réponses API sont mises en cache en edge.
+- **Données traitées :** Cloudflare traite IP et métadonnées de requête pour fournir et sécuriser le site.
 - **Politique :** [cloudflare.com/privacypolicy](https://www.cloudflare.com/privacypolicy/)
 
 ## Services tiers
 
-Votre navigateur peut se connecter directement a certains services tiers.
+Votre navigateur peut se connecter directement à certains services tiers.
 
 ### Données de calendrier
 
 **OpenF1**
 
-- **Objectif :** Fournit des données de calendrier F1 de secours lorsque le fournisseur principal est indisponible.
+- **But :** Fournit des données de calendrier F1 de secours lorsque le fournisseur principal est indisponible.
 - **Données envoyées :** Votre navigateur se connecte directement à l'API OpenF1. Votre adresse IP est visible par OpenF1 dans le cadre de cette requête web standard.
-- **Politique de confidentialité :** [openf1.org](https://openf1.org/)
+- **Politique :** [openf1.org](https://openf1.org/)
 
-### Donnees meteo
+### Données météo
 
 **Open-Meteo**
 
-- **But :** Previsions meteo de session.
-- **Donnees envoyees :** IP et coordonnees du circuit selectionne.
+- **But :** Prévisions météo de session.
+- **Données envoyées :** IP et coordonnées du circuit sélectionné.
 - **Politique :** [open-meteo.com/en/features#terms](https://open-meteo.com/en/features#terms)
 
 **RainViewer**
 
 - **But :** Couches radar.
-- **Donnees envoyees :** Aucune en direct, car le radar est proxyfie.
+- **Données envoyées :** Aucune en direct, car le radar est proxyfié.
 - **Politique :** [rainviewer.com/privacy](https://www.rainviewer.com/privacy.html)
 
 ### Cartographie et assets
@@ -58,13 +60,13 @@ Votre navigateur peut se connecter directement a certains services tiers.
 **Mapbox**
 
 - **But :** Fournit les tuiles de fond de carte principales et le rendu vectoriel.
-- **Donnees envoyees :** Votre navigateur se connecte directement aux API Mapbox (`api.mapbox.com` et `events.mapbox.com`). Votre adresse IP et les metadonnees de requete sont visibles par Mapbox dans le cadre de requetes web standard.
+- **Données envoyées :** Votre navigateur se connecte directement aux API Mapbox (`api.mapbox.com` et `events.mapbox.com`). Votre adresse IP et les métadonnées de requête sont visibles par Mapbox dans le cadre de requêtes web standard.
 - **Politique :** [mapbox.com/legal/privacy](https://www.mapbox.com/legal/privacy/)
 
 **Carto (OpenStreetMap)**
 
 - **But :** Tuiles de fond de carte.
-- **Donnees envoyees :** Le navigateur demande les images directement a Carto.
+- **Données envoyées :** Le navigateur demande les images directement à Carto.
 - **Politique :** [carto.com/privacy](https://carto.com/privacy/)
 
 **CDN publics**
@@ -72,15 +74,15 @@ Votre navigateur peut se connecter directement a certains services tiers.
 - **Google Fonts :** Polices.
 - **FlagCDN :** Drapeaux.
 
-### Communaute et support
+### Communauté et support
 
 **Buy Me a Coffee**
 
 - **But :** Dons facultatifs.
-- **Donnees envoyees :** En cas d'utilisation, des cookies et donnees de paiement/session peuvent etre traites.
+- **Données envoyées :** En cas d'utilisation, des cookies et données de paiement/session peuvent être traités.
 - **Politique :** [buymeacoffee.com/privacy-policy](https://www.buymeacoffee.com/privacy-policy)
 
-## Sources de donnees (proxyfiees)
+### Sources de données (proxyfiées)
 
 - **Jolpica F1 :** (cache edge de 24 heures).
 - **GitHub (bacinger/f1-circuits) :** (cache edge de 24 heures).
@@ -90,13 +92,15 @@ Votre navigateur peut se connecter directement a certains services tiers.
 
 ## Stockage local
 
-Les preferences sont stockees localement dans le navigateur :
+Les préférences sont stockées localement dans le navigateur :
 
 - **theme:** `light` ou `dark`
 - **unit:** `metric` ou `imperial`
 - **language:** votre langue sélectionnée (ex: `fr`, `en-US`)
 - **windOverlay:** `true` ou `false` (mémorise si le calque d'animation du vent est activé)
 - **f1_schedule_cache:** met en cache les données du calendrier de la F1 (cache de 7 jours)
+
+Ces données restent sur votre appareil et ne sont pas envoyées à nos serveurs.
 
 ## Open source
 

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { readdirSync, existsSync } from 'node:fs';
+import { readdirSync, existsSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 
@@ -39,6 +39,70 @@ describe('privacy policy locale coverage', () => {
     it.each(Object.keys(LANGUAGE_NAMES))('resolves the %s UI language to a policy that exists', (locale) => {
         const resolved = modal.resolvePrivacyLocale(locale);
         expect(existsSync(join(PRIVACY_DIR, `PRIVACY.${resolved}.md`))).toBe(true);
+    });
+
+    // A translation that quietly drops a paragraph still renders fine and still
+    // passes every other guard here -- de, fr, it and pt-BR had all lost the
+    // "this data stays on your device" sentence that way. Pin each translation
+    // to the English source's shape instead: same headings in the same order,
+    // and the same block count plus the one disclaimer.
+    describe('structural parity with the English source', () => {
+        const SOURCE = 'en-NZ';
+
+        const blocksOf = (locale) =>
+            readFileSync(join(PRIVACY_DIR, `PRIVACY.${locale}.md`), 'utf8')
+                .trim()
+                .split('\n\n');
+
+        const headingShape = (blocks) =>
+            blocks.filter((b) => b.startsWith('#')).map((b) => b.match(/^#+/)[0]);
+
+        const sourceBlocks = blocksOf(SOURCE);
+        const others = shippedLocales.filter((locale) => locale !== SOURCE);
+
+        it.each(others)('%s has the same heading structure as the source', (locale) => {
+            expect(headingShape(blocksOf(locale))).toEqual(headingShape(sourceBlocks));
+        });
+
+        it.each(others)('%s has the same block count as the source', (locale) => {
+            const isEnglish = locale.startsWith('en-');
+            // Translations carry one extra block: the machine-translation notice.
+            const expected = sourceBlocks.length + (isEnglish ? 0 : 1);
+            expect(blocksOf(locale).length).toBe(expected);
+        });
+    });
+
+    // Every translation is machine-generated, so each must say so above its
+    // first section. Asserted structurally rather than by matching the wording
+    // in ten languages: the disclaimer is the bold paragraph sitting between
+    // the "last updated" line and the first heading, which English has not got.
+    describe('machine-translation disclaimer', () => {
+        const isEnglish = (locale) => locale === 'en' || locale.startsWith('en-');
+
+        const blocksOf = (locale) =>
+            readFileSync(join(PRIVACY_DIR, `PRIVACY.${locale}.md`), 'utf8')
+                .trim()
+                .split('\n\n');
+
+        const translated = shippedLocales.filter((locale) => !isEnglish(locale));
+        const english = shippedLocales.filter(isEnglish);
+
+        it('ships both translated and English policies to compare', () => {
+            expect(translated.length).toBeGreaterThan(0);
+            expect(english.length).toBeGreaterThan(0);
+        });
+
+        it.each(translated)('%s declares itself machine-translated', (locale) => {
+            const [title, updated, disclaimer] = blocksOf(locale);
+            expect(title.startsWith('# ')).toBe(true);
+            expect(updated.startsWith('**')).toBe(true);
+            expect(disclaimer.startsWith('**')).toBe(true);
+            expect(disclaimer).not.toContain('\n');
+        });
+
+        it.each(english)('%s carries no disclaimer, being the source language', (locale) => {
+            expect(blocksOf(locale)[2].startsWith('##')).toBe(true);
+        });
     });
 
     it('never resolves to a policy that is missing from disk', () => {

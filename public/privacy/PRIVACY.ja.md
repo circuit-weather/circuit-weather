@@ -2,6 +2,8 @@
 
 **最終更新:** 2026年1月
 
+**ご注意:** この翻訳は機械翻訳です。内容に相違がある場合は英語版が優先されます。
+
 ## 概要
 
 Circuit Weather は、Formula 1 サーキット向けのリアルタイム天気レーダーを表示するオープンソースの Web アプリです。
@@ -35,9 +37,9 @@ Circuit Weather は、Formula 1 サーキット向けのリアルタイム天気
 
 **OpenF1**
 
-- **目的：** プライマリプロバイダーが利用できない場合にフォールバックF1スケジュールデータを提供します。
-- **送信されるデータ：** ブラウザはOpenF1 APIに直接接続します。標準のWebリクエストの一部として、IPアドレスはOpenF1に表示されます。
-- **プライバシーポリシー：** [openf1.org](https://openf1.org/)
+- **目的:** プライマリプロバイダーが利用できない場合にフォールバックF1スケジュールデータを提供します。
+- **送信データ:** ブラウザはOpenF1 APIに直接接続します。標準のWebリクエストの一部として、IPアドレスはOpenF1に表示されます。
+- **ポリシー:** [openf1.org](https://openf1.org/)
 
 ### 気象データ
 
@@ -58,8 +60,8 @@ Circuit Weather は、Formula 1 サーキット向けのリアルタイム天気
 **Mapbox**
 
 - **目的:** 主要なマップ背景タイルとベクターレンダリングを提供します。
-- **送信されるデータ:** ブラウザは直接 Mapbox API (`api.mapbox.com` および `events.mapbox.com`) に接続します。IPアドレスとリクエストのメタデータは標準的なウェブリクエストの一部としてMapboxに表示されます。
-- **プライバシーポリシー:** [mapbox.com/legal/privacy](https://www.mapbox.com/legal/privacy/)
+- **送信データ:** ブラウザは直接 Mapbox API (`api.mapbox.com` および `events.mapbox.com`) に接続します。IPアドレスとリクエストのメタデータは標準的なウェブリクエストの一部としてMapboxに表示されます。
+- **ポリシー:** [mapbox.com/legal/privacy](https://www.mapbox.com/legal/privacy/)
 
 **Carto (OpenStreetMap)**
 
@@ -80,7 +82,7 @@ Circuit Weather は、Formula 1 サーキット向けのリアルタイム天気
 - **送信データ:** ウィジェット利用時、Cookie や決済/セッション情報が処理される場合があります。
 - **ポリシー:** [buymeacoffee.com/privacy-policy](https://www.buymeacoffee.com/privacy-policy)
 
-## データ提供元（プロキシ経由）
+### データ提供元（プロキシ経由）
 
 - **Jolpica F1:** (24時間エッジキャッシュ).
 - **GitHub (bacinger/f1-circuits):** (24時間エッジキャッシュ).
@@ -98,7 +100,7 @@ Circuit Weather は、Formula 1 サーキット向けのリアルタイム天気
 - **windOverlay:** `true` または `false` (風のアニメーションレイヤーが有効かどうかを記憶します)
 - **f1_schedule_cache:** F1のスケジュールデータをキャッシュします (7日間キャッシュ)
 
-これらのデータは端末内にのみ保存されます。
+これらのデータは端末内に保存され、当方のサーバーへ送信されることはありません。
 
 ## オープンソース
 

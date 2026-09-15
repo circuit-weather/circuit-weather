@@ -64,12 +64,21 @@ describe('PrivacyModal.parseMarkdown (real DOM)', () => {
         });
     });
 
-    describe('rendering the shipped privacy policy', () => {
+    // Every shipped policy is hand-written, so run the structural assertions
+    // against all of them rather than one representative file: a malformed
+    // translation (broken link syntax, stray bold markers, an empty heading)
+    // renders as garbled text in the modal with nothing else to catch it.
+    const shippedPolicies = fs
+        .readdirSync(path.join(process.cwd(), 'public/privacy'))
+        .filter((file) => file.endsWith('.md'))
+        .sort();
+
+    describe.each(shippedPolicies)('rendering %s', (file) => {
         let host;
 
         beforeAll(() => {
             const md = fs.readFileSync(
-                path.join(process.cwd(), 'public/privacy/PRIVACY.en-GB.md'),
+                path.join(process.cwd(), 'public/privacy', file),
                 'utf8'
             );
             host = render(md);
@@ -106,6 +115,12 @@ describe('PrivacyModal.parseMarkdown (real DOM)', () => {
             for (const anchor of anchors) {
                 expect(anchor.getAttribute('rel')).toBe('noopener noreferrer');
                 expect(anchor.getAttribute('target')).toBe('_blank');
+            }
+        });
+
+        it('keeps every policy link intact through sanitisation', () => {
+            for (const anchor of host.querySelectorAll('a')) {
+                expect(anchor.getAttribute('href')).not.toBe('#unsafe-url');
             }
         });
     });

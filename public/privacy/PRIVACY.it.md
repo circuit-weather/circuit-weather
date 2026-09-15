@@ -2,9 +2,11 @@
 
 **Ultimo aggiornamento:** Gennaio 2026
 
+**Avviso:** Questa traduzione è stata generata automaticamente. In caso di discrepanze, prevale la versione inglese.
+
 ## Panoramica
 
-Circuit Weather e una web app open source che mostra radar meteo in tempo reale per i circuiti di Formula 1.
+Circuit Weather è una web app open source che mostra radar meteo in tempo reale per i circuiti di Formula 1.
 
 ## Raccolta dati
 
@@ -20,16 +22,16 @@ L'app usa servizi terzi che possono elaborare dati standard delle richieste web 
 
 ### Cloudflare
 
-Il sito e ospitato su **Cloudflare Workers**.
+Il sito è ospitato su **Cloudflare Workers**.
 
 - **Proxy privacy:** Calendario F1, tracciati, asset Leaflet, asset Mapbox GL JS e tile RainViewer passano dal nostro Worker.
 - **Cache edge:** Le risposte API vengono memorizzate in cache vicino all'utente.
 - **Dati elaborati:** Cloudflare elabora IP e metadati di richiesta per consegna e sicurezza.
-- **Privacy Policy:** [cloudflare.com/privacypolicy](https://www.cloudflare.com/privacypolicy/)
+- **Privacy:** [cloudflare.com/privacypolicy](https://www.cloudflare.com/privacypolicy/)
 
 ## Servizi di terze parti
 
-Il browser puo connettersi direttamente ad alcuni servizi per mappe, tile e widget.
+Il browser può connettersi direttamente ad alcuni servizi per mappe, tile e widget.
 
 ### Dati di pianificazione
 
@@ -37,7 +39,7 @@ Il browser puo connettersi direttamente ad alcuni servizi per mappe, tile e widg
 
 - **Scopo:** Fornisce dati di fallback sul programma di F1 quando il provider principale non è disponibile.
 - **Dati inviati:** Il tuo browser si connette direttamente all'API di OpenF1. Il tuo indirizzo IP è visibile a OpenF1 come parte di questa richiesta web standard.
-- **Informativa sulla privacy:** [openf1.org](https://openf1.org/)
+- **Privacy:** [openf1.org](https://openf1.org/)
 
 ### Dati meteo
 
@@ -58,8 +60,8 @@ Il browser puo connettersi direttamente ad alcuni servizi per mappe, tile e widg
 **Mapbox**
 
 - **Scopo:** Fornisce i tile di sfondo della mappa principali e il rendering vettoriale.
-- **Dati Inviati:** Il tuo browser si connette direttamente alle API di Mapbox (`api.mapbox.com` e `events.mapbox.com`). Il tuo indirizzo IP e i metadati della richiesta sono visibili a Mapbox come parte delle richieste web standard.
-- **Politica sulla privacy:** [mapbox.com/legal/privacy](https://www.mapbox.com/legal/privacy/)
+- **Dati inviati:** Il tuo browser si connette direttamente alle API di Mapbox (`api.mapbox.com` e `events.mapbox.com`). Il tuo indirizzo IP e i metadati della richiesta sono visibili a Mapbox come parte delle richieste web standard.
+- **Privacy:** [mapbox.com/legal/privacy](https://www.mapbox.com/legal/privacy/)
 
 **Carto (OpenStreetMap)**
 
@@ -80,7 +82,7 @@ Il browser puo connettersi direttamente ad alcuni servizi per mappe, tile e widg
 - **Dati inviati:** Se usato, possono essere trattati cookie e dati di pagamento/sessione.
 - **Privacy:** [buymeacoffee.com/privacy-policy](https://www.buymeacoffee.com/privacy-policy)
 
-## Fonti dati (proxy)
+### Fonti dati (proxy)
 
 - **Jolpica F1:** (cache edge di 24 ore).
 - **GitHub (bacinger/f1-circuits):** (cache edge di 24 ore).
@@ -97,6 +99,8 @@ Preferenze salvate localmente nel browser:
 - **language:** la lingua selezionata (es. `it`, `en-US`)
 - **windOverlay:** `true` o `false` (ricorda se il livello di animazione del vento è abilitato)
 - **f1_schedule_cache:** memorizza i dati del calendario F1 (cache di 7 giorni)
+
+Questi dati restano sul tuo dispositivo e non vengono inviati ai nostri server.
 
 ## Open source
 
