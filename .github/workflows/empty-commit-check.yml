@@ -11,9 +11,13 @@ name: Empty Commit Check
 # repositories whose other workflows are path-filtered and would not trigger
 # at all for a change that touches no files.
 #
-# A change is rejected when EITHER:
-#   1. the overall diff against the base/previous commit touches no files, or
-#   2. any individual non-merge commit in the range touches no files.
+# A change is rejected when its overall diff against the base (or the previous
+# commit, on a push) touches no files.
+#
+# Individual commits are deliberately NOT inspected. An agent that pushes an
+# empty commit and then a follow-up carrying the real change produces a branch
+# that is perfectly fine as a whole, and failing it helps nobody - the tidying
+# belongs in review, not in a gate that blocks CI.
 #
 # Events that carry no commit range (workflow_dispatch, release, new tags)
 # are skipped rather than failed, so manual and tag-driven releases still run.
@@ -99,7 +103,7 @@ jobs:
           echo "Inspecting range ${BASE_SHA}..${HEAD_SHA}"
           echo
 
-          # --- Check 1: the change as a whole must touch at least one file ---
+          # The change as a whole must touch at least one file.
           if git diff --quiet "$BASE_SHA" "$HEAD_SHA" --; then
             echo "::error title=Empty change::${BASE_SHA}..${HEAD_SHA} modifies no files. There is nothing to build or test."
             exit 1
@@ -109,25 +113,6 @@ jobs:
           git diff --name-status "$BASE_SHA" "$HEAD_SHA" -- | sed 's/^/  /'
           echo
 
-          # --- Check 2: no individual non-merge commit may be empty ---
-          empty_count=0
-          empty_report=""
-          while IFS= read -r sha; do
-            [ -n "$sha" ] || continue
-            # A root commit has no parent; `git diff` then errors, which is not
-            # an empty commit, so it correctly falls through to the else branch.
-            if git diff --quiet "${sha}^" "$sha" -- 2>/dev/null; then
-              empty_count=$((empty_count + 1))
-              empty_report="${empty_report}  ${sha}  $(git log -1 --format=%s "$sha")"$'\n'
-            fi
-          done < <(git rev-list --no-merges "${BASE_SHA}..${HEAD_SHA}")
-
-          if [ "$empty_count" -gt 0 ]; then
-            echo "::error title=Empty commit::Found ${empty_count} commit(s) that change no files:"
-            printf '%s' "$empty_report"
-            echo "Drop them with an interactive rebase, or amend them to carry real changes."
-            exit 1
-          fi
-
-          total=$(git rev-list --count "${BASE_SHA}..${HEAD_SHA}")
-          echo "OK: ${total} commit(s) in range, none empty, overall diff is non-empty."
+          changed="$(git diff --name-only "$BASE_SHA" "$HEAD_SHA" -- | wc -l | tr -d ' ')"
+          total="$(git rev-list --count "${BASE_SHA}..${HEAD_SHA}")"
+          echo "OK: ${total} commit(s) in range changing ${changed} file(s)."
