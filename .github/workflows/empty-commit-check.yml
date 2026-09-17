@@ -1,0 +1,133 @@
+name: Empty Commit Check
+
+# Gate that rejects changes containing nothing to build or test.
+#
+# Every non-agent workflow in this repository declares its first job as
+#   needs: empty-commit-check
+# so that when this gate fails the remaining jobs are skipped rather than run.
+#
+# It also runs standalone on every pull request, with no path filters, so an
+# empty pull request always produces a visible failing check - including in
+# repositories whose other workflows are path-filtered and would not trigger
+# at all for a change that touches no files.
+#
+# A change is rejected when EITHER:
+#   1. the overall diff against the base/previous commit touches no files, or
+#   2. any individual non-merge commit in the range touches no files.
+#
+# Events that carry no commit range (workflow_dispatch, release, new tags)
+# are skipped rather than failed, so manual and tag-driven releases still run.
+
+on:
+  workflow_call:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  empty-commit-check:
+    name: Reject empty commits
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fail when the change is empty
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE_REF: ${{ github.event.pull_request.base.ref }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
+          PUSH_AFTER: ${{ github.event.after }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          ZERO=0000000000000000000000000000000000000000
+
+          skip() { echo "::notice title=Empty commit check skipped::$1"; exit 0; }
+
+          fetch_branch() {
+            [ -n "${1:-}" ] || return 0
+            git fetch --no-tags --quiet origin "+refs/heads/$1:refs/remotes/origin/$1" 2>/dev/null || true
+          }
+
+          base_from_default() {
+            fetch_branch "$DEFAULT_BRANCH"
+            git merge-base "origin/$DEFAULT_BRANCH" "$1" 2>/dev/null || true
+          }
+
+          case "$EVENT_NAME" in
+            pull_request|pull_request_target)
+              [ -n "${PR_BASE_REF:-}" ] && [ -n "${PR_HEAD_SHA:-}" ] \
+                || skip "Pull request payload carried no base/head refs."
+              fetch_branch "$PR_BASE_REF"
+              HEAD_SHA="$PR_HEAD_SHA"
+              BASE_SHA="$(git merge-base "origin/$PR_BASE_REF" "$PR_HEAD_SHA" 2>/dev/null || true)"
+              [ -n "$BASE_SHA" ] \
+                || skip "No merge base between origin/$PR_BASE_REF and $PR_HEAD_SHA."
+              ;;
+            push)
+              HEAD_SHA="${PUSH_AFTER:-$GITHUB_SHA}"
+              if [ -z "${PUSH_BEFORE:-}" ] || [ "$PUSH_BEFORE" = "$ZERO" ]; then
+                BASE_SHA="$(base_from_default "$HEAD_SHA")"
+                { [ -n "$BASE_SHA" ] && [ "$BASE_SHA" != "$HEAD_SHA" ]; } \
+                  || skip "New ref with no commits beyond $DEFAULT_BRANCH."
+              elif git cat-file -e "${PUSH_BEFORE}^{commit}" 2>/dev/null; then
+                BASE_SHA="$PUSH_BEFORE"
+              else
+                echo "Previous commit $PUSH_BEFORE is unavailable (likely a force-push);" \
+                     "falling back to the merge base with $DEFAULT_BRANCH."
+                BASE_SHA="$(base_from_default "$HEAD_SHA")"
+                { [ -n "$BASE_SHA" ] && [ "$BASE_SHA" != "$HEAD_SHA" ]; } \
+                  || skip "No usable commit range after force-push fallback."
+              fi
+              ;;
+            *)
+              skip "Event '$EVENT_NAME' carries no commit range."
+              ;;
+          esac
+
+          if [ "$BASE_SHA" = "$HEAD_SHA" ]; then
+            skip "Base and head are the same commit ($HEAD_SHA); no new work to inspect."
+          fi
+
+          echo "Inspecting range ${BASE_SHA}..${HEAD_SHA}"
+          echo
+
+          # --- Check 1: the change as a whole must touch at least one file ---
+          if git diff --quiet "$BASE_SHA" "$HEAD_SHA" --; then
+            echo "::error title=Empty change::${BASE_SHA}..${HEAD_SHA} modifies no files. There is nothing to build or test."
+            exit 1
+          fi
+
+          echo "Files changed overall:"
+          git diff --name-status "$BASE_SHA" "$HEAD_SHA" -- | sed 's/^/  /'
+          echo
+
+          # --- Check 2: no individual non-merge commit may be empty ---
+          empty_count=0
+          empty_report=""
+          while IFS= read -r sha; do
+            [ -n "$sha" ] || continue
+            # A root commit has no parent; `git diff` then errors, which is not
+            # an empty commit, so it correctly falls through to the else branch.
+            if git diff --quiet "${sha}^" "$sha" -- 2>/dev/null; then
+              empty_count=$((empty_count + 1))
+              empty_report="${empty_report}  ${sha}  $(git log -1 --format=%s "$sha")"$'\n'
+            fi
+          done < <(git rev-list --no-merges "${BASE_SHA}..${HEAD_SHA}")
+
+          if [ "$empty_count" -gt 0 ]; then
+            echo "::error title=Empty commit::Found ${empty_count} commit(s) that change no files:"
+            printf '%s' "$empty_report"
+            echo "Drop them with an interactive rebase, or amend them to carry real changes."
+            exit 1
+          fi
+
+          total=$(git rev-list --count "${BASE_SHA}..${HEAD_SHA}")
+          echo "OK: ${total} commit(s) in range, none empty, overall diff is non-empty."
