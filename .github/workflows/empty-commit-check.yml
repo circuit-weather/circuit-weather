@@ -6,10 +6,10 @@ name: Empty Commit Check
 #   needs: empty-commit-check
 # so that when this gate fails the remaining jobs are skipped rather than run.
 #
-# It also runs standalone on every pull request, with no path filters, so an
-# empty pull request always produces a visible failing check - including in
-# repositories whose other workflows are path-filtered and would not trigger
-# at all for a change that touches no files.
+# It is called only by those workflows - it has no trigger of its own. An
+# earlier version also ran standalone on every pull request, which guaranteed a
+# check even where the other workflows are path-filtered, but it meant the gate
+# reported twice on every pull request. The duplicate line was not worth it.
 #
 # A change is rejected when its overall diff against the base (or the previous
 # commit, on a push) touches no files.
@@ -24,7 +24,6 @@ name: Empty Commit Check
 
 on:
   workflow_call:
-  pull_request:
 
 permissions:
   contents: read
