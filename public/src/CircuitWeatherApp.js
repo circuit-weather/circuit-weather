@@ -418,7 +418,7 @@ export class CircuitWeatherApp {
                 for (let j = 0; j < addedNodes.length; j++) {
                     const node = addedNodes[j];
                     if (node.nodeType === Node.ELEMENT_NODE) {
-                        if (node.matches(controlSelector) || node.querySelector(controlSelector) !== null) {
+                        if (node.matches(controlSelector) || (node.firstElementChild !== null && node.querySelector(controlSelector) !== null)) {
                             observer.observe(node);
                             shouldUpdate = true;
                         }
