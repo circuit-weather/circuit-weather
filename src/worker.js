@@ -613,6 +613,68 @@ async function handleAssetRequest(request, env, ctx, url) {
 }
 
 /**
+ * Validate vendor asset Content-Type and SRI hash integrity
+ * @returns {Promise<Response|null>} Error response if validation fails, null if valid
+ */
+async function validateVendorAssetResponse({ upstreamResponse, buffer, config, path, env, request }) {
+  // SEC: Validate Content-Type
+  // Bolt Security: Use strict MIME comparison, not substring check
+  const contentType = upstreamResponse.headers.get('Content-Type');
+  const mime = contentType ? contentType.split(';')[0].trim().toLowerCase() : '';
+  const isValidType = config.contentTypes.includes(mime);
+
+  if (!isValidType) {
+    if (env.ENVIRONMENT !== 'production') {
+      console.error(`Vendor Asset Invalid Content-Type (${path}): ${contentType} (expected ${config.contentTypes.join(' or ')})`);
+    }
+    return createErrorResponse(request, 502, 'Invalid upstream content type');
+  }
+
+  // Verify Hash
+  if (config.integrity) {
+    const hash = await calculateHash(buffer);
+    if (hash !== config.integrity) {
+      if (env.ENVIRONMENT !== 'production') {
+        console.error(`SRI Mismatch for ${path}: expected ${config.integrity}, got ${hash}`);
+      }
+      return createErrorResponse(request, 502, 'SRI Integrity Check Failed', {
+        'X-SRI-Status': 'mismatch'
+      });
+    }
+  }
+
+  return null;
+}
+
+/**
+ * Cache vendor asset buffer and build client response
+ */
+function cacheAndBuildVendorAssetResponse({ buffer, config, status, cache, cacheKey, ctx, request }) {
+  // Use the first allowed content type as the canonical one for the client response
+  const canonicalType = config.contentTypes[0];
+
+  const cacheHeaders = new Headers({
+    'Content-Type': canonicalType, // Enforce strict/canonical type
+    'Cache-Control': 'public, max-age=31536000, immutable', // Long cache for versioned file
+    'X-Cache': 'MISS',
+    'X-Upstream-Status': status.toString(),
+    ...API_SECURITY_HEADERS
+  });
+
+  // Cache it (Clone the response from buffer)
+  ctx.waitUntil(cache.put(cacheKey, new Response(buffer, { headers: cacheHeaders })));
+
+  const clientHeaders = new Headers(cacheHeaders);
+  setCorsHeaders(clientHeaders, request);
+
+  // Return to client (from buffer)
+  return new Response(buffer, {
+    status: 200,
+    headers: clientHeaders
+  });
+}
+
+/**
  * Helper to fetch, validate, and cache vendor assets
  */
 async function fetchAndCacheVendorAsset({ request, env, ctx, path, config, cache, cacheKey }) {
@@ -634,56 +696,29 @@ async function fetchAndCacheVendorAsset({ request, env, ctx, path, config, cache
       });
     }
 
-    // SEC: Validate Content-Type
-    // Bolt Security: Use strict MIME comparison, not substring check
-    const contentType = upstreamResponse.headers.get('Content-Type');
-    const mime = contentType ? contentType.split(';')[0].trim().toLowerCase() : '';
-    const isValidType = config.contentTypes.includes(mime);
-
-    if (!isValidType) {
-      if (env.ENVIRONMENT !== 'production') {
-        console.error(`Vendor Asset Invalid Content-Type (${path}): ${contentType} (expected ${config.contentTypes.join(' or ')})`);
-      }
-      return createErrorResponse(request, 502, 'Invalid upstream content type');
-    }
-
     // SEC: Buffer response for SRI Verification
     const buffer = await upstreamResponse.arrayBuffer();
 
-    // Verify Hash
-    if (config.integrity) {
-      const hash = await calculateHash(buffer);
-      if (hash !== config.integrity) {
-        if (env.ENVIRONMENT !== 'production') {
-          console.error(`SRI Mismatch for ${path}: expected ${config.integrity}, got ${hash}`);
-        }
-        return createErrorResponse(request, 502, 'SRI Integrity Check Failed', {
-          'X-SRI-Status': 'mismatch'
-        });
-      }
+    const validationError = await validateVendorAssetResponse({
+      upstreamResponse,
+      buffer,
+      config,
+      path,
+      env,
+      request
+    });
+    if (validationError) {
+      return validationError;
     }
 
-    // Use the first allowed content type as the canonical one for the client response
-    const canonicalType = config.contentTypes[0];
-
-    const cacheHeaders = new Headers({
-      'Content-Type': canonicalType, // Enforce strict/canonical type
-      'Cache-Control': 'public, max-age=31536000, immutable', // Long cache for versioned file
-      'X-Cache': 'MISS',
-      'X-Upstream-Status': status.toString(),
-      ...API_SECURITY_HEADERS
-    });
-
-    // Cache it (Clone the response from buffer)
-    ctx.waitUntil(cache.put(cacheKey, new Response(buffer, { headers: cacheHeaders })));
-
-    const clientHeaders = new Headers(cacheHeaders);
-    setCorsHeaders(clientHeaders, request);
-
-    // Return to client (from buffer)
-    return new Response(buffer, {
-      status: 200,
-      headers: clientHeaders
+    return cacheAndBuildVendorAssetResponse({
+      buffer,
+      config,
+      status,
+      cache,
+      cacheKey,
+      ctx,
+      request
     });
 
   } catch (error) {
