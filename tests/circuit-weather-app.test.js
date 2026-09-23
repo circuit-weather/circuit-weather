@@ -219,6 +219,7 @@ const { WeatherRadar } = await import('../public/src/map/WeatherRadar.js');
 const { RecentreControl } = await import('../public/src/map/RecentreControl.js');
 const { MapWeatherWidget } = await import('../public/src/map/MapWeatherWidget.js');
 const { ThemeManager } = await import('../public/src/ui/ThemeManager.js');
+const { i18n } = await import('../public/src/i18n/index.js');
 
 describe('CircuitWeatherApp Pure Methods', () => {
     let app;
@@ -1640,6 +1641,42 @@ describe('CircuitWeatherApp Pure Methods', () => {
 
             // Assert
             expect(renderErrorSpy).toHaveBeenCalledWith('Failed to initialize application.');
+            expect(app.showLoading).toHaveBeenCalledWith(false);
+
+            consoleSpy.mockRestore();
+        });
+
+        it('renders errors.scheduleAllUnavailable when all schedule sources fail with F1_SCHEDULE_UNAVAILABLE:jolpica,openf1:...', async () => {
+            // Arrange
+            app.mapManager.init = vi.fn().mockResolvedValue({ hasLayer: false, addControl: vi.fn() });
+            const error = new Error('F1_SCHEDULE_UNAVAILABLE:jolpica,openf1:ALL_SOURCES_FAILED');
+            app.f1Api.getSchedule.mockRejectedValue(error);
+            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+            const renderErrorSpy = vi.spyOn(app, 'renderError').mockImplementation(() => {});
+
+            // Act
+            await app.init();
+
+            // Assert
+            expect(renderErrorSpy).toHaveBeenCalledWith(i18n.t('errors.scheduleAllUnavailable'));
+            expect(app.showLoading).toHaveBeenCalledWith(false);
+
+            consoleSpy.mockRestore();
+        });
+
+        it('renders errors.scheduleUnavailable when a single schedule source fails with F1_SCHEDULE_UNAVAILABLE:jolpica:...', async () => {
+            // Arrange
+            app.mapManager.init = vi.fn().mockResolvedValue({ hasLayer: false, addControl: vi.fn() });
+            const error = new Error('F1_SCHEDULE_UNAVAILABLE:jolpica:FETCH_FAILED');
+            app.f1Api.getSchedule.mockRejectedValue(error);
+            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+            const renderErrorSpy = vi.spyOn(app, 'renderError').mockImplementation(() => {});
+
+            // Act
+            await app.init();
+
+            // Assert
+            expect(renderErrorSpy).toHaveBeenCalledWith(i18n.t('errors.scheduleUnavailable'));
             expect(app.showLoading).toHaveBeenCalledWith(false);
 
             consoleSpy.mockRestore();
