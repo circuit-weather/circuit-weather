@@ -1190,34 +1190,7 @@ export class CircuitWeatherApp {
         const unavailable = this.ui.forecastUnavailable;
 
         if (!weather.available) {
-            if (content) content.style.display = 'none';
-            if (unavailable) {
-                unavailable.style.display = 'block';
-
-                // Palette UX: Provide helpful guidance on when data will be available
-                const p = unavailable.querySelector('p');
-                if (p) {
-                    if (weather.reason === 'too_far' && weather.availableFrom) {
-                        const now = overrideNow || new Date();
-                        if (weather.availableFrom > now) {
-                            const dateStr = weather.availableFrom.toLocaleDateString(undefined, {
-                                month: 'short',
-                                day: 'numeric',
-                                hour: '2-digit',
-                                minute: '2-digit'
-                            });
-                            p.textContent = i18n.t('forecast.availableFrom', { date: dateStr });
-                        } else {
-                            p.textContent = i18n.t('forecast.availableSoon');
-                        }
-                    } else if (weather.reason === 'error') {
-                        p.textContent = i18n.t('forecast.unavailable');
-                    } else {
-                        // Default fallback
-                        p.textContent = i18n.t('forecast.availableCloser');
-                    }
-                }
-            }
+            this._renderUnavailableForecast(weather, content, unavailable, overrideNow);
             return;
         }
 
@@ -1227,7 +1200,47 @@ export class CircuitWeatherApp {
         // Rebuild Dashboard HTML
         // Note: We rebuild the entire dashboard here because renderForecastSkeleton() destroys
         // the internal structure (including IDs), causing cached references to become detached.
+        const dashboard = this._createForecastDashboard(weather, sessionTime);
 
+        // Inject into content
+        if (content) {
+            content.textContent = '';
+            content.appendChild(dashboard);
+        }
+    }
+
+    _renderUnavailableForecast(weather, content, unavailable, overrideNow) {
+        if (content) content.style.display = 'none';
+        if (unavailable) {
+            unavailable.style.display = 'block';
+
+            // Palette UX: Provide helpful guidance on when data will be available
+            const p = unavailable.querySelector('p');
+            if (p) {
+                if (weather.reason === 'too_far' && weather.availableFrom) {
+                    const now = overrideNow || new Date();
+                    if (weather.availableFrom > now) {
+                        const dateStr = weather.availableFrom.toLocaleDateString(undefined, {
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                        });
+                        p.textContent = i18n.t('forecast.availableFrom', { date: dateStr });
+                    } else {
+                        p.textContent = i18n.t('forecast.availableSoon');
+                    }
+                } else if (weather.reason === 'error') {
+                    p.textContent = i18n.t('forecast.unavailable');
+                } else {
+                    // Default fallback
+                    p.textContent = i18n.t('forecast.availableCloser');
+                }
+            }
+        }
+    }
+
+    _createForecastDashboard(weather, sessionTime) {
         const dashboard = document.createElement('article');
         dashboard.className = 'weather-dashboard';
 
@@ -1251,11 +1264,7 @@ export class CircuitWeatherApp {
             dashboard.appendChild(section);
         }
 
-        // Inject into content
-        if (content) {
-            content.textContent = '';
-            content.appendChild(dashboard);
-        }
+        return dashboard;
     }
 
     _createMetricElement(i18nKey, valueId, valueText) {
@@ -1353,62 +1362,67 @@ export class CircuitWeatherApp {
         ol.className = 'weather-timeline-list';
 
         for (const hour of hourlyWeather) {
-            const relTime = this.weatherClient.getRelativeTime(hour.time, sessionTime);
-            const desc = this.weatherClient.getWeatherDescription(hour.code);
-            const a11yTime = this.weatherClient.getAccessibleRelativeTime(hour.time, sessionTime);
-            const temp = Math.round(hour.temp);
-            const ariaLabel = i18n.t('weather.timelineAria', {
-                time: a11yTime,
-                description: desc,
-                temp,
-                rain: hour.precipProb,
-                wind: hour.windSpeed,
-                windUnit: units.wind_speed_10m,
-            });
-
-            const isoDateTime = new Date(hour.time * 1000).toISOString();
-
-            const li = document.createElement('li');
-            li.className = 'weather-timeline-item';
-            li.setAttribute('aria-label', ariaLabel);
-
-            const timeEl = document.createElement('time');
-            timeEl.setAttribute('datetime', isoDateTime);
-            timeEl.className = 'weather-timeline-time';
-            timeEl.setAttribute('aria-hidden', 'true');
-            timeEl.textContent = relTime;
-            li.appendChild(timeEl);
-
-            const conditionDiv = document.createElement('div');
-            conditionDiv.className = 'weather-timeline-condition';
-            conditionDiv.setAttribute('aria-hidden', 'true');
-            conditionDiv.appendChild(document.createTextNode(desc + ' '));
-
-            const windDiv = document.createElement('div');
-            windDiv.className = 'weather-timeline-wind';
-            windDiv.textContent = `${hour.windSpeed} ${units.wind_speed_10m}`;
-            conditionDiv.appendChild(windDiv);
-            li.appendChild(conditionDiv);
-
-            const tempDiv = document.createElement('div');
-            tempDiv.className = 'weather-timeline-temp';
-            tempDiv.setAttribute('aria-hidden', 'true');
-
-            const tempValDiv = document.createElement('div');
-            tempValDiv.textContent = `${temp}${units.temperature_2m}`;
-            tempDiv.appendChild(tempValDiv);
-
-            const precipDiv = document.createElement('div');
-            precipDiv.className = 'weather-timeline-precip';
-            precipDiv.textContent = `${hour.precipProb}%`;
-            tempDiv.appendChild(precipDiv);
-
-            li.appendChild(tempDiv);
+            const li = this._createTimelineItemElement(hour, sessionTime, units);
             ol.appendChild(li);
         }
 
         section.appendChild(ol);
         return section;
+    }
+
+    _createTimelineItemElement(hour, sessionTime, units) {
+        const relTime = this.weatherClient.getRelativeTime(hour.time, sessionTime);
+        const desc = this.weatherClient.getWeatherDescription(hour.code);
+        const a11yTime = this.weatherClient.getAccessibleRelativeTime(hour.time, sessionTime);
+        const temp = Math.round(hour.temp);
+        const ariaLabel = i18n.t('weather.timelineAria', {
+            time: a11yTime,
+            description: desc,
+            temp,
+            rain: hour.precipProb,
+            wind: hour.windSpeed,
+            windUnit: units.wind_speed_10m,
+        });
+
+        const isoDateTime = new Date(hour.time * 1000).toISOString();
+
+        const li = document.createElement('li');
+        li.className = 'weather-timeline-item';
+        li.setAttribute('aria-label', ariaLabel);
+
+        const timeEl = document.createElement('time');
+        timeEl.setAttribute('datetime', isoDateTime);
+        timeEl.className = 'weather-timeline-time';
+        timeEl.setAttribute('aria-hidden', 'true');
+        timeEl.textContent = relTime;
+        li.appendChild(timeEl);
+
+        const conditionDiv = document.createElement('div');
+        conditionDiv.className = 'weather-timeline-condition';
+        conditionDiv.setAttribute('aria-hidden', 'true');
+        conditionDiv.appendChild(document.createTextNode(desc + ' '));
+
+        const windDiv = document.createElement('div');
+        windDiv.className = 'weather-timeline-wind';
+        windDiv.textContent = `${hour.windSpeed} ${units.wind_speed_10m}`;
+        conditionDiv.appendChild(windDiv);
+        li.appendChild(conditionDiv);
+
+        const tempDiv = document.createElement('div');
+        tempDiv.className = 'weather-timeline-temp';
+        tempDiv.setAttribute('aria-hidden', 'true');
+
+        const tempValDiv = document.createElement('div');
+        tempValDiv.textContent = `${temp}${units.temperature_2m}`;
+        tempDiv.appendChild(tempValDiv);
+
+        const precipDiv = document.createElement('div');
+        precipDiv.className = 'weather-timeline-precip';
+        precipDiv.textContent = `${hour.precipProb}%`;
+        tempDiv.appendChild(precipDiv);
+
+        li.appendChild(tempDiv);
+        return li;
     }
 
     async handleRoute({ series, round, session }) {
