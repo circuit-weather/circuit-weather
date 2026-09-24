@@ -1216,6 +1216,20 @@ describe('CircuitWeatherApp Pure Methods', () => {
             expect(app.mapWeatherWidget.update).not.toHaveBeenCalled();
         });
 
+        it('handles error gracefully when weatherClient.getForecast fails during updateLiveWeatherForCircuit', async () => {
+            app.updateLiveWeatherForCircuit = CircuitWeatherApp.prototype.updateLiveWeatherForCircuit.bind(app);
+            app.currentCircuitCenter = [26.0, 50.0];
+            const error = new Error('Network error');
+            app.weatherClient.getForecast = vi.fn().mockRejectedValue(error);
+            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+            await expect(app.updateLiveWeatherForCircuit()).resolves.not.toThrow();
+
+            expect(consoleSpy).toHaveBeenCalledWith('Failed to update live weather:', error);
+            expect(app.mapWeatherWidget.update).not.toHaveBeenCalled();
+            consoleSpy.mockRestore();
+        });
+
         it('scheduleLiveWeatherUpdate debounces rapid calls into a single update', () => {
             // updateLiveWeatherForCircuit is mocked in beforeEach
             app.scheduleLiveWeatherUpdate();
