@@ -471,6 +471,47 @@ function createTrackCacheHitResponse(response, request) {
 }
 
 /**
+ * Formats, caches, and returns track response for client
+ * @param {Response} upstreamResponse
+ * @param {Request} cacheKey
+ * @param {Request} request
+ * @param {object} ctx
+ * @param {Cache} cache
+ * @returns {Response}
+ */
+function formatCacheableTrackResponse(upstreamResponse, cacheKey, request, ctx, cache) {
+  // Bolt Optimization: Stream response instead of buffering text
+  const [cacheBody, clientBody] = upstreamResponse.body.tee();
+
+  // Create cacheable response (24 hours - tracks are static)
+  const cacheHeaders = new Headers({
+    'Content-Type': 'application/json',
+    'Cache-Control': 'public, max-age=86400',
+    'X-Cache': 'MISS',
+    'X-Upstream-Status': upstreamResponse.status.toString(),
+    'Access-Control-Allow-Origin': '*',
+    ...API_SECURITY_HEADERS
+  });
+
+  const cacheResponse = new Response(cacheBody, {
+    status: 200,
+    headers: cacheHeaders,
+  });
+
+  // Save to cache
+  ctx.waitUntil(cache.put(cacheKey, cacheResponse));
+
+  // Prepare response for client with strict CORS
+  const clientHeaders = new Headers(cacheHeaders);
+  setCorsHeaders(clientHeaders, request);
+
+  return new Response(clientBody, {
+    status: 200,
+    headers: clientHeaders
+  });
+}
+
+/**
  * Fetches track data from upstream GitHub repository and caches it
  * @param {string} upstreamUrl
  * @param {Request} cacheKey
@@ -510,35 +551,7 @@ async function fetchAndCacheTrack(upstreamUrl, cacheKey, request, env, ctx) {
       return cacheAndReturnError({ request, cache, cacheKey, status: 502, message: 'Invalid upstream content type', ctx });
     }
 
-    // Bolt Optimization: Stream response instead of buffering text
-    const [cacheBody, clientBody] = upstreamResponse.body.tee();
-
-    // Create cacheable response (24 hours - tracks are static)
-    const cacheHeaders = new Headers({
-      'Content-Type': 'application/json',
-      'Cache-Control': 'public, max-age=86400',
-      'X-Cache': 'MISS',
-      'X-Upstream-Status': upstreamStatus.toString(),
-      'Access-Control-Allow-Origin': '*',
-      ...API_SECURITY_HEADERS
-    });
-
-    const cacheResponse = new Response(cacheBody, {
-      status: 200,
-      headers: cacheHeaders,
-    });
-
-    // Save to cache
-    ctx.waitUntil(cache.put(cacheKey, cacheResponse));
-
-    // Prepare response for client with strict CORS
-    const clientHeaders = new Headers(cacheHeaders);
-    setCorsHeaders(clientHeaders, request);
-
-    return new Response(clientBody, {
-      status: 200,
-      headers: clientHeaders
-    });
+    return formatCacheableTrackResponse(upstreamResponse, cacheKey, request, ctx, cache);
 
   } catch (error) {
     if (env.ENVIRONMENT !== 'production') {
@@ -695,6 +708,40 @@ async function fetchAndCacheVendorAsset({ request, env, ctx, path, config, cache
 }
 
 /**
+ * Checks connectivity to a single upstream API endpoint.
+ * Returns HTTP status code or 'unreachable' on failure.
+ */
+async function checkUpstreamHealth(name, targetUrl, env) {
+  try {
+    const res = await fetch(targetUrl, {
+      method: 'HEAD',
+      headers: { 'User-Agent': 'CircuitWeather-Health/1.0' },
+      signal: AbortSignal.timeout(2000)
+    });
+    return res.status;
+  } catch (e) {
+    if (env.ENVIRONMENT !== 'production') {
+      console.error(`Health check failed for ${name}:`, e);
+    }
+    return 'unreachable';
+  }
+}
+
+/**
+ * Checks connectivity to all configured upstream APIs concurrently.
+ */
+async function checkAllUpstreams(upstreams, env) {
+  const entries = Object.entries(upstreams);
+  const results = {};
+  const checks = entries.map(async ([name, url]) => {
+    results[name] = await checkUpstreamHealth(name, url, env);
+  });
+
+  await Promise.all(checks);
+  return results;
+}
+
+/**
  * Handle Health Check request
  * Checks connectivity to key upstream APIs and returns basic system status.
  */
@@ -731,26 +778,7 @@ async function handleHealthRequest(request, env, ctx, url) {
     github: 'https://raw.githubusercontent.com/bacinger/f1-circuits/master/circuits/au-1953.geojson'
   };
 
-  const results = {};
-  const checks = Object.keys(upstreams).map((name) => {
-    const url = upstreams[name];
-    return fetch(url, {
-      method: 'HEAD',
-      headers: { 'User-Agent': 'CircuitWeather-Health/1.0' },
-      signal: AbortSignal.timeout(2000)
-    })
-      .then((res) => {
-        results[name] = res.status;
-      })
-      .catch((e) => {
-        if (env.ENVIRONMENT !== 'production') {
-          console.error(`Health check failed for ${name}:`, e);
-        }
-        results[name] = 'unreachable';
-      });
-  });
-
-  await Promise.all(checks);
+  const results = await checkAllUpstreams(upstreams, env);
 
   // Create cacheable response
   const body = JSON.stringify({
