@@ -708,6 +708,40 @@ async function fetchAndCacheVendorAsset({ request, env, ctx, path, config, cache
 }
 
 /**
+ * Checks connectivity to a single upstream API endpoint.
+ * Returns HTTP status code or 'unreachable' on failure.
+ */
+async function checkUpstreamHealth(name, targetUrl, env) {
+  try {
+    const res = await fetch(targetUrl, {
+      method: 'HEAD',
+      headers: { 'User-Agent': 'CircuitWeather-Health/1.0' },
+      signal: AbortSignal.timeout(2000)
+    });
+    return res.status;
+  } catch (e) {
+    if (env.ENVIRONMENT !== 'production') {
+      console.error(`Health check failed for ${name}:`, e);
+    }
+    return 'unreachable';
+  }
+}
+
+/**
+ * Checks connectivity to all configured upstream APIs concurrently.
+ */
+async function checkAllUpstreams(upstreams, env) {
+  const entries = Object.entries(upstreams);
+  const results = {};
+  const checks = entries.map(async ([name, url]) => {
+    results[name] = await checkUpstreamHealth(name, url, env);
+  });
+
+  await Promise.all(checks);
+  return results;
+}
+
+/**
  * Handle Health Check request
  * Checks connectivity to key upstream APIs and returns basic system status.
  */
@@ -744,26 +778,7 @@ async function handleHealthRequest(request, env, ctx, url) {
     github: 'https://raw.githubusercontent.com/bacinger/f1-circuits/master/circuits/au-1953.geojson'
   };
 
-  const results = {};
-  const checks = Object.keys(upstreams).map((name) => {
-    const url = upstreams[name];
-    return fetch(url, {
-      method: 'HEAD',
-      headers: { 'User-Agent': 'CircuitWeather-Health/1.0' },
-      signal: AbortSignal.timeout(2000)
-    })
-      .then((res) => {
-        results[name] = res.status;
-      })
-      .catch((e) => {
-        if (env.ENVIRONMENT !== 'production') {
-          console.error(`Health check failed for ${name}:`, e);
-        }
-        results[name] = 'unreachable';
-      });
-  });
-
-  await Promise.all(checks);
+  const results = await checkAllUpstreams(upstreams, env);
 
   // Create cacheable response
   const body = JSON.stringify({
