@@ -211,4 +211,57 @@ describe('Worker Logic - Tile Errors', () => {
     expect(errorSpy).not.toHaveBeenCalled();
     errorSpy.mockRestore();
   });
+
+  it('handles tile proxy fetch timeout/abort error gracefully', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    mockFetch.mockRejectedValueOnce(new DOMException('The operation was aborted', 'TimeoutError'));
+
+    const req = createRequest('/api/tiles/v2/radar/1/2/3/512/1/1_1.png');
+    const res = await worker.fetch(req, global.env, global.ctx);
+
+    expect(res.status).toBe(502);
+    const data = await res.json();
+    expect(data.error.message).toBe('Tile proxy failed');
+    expect(data.error.status).toBe(502);
+    expect(errorSpy).toHaveBeenCalled();
+    errorSpy.mockRestore();
+  });
+
+  it('sets CORS headers on 502 tile proxy exception response when valid Origin is provided', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    mockFetch.mockRejectedValueOnce(new Error('Connection reset'));
+
+    const req = createRequest('/api/tiles/v2/radar/1/2/3/512/1/1_1.png', {
+      headers: { Origin: 'https://circuit-weather.racing' }
+    });
+    const res = await worker.fetch(req, global.env, global.ctx);
+
+    expect(res.status).toBe(502);
+    expect(res.headers.get('Access-Control-Allow-Origin')).toBe('https://circuit-weather.racing');
+    const data = await res.json();
+    expect(data.error.message).toBe('Tile proxy failed');
+    errorSpy.mockRestore();
+  });
+
+  it('catches exceptions thrown during upstream response processing and returns 502', async () => {
+    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      status: 200,
+      headers: {
+        get: () => {
+          throw new Error('Unexpected header processing error');
+        }
+      }
+    });
+
+    const req = createRequest('/api/tiles/v2/radar/1/2/3/512/1/1_1.png');
+    const res = await worker.fetch(req, global.env, global.ctx);
+
+    expect(res.status).toBe(502);
+    const data = await res.json();
+    expect(data.error.message).toBe('Tile proxy failed');
+    expect(errorSpy).toHaveBeenCalled();
+    errorSpy.mockRestore();
+  });
 });
