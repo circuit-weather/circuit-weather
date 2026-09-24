@@ -135,6 +135,7 @@ describe('Worker Utils Helpers', () => {
                 arr[0] = 2147483648; // 0.5 * 4294967296
                 return arr;
             });
+            const mathSpy = vi.spyOn(Math, 'random');
             const originalCrypto = globalThis.crypto;
             try {
                 Object.defineProperty(globalThis, 'crypto', {
@@ -145,8 +146,10 @@ describe('Worker Utils Helpers', () => {
 
                 const val = getSecureRandom();
                 expect(spy).toHaveBeenCalledTimes(1);
+                expect(mathSpy).not.toHaveBeenCalled();
                 expect(val).toBe(0.5);
             } finally {
+                mathSpy.mockRestore();
                 Object.defineProperty(globalThis, 'crypto', {
                     value: originalCrypto,
                     configurable: true,
@@ -155,7 +158,8 @@ describe('Worker Utils Helpers', () => {
             }
         });
 
-        it('falls back to Math.random when crypto.getRandomValues is not available', () => {
+        it('falls back to Math.random when crypto is undefined', () => {
+            const mathSpy = vi.spyOn(Math, 'random').mockReturnValue(0.12345);
             const originalCrypto = globalThis.crypto;
             try {
                 Object.defineProperty(globalThis, 'crypto', {
@@ -165,10 +169,33 @@ describe('Worker Utils Helpers', () => {
                 });
 
                 const val = getSecureRandom();
-                expect(typeof val).toBe('number');
-                expect(val).toBeGreaterThanOrEqual(0);
-                expect(val).toBeLessThan(1);
+                expect(mathSpy).toHaveBeenCalledTimes(1);
+                expect(val).toBe(0.12345);
             } finally {
+                mathSpy.mockRestore();
+                Object.defineProperty(globalThis, 'crypto', {
+                    value: originalCrypto,
+                    configurable: true,
+                    writable: true
+                });
+            }
+        });
+
+        it('falls back to Math.random when crypto exists but getRandomValues is not a function', () => {
+            const mathSpy = vi.spyOn(Math, 'random').mockReturnValue(0.6789);
+            const originalCrypto = globalThis.crypto;
+            try {
+                Object.defineProperty(globalThis, 'crypto', {
+                    value: { getRandomValues: null },
+                    configurable: true,
+                    writable: true
+                });
+
+                const val = getSecureRandom();
+                expect(mathSpy).toHaveBeenCalledTimes(1);
+                expect(val).toBe(0.6789);
+            } finally {
+                mathSpy.mockRestore();
                 Object.defineProperty(globalThis, 'crypto', {
                     value: originalCrypto,
                     configurable: true,

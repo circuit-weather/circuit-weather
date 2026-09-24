@@ -1093,16 +1093,20 @@ export class CircuitWeatherApp {
             return;
         }
 
-        const [lat, lng] = this.currentCircuitCenter;
-        // Bucket "now" to the refresh window so repeated fetches for the same circuit
-        // (re-selection, theme re-renders, switching away and back) reuse the
-        // WeatherClient cache instead of hitting Open-Meteo each time (Known
-        // Limitation #4 — avoids 429s). A fresh `new Date()` would change the cache
-        // key on every call, defeating the cache.
-        const bucketMs = CONFIG.WEATHER_REFRESH_INTERVAL_MS;
-        const bucketedNow = new Date(Math.floor(Date.now() / bucketMs) * bucketMs);
-        const weather = await this.weatherClient.getForecast(lat, lng, bucketedNow);
-        this.mapWeatherWidget.update(weather);
+        try {
+            const [lat, lng] = this.currentCircuitCenter;
+            // Bucket "now" to the refresh window so repeated fetches for the same circuit
+            // (re-selection, theme re-renders, switching away and back) reuse the
+            // WeatherClient cache instead of hitting Open-Meteo each time (Known
+            // Limitation #4 — avoids 429s). A fresh `new Date()` would change the cache
+            // key on every call, defeating the cache.
+            const bucketMs = CONFIG.WEATHER_REFRESH_INTERVAL_MS;
+            const bucketedNow = new Date(Math.floor(Date.now() / bucketMs) * bucketMs);
+            const weather = await this.weatherClient.getForecast(lat, lng, bucketedNow);
+            this.mapWeatherWidget.update(weather);
+        } catch (error) {
+            console.error('Failed to update live weather:', error);
+        }
     }
 
     startWeatherRefreshInterval() {
