@@ -596,9 +596,12 @@ export class WeatherRadar {
         if (this.ui.slider) this.ui.slider.value = index;
     }
 
-    updateTimeDisplay(timestamp) {
-        if (!this.ui.time || !timestamp) return;
-
+    /**
+     * Calculates effective time in milliseconds including drift from the latest frame.
+     * @param {number} timestamp - Unix timestamp in seconds
+     * @returns {number} Effective time in milliseconds
+     */
+    calculateEffectiveTime(timestamp) {
         // Palette UX: Calculate the "drift" between the latest radar data and real-time.
         // We apply this drift to ALL frames in the playback so that the countdown
         // updates every minute and maintains consistent spacing during cycling.
@@ -607,8 +610,73 @@ export class WeatherRadar {
         if (latestFrame) {
             drift = Date.now() - (latestFrame.time * 1000);
         }
+        return (timestamp * 1000) + drift;
+    }
 
-        const effectiveTimeMs = (timestamp * 1000) + drift;
+    /**
+     * Calculates session-relative time strings if within the valid window.
+     * @param {number} effectiveTimeMs - Effective frame time in milliseconds
+     * @returns {{ relativeText: string, accessibleText: string } | null}
+     */
+    getSessionRelativeTimeInfo(effectiveTimeMs) {
+        if (this.sessionTime === null) return null;
+
+        const diff = (effectiveTimeMs - this.sessionTime.getTime()) / CONFIG.ONE_MINUTE_MS;
+        // Only show session-relative if the session is within 7 days (10080 minutes) of the frame's effective time
+        if (Math.abs(diff) > 7 * 24 * 60) {
+            return null;
+        }
+
+        const absDiff = Math.abs(Math.round(diff));
+        const durationText = this.formatDuration(absDiff);
+
+        let relativeText = '';
+        if (Math.abs(diff) < 1) {
+            relativeText = i18n.t('radar.sessionStart');
+        } else if (diff < 0) {
+            relativeText = i18n.t('radar.beforeSession', { duration: durationText });
+        } else {
+            relativeText = i18n.t('radar.afterSession', { duration: durationText });
+        }
+
+        return { relativeText, accessibleText: relativeText };
+    }
+
+    /**
+     * Calculates standard real-time relative display strings (forecast / live / ago).
+     * @param {number} timestamp - Unix timestamp in seconds
+     * @param {number} effectiveTimeMs - Effective frame time in milliseconds
+     * @returns {{ relativeText: string, accessibleText: string }}
+     */
+    getStandardRelativeTimeInfo(timestamp, effectiveTimeMs) {
+        const diffSec = timestamp - (Date.now() / 1000);
+
+        if (diffSec > 60) {
+            const forecastText = i18n.t('radar.forecast');
+            return { relativeText: forecastText, accessibleText: forecastText };
+        }
+
+        // Palette UX: For past frames when no session is selected, show "X mins ago"
+        const diffMin = Math.round((Date.now() - effectiveTimeMs) / CONFIG.ONE_MINUTE_MS);
+
+        if (diffMin < 1) {
+            return {
+                relativeText: i18n.t('radar.live'),
+                accessibleText: i18n.t('radar.liveAria')
+            };
+        }
+
+        const relativeText = diffMin === 1
+            ? i18n.t('radar.minutesAgo', { count: diffMin })
+            : i18n.t('radar.minutesAgoPlural', { count: diffMin });
+
+        return { relativeText, accessibleText: relativeText };
+    }
+
+    updateTimeDisplay(timestamp) {
+        if (!this.ui.time || !timestamp) return;
+
+        const effectiveTimeMs = this.calculateEffectiveTime(timestamp);
 
         // Bolt Optimization: Use shared formatter and cached elements
         const date = new Date(timestamp * 1000);
@@ -619,56 +687,14 @@ export class WeatherRadar {
         this.ui.time.setAttribute('datetime', date.toISOString());
 
         let relativeText = '';
-        let accessibleText = ''; // Palette A11y: New variable for screen reader text
+        let accessibleText = '';
 
-        // Show relative to session if available and within a 7-day window of the radar time
-        const hasSession = this.sessionTime !== null;
-        let showSessionRelative = false;
-        let diff = 0;
+        if (this.ui.relative) {
+            const timeInfo = this.getSessionRelativeTimeInfo(effectiveTimeMs) ||
+                this.getStandardRelativeTimeInfo(timestamp, effectiveTimeMs);
 
-        if (hasSession) {
-            diff = (effectiveTimeMs - this.sessionTime.getTime()) / CONFIG.ONE_MINUTE_MS; // minutes
-            // Only show session-relative if the session is within 7 days (10080 minutes) of the frame's effective time
-            if (Math.abs(diff) <= 7 * 24 * 60) {
-                showSessionRelative = true;
-            }
-        }
-
-        if (this.ui.relative && showSessionRelative) {
-            const absDiff = Math.abs(Math.round(diff));
-            const durationText = this.formatDuration(absDiff);
-
-            if (Math.abs(diff) < 1) {
-                relativeText = i18n.t('radar.sessionStart');
-                accessibleText = i18n.t('radar.sessionStart');
-            } else if (diff < 0) {
-                relativeText = i18n.t('radar.beforeSession', { duration: durationText });
-                accessibleText = i18n.t('radar.beforeSession', { duration: durationText });
-            } else {
-                relativeText = i18n.t('radar.afterSession', { duration: durationText });
-                accessibleText = i18n.t('radar.afterSession', { duration: durationText });
-            }
-            this.ui.relative.textContent = relativeText;
-        } else if (this.ui.relative) {
-            const diffSec = timestamp - (Date.now() / 1000);
-
-            if (diffSec > 60) {
-                relativeText = i18n.t('radar.forecast');
-                accessibleText = i18n.t('radar.forecast');
-            } else {
-                // Palette UX: For past frames when no session is selected, show "X mins ago"
-                const diffMin = Math.round((Date.now() - effectiveTimeMs) / CONFIG.ONE_MINUTE_MS);
-
-                if (diffMin < 1) {
-                    relativeText = i18n.t('radar.live');
-                    accessibleText = i18n.t('radar.liveAria');
-                } else if (diffMin >= 1) {
-                    relativeText = diffMin === 1
-                        ? i18n.t('radar.minutesAgo', { count: diffMin })
-                        : i18n.t('radar.minutesAgoPlural', { count: diffMin });
-                    accessibleText = relativeText;
-                }
-            }
+            relativeText = timeInfo.relativeText;
+            accessibleText = timeInfo.accessibleText;
             this.ui.relative.textContent = relativeText;
         }
 
