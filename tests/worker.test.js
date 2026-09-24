@@ -110,6 +110,30 @@ describe("Worker Logic", () => {
       const res = await worker.fetch(req, global.env, global.ctx);
       expect(res.status).toBe(403);
     });
+
+    it("handles top-level worker unhandled route error in non-production environment", async () => {
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      const req = { url: "invalid-url", headers: new Headers() };
+      const res = await worker.fetch(req, { ENVIRONMENT: "test" }, global.ctx);
+
+      expect(res.status).toBe(500);
+      const data = await res.json();
+      expect(data.error.message).toBe("Internal Server Error");
+      expect(errorSpy).toHaveBeenCalledWith("Worker error:", expect.any(TypeError));
+      errorSpy.mockRestore();
+    });
+
+    it("handles top-level worker unhandled route error in production environment without logging", async () => {
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      const req = { url: "invalid-url", headers: new Headers() };
+      const res = await worker.fetch(req, { ENVIRONMENT: "production" }, global.ctx);
+
+      expect(res.status).toBe(500);
+      const data = await res.json();
+      expect(data.error.message).toBe("Internal Server Error");
+      expect(errorSpy).not.toHaveBeenCalled();
+      errorSpy.mockRestore();
+    });
   });
 
   describe("Health Check (/api/health)", () => {
@@ -382,7 +406,8 @@ describe("Worker Logic", () => {
 
     it("handles fetch exceptions gracefully", async () => {
       const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-      mockFetch.mockRejectedValueOnce(new Error("Network error"));
+      const networkError = new Error("Network error");
+      mockFetch.mockRejectedValueOnce(networkError);
 
       const req = createRequest("/api/radar");
       const res = await worker.fetch(req, global.env, global.ctx);
@@ -390,7 +415,7 @@ describe("Worker Logic", () => {
       expect(res.status).toBe(502);
       const data = await res.json();
       expect(data.error.message).toBe("Failed to fetch radar data");
-      expect(errorSpy).toHaveBeenCalled();
+      expect(errorSpy).toHaveBeenCalledWith("Radar Fetch Error:", networkError);
       errorSpy.mockRestore();
     });
 
