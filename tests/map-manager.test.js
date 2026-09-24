@@ -408,6 +408,38 @@ describe("MapManager", () => {
       expect(map).toBe(mapMock); // Leaflet mock
     });
 
+    it("should sanitize access_token from error messages when Mapbox initialization fails", async () => {
+      mapboxMapMock.on.mockImplementation((event, callback) => {
+        if (event === 'error') {
+          callback({ error: { message: 'Failed fetching style at https://api.mapbox.com/styles/v1/user/style?access_token=pk.secret_12345&other=1' } });
+        }
+      });
+
+      const map = await mapManager.init();
+
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        'Mapbox initialization failed, falling back to Leaflet:',
+        'Failed fetching style at https://api.mapbox.com/styles/v1/user/style?access_token=***&other=1'
+      );
+      expect(leafletMock.map).toHaveBeenCalled();
+      expect(mapManager.isMapbox).toBe(false);
+      expect(map).toBe(mapMock);
+    });
+
+    it("should handle error fallback when initMapbox rejects with a non-Error object or string", async () => {
+      vi.spyOn(mapManager, 'initMapbox').mockRejectedValue('String error without message property');
+
+      const map = await mapManager.init();
+
+      expect(consoleWarnSpy).toHaveBeenCalledWith(
+        'Mapbox initialization failed, falling back to Leaflet:',
+        'String error without message property'
+      );
+      expect(leafletMock.map).toHaveBeenCalled();
+      expect(mapManager.isMapbox).toBe(false);
+      expect(map).toBe(mapMock);
+    });
+
     it("should fallback to Leaflet if fetch config fails", async () => {
       mapboxglMock.Map.mockClear();
       vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false }));
