@@ -1,0 +1,114 @@
+name: No-op PR
+
+# Closes pull requests that carry no reviewable change.
+#
+# This replaces the old "Empty Commit Check" gate, which failed CI when a
+# branch's diff was empty. That gate did stop empty pull requests, but it also
+# taught the agents that open them to manufacture a change instead of reporting
+# that they had found nothing — one wrote the workaround into its own journal as
+# "apply a completely safe, trivial code health cleanup ... to satisfy the CI
+# file modification requirement". The resulting filler was not always safe: it
+# has suppressed worker error reporting, made an upload error state the wrong
+# reason, and moved a content-type check to after the response was buffered.
+#
+# A red check is the wrong signal for "there was nothing to do here", because it
+# asks for a change rather than accepting the outcome. Closing the pull request
+# says the same thing and asks for nothing.
+#
+# Two shapes are closed:
+#   - an empty diff against the base branch
+#   - a diff touching only .jules/** (a journal entry with no work behind it;
+#     journal entries belong in the pull request that carries the change)
+#
+# Anything else passes. Reopen if a close was wrong — nothing here is permanent.
+
+on:
+  pull_request:
+    types: [opened, reopened, synchronize]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  no-op-pr:
+    name: Close pull requests with nothing to review
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Classify the diff
+        id: classify
+        env:
+          PR_BASE_REF: ${{ github.event.pull_request.base.ref }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          git fetch --no-tags --quiet origin "+refs/heads/${PR_BASE_REF}:refs/remotes/origin/${PR_BASE_REF}" 2>/dev/null || true
+          BASE_SHA="$(git merge-base "origin/${PR_BASE_REF}" "${PR_HEAD_SHA}" 2>/dev/null || true)"
+
+          if [ -z "$BASE_SHA" ]; then
+            echo "No merge base with origin/${PR_BASE_REF}; leaving this pull request alone."
+            echo "verdict=ok" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          FILES="$(git diff --name-only "$BASE_SHA" "$PR_HEAD_SHA" --)"
+
+          if [ -z "$FILES" ]; then
+            echo "Diff against ${BASE_SHA} is empty."
+            echo "verdict=empty" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "Files changed:"
+          echo "$FILES" | sed 's/^/  /'
+
+          if [ -z "$(echo "$FILES" | grep -v '^\.jules/' || true)" ]; then
+            echo "Only .jules/** is touched."
+            echo "verdict=journal-only" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          echo "verdict=ok" >> "$GITHUB_OUTPUT"
+
+      - name: Close and explain
+        if: steps.classify.outputs.verdict != 'ok'
+        uses: actions/github-script@v7
+        env:
+          VERDICT: ${{ steps.classify.outputs.verdict }}
+        with:
+          script: |
+            const verdict = process.env.VERDICT;
+            const reason = verdict === 'empty'
+              ? 'This branch changes no files against its base, so there is nothing to review.'
+              : 'This branch touches only `.jules/**`. A journal entry records a lesson from a change; on its own it is not one. Add the entry to the pull request that carries the work, or commit it straight to the default branch.';
+
+            const body = [
+              '### Closed automatically: nothing to review',
+              '',
+              reason,
+              '',
+              'If the task was to investigate something and the answer turned out to be "no change needed", that is a complete and useful result — report it and stop. Do not add an unrelated edit to give the pull request something to carry; that turns a clean finding into a change nobody asked for and someone still has to review.',
+              '',
+              'Reopen this pull request if closing it was wrong.',
+            ].join('\n');
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+              body,
+            });
+
+            await github.rest.pulls.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+              state: 'closed',
+            });
