@@ -17,6 +17,18 @@ name: Overlapping PR check
 #
 # The comment is rewritten in place on each push, so a pull request carries at
 # most one of these and it always reflects the current diff.
+#
+# Open pull requests and their file lists are read in ONE GraphQL query rather
+# than a REST listFiles call per pull request. That matters here: these repos
+# see bursts of twenty or thirty agent pull requests within a few minutes, and
+# the REST shape would spend ~N calls per event against GITHUB_TOKEN's limit of
+# 1000 requests per hour per repository — exhausting it during exactly the burst
+# this check exists to catch. GraphQL bills this as a handful of points against
+# a far larger budget.
+#
+# Only the 50 most recently updated open pull requests are compared, and at most
+# 100 files each. Both bounds are far above what these repositories carry; a
+# pull request past either edge is simply not compared, never wrongly flagged.
 
 on:
   pull_request:
@@ -39,24 +51,41 @@ jobs:
             const { owner, repo } = context.repo;
             const self = context.payload.pull_request.number;
 
-            const filesOf = async (number) => {
-              const files = await github.paginate(github.rest.pulls.listFiles, {
-                owner, repo, pull_number: number, per_page: 100,
-              });
-              return new Set(files.map((f) => f.filename));
-            };
+            const query = `
+              query($owner: String!, $repo: String!) {
+                repository(owner: $owner, name: $repo) {
+                  pullRequests(
+                    states: OPEN
+                    first: 50
+                    orderBy: { field: UPDATED_AT, direction: DESC }
+                  ) {
+                    nodes {
+                      number
+                      title
+                      isDraft
+                      files(first: 100) { nodes { path } }
+                    }
+                  }
+                }
+              }`;
 
-            const mine = await filesOf(self);
+            const data = await github.graphql(query, { owner, repo });
+            const prs = data.repository.pullRequests.nodes;
 
-            const open = await github.paginate(github.rest.pulls.list, {
-              owner, repo, state: 'open', per_page: 100,
-            });
+            const pathsOf = (pr) => new Set((pr.files?.nodes ?? []).map((f) => f.path));
+
+            const me = prs.find((pr) => pr.number === self);
+            if (!me) {
+              core.info(`#${self} is outside the 50 most recently updated open PRs; skipping.`);
+              return;
+            }
+            const mine = pathsOf(me);
 
             const overlaps = [];
-            for (const pr of open) {
-              if (pr.number === self || pr.draft) continue;
-              const theirs = await filesOf(pr.number);
-              const shared = [...mine].filter((f) => theirs.has(f));
+            for (const pr of prs) {
+              if (pr.number === self || pr.isDraft) continue;
+              const theirs = pathsOf(pr);
+              const shared = [...mine].filter((p) => theirs.has(p));
               if (shared.length) overlaps.push({ pr, shared });
             }
 
@@ -89,7 +118,7 @@ jobs:
             ];
 
             for (const { pr, shared } of overlaps) {
-              const shown = shared.slice(0, 10).map((f) => `\`${f}\``).join(', ');
+              const shown = shared.slice(0, 10).map((p) => `\`${p}\``).join(', ');
               const more = shared.length > 10 ? ` _(+${shared.length - 10} more)_` : '';
               lines.push(`- #${pr.number} — ${pr.title}`);
               lines.push(`  - ${shown}${more}`);
