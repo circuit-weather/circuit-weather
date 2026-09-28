@@ -3,12 +3,15 @@
  * Provides installability and app shell caching for PWA support.
  *
  * Strategy:
- * - Cache-first for app shell (HTML, CSS, JS, icons)
+ * - Network-first with cache fallback for same-origin assets (HTML, CSS, JS,
+ *   icons). The frontend is unbundled ES modules, so serving any of them
+ *   cache-first lets a deploy mix old and new modules (e.g. new code calling
+ *   an i18n key that a stale cached locale file lacks), which is how raw
+ *   keys like "controls.roundLabel" ended up in the UI.
  * - Network-only for API calls (weather data must be fresh)
- * - Network-first with cache fallback for navigation
  */
 
-const CACHE_VERSION = '1.1.8';
+const CACHE_VERSION = '1.2.0';
 const CACHE_NAME = `circuit-weather-v${CACHE_VERSION}`;
 
 // App shell resources to pre-cache on install
@@ -78,31 +81,26 @@ self.addEventListener('fetch', (event) => {
     // Network-only for external resources (CDNs, fonts, tiles, etc.)
     if (url.origin !== self.location.origin) return;
 
-    // Cache-first for same-origin app shell assets
+    // Network-first for same-origin assets; fall back to the cache offline
     event.respondWith(
-        caches.match(event.request)
-            .then((cached) => {
-                if (cached) return cached;
-
-                return fetch(event.request).then((response) => {
-                    // Don't cache non-ok responses
-                    if (!response || response.status !== 200) return response;
-
-                    // Cache the fetched response for next time
+        fetch(event.request)
+            .then((response) => {
+                // Only cache complete, successful responses
+                if (response && response.status === 200) {
                     const clone = response.clone();
                     caches.open(CACHE_NAME).then((cache) => {
                         cache.put(event.request, clone);
                     });
-
-                    return response;
-                });
+                }
+                return response;
             })
-            .catch(() => {
-                // If both cache and network fail for a navigation request,
-                // return the cached index.html as a fallback
+            .catch(() => caches.match(event.request).then((cached) => {
+                if (cached) return cached;
+                // Offline navigation to an uncached route: serve the app shell
                 if (event.request.mode === 'navigate') {
                     return caches.match('/');
                 }
-            })
+                return Response.error();
+            }))
     );
 });
