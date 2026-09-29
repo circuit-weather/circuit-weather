@@ -159,6 +159,15 @@ describe('Worker Security Utils', () => {
     it('allows standard fetch destinations', () => {
       expect(checkFetchDest(createRequest({ 'Sec-Fetch-Dest': 'empty' }))).toBe(true);
       expect(checkFetchDest(createRequest({ 'Sec-Fetch-Dest': 'image' }))).toBe(true);
+      expect(checkFetchDest(createRequest({ 'Sec-Fetch-Dest': 'document' }))).toBe(true);
+      expect(checkFetchDest(createRequest({ 'Sec-Fetch-Dest': 'worker' }))).toBe(true);
+      expect(checkFetchDest(createRequest({ 'Sec-Fetch-Dest': 'style' }))).toBe(true);
+      expect(checkFetchDest(createRequest({ 'Sec-Fetch-Dest': 'font' }))).toBe(true);
+    });
+
+    it('allows requests when Sec-Fetch-Dest header is missing or empty', () => {
+      expect(checkFetchDest(createRequest({}))).toBe(true);
+      expect(checkFetchDest(createRequest({ 'Sec-Fetch-Dest': '' }))).toBe(true);
     });
 
     it('blocks script destination', () => {
@@ -175,6 +184,11 @@ describe('Worker Security Utils', () => {
 
     it('blocks iframe destination', () => {
       expect(checkFetchDest(createRequest({ 'Sec-Fetch-Dest': 'iframe' }))).toBe(false);
+    });
+
+    it('allows non-matching or casing-variant destinations', () => {
+      expect(checkFetchDest(createRequest({ 'Sec-Fetch-Dest': 'SCRIPT' }))).toBe(true);
+      expect(checkFetchDest(createRequest({ 'Sec-Fetch-Dest': 'unknown-dest' }))).toBe(true);
     });
   });
 
