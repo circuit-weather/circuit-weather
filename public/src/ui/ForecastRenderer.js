@@ -64,7 +64,7 @@ export class ForecastRenderer {
         const errorIcon = document.createElement('div');
         errorIcon.className = 'error-icon';
         const svgNS = "http://www.w3.org/2000/svg";
-        errorIcon.appendChild(this.createErrorIconSvg(svgNS));
+        errorIcon.appendChild(app._createErrorIconSvg(svgNS));
         errorState.appendChild(errorIcon);
 
         const h2 = document.createElement('h2');
@@ -91,7 +91,7 @@ export class ForecastRenderer {
             btn.disabled = true;
             btn.setAttribute('aria-disabled', 'true');
             btn.textContent = '';
-            btn.appendChild(this.createLoadingSpinnerSvg(svgNS));
+            btn.appendChild(app._createLoadingSpinnerSvg(svgNS));
             btn.appendChild(document.createTextNode(i18n.t('common.retrying')));
 
             btn.setAttribute('aria-label', i18n.t('errors.retryingConnection'));
@@ -143,7 +143,7 @@ export class ForecastRenderer {
         if (content) content.style.display = 'block';
         if (unavailable) unavailable.style.display = 'none';
 
-        const dashboard = this.createForecastDashboard(app, weather, sessionTime);
+        const dashboard = app._createForecastDashboard(weather, sessionTime);
 
         if (content) {
             content.textContent = '';
@@ -193,12 +193,12 @@ export class ForecastRenderer {
         }
 
         if (sessionWeather) {
-            const dl = this.createCurrentWeatherElement(app, sessionWeather, weather.units, weather.hourly);
+            const dl = app._createCurrentWeatherElement(sessionWeather, weather.units, weather.hourly);
             dashboard.appendChild(dl);
         }
 
         if (weather.hourly) {
-            const section = this.createTimelineElement(app, weather.hourly, sessionTime, weather.units);
+            const section = app._createTimelineElement(weather.hourly, sessionTime, weather.units);
             dashboard.appendChild(section);
         }
 
@@ -259,10 +259,10 @@ export class ForecastRenderer {
         const dl = document.createElement('dl');
         dl.className = 'weather-current';
 
-        dl.appendChild(this.createMetricElement(app, 'weather.temp', 'weatherTemp', `${temp}${units.temperature_2m}`));
-        dl.appendChild(this.createMetricElement(app, 'weather.rain', 'weatherRain', `${maxPrecip}%`));
+        dl.appendChild(app._createMetricElement('weather.temp', 'weatherTemp', `${temp}${units.temperature_2m}`));
+        dl.appendChild(app._createMetricElement('weather.rain', 'weatherRain', `${maxPrecip}%`));
 
-        const divWind = this.createMetricElement(app, 'weather.wind', 'weatherWind', `${wind} ${units.wind_speed_10m}`);
+        const divWind = app._createMetricElement('weather.wind', 'weatherWind', `${wind} ${units.wind_speed_10m}`);
         const ddWindDir = document.createElement('dd');
         ddWindDir.className = 'weather-sub';
         ddWindDir.id = 'weatherWindDir';
@@ -270,7 +270,7 @@ export class ForecastRenderer {
         ddWindDir.setAttribute('aria-label', i18n.t('weather.windDirection', { direction: windInfo.text, degrees: dir }));
 
         ddWindDir.appendChild(document.createTextNode(windInfo.text + ' '));
-        ddWindDir.appendChild(this.createWindArrowSvg(rotation));
+        ddWindDir.appendChild(app._createWindArrowSvg(rotation));
 
         divWind.appendChild(ddWindDir);
         dl.appendChild(divWind);
@@ -290,7 +290,7 @@ export class ForecastRenderer {
         ol.className = 'weather-timeline-list';
 
         for (const hour of hourlyWeather) {
-            const li = this.createTimelineItemElement(app, hour, sessionTime, units);
+            const li = app._createTimelineItemElement(hour, sessionTime, units);
             ol.appendChild(li);
         }
 

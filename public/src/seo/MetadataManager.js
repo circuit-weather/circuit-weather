@@ -41,9 +41,9 @@ export class MetadataManager {
     updateMetaTags(title, desc) {
         document.title = title;
 
-        let child = document.head ? document.head.firstElementChild : null;
+        let child = document.head ? (document.head.firstElementChild || document.head.firstChild) : null;
         while (child) {
-            const tag = child.tagName;
+            const tag = child.tagName || child.nodeName;
             if (tag === 'META') {
                 const name = child.getAttribute('name');
                 const property = child.getAttribute('property');
@@ -181,9 +181,9 @@ export class MetadataManager {
      * @param {Object} app - The app instance.
      */
     updatePageMetadata(app) {
-        const { title, desc } = this.getPageTitleAndDesc(app);
-        this.updateMetaTags(title, desc);
-        this.updateBreadcrumbJsonLd(app);
-        this.updateEventJsonLd(app, desc);
+        const { title, desc } = app._getPageTitleAndDesc();
+        app._updateMetaTags(title, desc);
+        app._updateBreadcrumbJsonLd();
+        app._updateEventJsonLd(desc);
     }
 }
