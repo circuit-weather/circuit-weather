@@ -94,6 +94,9 @@ describe('Worker Utils - checkRequestSource (Hotlink & CSRF Protection)', () => 
     it('allows Same-Origin Referer on self-hosted or custom deployments', () => {
       const selfHostedOrigin = 'https://my-custom-weather.org';
       const url = new URL(`${selfHostedOrigin}/api/data`);
+      const reqExact = createRequest({ Referer: selfHostedOrigin });
+      expect(checkRequestSource(reqExact, url)).toBe(true);
+
       const req = createRequest({ Referer: `${selfHostedOrigin}/dashboard` });
       expect(checkRequestSource(req, url)).toBe(true);
     });

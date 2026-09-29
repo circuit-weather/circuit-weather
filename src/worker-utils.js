@@ -140,7 +140,7 @@ export function checkRequestSource(request, requestUrl) {
       // Allowed
     }
     // SEC: Strict Same-Origin Check (allows self-hosted workers/previews)
-    else if (requestUrl && referer.startsWith(requestUrl.origin + '/')) {
+    else if (requestUrl && (referer === requestUrl.origin || referer.startsWith(requestUrl.origin + '/'))) {
       // Allowed (Same-Origin)
     }
     // 3b. Check regexes (updated to support full URL matching)
