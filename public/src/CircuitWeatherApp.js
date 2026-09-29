@@ -1323,12 +1323,7 @@ export class CircuitWeatherApp {
         return svg;
     }
 
-    _createCurrentWeatherElement(sessionWeather, units, hourlyData) {
-        const temp = Math.round(sessionWeather.temp);
-        const wind = Math.round(sessionWeather.windSpeed);
-        const dir = sessionWeather.windDir;
-        const maxPrecip = Math.max(...hourlyData.map(h => h.precipProb));
-
+    _createWindMetricElement(wind, dir, speedUnit, dirUnit) {
         // Wind Direction Logic
         const windInfo = getWindDirection(dir);
         // Rotation: Input 0 (N) -> Blows South -> Arrow (Up) needs 180 deg rotation
@@ -1337,6 +1332,26 @@ export class CircuitWeatherApp {
         // `degrees + 180` — a non-numeric windDir from upstream would concatenate
         // instead of add and carry arbitrary text into the CSS.
         const rotation = Number(windInfo.rotation) || 0;
+
+        const divWind = this._createMetricElement('weather.wind', 'weatherWind', `${wind} ${speedUnit}`);
+        const ddWindDir = document.createElement('dd');
+        ddWindDir.className = 'weather-sub';
+        ddWindDir.id = 'weatherWindDir';
+        ddWindDir.title = `${dir}${dirUnit || i18n.t('units.degrees') || '°'}`;
+        ddWindDir.setAttribute('aria-label', i18n.t('weather.windDirection', { direction: windInfo.text, degrees: dir }));
+
+        ddWindDir.appendChild(document.createTextNode(windInfo.text + ' '));
+        ddWindDir.appendChild(this._createWindArrowSvg(rotation));
+
+        divWind.appendChild(ddWindDir);
+        return divWind;
+    }
+
+    _createCurrentWeatherElement(sessionWeather, units, hourlyData) {
+        const temp = Math.round(sessionWeather.temp);
+        const wind = Math.round(sessionWeather.windSpeed);
+        const dir = sessionWeather.windDir;
+        const maxPrecip = Math.max(...hourlyData.map(h => h.precipProb));
 
         const dl = document.createElement('dl');
         dl.className = 'weather-current';
@@ -1348,17 +1363,7 @@ export class CircuitWeatherApp {
         dl.appendChild(this._createMetricElement('weather.rain', 'weatherRain', `${maxPrecip}%`));
 
         // Wind metric
-        const divWind = this._createMetricElement('weather.wind', 'weatherWind', `${wind} ${units.wind_speed_10m}`);
-        const ddWindDir = document.createElement('dd');
-        ddWindDir.className = 'weather-sub';
-        ddWindDir.id = 'weatherWindDir';
-        ddWindDir.title = `${dir}${units.wind_direction_10m}`;
-        ddWindDir.setAttribute('aria-label', i18n.t('weather.windDirection', { direction: windInfo.text, degrees: dir }));
-
-        ddWindDir.appendChild(document.createTextNode(windInfo.text + ' '));
-        ddWindDir.appendChild(this._createWindArrowSvg(rotation));
-
-        divWind.appendChild(ddWindDir);
+        const divWind = this._createWindMetricElement(wind, dir, units.wind_speed_10m, units.wind_direction_10m);
         dl.appendChild(divWind);
 
         return dl;
