@@ -106,59 +106,45 @@ export function checkRequestSource(request, requestUrl) {
   const referer = request.headers.get('Referer');
   const secFetchSite = request.headers.get('Sec-Fetch-Site');
 
-  // 1. Check Sec-Fetch-Site (Strongest indicator for browsers)
-  // 'same-origin' = app API call (allow)
-  // 'same-site' = app API call from subdomain (allow)
-  // 'none' = user typed URL / bookmarks (allow for direct access)
-  // Block 'cross-site' unless Origin/Referer is whitelisted below
-  if (secFetchSite && ['same-origin', 'same-site', 'none'].includes(secFetchSite)) {
-    return true;
-  }
-
-  // 2. Check Origin (Strict)
-  // Bolt Optimization: Regexes now support optional trailing slash/path, which is fine for Origin too
+  // 1. Check Origin (Strict)
+  let isOriginValid = false;
   if (origin) {
-    // SEC: Strict Same-Origin Check (allows self-hosted workers/previews)
-    if (requestUrl && origin === requestUrl.origin) {
-      // Allowed (Same-Origin)
-    }
-    else if (
-      origin !== PRODUCTION_DOMAIN &&
-      !ALLOWED_ORIGIN_LOCALHOST_REGEX.test(origin) &&
-      !ALLOWED_ORIGIN_127_REGEX.test(origin) &&
-      !ALLOWED_PREVIEW_REGEX.test(origin)
+    if (
+      (requestUrl && origin === requestUrl.origin) ||
+      origin === PRODUCTION_DOMAIN ||
+      ALLOWED_ORIGIN_LOCALHOST_REGEX.test(origin) ||
+      ALLOWED_ORIGIN_127_REGEX.test(origin) ||
+      ALLOWED_PREVIEW_REGEX.test(origin)
     ) {
-      return false; // Invalid Origin
+      isOriginValid = true;
+    } else {
+      return false; // Invalid Origin header provided
     }
   }
 
-  // 3. Check Referer (Strict)
+  // 2. Check Referer (Strict)
+  let isRefererValid = false;
   if (referer) {
-    // Bolt Optimization: Avoid new URL() parsing on hot path (~20x faster)
-    // 3a. Fast path for production domain (most common)
-    if (referer === PRODUCTION_DOMAIN || referer.startsWith(PRODUCTION_DOMAIN + '/')) {
-      // Allowed
-    }
-    // SEC: Strict Same-Origin Check (allows self-hosted workers/previews)
-    else if (requestUrl && referer.startsWith(requestUrl.origin + '/')) {
-      // Allowed (Same-Origin)
-    }
-    // 3b. Check regexes (updated to support full URL matching)
-    else if (
+    if (
+      referer === PRODUCTION_DOMAIN ||
+      referer.startsWith(PRODUCTION_DOMAIN + '/') ||
+      (requestUrl && (referer === requestUrl.origin || referer.startsWith(requestUrl.origin + '/'))) ||
       ALLOWED_ORIGIN_LOCALHOST_REGEX.test(referer) ||
       ALLOWED_ORIGIN_127_REGEX.test(referer) ||
       ALLOWED_PREVIEW_REGEX.test(referer)
     ) {
-      // Allowed
+      isRefererValid = true;
     } else {
-      return false; // Invalid Referer
+      return false; // Invalid Referer header provided
     }
   }
 
-  // 4. Require at least one valid identity header (Stop script scraping)
-  // If we have no Sec-Fetch-Site, no Origin, and no Referer -> Block
-  // Also block 'cross-site' requests if they lack Origin/Referer verification
+  // 3. Check Sec-Fetch-Site (Browser context)
   const isSafeSite = secFetchSite && ['same-origin', 'same-site', 'none'].includes(secFetchSite);
+
+  // 4. Require at least one valid identity header (Stop script scraping)
+  // Without Sec-Fetch-Site, Origin, or Referer -> Block
+  // If Origin or Referer was supplied, it must have passed validation above (otherwise returned false early)
   if (!origin && !referer && !isSafeSite) {
     return false;
   }

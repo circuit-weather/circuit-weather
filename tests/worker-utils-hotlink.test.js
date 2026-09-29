@@ -94,6 +94,9 @@ describe('Worker Utils - checkRequestSource (Hotlink & CSRF Protection)', () => 
     it('allows Same-Origin Referer on self-hosted or custom deployments', () => {
       const selfHostedOrigin = 'https://my-custom-weather.org';
       const url = new URL(`${selfHostedOrigin}/api/data`);
+      const reqExact = createRequest({ Referer: selfHostedOrigin });
+      expect(checkRequestSource(reqExact, url)).toBe(true);
+
       const req = createRequest({ Referer: `${selfHostedOrigin}/dashboard` });
       expect(checkRequestSource(req, url)).toBe(true);
     });
@@ -143,6 +146,22 @@ describe('Worker Utils - checkRequestSource (Hotlink & CSRF Protection)', () => 
       const req = createRequest({
         Origin: 'https://evil.com',
         Referer: PRODUCTION_DOMAIN
+      });
+      expect(checkRequestSource(req, PROD_URL)).toBe(false);
+    });
+
+    it('blocks when Sec-Fetch-Site is same-origin but Referer is hostile', () => {
+      const req = createRequest({
+        'Sec-Fetch-Site': 'same-origin',
+        Referer: 'https://evil.com/spoofed'
+      });
+      expect(checkRequestSource(req, PROD_URL)).toBe(false);
+    });
+
+    it('blocks when Sec-Fetch-Site is same-origin but Origin is hostile', () => {
+      const req = createRequest({
+        'Sec-Fetch-Site': 'same-origin',
+        Origin: 'https://evil.com'
       });
       expect(checkRequestSource(req, PROD_URL)).toBe(false);
     });
