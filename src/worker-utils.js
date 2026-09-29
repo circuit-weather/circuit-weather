@@ -3,9 +3,9 @@
 export const VALID_API_PATH_REGEX = /^[a-zA-Z0-9/._-]*$/;
 export const VALID_TRACK_ID_REGEX = /^[a-z0-9-]+$/;
 const PRODUCTION_DOMAIN = 'https://circuit-weather.racing';
-const ALLOWED_ORIGIN_LOCALHOST_REGEX = /^http:\/\/localhost(?::\d+)?(?:\/|$)/;
-const ALLOWED_ORIGIN_127_REGEX = /^http:\/\/127\.0\.0\.1(?::\d+)?(?:\/|$)/;
-const ALLOWED_PREVIEW_REGEX = /^https:\/\/(?:[a-zA-Z0-9-]+\.)*circuit-weather\.pages\.dev(?::\d+)?(?:\/|$)/;
+const ALLOWED_ORIGIN_LOCALHOST_REGEX = /^http:\/\/localhost(?::\d+)?$/;
+const ALLOWED_ORIGIN_127_REGEX = /^http:\/\/127\.0\.0\.1(?::\d+)?$/;
+const ALLOWED_PREVIEW_REGEX = /^https:\/\/(?:[a-zA-Z0-9-]+\.)*circuit-weather\.pages\.dev(?::\d+)?$/;
 export const DOTFILE_REGEX = /(?:^|\/)\./;
 
 /**
@@ -135,6 +135,8 @@ export function checkRequestSource(request, requestUrl) {
   // 3. Check Referer (Strict)
   if (referer) {
     // Bolt Optimization: Avoid new URL() parsing on hot path (~20x faster)
+    // Extract origin part of referer (e.g. "http://localhost:8787/path" -> "http://localhost:8787")
+    const refererOrigin = referer.split('/', 3).join('/');
     // 3a. Fast path for production domain (most common)
     if (referer === PRODUCTION_DOMAIN || referer.startsWith(PRODUCTION_DOMAIN + '/')) {
       // Allowed
@@ -143,11 +145,11 @@ export function checkRequestSource(request, requestUrl) {
     else if (requestUrl && referer.startsWith(requestUrl.origin + '/')) {
       // Allowed (Same-Origin)
     }
-    // 3b. Check regexes (updated to support full URL matching)
+    // 3b. Check regexes against extracted referer origin
     else if (
-      ALLOWED_ORIGIN_LOCALHOST_REGEX.test(referer) ||
-      ALLOWED_ORIGIN_127_REGEX.test(referer) ||
-      ALLOWED_PREVIEW_REGEX.test(referer)
+      ALLOWED_ORIGIN_LOCALHOST_REGEX.test(refererOrigin) ||
+      ALLOWED_ORIGIN_127_REGEX.test(refererOrigin) ||
+      ALLOWED_PREVIEW_REGEX.test(refererOrigin)
     ) {
       // Allowed
     } else {
