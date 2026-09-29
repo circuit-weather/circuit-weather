@@ -114,17 +114,23 @@ export class PrivacyModal {
     const paths = this.getPrivacyPolicyPaths();
 
     try {
-      let markdown = null;
+      // PERF: Fetch all candidate privacy policy paths in parallel to reduce load latency
+      const results = await Promise.all(
+        paths.map(async (path) => {
+          try {
+            // SEC: Add timeout to prevent hanging connections during document fetch
+            const response = await fetch(path, {
+              signal: AbortSignal.timeout(3000)
+            });
+            if (!response.ok) return null;
+            return await response.text();
+          } catch {
+            return null;
+          }
+        })
+      );
 
-      for (const path of paths) {
-        // SEC: Add timeout to prevent hanging connections during document fetch
-        const response = await fetch(path, {
-            signal: AbortSignal.timeout(3000)
-        });
-        if (!response.ok) continue;
-        markdown = await response.text();
-        break;
-      }
+      const markdown = results.find((res) => res !== null);
 
       if (!markdown) {
         throw new Error('No privacy policy translation available');
