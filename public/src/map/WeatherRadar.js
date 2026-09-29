@@ -259,37 +259,7 @@ export class WeatherRadar {
             },
 
             addTo: (map) => {
-                if (!map.getSource(sourceId)) {
-                    map.addSource(sourceId, {
-                        type: 'raster',
-                        tiles: [frame.url],
-                        tileSize: 512,
-                        // RainViewer free tier limit is tile zoom 7 (Jan 2026).
-                        // Unlike Leaflet (which uses zoomOffset: -1 to subtract 1 from map zoom),
-                        // Mapbox fills {z} directly with no offset. maxzoom: 7 ensures Mapbox
-                        // never requests tiles beyond zoom 7, matching the Leaflet behaviour.
-                        maxzoom: 7,
-                        minzoom: 1
-                    });
-                }
-                if (!map.getLayer(layerId)) {
-                    const beforeId = map.getLayer('range-circles-line') ? 'range-circles-line' : null;
-                    map.addLayer({
-                        id: layerId,
-                        type: 'raster',
-                        source: sourceId,
-                        paint: {
-                            'raster-opacity': 0.01,
-                            'raster-fade-duration': 0
-                        }
-                    }, beforeId);
-
-                    // Fire load event when Mapbox finishes rendering this source
-                    map.once('idle', () => {
-                        this.isLoaded = true;
-                        if (layerProxy.events['load']) layerProxy.events['load']();
-                    });
-                }
+                this.addMapboxLayerToMap(map, sourceId, layerId, frame, layerProxy);
             },
 
             setZIndex: () => {}, // Mapbox layers are ordered by when they are added or using beforeId
@@ -312,6 +282,40 @@ export class WeatherRadar {
         };
 
         return layerProxy;
+    }
+
+    addMapboxLayerToMap(map, sourceId, layerId, frame, layerProxy) {
+        if (!map.getSource(sourceId)) {
+            map.addSource(sourceId, {
+                type: 'raster',
+                tiles: [frame.url],
+                tileSize: 512,
+                // RainViewer free tier limit is tile zoom 7 (Jan 2026).
+                // Unlike Leaflet (which uses zoomOffset: -1 to subtract 1 from map zoom),
+                // Mapbox fills {z} directly with no offset. maxzoom: 7 ensures Mapbox
+                // never requests tiles beyond zoom 7, matching the Leaflet behaviour.
+                maxzoom: 7,
+                minzoom: 1
+            });
+        }
+        if (!map.getLayer(layerId)) {
+            const beforeId = map.getLayer('range-circles-line') ? 'range-circles-line' : null;
+            map.addLayer({
+                id: layerId,
+                type: 'raster',
+                source: sourceId,
+                paint: {
+                    'raster-opacity': 0.01,
+                    'raster-fade-duration': 0
+                }
+            }, beforeId);
+
+            // Fire load event when Mapbox finishes rendering this source
+            map.once('idle', () => {
+                this.isLoaded = true;
+                if (layerProxy.events['load']) layerProxy.events['load']();
+            });
+        }
     }
 
     /**
