@@ -24,8 +24,8 @@ export function recursivelyDecodePath(path) {
     try {
       decoded = decodeURIComponent(decoded);
     } catch {
-      // Catch URIError for partially decoded string (legit '%' chars)
-      return decoded;
+      // Return null on malformed percent-encoding to prevent traversal/bypass attempts
+      return null;
     }
     depth++;
   }
