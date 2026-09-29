@@ -17,16 +17,6 @@ export class WeatherRadar {
         this.pastFrameCount = 0;
         this.pendingFrames = null;
 
-        // Smart polling + auto update checker
-        this.polling = new RadarPolling({
-            getFrames: () => this.frames,
-            isPlaying: () => this.playback.isPlaying,
-            applyFrameUpdate: (frames) => this.applyFrameUpdate(frames),
-            setPendingFrames: (frames) => { this.pendingFrames = frames; },
-            onPastCountChange: (count) => { this.pastFrameCount = count; },
-            fetchFrames: () => RadarFrames.getFramesFromApi()
-        });
-
         // Shared time formatter (O(1) creation, reuse in loops)
         this.timeFormatter = new Intl.DateTimeFormat(i18n.locale, {
             hour: '2-digit',
@@ -37,6 +27,30 @@ export class WeatherRadar {
         // Tile-error tracking + "connection instability" toast
         this.errorToast = new RadarErrorToast({ onRetry: () => this.redrawLayers() });
 
+        this.initPolling();
+        this.initPlayback();
+        this.initUI();
+
+        this.handleSpaceKey = this.handleSpaceKey.bind(this);
+        this.handleLanguageChange = this.handleLanguageChange.bind(this);
+        this.bindEvents();
+
+        this.initRelativeTimer();
+    }
+
+    initPolling() {
+        // Smart polling + auto update checker
+        this.polling = new RadarPolling({
+            getFrames: () => this.frames,
+            isPlaying: () => this.playback.isPlaying,
+            applyFrameUpdate: (frames) => this.applyFrameUpdate(frames),
+            setPendingFrames: (frames) => { this.pendingFrames = frames; },
+            onPastCountChange: (count) => { this.pastFrameCount = count; },
+            fetchFrames: () => RadarFrames.getFramesFromApi()
+        });
+    }
+
+    initPlayback() {
         // Animation playback + speed control. Frame state stays here and is
         // accessed via callbacks.
         this.playback = new RadarPlayback({
@@ -51,7 +65,9 @@ export class WeatherRadar {
                 }
             }
         });
+    }
 
+    initUI() {
         // Bolt Optimization: Cache UI elements
         this.ui = {
             slider: document.getElementById('radarSlider'),
@@ -61,11 +77,9 @@ export class WeatherRadar {
             timeEnd: document.getElementById('radarTimeEnd'),
             controls: document.getElementById('radarControls')
         };
+    }
 
-        this.handleSpaceKey = this.handleSpaceKey.bind(this);
-        this.handleLanguageChange = this.handleLanguageChange.bind(this);
-        this.bindEvents();
-
+    initRelativeTimer() {
         // Palette UX: Start a 1-minute timer to keep the relative time updated
         this.relativeTimeInterval = setInterval(() => {
             if (this.visibleLayerIndex >= 0) {
