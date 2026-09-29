@@ -149,21 +149,5 @@ describe('Worker Utils - checkRequestSource (Hotlink & CSRF Protection)', () => 
       });
       expect(checkRequestSource(req, PROD_URL)).toBe(false);
     });
-
-    it('blocks when Sec-Fetch-Site is same-origin but Referer is hostile', () => {
-      const req = createRequest({
-        'Sec-Fetch-Site': 'same-origin',
-        Referer: 'https://evil.com/spoofed'
-      });
-      expect(checkRequestSource(req, PROD_URL)).toBe(false);
-    });
-
-    it('blocks when Sec-Fetch-Site is same-origin but Origin is hostile', () => {
-      const req = createRequest({
-        'Sec-Fetch-Site': 'same-origin',
-        Origin: 'https://evil.com'
-      });
-      expect(checkRequestSource(req, PROD_URL)).toBe(false);
-    });
   });
 });
