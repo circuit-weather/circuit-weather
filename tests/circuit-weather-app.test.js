@@ -574,6 +574,38 @@ describe('CircuitWeatherApp Pure Methods', () => {
             expect(app.ui.mobileRaceInfoCircuit.textContent).toBe('Silverstone');
         });
 
+        it('shows the Malaysian flag for Malaysia', () => {
+            app.updateRaceInfo({ location: { country: 'Malaysia' }, name: 'Malaysian Grand Prix' });
+
+            expect(app.ui.countryFlag.src).toBe('https://flagcdn.com/w80/my.png');
+            expect(app.ui.countryFlag.style.display).toBe('');
+            expect(app.ui.mobileCountryFlag.src).toBe('https://flagcdn.com/w80/my.png');
+        });
+
+        it('hides the previous flag when the country has no mapping', () => {
+            app.updateRaceInfo({ location: { country: 'UK' }, name: 'British Grand Prix' });
+            app.updateRaceInfo({ location: { country: 'Atlantis' }, name: 'Atlantis Grand Prix' });
+
+            expect(app.ui.countryFlag.style.display).toBe('none');
+            expect(app.ui.mobileCountryFlag.style.display).toBe('none');
+        });
+
+        it('shows the flag for a race in Malaysia regardless of race name', () => {
+            app.updateRaceInfo({ location: { country: 'Malaysia' }, name: 'Some Grand Prix' });
+
+            expect(app.ui.countryFlag.src).toBe('https://flagcdn.com/w80/my.png');
+            expect(app.ui.countryFlag.style.display).toBe('');
+            expect(app.ui.mobileCountryFlag.src).toBe('https://flagcdn.com/w80/my.png');
+        });
+
+        it('hides the previous flag when the country has no mapping', () => {
+            app.updateRaceInfo({ location: { country: 'UK' }, name: 'British Grand Prix' });
+            app.updateRaceInfo({ location: { country: 'Atlantis' }, name: 'Atlantis Grand Prix' });
+
+            expect(app.ui.countryFlag.style.display).toBe('none');
+            expect(app.ui.mobileCountryFlag.style.display).toBe('none');
+        });
+
         it('throws an error when race is null', () => {
             expect(() => app.updateRaceInfo(null)).toThrow(TypeError);
         });
