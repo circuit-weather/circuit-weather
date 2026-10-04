@@ -944,9 +944,13 @@ export class CircuitWeatherApp {
         if (this.ui.raceInfoBanner) {
             this.ui.raceInfoBanner.style.display = race ? 'flex' : 'none';
         }
-        if (this.ui.countryFlag && flagUrl) {
-            this.ui.countryFlag.src = flagUrl;
-            this.ui.countryFlag.alt = i18n.t('common.countryFlag', { country });
+        if (this.ui.countryFlag) {
+            // Hide rather than leave the previous round's flag showing when the country is unmapped
+            this.ui.countryFlag.style.display = flagUrl ? '' : 'none';
+            if (flagUrl) {
+                this.ui.countryFlag.src = flagUrl;
+                this.ui.countryFlag.alt = i18n.t('common.countryFlag', { country });
+            }
         }
         if (this.ui.raceInfoCountry) this.ui.raceInfoCountry.textContent = country || '';
         if (this.ui.raceInfoName) this.ui.raceInfoName.textContent = race.name || '';
@@ -958,9 +962,13 @@ export class CircuitWeatherApp {
             const isMobile = this.mobileQuery.matches;
             this.ui.mobileRaceInfo.style.display = (race && isMobile) ? 'flex' : 'none';
         }
-        if (this.ui.mobileCountryFlag && flagUrl) {
-            this.ui.mobileCountryFlag.src = flagUrl;
-            this.ui.mobileCountryFlag.alt = i18n.t('common.countryFlag', { country });
+        if (this.ui.mobileCountryFlag) {
+            // Hide rather than leave the previous round's flag showing when the country is unmapped
+            this.ui.mobileCountryFlag.style.display = flagUrl ? '' : 'none';
+            if (flagUrl) {
+                this.ui.mobileCountryFlag.src = flagUrl;
+                this.ui.mobileCountryFlag.alt = i18n.t('common.countryFlag', { country });
+            }
         }
         if (this.ui.mobileRaceInfoName) this.ui.mobileRaceInfoName.textContent = race.name || '';
         if (this.ui.mobileRaceInfoCircuit) this.ui.mobileRaceInfoCircuit.textContent = race.circuit?.circuitName || '';
