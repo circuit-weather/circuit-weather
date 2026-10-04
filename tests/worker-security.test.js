@@ -56,6 +56,11 @@ describe('Worker Security Utils', () => {
       expect(checkRequestSource(req, PROD_URL)).toBe(true);
     });
 
+    it('rejects origins with path components in getAllowedOrigin', () => {
+      const req = createRequest({ 'Origin': 'http://localhost:8787/path' });
+      expect(getAllowedOrigin(req)).toBe(null);
+    });
+
     it('allows Same-Origin requests from Workers.dev (Preview)', () => {
       const origin = 'https://circuit-weather.user.workers.dev';
       const req = createRequest({ 'Origin': origin });
