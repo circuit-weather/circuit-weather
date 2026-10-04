@@ -38,6 +38,10 @@ describe('Config File (public/src/config.js)', () => {
             expect(COUNTRY_CODES['USA']).toBe('us');
             expect(COUNTRY_CODES['United States']).toBe('us');
             expect(COUNTRY_CODES['UK']).toBe('gb');
+            expect(COUNTRY_CODES['Malaysia']).toBe('my');
+            expect(COUNTRY_CODES['United Kingdom']).toBe('gb');
+            expect(COUNTRY_CODES['Malaysia']).toBe('my');
+            expect(COUNTRY_CODES['United Kingdom']).toBe('gb');
         });
 
         it('should be completely frozen to prevent runtime tampering', () => {

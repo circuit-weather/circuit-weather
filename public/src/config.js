@@ -56,12 +56,18 @@ Object.freeze(CONFIG);
 
 // Country code mappings for flags (ISO 3166-1 alpha-2)
 export const COUNTRY_CODES = {
-    'Australia': 'au', 'Austria': 'at', 'Azerbaijan': 'az', 'Bahrain': 'bh',
-    'Belgium': 'be', 'Brazil': 'br', 'Canada': 'ca', 'China': 'cn',
-    'Hungary': 'hu', 'Italy': 'it', 'Japan': 'jp', 'Mexico': 'mx',
-    'Monaco': 'mc', 'Netherlands': 'nl', 'Qatar': 'qa', 'Saudi Arabia': 'sa',
-    'Singapore': 'sg', 'Spain': 'es', 'UAE': 'ae', 'UK': 'gb',
-    'USA': 'us', 'United States': 'us',
+    'Argentina': 'ar', 'Australia': 'au', 'Austria': 'at', 'Azerbaijan': 'az',
+    'Bahrain': 'bh', 'Belgium': 'be', 'Brazil': 'br', 'Canada': 'ca',
+    'China': 'cn', 'France': 'fr', 'Germany': 'de', 'Hungary': 'hu',
+    'India': 'in', 'Italy': 'it', 'Japan': 'jp', 'Korea': 'kr',
+    'Malaysia': 'my', 'Mexico': 'mx', 'Monaco': 'mc', 'Morocco': 'ma',
+    'Netherlands': 'nl', 'Portugal': 'pt', 'Qatar': 'qa', 'Russia': 'ru',
+    'Saudi Arabia': 'sa', 'Singapore': 'sg', 'South Africa': 'za',
+    'South Korea': 'kr', 'Spain': 'es', 'Thailand': 'th', 'Turkey': 'tr',
+    'UAE': 'ae', 'UK': 'gb', 'USA': 'us', 'Vietnam': 'vn',
+    // Long-form names (e.g. from the OpenF1 fallback)
+    'Great Britain': 'gb', 'United Arab Emirates': 'ae',
+    'United Kingdom': 'gb', 'United States': 'us',
 };
 // SEC: Prevent runtime tampering with country codes
 Object.freeze(COUNTRY_CODES);
