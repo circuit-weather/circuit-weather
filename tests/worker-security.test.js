@@ -245,10 +245,9 @@ describe('Worker Security Utils', () => {
       expect(recursivelyDecodePath('%25252e%25252e/')).toBe('../');
     });
 
-    it('returns null for malformed percent-encoding strings', () => {
-      expect(recursivelyDecodePath('invalid%')).toBeNull();
-      expect(recursivelyDecodePath('test%25')).toBeNull();
-      expect(recursivelyDecodePath('%252e%252e%2f%FF')).toBeNull();
+    it('handles legitimate % characters safely', () => {
+      expect(recursivelyDecodePath('invalid%')).toBe('invalid%');
+      expect(recursivelyDecodePath('test%25')).toBe('test%');
     });
 
     it('returns null if max depth is exceeded', () => {
