@@ -873,6 +873,25 @@ export class CircuitWeatherApp {
         this.updatePageMetadata();
         this.populateSessionSelect(race.sessions);
 
+        this._resolveRoundMapCenter(race);
+
+        // Update race info banner
+        this.updateRaceInfo(race);
+
+        this._resetRoundUIState();
+
+        this.updateMobileVisibility();
+
+        // Clear the forecast update since no session is active yet for this round
+        this.stopSessionForecastInterval();
+
+        // Start polling again, it will only do work if a session is actively selected
+        this.startSessionForecastInterval();
+
+        this.router.navigate('f1', round, null);
+    }
+
+    _resolveRoundMapCenter(race) {
         // The map centre is derived from the track GeoJSON bounding box for every
         // data source, so it stays consistent regardless of where the schedule came
         // from. Schedule coordinates (when present) are only a fallback for circuits
@@ -899,10 +918,9 @@ export class CircuitWeatherApp {
         } else {
             applyCenter(null);
         }
+    }
 
-        // Update race info banner
-        this.updateRaceInfo(race);
-
+    _resetRoundUIState() {
         // Hide countdown until session selected (radar always shows)
         this.countdown.show(false);
 
@@ -920,19 +938,6 @@ export class CircuitWeatherApp {
         if (this.ui.sessionEmptyState) {
             this.ui.sessionEmptyState.style.display = 'flex';
         }
-
-        // Note: live weather (debounced) and the wind overlay are refreshed by
-        // applyCenter() above, once the circuit centre is resolved from the track.
-
-        this.updateMobileVisibility();
-
-        // Clear the forecast update since no session is active yet for this round
-        this.stopSessionForecastInterval();
-        
-        // Start polling again, it will only do work if a session is actively selected
-        this.startSessionForecastInterval();
-
-        this.router.navigate('f1', round, null);
     }
 
     updateRaceInfo(race) {
