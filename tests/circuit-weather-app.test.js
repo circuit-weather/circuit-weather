@@ -703,10 +703,14 @@ describe('CircuitWeatherApp Pure Methods', () => {
             app.ui.loadingOverlay = createMockElement('loadingOverlay');
         });
 
-        it('catches and logs errors during session selection', async () => {
+        it('catches and logs errors during session selection and displays forecast unavailable state', async () => {
             const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
             app.radar.load = vi.fn().mockRejectedValue(new Error('Radar Error'));
             app.radar.showErrorToast = vi.fn();
+
+            const mockUnavailableParagraph = createMockElement('p');
+            app.ui.forecastUnavailable = createMockElement('forecastUnavailable');
+            app.ui.forecastUnavailable.querySelector = vi.fn().mockReturnValue(mockUnavailableParagraph);
 
             // Make forecast update fail as well to cover both branches
             app.weatherClient.getForecast = vi.fn().mockRejectedValue(new Error('Forecast Error'));
@@ -719,6 +723,8 @@ describe('CircuitWeatherApp Pure Methods', () => {
             expect(app.ui.forecastContent.innerHTML).toBe('');
             expect(app.ui.forecastContent.removeAttribute).toHaveBeenCalledWith('aria-busy');
             expect(app.ui.forecastContent.style.display).toBe('none');
+            expect(app.ui.forecastUnavailable.style.display).toBe('block');
+            expect(mockUnavailableParagraph.textContent).toBe(i18n.t('forecast.failedTryAgain'));
             consoleSpy.mockRestore();
         });
 
@@ -1687,6 +1693,36 @@ describe('CircuitWeatherApp Pure Methods', () => {
 
             // Assert
             expect(renderErrorSpy).toHaveBeenCalledWith('Failed to initialize application.');
+            expect(app.showLoading).toHaveBeenCalledWith(false);
+
+            consoleSpy.mockRestore();
+        });
+
+        it('renders fallback DOM error state when init schedule fetch fails with generic error', async () => {
+            app.mapManager.init = vi.fn().mockResolvedValue({ hasLayer: false, addControl: vi.fn() });
+            const mockSidebar = createMockElement('sidebar-content');
+            vi.spyOn(document, 'querySelector').mockImplementation(sel => {
+                if (sel === '.sidebar-content') return mockSidebar;
+                return createMockElement(sel);
+            });
+
+            const error = new Error('Network failure');
+            app.f1Api.getSchedule.mockRejectedValue(error);
+            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+            await app.init();
+
+            expect(mockSidebar.textContent).toBe('');
+            const appendedErrorState = mockSidebar.appendChild.mock.calls[0][0];
+            expect(appendedErrorState.className).toBe('error-state');
+
+            const p = appendedErrorState.appendChild.mock.calls.find(call => call[0].id === 'p')?.[0];
+            const btn = appendedErrorState.appendChild.mock.calls.find(call => call[0].className === 'retry-btn')?.[0];
+
+            expect(p).toBeDefined();
+            expect(p.textContent).toBe(i18n.t('errors.initFailed'));
+            expect(btn).toBeDefined();
+            expect(btn.className).toBe('retry-btn');
             expect(app.showLoading).toHaveBeenCalledWith(false);
 
             consoleSpy.mockRestore();
