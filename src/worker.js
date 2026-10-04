@@ -986,6 +986,18 @@ async function handleTileRequest(request, env, ctx, url) {
 
     const status = upstreamResponse.status;
 
+    // NOTE: This sampled logging is deliberate observability, not a leftover debug
+    // statement. It is non-production only, logs 100% of 4xx/5xx and ~5% of 2xx, and
+    // redacts the tile path unless DEBUG === 'true'. Do not remove it.
+    // Log outcomes (sampled for 2xx, 100% for errors)
+    const bucket = Math.floor(status / 100);
+    if (bucket >= 4 || getSecureRandom() < 0.05) {
+      if (env.ENVIRONMENT !== 'production') {
+        const logPath = env.DEBUG === 'true' ? decodedTilePath : '[REDACTED]';
+        console.info(`Tile Proxy Bucket: ${bucket}xx (Status: ${status}) Path: ${logPath}`);
+      }
+    }
+
     // 3. Cache Determination
     // Cache success (2xx) or benign error (404). Do NOT cache 429/5xx.
     const shouldCache = upstreamResponse.ok || status === 404;
