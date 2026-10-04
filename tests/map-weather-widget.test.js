@@ -62,7 +62,10 @@ class MockDOMParser {
     parseFromString(str, type) {
         return {
             documentElement: {
-                childNodes: []
+                childNodes: [
+                    { nodeType: 1, cloneNode: vi.fn(() => createMockElement('path', '')) },
+                    { nodeType: 3 } // Non-element node to test branch logic
+                ]
             }
         };
     }
