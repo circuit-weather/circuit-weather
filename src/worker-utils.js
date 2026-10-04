@@ -25,6 +25,9 @@ export function recursivelyDecodePath(path) {
       decoded = decodeURIComponent(decoded);
     } catch {
       // Catch URIError for partially decoded string (legit '%' chars)
+      // NOTE: Returning the partial string (not null) is deliberate and safe: the stray '%'
+      // stays in it, and callers (validateApiPath/validateTilePath) reject it because
+      // VALID_API_PATH_REGEX forbids '%'. Returning null would only change the error message.
       return decoded;
     }
     depth++;
