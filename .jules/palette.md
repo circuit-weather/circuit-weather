@@ -47,3 +47,8 @@
 
 **Learning:** When content is injected dynamically via JavaScript (like the skeleton loader or the final forecast data in `forecastContent`), screen readers will not announce it unless the container is explicitly marked as a live region.
 **Action:** Always add `aria-live="polite"` (or `assertive` for critical alerts) to containers that will receive dynamically injected content that users need to be aware of without explicit focus.
+
+## 2025-01-20 - Missing Hover States on Range Input Thumbs
+
+**Learning:** The custom styling on the radar timeline `input[type="range"]` (`.radar-slider`) lacks `:hover` feedback for the slider thumb (`::-webkit-slider-thumb` and `::-moz-range-thumb`), making it less intuitive that the thumb can be interacted with, especially since other controls in the timeline have `:hover` styling.
+**Action:** Always provide visual `:hover` feedback on interactive UI components, including custom range input thumbs, to improve the discoverability of interactive elements.
