@@ -398,6 +398,13 @@ describe('F1API', () => {
             await expect(api.fetchFromJolpica()).rejects.toThrow('HTTP 404');
         });
 
+        it('propagates network errors when fetch rejects', async () => {
+            const networkError = new TypeError('Failed to fetch');
+            mockFetch.mockRejectedValueOnce(networkError);
+
+            await expect(api.fetchFromJolpica()).rejects.toThrow('Failed to fetch');
+        });
+
         it('returns empty array if MRData or RaceTable or Races are undefined', async () => {
             mockFetch.mockResolvedValueOnce({
                 ok: true,
