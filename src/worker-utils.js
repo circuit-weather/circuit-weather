@@ -330,43 +330,13 @@ export function getSecureRandom() {
   return Math.random();
 }
 
-export const IPV4_REGEX = /^(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(?:\.(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)){3}$/;
-
-export const IPV6_REGEX = /^(?:(?:[a-fA-F0-9]{1,4}:){7}[a-fA-F0-9]{1,4}|(?:[a-fA-F0-9]{1,4}:){1,7}:|(?:[a-fA-F0-9]{1,4}:){1,6}:[a-fA-F0-9]{1,4}|(?:[a-fA-F0-9]{1,4}:){1,5}(?::[a-fA-F0-9]{1,4}){1,2}|(?:[a-fA-F0-9]{1,4}:){1,4}(?::[a-fA-F0-9]{1,4}){1,3}|(?:[a-fA-F0-9]{1,4}:){1,3}(?::[a-fA-F0-9]{1,4}){1,4}|(?:[a-fA-F0-9]{1,4}:){1,2}(?::[a-fA-F0-9]{1,4}){1,5}|[a-fA-F0-9]{1,4}:(?::[a-fA-F0-9]{1,4}){1,6}|:(?:(?::[a-fA-F0-9]{1,4}){1,7}|:)|fe80:(?::[a-fA-F0-9]{0,4}){0,4}%[0-9a-zA-Z]+|::(?:ffff(?::0{1,4})?:)?(?:(?:25[0-5]|(?:2[0-4]|1?[0-9])?[0-9])\.){3}(?:25[0-5]|(?:2[0-4]|1?[0-9])?[0-9])|(?:[a-fA-F0-9]{1,4}:){1,4}:(?:(?:25[0-5]|(?:2[0-4]|1?[0-9])?[0-9])\.){3}(?:25[0-5]|(?:2[0-4]|1?[0-9])?[0-9]))$/;
-
 /**
- * Validates whether a string is a valid IPv4 or IPv6 address.
+ * Extracts and parses the lowercased base MIME type from a Response object's Content-Type header.
+ * @param {Response} response - The fetch Response object
+ * @returns {{ contentType: string|null, mime: string }} Parsed Content-Type header and base MIME type
  */
-export function isValidIp(ip) {
-  if (typeof ip !== 'string' || !ip || ip.length > 45) return false;
-  return IPV4_REGEX.test(ip) || IPV6_REGEX.test(ip);
-}
-
-/**
- * Extracts and strictly validates client IP from request headers.
- * Falls back to '127.0.0.1' if missing, malformed, or invalid.
- */
-export function getClientIp(request) {
-  const header = request.headers.get('CF-Connecting-IP');
-  if (!header) return '127.0.0.1';
-
-  // Extract first IP if comma-separated list
-  let rawIp = header.split(',')[0].trim();
-
-  // Strip brackets if bracketed IPv6 (e.g. [::1])
-  if (rawIp.startsWith('[') && rawIp.includes(']')) {
-    rawIp = rawIp.slice(1, rawIp.indexOf(']'));
-  } else if (rawIp.includes(':') && rawIp.includes('.')) {
-    // IPv4 with port (e.g. 127.0.0.1:8080)
-    const parts = rawIp.split(':');
-    if (parts.length === 2 && IPV4_REGEX.test(parts[0])) {
-      rawIp = parts[0];
-    }
-  }
-
-  if (isValidIp(rawIp)) {
-    return rawIp;
-  }
-
-  return '127.0.0.1';
+export function getParsedMimeType(response) {
+  const contentType = response?.headers?.get ? (response.headers.get('Content-Type') ?? null) : null;
+  const mime = contentType ? contentType.split(';')[0].trim().toLowerCase() : '';
+  return { contentType, mime };
 }

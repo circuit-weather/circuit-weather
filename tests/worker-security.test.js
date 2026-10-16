@@ -4,9 +4,7 @@ import {
   checkFetchDest,
   getAllowedOrigin,
   VALID_API_PATH_REGEX,
-  recursivelyDecodePath,
-  getClientIp,
-  isValidIp
+  recursivelyDecodePath
 } from '../src/worker-utils.js';
 import { PRODUCTION_DOMAIN } from './helpers/constants.js';
 
@@ -266,14 +264,34 @@ describe('Worker Security Utils', () => {
       expect(recursivelyDecodePath('%25252e%25252e/')).toBe('../');
     });
 
-    it('handles legitimate % characters safely', () => {
-      expect(recursivelyDecodePath('invalid%')).toBe('invalid%');
-      expect(recursivelyDecodePath('test%25')).toBe('test%');
+    it('handles plain unencoded paths and empty strings unchanged', () => {
+      expect(recursivelyDecodePath('')).toBe('');
+      expect(recursivelyDecodePath('api/v1/status')).toBe('api/v1/status');
     });
 
-    it('returns null if max depth is exceeded', () => {
-      // 6 times encoded
+    it('handles depth boundary edge cases accurately', () => {
+      // 4-times encoded 'a': %25252561 -> %252561 -> %2561 -> %61 -> a (depth 4 completes, fully decoded, returns 'a')
+      expect(recursivelyDecodePath('%25252561')).toBe('a');
+
+      // 5-times encoded 'a': %2525252561 -> after 5 iterations decoded is 'a' but loop terminated when depth reached 5, previous was '%61', returns null
+      expect(recursivelyDecodePath('%2525252561')).toBeNull();
+
+      // 6-times encoded: depth exceeded, returns null
       expect(recursivelyDecodePath('%2525252525252e/')).toBeNull();
+    });
+
+    it('handles legitimate % characters safely and handles URIError on invalid sequences', () => {
+      expect(recursivelyDecodePath('invalid%')).toBe('invalid%');
+      expect(recursivelyDecodePath('test%25')).toBe('test%');
+      expect(recursivelyDecodePath('%xy')).toBe('%xy');
+      expect(recursivelyDecodePath('path/%E0%A0')).toBe('path/%E0%A0');
+      expect(recursivelyDecodePath('foo%2')).toBe('foo%2');
+    });
+
+    it('returns partially decoded path when subsequent iteration encounters URIError', () => {
+      // %25xy decodes %25 -> % on first pass to produce %xy.
+      // Second pass tries decodeURIComponent('%xy') which throws URIError, returning '%xy'.
+      expect(recursivelyDecodePath('%25xy')).toBe('%xy');
     });
   });
 
@@ -285,64 +303,6 @@ describe('Worker Security Utils', () => {
 
       expect(VALID_API_PATH_REGEX.test('invalid<script>')).toBe(false);
       expect(VALID_API_PATH_REGEX.test('drop table')).toBe(false);
-    });
-  });
-
-  describe('getClientIp (Client IP Spoofing Protection)', () => {
-    it('returns default fallback 127.0.0.1 when CF-Connecting-IP header is missing', () => {
-      const req = createRequest({});
-      expect(getClientIp(req)).toBe('127.0.0.1');
-    });
-
-    it('extracts valid IPv4 address correctly', () => {
-      const req = createRequest({ 'CF-Connecting-IP': '203.0.113.195' });
-      expect(getClientIp(req)).toBe('203.0.113.195');
-    });
-
-    it('extracts valid IPv6 address correctly', () => {
-      const req = createRequest({ 'CF-Connecting-IP': '2001:db8::1' });
-      expect(getClientIp(req)).toBe('2001:db8::1');
-    });
-
-    it('extracts and validates first IP in comma-separated list', () => {
-      const req = createRequest({ 'CF-Connecting-IP': '198.51.100.1, 203.0.113.195' });
-      expect(getClientIp(req)).toBe('198.51.100.1');
-    });
-
-    it('strips brackets from IPv6 address', () => {
-      const req = createRequest({ 'CF-Connecting-IP': '[2001:db8::1]' });
-      expect(getClientIp(req)).toBe('2001:db8::1');
-    });
-
-    it('strips port from IPv4 address', () => {
-      const req = createRequest({ 'CF-Connecting-IP': '198.51.100.1:8080' });
-      expect(getClientIp(req)).toBe('198.51.100.1');
-    });
-
-    it('falls back to 127.0.0.1 for spoofed or invalid IP headers', () => {
-      const maliciousHeaders = [
-        'invalid-ip-string',
-        '<script>alert(1)</script>',
-        '256.1.1.1',
-        '1.2.3.4.5',
-        '::1::1',
-        'SELECT * FROM users',
-        '   ',
-        'A'.repeat(100)
-      ];
-
-      for (const headerVal of maliciousHeaders) {
-        const req = createRequest({ 'CF-Connecting-IP': headerVal });
-        expect(getClientIp(req)).toBe('127.0.0.1');
-      }
-    });
-
-    it('validates IP helper isValidIp correctly', () => {
-      expect(isValidIp('127.0.0.1')).toBe(true);
-      expect(isValidIp('::1')).toBe(true);
-      expect(isValidIp('not-an-ip')).toBe(false);
-      expect(isValidIp(null)).toBe(false);
-      expect(isValidIp(123)).toBe(false);
     });
   });
 });

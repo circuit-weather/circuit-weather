@@ -346,6 +346,27 @@ describe('CircuitWeatherApp Pure Methods', () => {
 
             expect(Number.isNaN(result.getTime())).toBe(true);
             expect(race._endTimeMs).toBeUndefined();
+
+            // When schedule data is later updated with valid dates
+            race.date = '2024-03-10';
+            race.sessions[0].date = '2024-03-10';
+            race.sessions[0].time = '14:00:00Z';
+
+            const fixedResult = app.getRaceEndTime(race);
+            expect(Number.isNaN(fixedResult.getTime())).toBe(false);
+            expect(typeof race._endTimeMs).toBe('number');
+        });
+
+        it('handles null race or missing sessions gracefully', () => {
+            const nullResult = app.getRaceEndTime(null);
+            expect(Number.isNaN(nullResult.getTime())).toBe(true);
+
+            const raceNoSessions = {
+                date: '2024-03-10',
+            };
+            const resultNoSessions = app.getRaceEndTime(raceNoSessions);
+            expect(Number.isNaN(resultNoSessions.getTime())).toBe(false);
+            expect(typeof raceNoSessions._endTimeMs).toBe('number');
         });
     });
 
@@ -1693,6 +1714,40 @@ describe('CircuitWeatherApp Pure Methods', () => {
 
             // Assert
             expect(renderErrorSpy).toHaveBeenCalledWith('Failed to initialize application.');
+            expect(app.showLoading).toHaveBeenCalledWith(false);
+
+            consoleSpy.mockRestore();
+        });
+
+        it('catches initialization errors when startWeatherRefreshInterval throws during init', async () => {
+            app.mapManager.init = vi.fn().mockResolvedValue({ hasLayer: false, addControl: vi.fn() });
+            app.startWeatherRefreshInterval = vi.fn().mockImplementation(() => {
+                throw new Error('Weather refresh interval error');
+            });
+            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+            const renderErrorSpy = vi.spyOn(app, 'renderError').mockImplementation(() => {});
+
+            await app.init();
+
+            expect(consoleSpy).toHaveBeenCalledWith('Initialization failed:', expect.any(Error));
+            expect(renderErrorSpy).toHaveBeenCalledWith(i18n.t('errors.initFailed'));
+            expect(app.showLoading).toHaveBeenCalledWith(false);
+
+            consoleSpy.mockRestore();
+        });
+
+        it('catches initialization errors when startSessionForecastInterval throws during init', async () => {
+            app.mapManager.init = vi.fn().mockResolvedValue({ hasLayer: false, addControl: vi.fn() });
+            app.startSessionForecastInterval = vi.fn().mockImplementation(() => {
+                throw new Error('Session forecast interval error');
+            });
+            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+            const renderErrorSpy = vi.spyOn(app, 'renderError').mockImplementation(() => {});
+
+            await app.init();
+
+            expect(consoleSpy).toHaveBeenCalledWith('Initialization failed:', expect.any(Error));
+            expect(renderErrorSpy).toHaveBeenCalledWith(i18n.t('errors.initFailed'));
             expect(app.showLoading).toHaveBeenCalledWith(false);
 
             consoleSpy.mockRestore();
