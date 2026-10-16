@@ -213,6 +213,9 @@ function handleOptions(request) {
 /**
  * Helper to cache and return an error response
  */
+// Intentionally keeps 'cache' as an explicit required parameter (no 'caches.default' default): every caller passes the cache
+// it just used, so it stays injectable/mockable and callers cannot silently write to a different cache than they read from.
+// Defaulting it is a no-benefit refactor that obscures this.
 function cacheAndReturnError({ request, cache, cacheKey, status, message, extraDetails = {}, ctx }) {
   // Cache error response to prevent hammering upstream
   const errorCacheTTL = status === 429 ? 300 : 60;
