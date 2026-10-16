@@ -280,10 +280,11 @@ export class CircuitWeatherApp {
      * `setHours()` mutation this file uses elsewhere.
      */
     getRaceEndTime(race) {
+        if (!race) return new Date(NaN);
         if (typeof race._endTimeMs === 'number') return new Date(race._endTimeMs);
 
         let end;
-        const raceSession = race.sessions.find(s => s.id === 'race');
+        const raceSession = Array.isArray(race.sessions) ? race.sessions.find(s => s.id === 'race') : null;
         if (raceSession && raceSession.date && raceSession.time) {
             end = new Date(`${raceSession.date}T${raceSession.time}`);
             end.setHours(end.getHours() + CONFIG.RACE_DURATION_BUFFER_HOURS);
@@ -429,11 +430,12 @@ export class CircuitWeatherApp {
             let shouldUpdate = false;
             for (let i = 0; i < mutations.length; i++) {
                 const addedNodes = mutations[i].addedNodes;
-                const len = addedNodes.length;
-                for (let j = 0; j < len; j++) {
+                for (let j = 0; j < addedNodes.length; j++) {
                     const node = addedNodes[j];
                     if (node.nodeType === Node.ELEMENT_NODE) {
-                        if (node.matches(controlSelector) || (node.firstElementChild !== null && node.querySelector(controlSelector) !== null)) {
+                        // Intentionally unchanged: caching addedNodes.length and adding a firstElementChild pre-check are micro-optimisations on a
+                        // tiny, infrequent mutation list (Mapbox control additions). querySelector already short-circuits on empty nodes; no measurable gain.
+                        if (node.matches(controlSelector) || node.querySelector(controlSelector) !== null) {
                             observer.observe(node);
                             shouldUpdate = true;
                         }

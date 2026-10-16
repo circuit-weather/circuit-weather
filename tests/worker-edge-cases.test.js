@@ -344,6 +344,56 @@ describe('Worker Edge Cases', () => {
             expect(JSON.stringify(body)).not.toContain('Invalid URL');
             expect(JSON.stringify(body)).not.toContain('TypeError');
         });
+
+        it('logs error in non-production environment when route handler throws unexpected error', async () => {
+            const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+            const mockErr = new Error('Unexpected route error');
+
+            // Pass a request object whose url getter throws to simulate an error in route handling
+            const request = {
+                method: 'GET',
+                get url() {
+                    throw mockErr;
+                },
+                headers: new Headers({
+                    'CF-Connecting-IP': '127.0.0.1'
+                })
+            };
+
+            const response = await workerModule.fetch(request, env, ctx);
+
+            expect(response.status).toBe(500);
+            const body = await response.json();
+            expect(body.error.message).toBe('Internal Server Error');
+            expect(errorSpy).toHaveBeenCalledWith('Worker error:', mockErr);
+
+            errorSpy.mockRestore();
+        });
+
+        it('suppresses error logging in production environment when route handler throws unexpected error', async () => {
+            const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+            const mockErr = new Error('Unexpected route error');
+
+            const request = {
+                method: 'GET',
+                get url() {
+                    throw mockErr;
+                },
+                headers: new Headers({
+                    'CF-Connecting-IP': '127.0.0.1'
+                })
+            };
+
+            const prodEnv = createEnv({ ENVIRONMENT: 'production' });
+            const response = await workerModule.fetch(request, prodEnv, ctx);
+
+            expect(response.status).toBe(500);
+            const body = await response.json();
+            expect(body.error.message).toBe('Internal Server Error');
+            expect(errorSpy).not.toHaveBeenCalled();
+
+            errorSpy.mockRestore();
+        });
     });
 
     // ---------------------------------------------------------------
