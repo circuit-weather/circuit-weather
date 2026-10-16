@@ -311,23 +311,37 @@ function validateApiPath(request, rawPath) {
 }
 
 /**
- * Checks cache for F1 API response and returns hit Response if found.
+ * Creates a Response object for a cache hit with standard X-Cache header, CORS, and optional header overrides.
+ * @param {Response} response
+ * @param {Request} request
+ * @param {Record<string, string>} [additionalHeaders]
+ * @returns {Response}
  */
-async function checkApiCache(request, cache, cacheKey) {
-  const response = await cache.match(cacheKey);
-  if (!response) return null;
-
+function createCacheHitResponse(response, request, additionalHeaders = {}) {
   const headers = new Headers(response.headers);
   headers.set('X-Cache', 'HIT');
 
   // Apply strict CORS
   setCorsHeaders(headers, request);
 
+  for (const [key, value] of Object.entries(additionalHeaders)) {
+    headers.set(key, value);
+  }
+
   return new Response(response.body, {
     status: response.status,
     statusText: response.statusText,
     headers
   });
+}
+
+/**
+ * Checks cache for F1 API response and returns hit Response if found.
+ */
+async function checkApiCache(request, cache, cacheKey) {
+  const response = await cache.match(cacheKey);
+  if (!response) return null;
+  return createCacheHitResponse(response, request);
 }
 
 /**
@@ -454,19 +468,9 @@ function extractAndValidateTrackId(url) {
  * @returns {Response}
  */
 function createTrackCacheHitResponse(response, request) {
-  const headers = new Headers(response.headers);
-  headers.set('X-Cache', 'HIT');
-
-  // Apply strict CORS
-  setCorsHeaders(headers, request);
-
   // Ensure client caches this for a long time too (24h)
-  headers.set('Cache-Control', 'public, max-age=86400');
-
-  return new Response(response.body, {
-    status: response.status,
-    statusText: response.statusText,
-    headers
+  return createCacheHitResponse(response, request, {
+    'Cache-Control': 'public, max-age=86400'
   });
 }
 
@@ -610,16 +614,7 @@ async function handleAssetRequest(request, env, ctx, url) {
   let response = await cache.match(cacheKey);
 
   if (response) {
-    const headers = new Headers(response.headers);
-    headers.set('X-Cache', 'HIT');
-
-    // Apply strict CORS
-    setCorsHeaders(headers, request);
-
-    return new Response(response.body, {
-      status: response.status,
-      headers
-    });
+    return createCacheHitResponse(response, request);
   }
 
   return await fetchAndCacheVendorAsset({ request, env, ctx, path, config, cache, cacheKey });
@@ -760,16 +755,7 @@ async function handleHealthRequest(request, env, ctx, url) {
   let response = await cache.match(cacheKey);
 
   if (response) {
-    const headers = new Headers(response.headers);
-    headers.set('X-Cache', 'HIT');
-
-    // Apply strict CORS
-    setCorsHeaders(headers, request);
-
-    return new Response(response.body, {
-      status: response.status,
-      headers
-    });
+    return createCacheHitResponse(response, request);
   }
 
   const upstreams = {
@@ -927,18 +913,7 @@ function handleCacheableTileResponse({ request, ctx, cache, cacheKey, upstreamRe
 async function checkTileCache(request, cache, cacheKey) {
   const response = await cache.match(cacheKey);
   if (!response) return null;
-
-  const headers = new Headers(response.headers);
-  headers.set('X-Cache', 'HIT');
-
-  // Apply strict CORS
-  setCorsHeaders(headers, request);
-
-  return new Response(response.body, {
-    status: response.status,
-    statusText: response.statusText,
-    headers
-  });
+  return createCacheHitResponse(response, request);
 }
 
 function handleNonCacheableTileError(request, status, upstreamResponse) {
@@ -1045,20 +1020,9 @@ async function handleTileRequest(request, env, ctx, url) {
 async function checkRadarCache(request, cache, cacheKey) {
   const response = await cache.match(cacheKey);
   if (!response) return null;
-
-  const headers = new Headers(response.headers);
-  headers.set('X-Cache', 'HIT');
-
-  // Apply strict CORS
-  setCorsHeaders(headers, request);
-
   // Override Cache-Control for the client to ensure frequent checks (1 min)
-  headers.set('Cache-Control', 'public, max-age=60');
-
-  return new Response(response.body, {
-    status: response.status,
-    statusText: response.statusText,
-    headers
+  return createCacheHitResponse(response, request, {
+    'Cache-Control': 'public, max-age=60'
   });
 }
 
