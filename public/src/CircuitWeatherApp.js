@@ -503,9 +503,7 @@ export class CircuitWeatherApp {
 
         // BOTTOM OFFSETS: Avoid Mapbox Logo / Attribution
         let attributionHeight = 25; // Safe default for attribution/logo
-        const attribution = document.querySelector('.mapboxgl-ctrl-bottom-left') ||
-                            document.querySelector('.mapboxgl-ctrl-bottom-right') ||
-                            document.querySelector('.leaflet-control-attribution');
+        const attribution = document.querySelector('.mapboxgl-ctrl-bottom-left, .mapboxgl-ctrl-bottom-right, .leaflet-control-attribution');
 
         if (attribution) {
             const attrBox = attribution.getBoundingClientRect();
