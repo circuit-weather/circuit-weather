@@ -29,7 +29,8 @@ import {
   setCorsHeaders,
   getEmptyRadarResponse,
   createErrorResponse,
-  getSecureRandom
+  getSecureRandom,
+  getParsedMimeType
 } from './worker-utils.js';
 
 // Per-upstream timeouts to prevent resource exhaustion while allowing for slow upstreams
@@ -352,8 +353,7 @@ async function fetchAndCacheApiRequest({ request, env, ctx, upstreamUrl, cache, 
     // SEC: Strict Content-Type Validation
     // Prevent cache poisoning if upstream returns HTML error page with 200 OK
     // Bolt Security: Use strict MIME comparison, not substring check
-    const contentType = upstreamResponse.headers.get('Content-Type');
-    const mime = contentType ? contentType.split(';')[0].trim().toLowerCase() : '';
+    const { contentType, mime } = getParsedMimeType(upstreamResponse);
 
     if (mime !== 'application/json') {
       if (env.ENVIRONMENT !== 'production') {
@@ -539,8 +539,7 @@ async function fetchAndCacheTrack(upstreamUrl, cacheKey, request, env, ctx) {
 
     // SEC: Strict Content-Type Validation
     // Prevent MIME sniffing vulnerabilities if upstream serves non-JSON content
-    const contentType = upstreamResponse.headers.get('Content-Type');
-    const mime = contentType ? contentType.split(';')[0].trim().toLowerCase() : '';
+    const { contentType, mime } = getParsedMimeType(upstreamResponse);
 
     // GitHub raw content for geojson might be text/plain or application/json
     // We should strictly allow text/plain or application/json since github raw serves text/plain
@@ -649,8 +648,7 @@ async function fetchAndCacheVendorAsset({ request, env, ctx, path, config, cache
 
     // SEC: Validate Content-Type
     // Bolt Security: Use strict MIME comparison, not substring check
-    const contentType = upstreamResponse.headers.get('Content-Type');
-    const mime = contentType ? contentType.split(';')[0].trim().toLowerCase() : '';
+    const { contentType, mime } = getParsedMimeType(upstreamResponse);
     const isValidType = config.contentTypes.includes(mime);
 
     if (!isValidType) {
@@ -1004,9 +1002,8 @@ async function handleTileRequest(request, env, ctx, url) {
     const ttl = upstreamResponse.ok ? 7200 : 60;
 
     if (shouldCache) {
-      const contentType = upstreamResponse.headers.get('Content-Type');
       // SEC: Strict MIME comparison, not a substring check.
-      const mime = contentType ? contentType.split(';')[0].trim().toLowerCase() : '';
+      const { contentType, mime } = getParsedMimeType(upstreamResponse);
       const isPng = mime === 'image/png';
 
       // SEC: Strict Content-Type validation (success responses only).
@@ -1102,8 +1099,7 @@ function handleRadarUpstreamError(request, env, upstreamResponse) {
   // SEC: Strict Content-Type Validation
   // Prevent cache poisoning if upstream returns HTML error page (e.g. WAF/Maintenance) with 200 OK
   // Bolt Security: Use strict MIME comparison, not substring check
-  const contentType = upstreamResponse.headers.get('Content-Type');
-  const mime = contentType ? contentType.split(';')[0].trim().toLowerCase() : '';
+  const { contentType, mime } = getParsedMimeType(upstreamResponse);
 
   if (mime !== 'application/json') {
     if (env.ENVIRONMENT !== 'production') {
