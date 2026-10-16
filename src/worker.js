@@ -444,6 +444,8 @@ async function handleApiRequest(request, env, ctx, url) {
   const cache = caches.default;
 
   // Check cache match
+  // Intentionally terse one-line early returns (and 'return await' for the final call), matching the style used throughout this file.
+  // Expanding to braces / dropping 'await' is purely cosmetic; do not re-propose.
   const cachedResponse = await checkApiCache(request, cache, cacheKey);
   if (cachedResponse) return cachedResponse;
 
