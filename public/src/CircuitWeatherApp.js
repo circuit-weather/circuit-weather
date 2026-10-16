@@ -1369,6 +1369,8 @@ export class CircuitWeatherApp {
         const temp = Math.round(sessionWeather.temp);
         const wind = Math.round(sessionWeather.windSpeed);
         const dir = sessionWeather.windDir;
+        // Intentionally kept as Math.max(...map): hourlyData is a small (<= 24 entries) array, so the spread is safe and clearer.
+        // A reduce rewrite is a pointless micro-optimisation and changes the empty-array result (-Infinity vs 0).
         const maxPrecip = Math.max(...hourlyData.map(h => h.precipProb));
 
         const dl = document.createElement('dl');
