@@ -6,7 +6,7 @@ const COMPASS_POINTS = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
  * 0° (N) blows south, so the arrow rotates 180° to point down.
  */
 export function getWindDirection(degrees) {
-    const index = Math.round(degrees / 45) % 8;
+    const index = ((Math.round(degrees / 45) % 8) + 8) % 8;
     return {
         text: COMPASS_POINTS[index],
         rotation: degrees + 180
