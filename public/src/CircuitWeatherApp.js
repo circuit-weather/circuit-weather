@@ -1364,7 +1364,7 @@ export class CircuitWeatherApp {
         const temp = Math.round(sessionWeather.temp);
         const wind = Math.round(sessionWeather.windSpeed);
         const dir = sessionWeather.windDir;
-        const maxPrecip = Math.max(...hourlyData.map(h => h.precipProb));
+        const maxPrecip = hourlyData.reduce((max, h) => Math.max(max, h.precipProb), 0);
 
         const dl = document.createElement('dl');
         dl.className = 'weather-current';
