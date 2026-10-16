@@ -85,6 +85,71 @@ describe('status utils', () => {
             };
             expect(getRoundStatus(raceWithBadSessions, now)).toBe('UNKNOWN');
         });
+
+        it('evaluates exact start and end boundaries for session and round status', () => {
+            // Race starts at 15:00:00Z and ends at 19:00:00Z (15:00 + 4h duration for race in round status)
+            const exactStart = new Date('2023-03-05T15:00:00Z');
+            const exactEnd = new Date('2023-03-05T19:00:00Z');
+            const oneSecondAfterEnd = new Date('2023-03-05T19:00:01Z');
+            const oneSecondBeforeStart = new Date('2023-03-05T14:59:59Z');
+
+            expect(getRoundStatus(race, exactStart)).toBe('LIVE');
+            expect(getRoundStatus(race, exactEnd)).toBe('LIVE');
+            expect(getRoundStatus(race, oneSecondAfterEnd)).toBe('PAST');
+            expect(getRoundStatus(race, oneSecondBeforeStart)).toBe('CURRENT');
+        });
+
+        it('handles unordered sessions and calculates minStart and maxEnd correctly', () => {
+            const unorderedRace = {
+                sessions: [
+                    { id: 'race', date: '2023-03-05', time: '15:00:00Z' },
+                    { id: 'fp1', date: '2023-03-03', time: '10:00:00Z' }
+                ]
+            };
+
+            const beforeAll = new Date('2023-03-03T09:59:59Z');
+            const betweenSessions = new Date('2023-03-04T12:00:00Z');
+            const afterAll = new Date('2023-03-05T19:00:01Z');
+
+            expect(getRoundStatus(unorderedRace, beforeAll)).toBe('FUTURE');
+            expect(getRoundStatus(unorderedRace, betweenSessions)).toBe('CURRENT');
+            expect(getRoundStatus(unorderedRace, afterAll)).toBe('PAST');
+        });
+
+        it('skips malformed sessions while correctly processing valid sessions', () => {
+            const mixedRace = {
+                sessions: [
+                    { id: 'bad1' },
+                    { id: 'fp1', date: '2023-03-03', time: '10:00:00Z' },
+                    { id: 'bad2', date: '2023-03-05' }
+                ]
+            };
+
+            const duringFp1 = new Date('2023-03-03T11:00:00Z');
+            const afterFp1 = new Date('2023-03-03T12:00:01Z');
+
+            expect(getRoundStatus(mixedRace, duringFp1)).toBe('LIVE');
+            expect(getRoundStatus(mixedRace, afterFp1)).toBe('PAST');
+        });
+
+        it('applies 4-hour duration specifically for race session in getRoundStatus', () => {
+            const raceOnly = {
+                sessions: [
+                    { id: 'race', date: '2023-03-05', time: '15:00:00Z' }
+                ]
+            };
+
+            // 3 hours after start (18:00) -> Still LIVE for race round (4h duration)
+            const threeHoursIn = new Date('2023-03-05T18:00:00Z');
+            // Exactly 4 hours after start (19:00) -> LIVE
+            const fourHoursIn = new Date('2023-03-05T19:00:00Z');
+            // Just after 4 hours -> PAST
+            const pastFourHours = new Date('2023-03-05T19:00:01Z');
+
+            expect(getRoundStatus(raceOnly, threeHoursIn)).toBe('LIVE');
+            expect(getRoundStatus(raceOnly, fourHoursIn)).toBe('LIVE');
+            expect(getRoundStatus(raceOnly, pastFourHours)).toBe('PAST');
+        });
     });
 
     describe('formatStatusLabel', () => {
