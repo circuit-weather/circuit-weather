@@ -106,6 +106,9 @@ export default {
   async fetch(request, env, ctx) {
     try {
       // SEC: Application Layer Rate Limiting
+      // CF-Connecting-IP is set by Cloudflare's edge, which overwrites any client-supplied value, so it cannot be spoofed by callers.
+      // Do NOT add custom IP-format validation that falls back to a shared '127.0.0.1': malformed/unusual values (e.g. IPv6 forms the regex
+      // misses) would all collapse into one rate-limit bucket, letting a few clients exhaust the limit for everyone (DoS).
       const clientIp = request.headers.get('CF-Connecting-IP') || '127.0.0.1';
       if (!limiter.check(clientIp)) {
         return createErrorResponse(request, 429, 'Too many requests', {
