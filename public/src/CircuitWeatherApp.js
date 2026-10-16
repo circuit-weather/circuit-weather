@@ -280,10 +280,11 @@ export class CircuitWeatherApp {
      * `setHours()` mutation this file uses elsewhere.
      */
     getRaceEndTime(race) {
+        if (!race) return new Date(NaN);
         if (typeof race._endTimeMs === 'number') return new Date(race._endTimeMs);
 
         let end;
-        const raceSession = race.sessions.find(s => s.id === 'race');
+        const raceSession = Array.isArray(race.sessions) ? race.sessions.find(s => s.id === 'race') : null;
         if (raceSession && raceSession.date && raceSession.time) {
             end = new Date(`${raceSession.date}T${raceSession.time}`);
             end.setHours(end.getHours() + CONFIG.RACE_DURATION_BUFFER_HOURS);
