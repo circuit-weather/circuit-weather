@@ -288,7 +288,7 @@ describe("Worker Logic", () => {
       errorSpy.mockRestore();
     });
 
-    it("returns 502 when fetch throws network error for F1 API", async () => {
+    it("returns 502 when fetch throws network error for F1 API in non-production", async () => {
       const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
       mockFetch.mockRejectedValueOnce(new Error("Network failure"));
 
@@ -299,6 +299,21 @@ describe("Worker Logic", () => {
       const data = await res.json();
       expect(data.error.message).toBe("Failed to fetch from upstream");
       expect(errorSpy).toHaveBeenCalledWith("API Fetch Error:", expect.any(Error));
+      errorSpy.mockRestore();
+    });
+
+    it("returns 502 without logging when fetch throws network error for F1 API in production", async () => {
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      mockFetch.mockRejectedValueOnce(new Error("Network failure"));
+
+      const prodEnv = { ...global.env, ENVIRONMENT: "production" };
+      const req = createRequest("/api/f1/current");
+      const res = await worker.fetch(req, prodEnv, global.ctx);
+
+      expect(res.status).toBe(502);
+      const data = await res.json();
+      expect(data.error.message).toBe("Failed to fetch from upstream");
+      expect(errorSpy).not.toHaveBeenCalled();
       errorSpy.mockRestore();
     });
 
