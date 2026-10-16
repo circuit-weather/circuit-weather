@@ -415,7 +415,9 @@ async function handleApiRequest(request, env, ctx, url) {
   const rawPath = url.pathname.slice('/api/f1/'.length);
 
   const validatedOrError = validateApiPath(request, rawPath);
-  if (validatedOrError instanceof Response) return validatedOrError;
+  if (validatedOrError instanceof Response) {
+    return validatedOrError;
+  }
   const apiPath = validatedOrError;
 
   // Build upstream URL
@@ -428,9 +430,11 @@ async function handleApiRequest(request, env, ctx, url) {
 
   // Check cache match
   const cachedResponse = await checkApiCache(request, cache, cacheKey);
-  if (cachedResponse) return cachedResponse;
+  if (cachedResponse) {
+    return cachedResponse;
+  }
 
-  return await fetchAndCacheApiRequest({ request, env, ctx, upstreamUrl, cache, cacheKey });
+  return fetchAndCacheApiRequest({ request, env, ctx, upstreamUrl, cache, cacheKey });
 }
 
 /**
