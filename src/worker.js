@@ -29,7 +29,8 @@ import {
   setCorsHeaders,
   getEmptyRadarResponse,
   createErrorResponse,
-  getSecureRandom
+  getSecureRandom,
+  getClientIp
 } from './worker-utils.js';
 
 // Per-upstream timeouts to prevent resource exhaustion while allowing for slow upstreams
@@ -105,7 +106,7 @@ export default {
   async fetch(request, env, ctx) {
     try {
       // SEC: Application Layer Rate Limiting
-      const clientIp = request.headers.get('CF-Connecting-IP') || '127.0.0.1';
+      const clientIp = getClientIp(request);
       if (!limiter.check(clientIp)) {
         return createErrorResponse(request, 429, 'Too many requests', {
           'Retry-After': '60',
