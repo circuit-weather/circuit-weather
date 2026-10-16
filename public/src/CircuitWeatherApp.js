@@ -342,6 +342,10 @@ export class CircuitWeatherApp {
         // Optimization: Races are chronologically ordered, use binary search
         // to find the first race that hasn't ended yet to skip O(N) iteration
         // and Date object instantiation for races entirely in the past.
+        // Deliberately scans every session of the first active race and all later races instead of
+        // assuming nextRace.sessions[0] is the next FUTURE session: session order is not guaranteed by
+        // the schedule APIs and sessions may be missing/malformed, so each is checked with getSessionStatus.
+        // The binary search above already removes past races; this loop is cheap. Do not 'optimise' it.
         const firstActiveIndex = this._findFirstActiveRaceIndex(now);
 
         for (let i = firstActiveIndex; i < this.races.length; i++) {
