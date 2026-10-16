@@ -255,6 +255,32 @@ describe('F1API', () => {
             errorSpy.mockRestore();
         });
 
+        it('handles network rejections in both Jolpica and OpenF1 fallback', async () => {
+            const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+            const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+            const jolpicaErr = new TypeError('Jolpica network error');
+            const openF1Err = new TypeError('OpenF1 network error');
+
+            mockFetch
+                .mockRejectedValueOnce(jolpicaErr) // Jolpica fetch throws network error
+                .mockRejectedValueOnce(openF1Err);  // OpenF1 fetch throws network error
+
+            await expect(api.getSchedule()).rejects.toThrow('F1_SCHEDULE_UNAVAILABLE:jolpica,openf1:ALL_SOURCES_FAILED');
+
+            expect(warnSpy).toHaveBeenCalledWith(
+                'Jolpica schedule fetch failed, trying OpenF1 fallback:',
+                jolpicaErr
+            );
+            expect(errorSpy).toHaveBeenCalledWith(
+                'OpenF1 fallback also failed:',
+                openF1Err
+            );
+
+            warnSpy.mockRestore();
+            errorSpy.mockRestore();
+        });
+
         it('returns empty array when RaceTable has no Races', async () => {
             mockFetch.mockResolvedValueOnce({
                 ok: true,
@@ -396,6 +422,13 @@ describe('F1API', () => {
             });
 
             await expect(api.fetchFromJolpica()).rejects.toThrow('HTTP 404');
+        });
+
+        it('propagates network errors when fetch rejects', async () => {
+            const networkError = new TypeError('Failed to fetch');
+            mockFetch.mockRejectedValueOnce(networkError);
+
+            await expect(api.fetchFromJolpica()).rejects.toThrow('Failed to fetch');
         });
 
         it('returns empty array if MRData or RaceTable or Races are undefined', async () => {
