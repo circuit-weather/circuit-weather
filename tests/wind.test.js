@@ -15,12 +15,23 @@ describe('getWindDirection', () => {
         [180, 'S', 360],
         [315, 'NW', 495],
         [360, 'N', 540],
+        // Large positive values
+        [405, 'NE', 585],
+        [720, 'N', 900],
+        // Negative values
+        [-45, 'NW', 135],
+        [-90, 'W', 90],
+        [-360, 'N', -180],
+        [-405, 'NW', -225],
+        // Decimal degrees and rounding boundaries
+        [22.4, 'N', 202.4],
+        [22.5, 'NE', 202.5],
     ];
     cases.forEach(([deg, text, rotation]) => {
         it(`maps ${deg}° to ${text} (rotation ${rotation})`, () => {
             const result = getWindDirection(deg);
             expect(result.text).toBe(text);
-            expect(result.rotation).toBe(rotation);
+            expect(result.rotation).toBeCloseTo(rotation, 6);
         });
     });
 });

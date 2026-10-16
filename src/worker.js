@@ -29,7 +29,8 @@ import {
   setCorsHeaders,
   getEmptyRadarResponse,
   createErrorResponse,
-  getSecureRandom
+  getSecureRandom,
+  getParsedMimeType
 } from './worker-utils.js';
 
 // Per-upstream timeouts to prevent resource exhaustion while allowing for slow upstreams
@@ -212,7 +213,10 @@ function handleOptions(request) {
 /**
  * Helper to cache and return an error response
  */
-function cacheAndReturnError({ request, cacheKey, status, message, extraDetails = {}, ctx, cache = caches.default }) {
+// Intentionally keeps 'cache' as an explicit required parameter (no 'caches.default' default): every caller passes the cache
+// it just used, so it stays injectable/mockable and callers cannot silently write to a different cache than they read from.
+// Defaulting it is a no-benefit refactor that obscures this.
+function cacheAndReturnError({ request, cache, cacheKey, status, message, extraDetails = {}, ctx }) {
   // Cache error response to prevent hammering upstream
   const errorCacheTTL = status === 429 ? 300 : 60;
 
@@ -311,23 +315,37 @@ function validateApiPath(request, rawPath) {
 }
 
 /**
- * Checks cache for F1 API response and returns hit Response if found.
+ * Creates a Response object for a cache hit with standard X-Cache header, CORS, and optional header overrides.
+ * @param {Response} response
+ * @param {Request} request
+ * @param {Record<string, string>} [additionalHeaders]
+ * @returns {Response}
  */
-async function checkApiCache(request, cache, cacheKey) {
-  const response = await cache.match(cacheKey);
-  if (!response) return null;
-
+function createCacheHitResponse(response, request, additionalHeaders = {}) {
   const headers = new Headers(response.headers);
   headers.set('X-Cache', 'HIT');
 
   // Apply strict CORS
   setCorsHeaders(headers, request);
 
+  for (const [key, value] of Object.entries(additionalHeaders)) {
+    headers.set(key, value);
+  }
+
   return new Response(response.body, {
     status: response.status,
     statusText: response.statusText,
     headers
   });
+}
+
+/**
+ * Checks cache for F1 API response and returns hit Response if found.
+ */
+async function checkApiCache(request, cache, cacheKey) {
+  const response = await cache.match(cacheKey);
+  if (!response) return null;
+  return createCacheHitResponse(response, request);
 }
 
 /**
@@ -346,20 +364,19 @@ async function fetchAndCacheApiRequest({ request, env, ctx, upstreamUrl, cache, 
     const status = upstreamResponse.status;
 
     if (!upstreamResponse.ok) {
-      return cacheAndReturnError({ request, cacheKey, status, message: 'Upstream API error', ctx });
+      return cacheAndReturnError({ request, cache, cacheKey, status, message: 'Upstream API error', ctx });
     }
 
     // SEC: Strict Content-Type Validation
     // Prevent cache poisoning if upstream returns HTML error page with 200 OK
     // Bolt Security: Use strict MIME comparison, not substring check
-    const contentType = upstreamResponse.headers.get('Content-Type');
-    const mime = contentType ? contentType.split(';')[0].trim().toLowerCase() : '';
+    const { contentType, mime } = getParsedMimeType(upstreamResponse);
 
     if (mime !== 'application/json') {
       if (env.ENVIRONMENT !== 'production') {
         console.error(`Upstream Invalid Content-Type: ${contentType} (parsed: ${mime})`);
       }
-      return cacheAndReturnError({ request, cacheKey, status: 502, message: 'Invalid upstream content type', ctx });
+      return cacheAndReturnError({ request, cache, cacheKey, status: 502, message: 'Invalid upstream content type', ctx });
     }
 
     // Bolt Optimization: Stream response instead of buffering text
@@ -454,19 +471,9 @@ function extractAndValidateTrackId(url) {
  * @returns {Response}
  */
 function createTrackCacheHitResponse(response, request) {
-  const headers = new Headers(response.headers);
-  headers.set('X-Cache', 'HIT');
-
-  // Apply strict CORS
-  setCorsHeaders(headers, request);
-
   // Ensure client caches this for a long time too (24h)
-  headers.set('Cache-Control', 'public, max-age=86400');
-
-  return new Response(response.body, {
-    status: response.status,
-    statusText: response.statusText,
-    headers
+  return createCacheHitResponse(response, request, {
+    'Cache-Control': 'public, max-age=86400'
   });
 }
 
@@ -534,13 +541,12 @@ async function fetchAndCacheTrack(upstreamUrl, cacheKey, request, env, ctx) {
 
     if (!upstreamResponse.ok) {
       const status = upstreamStatus === 404 ? 404 : 502;
-      return cacheAndReturnError({ request, cacheKey, status, message: 'Track not found', ctx });
+      return cacheAndReturnError({ request, cache, cacheKey, status, message: 'Track not found', ctx });
     }
 
     // SEC: Strict Content-Type Validation
     // Prevent MIME sniffing vulnerabilities if upstream serves non-JSON content
-    const contentType = upstreamResponse.headers.get('Content-Type');
-    const mime = contentType ? contentType.split(';')[0].trim().toLowerCase() : '';
+    const { contentType, mime } = getParsedMimeType(upstreamResponse);
 
     // GitHub raw content for geojson might be text/plain or application/json
     // We should strictly allow text/plain or application/json since github raw serves text/plain
@@ -548,7 +554,7 @@ async function fetchAndCacheTrack(upstreamUrl, cacheKey, request, env, ctx) {
       if (env.ENVIRONMENT !== 'production') {
         console.error(`Upstream Track Invalid Content-Type: ${contentType} (parsed: ${mime})`);
       }
-      return cacheAndReturnError({ request, cacheKey, status: 502, message: 'Invalid upstream content type', ctx });
+      return cacheAndReturnError({ request, cache, cacheKey, status: 502, message: 'Invalid upstream content type', ctx });
     }
 
     return formatCacheableTrackResponse(upstreamResponse, cacheKey, request, ctx, cache);
@@ -610,16 +616,7 @@ async function handleAssetRequest(request, env, ctx, url) {
   let response = await cache.match(cacheKey);
 
   if (response) {
-    const headers = new Headers(response.headers);
-    headers.set('X-Cache', 'HIT');
-
-    // Apply strict CORS
-    setCorsHeaders(headers, request);
-
-    return new Response(response.body, {
-      status: response.status,
-      headers
-    });
+    return createCacheHitResponse(response, request);
   }
 
   return await fetchAndCacheVendorAsset({ request, env, ctx, path, config, cache, cacheKey });
@@ -649,8 +646,7 @@ async function fetchAndCacheVendorAsset({ request, env, ctx, path, config, cache
 
     // SEC: Validate Content-Type
     // Bolt Security: Use strict MIME comparison, not substring check
-    const contentType = upstreamResponse.headers.get('Content-Type');
-    const mime = contentType ? contentType.split(';')[0].trim().toLowerCase() : '';
+    const { contentType, mime } = getParsedMimeType(upstreamResponse);
     const isValidType = config.contentTypes.includes(mime);
 
     if (!isValidType) {
@@ -760,16 +756,7 @@ async function handleHealthRequest(request, env, ctx, url) {
   let response = await cache.match(cacheKey);
 
   if (response) {
-    const headers = new Headers(response.headers);
-    headers.set('X-Cache', 'HIT');
-
-    // Apply strict CORS
-    setCorsHeaders(headers, request);
-
-    return new Response(response.body, {
-      status: response.status,
-      headers
-    });
+    return createCacheHitResponse(response, request);
   }
 
   const upstreams = {
@@ -927,18 +914,7 @@ function handleCacheableTileResponse({ request, ctx, cache, cacheKey, upstreamRe
 async function checkTileCache(request, cache, cacheKey) {
   const response = await cache.match(cacheKey);
   if (!response) return null;
-
-  const headers = new Headers(response.headers);
-  headers.set('X-Cache', 'HIT');
-
-  // Apply strict CORS
-  setCorsHeaders(headers, request);
-
-  return new Response(response.body, {
-    status: response.status,
-    statusText: response.statusText,
-    headers
-  });
+  return createCacheHitResponse(response, request);
 }
 
 function handleNonCacheableTileError(request, status, upstreamResponse) {
@@ -1004,9 +980,8 @@ async function handleTileRequest(request, env, ctx, url) {
     const ttl = upstreamResponse.ok ? 7200 : 60;
 
     if (shouldCache) {
-      const contentType = upstreamResponse.headers.get('Content-Type');
       // SEC: Strict MIME comparison, not a substring check.
-      const mime = contentType ? contentType.split(';')[0].trim().toLowerCase() : '';
+      const { contentType, mime } = getParsedMimeType(upstreamResponse);
       const isPng = mime === 'image/png';
 
       // SEC: Strict Content-Type validation (success responses only).
@@ -1045,20 +1020,9 @@ async function handleTileRequest(request, env, ctx, url) {
 async function checkRadarCache(request, cache, cacheKey) {
   const response = await cache.match(cacheKey);
   if (!response) return null;
-
-  const headers = new Headers(response.headers);
-  headers.set('X-Cache', 'HIT');
-
-  // Apply strict CORS
-  setCorsHeaders(headers, request);
-
   // Override Cache-Control for the client to ensure frequent checks (1 min)
-  headers.set('Cache-Control', 'public, max-age=60');
-
-  return new Response(response.body, {
-    status: response.status,
-    statusText: response.statusText,
-    headers
+  return createCacheHitResponse(response, request, {
+    'Cache-Control': 'public, max-age=60'
   });
 }
 
@@ -1102,8 +1066,7 @@ function handleRadarUpstreamError(request, env, upstreamResponse) {
   // SEC: Strict Content-Type Validation
   // Prevent cache poisoning if upstream returns HTML error page (e.g. WAF/Maintenance) with 200 OK
   // Bolt Security: Use strict MIME comparison, not substring check
-  const contentType = upstreamResponse.headers.get('Content-Type');
-  const mime = contentType ? contentType.split(';')[0].trim().toLowerCase() : '';
+  const { contentType, mime } = getParsedMimeType(upstreamResponse);
 
   if (mime !== 'application/json') {
     if (env.ENVIRONMENT !== 'production') {

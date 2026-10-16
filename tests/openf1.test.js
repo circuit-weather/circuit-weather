@@ -62,6 +62,38 @@ describe('openf1', () => {
         it('returns null if dateStr is invalid', () => {
             expect(openF1ToErgastDateTime('invalid-date-string', '03:00:00')).toBeNull();
         });
+
+        it('handles GMT offsets with an explicit plus prefix', () => {
+            const res = openF1ToErgastDateTime('2026-03-22T15:00:00', '+03:00:00');
+            expect(res).toEqual({ date: '2026-03-22', time: '12:00:00Z' });
+        });
+
+        it('handles non-integer hour GMT offsets (e.g. half-hour offsets)', () => {
+            const positiveHalfHour = openF1ToErgastDateTime('2026-03-22T15:30:00', '+05:30:00');
+            expect(positiveHalfHour).toEqual({ date: '2026-03-22', time: '10:00:00Z' });
+
+            const negativeHalfHour = openF1ToErgastDateTime('2026-03-22T10:00:00', '-03:30:00');
+            expect(negativeHalfHour).toEqual({ date: '2026-03-22', time: '13:30:00Z' });
+        });
+
+        it('parses embedded negative timezone offset directly', () => {
+            const res = openF1ToErgastDateTime('2026-03-22T15:00:00-04:00', '00:00:00');
+            expect(res).toEqual({ date: '2026-03-22', time: '19:00:00Z' });
+        });
+
+        it('parses embedded timezone offset without colon formatting', () => {
+            const res = openF1ToErgastDateTime('2026-03-22T15:00:00+0300', '00:00:00');
+            expect(res).toEqual({ date: '2026-03-22', time: '12:00:00Z' });
+        });
+
+        it('handles year boundary rollover when offset pushes UTC time across New Year', () => {
+            const res = openF1ToErgastDateTime('2026-12-31T23:00:00', '-05:00:00');
+            expect(res).toEqual({ date: '2027-01-01', time: '04:00:00Z' });
+        });
+
+        it('returns null if dateStr with embedded timezone is invalid', () => {
+            expect(openF1ToErgastDateTime('2026-99-99T15:00:00Z', null)).toBeNull();
+        });
     });
 
     // The datetime conversion is an internal helper, exercised here through the

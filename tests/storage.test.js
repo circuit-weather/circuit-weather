@@ -24,6 +24,13 @@ describe('SafeStorage', () => {
     expect(mockLocalStorage.getItem).toHaveBeenCalledWith('test-key');
   });
 
+  it('returns null when key does not exist in localStorage', () => {
+    mockLocalStorage.getItem.mockReturnValue(null);
+    const result = SafeStorage.getItem('non-existent-key');
+    expect(result).toBeNull();
+    expect(mockLocalStorage.getItem).toHaveBeenCalledWith('non-existent-key');
+  });
+
   it('sets item safely when localStorage works', () => {
     SafeStorage.setItem('key', 'value');
     expect(mockLocalStorage.setItem).toHaveBeenCalledWith('key', 'value');
@@ -41,6 +48,33 @@ describe('SafeStorage', () => {
     const error = new Error('Quota Exceeded');
     mockLocalStorage.setItem.mockImplementation(() => {
       throw error;
+    });
+
+    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    expect(() => SafeStorage.setItem('key', 'value')).not.toThrow();
+    expect(warnSpy).toHaveBeenCalledWith('Storage write error:', error);
+
+    warnSpy.mockRestore();
+  });
+
+  it('returns null when accessing localStorage property itself throws SecurityError on getItem', () => {
+    vi.stubGlobal('localStorage', {
+      get getItem() {
+        throw new Error('SecurityError: Access to localStorage is denied');
+      }
+    });
+
+    const result = SafeStorage.getItem('key');
+    expect(result).toBeNull();
+  });
+
+  it('fails silently and logs warning when accessing localStorage property itself throws on setItem', () => {
+    const error = new Error('SecurityError: Access to localStorage is denied');
+    vi.stubGlobal('localStorage', {
+      get setItem() {
+        throw error;
+      }
     });
 
     const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
