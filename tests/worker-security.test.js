@@ -264,14 +264,34 @@ describe('Worker Security Utils', () => {
       expect(recursivelyDecodePath('%25252e%25252e/')).toBe('../');
     });
 
-    it('handles legitimate % characters safely', () => {
-      expect(recursivelyDecodePath('invalid%')).toBe('invalid%');
-      expect(recursivelyDecodePath('test%25')).toBe('test%');
+    it('handles plain unencoded paths and empty strings unchanged', () => {
+      expect(recursivelyDecodePath('')).toBe('');
+      expect(recursivelyDecodePath('api/v1/status')).toBe('api/v1/status');
     });
 
-    it('returns null if max depth is exceeded', () => {
-      // 6 times encoded
+    it('handles depth boundary edge cases accurately', () => {
+      // 4-times encoded 'a': %25252561 -> %252561 -> %2561 -> %61 -> a (depth 4 completes, fully decoded, returns 'a')
+      expect(recursivelyDecodePath('%25252561')).toBe('a');
+
+      // 5-times encoded 'a': %2525252561 -> after 5 iterations decoded is 'a' but loop terminated when depth reached 5, previous was '%61', returns null
+      expect(recursivelyDecodePath('%2525252561')).toBeNull();
+
+      // 6-times encoded: depth exceeded, returns null
       expect(recursivelyDecodePath('%2525252525252e/')).toBeNull();
+    });
+
+    it('handles legitimate % characters safely and handles URIError on invalid sequences', () => {
+      expect(recursivelyDecodePath('invalid%')).toBe('invalid%');
+      expect(recursivelyDecodePath('test%25')).toBe('test%');
+      expect(recursivelyDecodePath('%xy')).toBe('%xy');
+      expect(recursivelyDecodePath('path/%E0%A0')).toBe('path/%E0%A0');
+      expect(recursivelyDecodePath('foo%2')).toBe('foo%2');
+    });
+
+    it('returns partially decoded path when subsequent iteration encounters URIError', () => {
+      // %25xy decodes %25 -> % on first pass to produce %xy.
+      // Second pass tries decodeURIComponent('%xy') which throws URIError, returning '%xy'.
+      expect(recursivelyDecodePath('%25xy')).toBe('%xy');
     });
   });
 

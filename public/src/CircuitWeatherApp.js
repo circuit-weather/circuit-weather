@@ -280,10 +280,11 @@ export class CircuitWeatherApp {
      * `setHours()` mutation this file uses elsewhere.
      */
     getRaceEndTime(race) {
+        if (!race) return new Date(NaN);
         if (typeof race._endTimeMs === 'number') return new Date(race._endTimeMs);
 
         let end;
-        const raceSession = race.sessions.find(s => s.id === 'race');
+        const raceSession = Array.isArray(race.sessions) ? race.sessions.find(s => s.id === 'race') : null;
         if (raceSession && raceSession.date && raceSession.time) {
             end = new Date(`${raceSession.date}T${raceSession.time}`);
             end.setHours(end.getHours() + CONFIG.RACE_DURATION_BUFFER_HOURS);
@@ -503,7 +504,13 @@ export class CircuitWeatherApp {
 
         // BOTTOM OFFSETS: Avoid Mapbox Logo / Attribution
         let attributionHeight = 25; // Safe default for attribution/logo
-        const attribution = document.querySelector('.mapboxgl-ctrl-bottom-left, .mapboxgl-ctrl-bottom-right, .leaflet-control-attribution');
+        // Deliberately NOT a single combined selector: the 
+        // 
+        //  chain gives explicit priority (Mapbox bottom-left, then bottom-right, then Leaflet).
+        // A comma-separated selector returns the first match in DOM order, which changes which element is measured. One-off query, no perf benefit.
+        const attribution = document.querySelector('.mapboxgl-ctrl-bottom-left') ||
+                            document.querySelector('.mapboxgl-ctrl-bottom-right') ||
+                            document.querySelector('.leaflet-control-attribution');
 
         if (attribution) {
             const attrBox = attribution.getBoundingClientRect();
