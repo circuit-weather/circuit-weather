@@ -342,16 +342,28 @@ export class CircuitWeatherApp {
         // to find the first race that hasn't ended yet to skip O(N) iteration
         // and Date object instantiation for races entirely in the past.
         const firstActiveIndex = this._findFirstActiveRaceIndex(now);
+        if (firstActiveIndex >= this.races.length) return null;
 
-        for (let i = firstActiveIndex; i < this.races.length; i++) {
-            const race = this.races[i];
-            for (let j = 0; j < race.sessions.length; j++) {
-                const s = race.sessions[j];
+        // Check sessions in the current active race
+        const activeRace = this.races[firstActiveIndex];
+        if (activeRace && activeRace.sessions) {
+            for (let j = 0; j < activeRace.sessions.length; j++) {
+                const s = activeRace.sessions[j];
                 if (getSessionStatus(s, now) === 'FUTURE') {
-                    return { round: race.round, sessionId: s.id };
+                    return { round: activeRace.round, sessionId: s.id };
                 }
             }
         }
+
+        // If the current active race has no future sessions, the first session
+        // of the next scheduled race is guaranteed to be the next future session.
+        for (let i = firstActiveIndex + 1; i < this.races.length; i++) {
+            const nextRace = this.races[i];
+            if (nextRace && nextRace.sessions && nextRace.sessions.length > 0) {
+                return { round: nextRace.round, sessionId: nextRace.sessions[0].id };
+            }
+        }
+
         return null;
     }
 
@@ -377,6 +389,7 @@ export class CircuitWeatherApp {
                 }
                 if (!targetSession && status === 'FUTURE') {
                     targetSession = session;
+                    break;
                 }
             }
 
