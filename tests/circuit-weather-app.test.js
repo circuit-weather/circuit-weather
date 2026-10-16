@@ -1698,6 +1698,40 @@ describe('CircuitWeatherApp Pure Methods', () => {
             consoleSpy.mockRestore();
         });
 
+        it('catches initialization errors when startWeatherRefreshInterval throws during init', async () => {
+            app.mapManager.init = vi.fn().mockResolvedValue({ hasLayer: false, addControl: vi.fn() });
+            app.startWeatherRefreshInterval = vi.fn().mockImplementation(() => {
+                throw new Error('Weather refresh interval error');
+            });
+            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+            const renderErrorSpy = vi.spyOn(app, 'renderError').mockImplementation(() => {});
+
+            await app.init();
+
+            expect(consoleSpy).toHaveBeenCalledWith('Initialization failed:', expect.any(Error));
+            expect(renderErrorSpy).toHaveBeenCalledWith(i18n.t('errors.initFailed'));
+            expect(app.showLoading).toHaveBeenCalledWith(false);
+
+            consoleSpy.mockRestore();
+        });
+
+        it('catches initialization errors when startSessionForecastInterval throws during init', async () => {
+            app.mapManager.init = vi.fn().mockResolvedValue({ hasLayer: false, addControl: vi.fn() });
+            app.startSessionForecastInterval = vi.fn().mockImplementation(() => {
+                throw new Error('Session forecast interval error');
+            });
+            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+            const renderErrorSpy = vi.spyOn(app, 'renderError').mockImplementation(() => {});
+
+            await app.init();
+
+            expect(consoleSpy).toHaveBeenCalledWith('Initialization failed:', expect.any(Error));
+            expect(renderErrorSpy).toHaveBeenCalledWith(i18n.t('errors.initFailed'));
+            expect(app.showLoading).toHaveBeenCalledWith(false);
+
+            consoleSpy.mockRestore();
+        });
+
         it('renders fallback DOM error state when init schedule fetch fails with generic error', async () => {
             app.mapManager.init = vi.fn().mockResolvedValue({ hasLayer: false, addControl: vi.fn() });
             const mockSidebar = createMockElement('sidebar-content');
