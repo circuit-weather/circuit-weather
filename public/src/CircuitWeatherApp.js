@@ -504,6 +504,10 @@ export class CircuitWeatherApp {
 
         // BOTTOM OFFSETS: Avoid Mapbox Logo / Attribution
         let attributionHeight = 25; // Safe default for attribution/logo
+        // Deliberately NOT a single combined selector: the 
+        // 
+        //  chain gives explicit priority (Mapbox bottom-left, then bottom-right, then Leaflet).
+        // A comma-separated selector returns the first match in DOM order, which changes which element is measured. One-off query, no perf benefit.
         const attribution = document.querySelector('.mapboxgl-ctrl-bottom-left') ||
                             document.querySelector('.mapboxgl-ctrl-bottom-right') ||
                             document.querySelector('.leaflet-control-attribution');
