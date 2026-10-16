@@ -212,7 +212,7 @@ function handleOptions(request) {
 /**
  * Helper to cache and return an error response
  */
-function cacheAndReturnError({ request, cache, cacheKey, status, message, extraDetails = {}, ctx }) {
+function cacheAndReturnError({ request, cacheKey, status, message, extraDetails = {}, ctx, cache = caches.default }) {
   // Cache error response to prevent hammering upstream
   const errorCacheTTL = status === 429 ? 300 : 60;
 
@@ -346,7 +346,7 @@ async function fetchAndCacheApiRequest({ request, env, ctx, upstreamUrl, cache, 
     const status = upstreamResponse.status;
 
     if (!upstreamResponse.ok) {
-      return cacheAndReturnError({ request, cache, cacheKey, status, message: 'Upstream API error', ctx });
+      return cacheAndReturnError({ request, cacheKey, status, message: 'Upstream API error', ctx });
     }
 
     // SEC: Strict Content-Type Validation
@@ -359,7 +359,7 @@ async function fetchAndCacheApiRequest({ request, env, ctx, upstreamUrl, cache, 
       if (env.ENVIRONMENT !== 'production') {
         console.error(`Upstream Invalid Content-Type: ${contentType} (parsed: ${mime})`);
       }
-      return cacheAndReturnError({ request, cache, cacheKey, status: 502, message: 'Invalid upstream content type', ctx });
+      return cacheAndReturnError({ request, cacheKey, status: 502, message: 'Invalid upstream content type', ctx });
     }
 
     // Bolt Optimization: Stream response instead of buffering text
@@ -534,7 +534,7 @@ async function fetchAndCacheTrack(upstreamUrl, cacheKey, request, env, ctx) {
 
     if (!upstreamResponse.ok) {
       const status = upstreamStatus === 404 ? 404 : 502;
-      return cacheAndReturnError({ request, cache, cacheKey, status, message: 'Track not found', ctx });
+      return cacheAndReturnError({ request, cacheKey, status, message: 'Track not found', ctx });
     }
 
     // SEC: Strict Content-Type Validation
@@ -548,7 +548,7 @@ async function fetchAndCacheTrack(upstreamUrl, cacheKey, request, env, ctx) {
       if (env.ENVIRONMENT !== 'production') {
         console.error(`Upstream Track Invalid Content-Type: ${contentType} (parsed: ${mime})`);
       }
-      return cacheAndReturnError({ request, cache, cacheKey, status: 502, message: 'Invalid upstream content type', ctx });
+      return cacheAndReturnError({ request, cacheKey, status: 502, message: 'Invalid upstream content type', ctx });
     }
 
     return formatCacheableTrackResponse(upstreamResponse, cacheKey, request, ctx, cache);
