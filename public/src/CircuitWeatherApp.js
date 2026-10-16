@@ -280,10 +280,11 @@ export class CircuitWeatherApp {
      * `setHours()` mutation this file uses elsewhere.
      */
     getRaceEndTime(race) {
+        if (!race) return new Date(NaN);
         if (typeof race._endTimeMs === 'number') return new Date(race._endTimeMs);
 
         let end;
-        const raceSession = race.sessions.find(s => s.id === 'race');
+        const raceSession = Array.isArray(race.sessions) ? race.sessions.find(s => s.id === 'race') : null;
         if (raceSession && raceSession.date && raceSession.time) {
             end = new Date(`${raceSession.date}T${raceSession.time}`);
             end.setHours(end.getHours() + CONFIG.RACE_DURATION_BUFFER_HOURS);
@@ -341,29 +342,18 @@ export class CircuitWeatherApp {
         // Optimization: Races are chronologically ordered, use binary search
         // to find the first race that hasn't ended yet to skip O(N) iteration
         // and Date object instantiation for races entirely in the past.
+        // x
         const firstActiveIndex = this._findFirstActiveRaceIndex(now);
-        if (firstActiveIndex >= this.races.length) return null;
 
-        // Check sessions in the current active race
-        const activeRace = this.races[firstActiveIndex];
-        if (activeRace && activeRace.sessions) {
-            for (let j = 0; j < activeRace.sessions.length; j++) {
-                const s = activeRace.sessions[j];
+        for (let i = firstActiveIndex; i < this.races.length; i++) {
+            const race = this.races[i];
+            for (let j = 0; j < race.sessions.length; j++) {
+                const s = race.sessions[j];
                 if (getSessionStatus(s, now) === 'FUTURE') {
-                    return { round: activeRace.round, sessionId: s.id };
+                    return { round: race.round, sessionId: s.id };
                 }
             }
         }
-
-        // If the current active race has no future sessions, the first session
-        // of the next scheduled race is guaranteed to be the next future session.
-        for (let i = firstActiveIndex + 1; i < this.races.length; i++) {
-            const nextRace = this.races[i];
-            if (nextRace && nextRace.sessions && nextRace.sessions.length > 0) {
-                return { round: nextRace.round, sessionId: nextRace.sessions[0].id };
-            }
-        }
-
         return null;
     }
 
@@ -389,7 +379,6 @@ export class CircuitWeatherApp {
                 }
                 if (!targetSession && status === 'FUTURE') {
                     targetSession = session;
-                    break;
                 }
             }
 
