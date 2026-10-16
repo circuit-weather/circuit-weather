@@ -329,3 +329,14 @@ export function getSecureRandom() {
   }
   return Math.random();
 }
+
+/**
+ * Extracts and parses the lowercased base MIME type from a Response object's Content-Type header.
+ * @param {Response} response - The fetch Response object
+ * @returns {{ contentType: string|null, mime: string }} Parsed Content-Type header and base MIME type
+ */
+export function getParsedMimeType(response) {
+  const contentType = response?.headers?.get ? (response.headers.get('Content-Type') ?? null) : null;
+  const mime = contentType ? contentType.split(';')[0].trim().toLowerCase() : '';
+  return { contentType, mime };
+}

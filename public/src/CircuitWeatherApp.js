@@ -280,10 +280,11 @@ export class CircuitWeatherApp {
      * `setHours()` mutation this file uses elsewhere.
      */
     getRaceEndTime(race) {
+        if (!race) return new Date(NaN);
         if (typeof race._endTimeMs === 'number') return new Date(race._endTimeMs);
 
         let end;
-        const raceSession = race.sessions.find(s => s.id === 'race');
+        const raceSession = Array.isArray(race.sessions) ? race.sessions.find(s => s.id === 'race') : null;
         if (raceSession && raceSession.date && raceSession.time) {
             end = new Date(`${raceSession.date}T${raceSession.time}`);
             end.setHours(end.getHours() + CONFIG.RACE_DURATION_BUFFER_HOURS);
@@ -1364,7 +1365,9 @@ export class CircuitWeatherApp {
         const temp = Math.round(sessionWeather.temp);
         const wind = Math.round(sessionWeather.windSpeed);
         const dir = sessionWeather.windDir;
-        const maxPrecip = hourlyData.reduce((max, h) => Math.max(max, h.precipProb), 0);
+        // Intentionally kept as Math.max(...map): hourlyData is a small (<= 24 entries) array, so the spread is safe and clearer.
+        // A reduce rewrite is a pointless micro-optimisation and changes the empty-array result (-Infinity vs 0).
+        const maxPrecip = Math.max(...hourlyData.map(h => h.precipProb));
 
         const dl = document.createElement('dl');
         dl.className = 'weather-current';

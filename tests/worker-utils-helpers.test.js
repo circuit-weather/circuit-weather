@@ -4,6 +4,7 @@ import {
     getEmptyRadarResponse,
     calculateHash,
     getSecureRandom,
+    getParsedMimeType,
     API_SECURITY_HEADERS
 } from '../src/worker-utils.js';
 import { PRODUCTION_DOMAIN } from './helpers/constants.js';
@@ -202,6 +203,31 @@ describe('Worker Utils Helpers', () => {
                     writable: true
                 });
             }
+        });
+    });
+
+    describe('getParsedMimeType', () => {
+        it('parses standard content-type header correctly', () => {
+            const response = { headers: new Map([['Content-Type', 'application/json']]) };
+            const res = getParsedMimeType(response);
+            expect(res).toEqual({ contentType: 'application/json', mime: 'application/json' });
+        });
+
+        it('parses content-type with parameters and converts mime to lowercase', () => {
+            const response = { headers: new Map([['Content-Type', 'APPLICATION/JSON; charset=utf-8']]) };
+            const res = getParsedMimeType(response);
+            expect(res).toEqual({ contentType: 'APPLICATION/JSON; charset=utf-8', mime: 'application/json' });
+        });
+
+        it('handles missing content-type header gracefully', () => {
+            const response = { headers: new Map() };
+            const res = getParsedMimeType(response);
+            expect(res).toEqual({ contentType: null, mime: '' });
+        });
+
+        it('handles null/undefined response object safely', () => {
+            expect(getParsedMimeType(null)).toEqual({ contentType: null, mime: '' });
+            expect(getParsedMimeType(undefined)).toEqual({ contentType: null, mime: '' });
         });
     });
 });
