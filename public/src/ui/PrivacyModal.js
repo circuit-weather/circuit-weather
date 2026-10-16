@@ -116,18 +116,28 @@ export class PrivacyModal {
     try {
       let markdown = null;
 
-      // NOTE: Candidate paths are deliberately fetched sequentially, not in parallel.
-      // The user's own locale (first path) almost always exists, so this costs one
-      // request. Promise.all would fire every fallback on each open and wait for the
-      // slowest (up to the 3s timeout) before rendering; fallback order is kept here.
-      for (const path of paths) {
-        // SEC: Add timeout to prevent hanging connections during document fetch
-        const response = await fetch(path, {
+      // Initiate fetches in parallel to minimize total latency when fallbacks are needed,
+      // while evaluating responses sequentially to preserve locale fallback priority.
+      const requests = paths.map(async (path) => {
+        try {
+          // SEC: Add timeout to prevent hanging connections during document fetch
+          const response = await fetch(path, {
             signal: AbortSignal.timeout(3000)
-        });
-        if (!response.ok) continue;
-        markdown = await response.text();
-        break;
+          });
+          if (!response.ok) return null;
+          const text = await response.text();
+          return text || null;
+        } catch {
+          return null;
+        }
+      });
+
+      for (const req of requests) {
+        const text = await req;
+        if (text) {
+          markdown = text;
+          break;
+        }
       }
 
       if (!markdown) {
