@@ -321,7 +321,7 @@ describe('Worker Edge Cases', () => {
     // Unhandled Exceptions
     // ---------------------------------------------------------------
     describe('Unhandled Exceptions', () => {
-        it('returns 500 Internal Server Error when internal routing throws', async () => {
+        it('returns 400 Bad Request when request URL is invalid', async () => {
             // Create a request with an invalid URL structure that will cause new URL() to throw
             const request = {
                 url: 'invalid-url',
@@ -333,16 +333,35 @@ describe('Worker Edge Cases', () => {
 
             const response = await workerModule.fetch(request, env, ctx);
 
+            expect(response.status).toBe(400);
+
+            const body = await response.json();
+            expect(body.error.message).toBe('Invalid URL format');
+            expect(body.error.status).toBe(400);
+
+            // SEC: internal error detail must never reach the client
+            expect(body.error.details).toBeUndefined();
+            // The JSON error message is 'Invalid URL format', so we can't assert it doesn't contain 'Invalid URL'.
+            // Instead, we just check it doesn't contain the raw error message which contains 'TypeError'
+            expect(JSON.stringify(body)).not.toContain('TypeError');
+        });
+
+        it('returns 500 Internal Server Error when internal routing throws non-TypeError', async () => {
+            const request = {
+                url: 'https://example.com/api/f1/current',
+                method: 'GET',
+                headers: new Headers(),
+                get method() {
+                    throw new Error('Unexpected route error');
+                }
+            };
+            const response = await workerModule.fetch(request, env, ctx);
             expect(response.status).toBe(500);
 
             const body = await response.json();
             expect(body.error.message).toBe('Internal Server Error');
             expect(body.error.status).toBe(500);
-
-            // SEC: internal error detail must never reach the client
             expect(body.error.details).toBeUndefined();
-            expect(JSON.stringify(body)).not.toContain('Invalid URL');
-            expect(JSON.stringify(body)).not.toContain('TypeError');
         });
 
         it('logs error in non-production environment when route handler throws unexpected error', async () => {
@@ -351,13 +370,11 @@ describe('Worker Edge Cases', () => {
 
             // Pass a request object whose url getter throws to simulate an error in route handling
             const request = {
-                method: 'GET',
-                get url() {
+                url: 'https://example.com/api/f1/current',
+                headers: new Headers(),
+                get method() {
                     throw mockErr;
-                },
-                headers: new Headers({
-                    'CF-Connecting-IP': '127.0.0.1'
-                })
+                }
             };
 
             const response = await workerModule.fetch(request, env, ctx);
@@ -375,13 +392,11 @@ describe('Worker Edge Cases', () => {
             const mockErr = new Error('Unexpected route error');
 
             const request = {
-                method: 'GET',
-                get url() {
+                url: 'https://example.com/api/f1/current',
+                headers: new Headers(),
+                get method() {
                     throw mockErr;
-                },
-                headers: new Headers({
-                    'CF-Connecting-IP': '127.0.0.1'
-                })
+                }
             };
 
             const prodEnv = createEnv({ ENVIRONMENT: 'production' });

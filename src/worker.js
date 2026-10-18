@@ -117,7 +117,15 @@ export default {
       }
 
 
-      const url = new URL(request.url);
+      let url;
+      try {
+        url = new URL(request.url);
+      } catch (e) {
+        if (e instanceof TypeError) {
+          return createErrorResponse(request, 400, 'Invalid URL format');
+        }
+        throw e;
+      }
       const path = url.pathname;
 
       // Handle CORS preflight

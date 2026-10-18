@@ -113,19 +113,27 @@ describe("Worker Logic", () => {
 
     it("handles top-level worker unhandled route error in non-production environment", async () => {
       const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-      const req = { url: "invalid-url", headers: new Headers() };
+      const req = {
+        url: "https://example.com/api/f1/current",
+        headers: new Headers(),
+        get method() { throw new Error('mock error'); }
+      };
       const res = await worker.fetch(req, { ENVIRONMENT: "test" }, global.ctx);
 
       expect(res.status).toBe(500);
       const data = await res.json();
       expect(data.error.message).toBe("Internal Server Error");
-      expect(errorSpy).toHaveBeenCalledWith("Worker error:", expect.any(TypeError));
+      expect(errorSpy).toHaveBeenCalledWith("Worker error:", expect.any(Error));
       errorSpy.mockRestore();
     });
 
     it("handles top-level worker unhandled route error in production environment without logging", async () => {
       const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-      const req = { url: "invalid-url", headers: new Headers() };
+      const req = {
+        url: "https://example.com/api/f1/current",
+        headers: new Headers(),
+        get method() { throw new Error('mock error'); }
+      };
       const res = await worker.fetch(req, { ENVIRONMENT: "production" }, global.ctx);
 
       expect(res.status).toBe(500);
