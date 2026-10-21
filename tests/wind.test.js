@@ -149,6 +149,33 @@ describe('windDisplacement', () => {
         const west = windDisplacement(0, -U_EQ, 0, 3600, 1);
         expect(west.dLon).toBeLessThan(0);
     });
+
+    it('handles negative latitudes in southern hemisphere', () => {
+        // cos(-60°) = cos(60°) = 0.5
+        const { dLat, dLon } = windDisplacement(-60, U_EQ, V_EQ, 3600, 1);
+        expect(dLat).toBeCloseTo(1, 6);
+        expect(dLon).toBeCloseTo(2, 6);
+    });
+
+    it('returns zero displacement when dtSeconds or gain is zero', () => {
+        const zeroTime = windDisplacement(30, U_EQ, V_EQ, 0, 1);
+        expect(zeroTime.dLat).toBe(0);
+        expect(zeroTime.dLon).toBe(0);
+
+        const zeroGain = windDisplacement(30, U_EQ, V_EQ, 3600, 0);
+        expect(zeroGain.dLat).toBe(0);
+        expect(zeroGain.dLon).toBe(0);
+    });
+
+    it('calculates expected displacement with combined fractional inputs', () => {
+        // u = 55.66, v = 55.287, lat = 45 (cos 45° = 0.70710678), dt = 1.8s (0.0005 hr), gain = 2
+        // dLat = (55.287 / 110.574) * (1.8 / 3600) * 2 = 0.5 * 0.0005 * 2 = 0.0005
+        // dLon = (55.66 / (111.320 * cos(45°))) * 0.0005 * 2
+        const res = windDisplacement(45, 55.66, 55.287, 1.8, 2);
+        expect(res.dLat).toBeCloseTo(0.0005, 6);
+        const expectedDLon = (55.66 / (111.320 * Math.cos(45 * Math.PI / 180))) * (1.8 / 3600) * 2;
+        expect(res.dLon).toBeCloseTo(expectedDLon, 6);
+    });
 });
 
 describe('isWithinField', () => {
