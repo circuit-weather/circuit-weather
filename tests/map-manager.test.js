@@ -635,21 +635,31 @@ describe("MapManager", () => {
       expect(mapManager.applyMapLanguage).toHaveBeenCalledWith('en');
     });
 
-    it("should catch setLayoutProperty errors for slot-managed layers", async () => {
+    it("should catch setLayoutProperty errors for slot-managed layers, log nothing, and continue processing remaining layers", async () => {
       mapboxMapMock.getStyle.mockReturnValue({
         layers: [
           { id: 'layer1', type: 'symbol' },
+          { id: 'layer2', type: 'symbol' },
         ]
       });
       mapboxMapMock.getLayoutProperty.mockReturnValue(['get', 'name']);
-      mapboxMapMock.setLayoutProperty.mockImplementation(() => {
-        throw new Error('slot-managed');
+      mapboxMapMock.setLayoutProperty.mockImplementation((layerId) => {
+        if (layerId === 'layer1') {
+          throw new Error('Error: Standard style slot-managed layer cannot be updated');
+        }
       });
       mapManager.isMapbox = true;
       mapManager.map = mapboxMapMock;
+
       expect(() => {
         mapManager.applyMapLanguage('en');
       }).not.toThrow();
+
+      expect(mapboxMapMock.setLayoutProperty).toHaveBeenCalledTimes(2);
+      expect(mapboxMapMock.setLayoutProperty).toHaveBeenNthCalledWith(1, 'layer1', 'text-field', ['coalesce', ['get', 'name_en'], ['get', 'name']]);
+      expect(mapboxMapMock.setLayoutProperty).toHaveBeenNthCalledWith(2, 'layer2', 'text-field', ['coalesce', ['get', 'name_en'], ['get', 'name']]);
+      expect(consoleWarnSpy).not.toHaveBeenCalled();
+      expect(consoleErrorSpy).not.toHaveBeenCalled();
     });
 
     it("should log error if Mapbox runtime error occurs after load", async () => {
