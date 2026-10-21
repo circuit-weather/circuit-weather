@@ -42,7 +42,7 @@ export class F1API {
             const races = await this.fetchFromJolpica();
             return this.cacheSchedule(cacheKey, races, 'jolpica');
         } catch (jolpicaError) {
-            console.warn('Jolpica schedule fetch failed, trying OpenF1 fallback:', jolpicaError);
+            // Fall through to OpenF1 fallback
         }
 
         // Fallback source: OpenF1, called directly from the browser. OpenF1 blocks

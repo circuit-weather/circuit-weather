@@ -256,7 +256,6 @@ describe('F1API', () => {
         });
 
         it('handles network rejections in both Jolpica and OpenF1 fallback', async () => {
-            const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
             const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
             const jolpicaErr = new TypeError('Jolpica network error');
@@ -268,16 +267,11 @@ describe('F1API', () => {
 
             await expect(api.getSchedule()).rejects.toThrow('F1_SCHEDULE_UNAVAILABLE:jolpica,openf1:ALL_SOURCES_FAILED');
 
-            expect(warnSpy).toHaveBeenCalledWith(
-                'Jolpica schedule fetch failed, trying OpenF1 fallback:',
-                jolpicaErr
-            );
             expect(errorSpy).toHaveBeenCalledWith(
                 'OpenF1 fallback also failed:',
                 openF1Err
             );
 
-            warnSpy.mockRestore();
             errorSpy.mockRestore();
         });
 
@@ -376,8 +370,7 @@ describe('F1API', () => {
             expect(mockFetch).toHaveBeenCalledTimes(1);
         });
 
-        it('logs warnings when Jolpica fails and errors when OpenF1 fallback also fails', async () => {
-            const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+        it('errors when OpenF1 fallback also fails', async () => {
             const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
             mockFetch
@@ -386,16 +379,11 @@ describe('F1API', () => {
 
             await expect(api.getSchedule()).rejects.toThrow('F1_SCHEDULE_UNAVAILABLE:jolpica,openf1:ALL_SOURCES_FAILED');
 
-            expect(warnSpy).toHaveBeenCalledWith(
-                'Jolpica schedule fetch failed, trying OpenF1 fallback:',
-                expect.any(Error)
-            );
             expect(errorSpy).toHaveBeenCalledWith(
                 'OpenF1 fallback also failed:',
                 expect.any(Error)
             );
 
-            warnSpy.mockRestore();
             errorSpy.mockRestore();
         });
     });
