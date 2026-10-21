@@ -491,14 +491,21 @@ export class WeatherRadar {
 
         // Concurrency pool to speed up preloading without hammering the API
         const poolSize = 3;
-        let index = 0;
+        const poolCount = Math.min(poolSize, sequence.length);
+        if (poolCount === 0) return;
 
-        const workers = new Array(Math.min(poolSize, sequence.length)).fill(0).map(async () => {
+        let index = 0;
+        const worker = async () => {
             while (index < sequence.length) {
                 const currentIndex = sequence[index++];
                 await this.preloadFrame(currentIndex);
             }
-        });
+        };
+
+        const workers = new Array(poolCount);
+        for (let i = 0; i < poolCount; i++) {
+            workers[i] = worker();
+        }
 
         await Promise.all(workers);
     }
