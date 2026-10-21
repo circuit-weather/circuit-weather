@@ -340,3 +340,73 @@ export function getParsedMimeType(response) {
   const mime = contentType ? contentType.split(';')[0].trim().toLowerCase() : '';
   return { contentType, mime };
 }
+
+/**
+ * Helper to cache and return an error response
+ */
+// Intentionally keeps 'cache' as an explicit required parameter (no 'caches.default' default): every caller passes the cache
+// it just used, so it stays injectable/mockable and callers cannot silently write to a different cache than they read from.
+// Defaulting it is a no-benefit refactor that obscures this.
+export function cacheAndReturnError({ request, cache, cacheKey, status, message, extraDetails = {}, ctx }) {
+  // Cache error response to prevent hammering upstream
+  const errorCacheTTL = status === 429 ? 300 : 60;
+
+  const errorBody = JSON.stringify({
+    error: {
+      message: message,
+      status: status,
+      ...extraDetails
+    }
+  });
+
+  const errorHeaders = new Headers({
+    'Content-Type': 'application/json',
+    'Cache-Control': `public, max-age=${errorCacheTTL}`,
+    'X-Cache': 'ERROR-CACHED',
+    'X-Upstream-Status': status.toString(),
+    'Access-Control-Allow-Origin': '*', // Store permissive, override on delivery
+    ...API_SECURITY_HEADERS
+  });
+
+  const errorResponse = new Response(errorBody, {
+    status: status,
+    headers: errorHeaders
+  });
+
+  // Cache the error response
+  ctx.waitUntil(cache.put(cacheKey, errorResponse.clone()));
+
+  // Prepare response for client with strict CORS
+  const clientErrorHeaders = new Headers(errorHeaders);
+  setCorsHeaders(clientErrorHeaders, request);
+
+  return new Response(errorBody, {
+    status: status,
+    headers: clientErrorHeaders
+  });
+}
+
+/**
+ * Creates a Response object for a cache hit with standard X-Cache header, CORS, and optional header overrides.
+ * @param {Response} response
+ * @param {Request} request
+ * @param {Record<string, string>} [additionalHeaders]
+ * @returns {Response}
+ */
+export function createCacheHitResponse(response, request, additionalHeaders = {}) {
+  const headers = new Headers(response.headers);
+  headers.set('X-Cache', 'HIT');
+
+  // Apply strict CORS
+  setCorsHeaders(headers, request);
+
+  for (const [key, value] of Object.entries(additionalHeaders)) {
+    headers.set(key, value);
+  }
+
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers
+  });
+}
