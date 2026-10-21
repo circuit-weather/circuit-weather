@@ -212,12 +212,21 @@ export class WindOverlay {
         }
     }
 
+    _getRandom() {
+        if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+            const arr = new Uint32Array(1);
+            crypto.getRandomValues(arr);
+            return arr[0] / (0xffffffff + 1);
+        }
+        return Math.random();
+    }
+
     _spawn(randomAge) {
         const f = this.field;
         return {
-            lat: f.minLat + Math.random() * (f.maxLat - f.minLat),
-            lon: f.minLon + Math.random() * (f.maxLon - f.minLon),
-            age: randomAge ? Math.random() * CONFIG.WIND_FIELD_PARTICLE_LIFE : 0,
+            lat: f.minLat + this._getRandom() * (f.maxLat - f.minLat),
+            lon: f.minLon + this._getRandom() * (f.maxLon - f.minLon),
+            age: randomAge ? this._getRandom() * CONFIG.WIND_FIELD_PARTICLE_LIFE : 0,
         };
     }
 

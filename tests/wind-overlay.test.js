@@ -572,4 +572,47 @@ describe('WindOverlay', async () => {
             vi.useRealTimers();
         });
     });
+
+    describe('Random Number Generation & Particle Spawning', () => {
+        it('uses crypto.getRandomValues in _getRandom when crypto is available', () => {
+            const overlay = new WindOverlay(null);
+            const spy = vi.spyOn(crypto, 'getRandomValues').mockImplementation((arr) => {
+                arr[0] = 0x80000000;
+                return arr;
+            });
+
+            const val = overlay._getRandom();
+            expect(spy).toHaveBeenCalled();
+            expect(val).toBeCloseTo(0.5, 4);
+
+            spy.mockRestore();
+        });
+
+        it('falls back to Math.random in _getRandom when crypto or getRandomValues is unavailable', () => {
+            const overlay = new WindOverlay(null);
+            const originalCrypto = global.crypto;
+
+            vi.stubGlobal('crypto', undefined);
+            const mathSpy = vi.spyOn(Math, 'random').mockReturnValue(0.75);
+
+            expect(overlay._getRandom()).toBe(0.75);
+            expect(mathSpy).toHaveBeenCalled();
+
+            mathSpy.mockRestore();
+            vi.stubGlobal('crypto', originalCrypto);
+        });
+
+        it('spawns particles within field boundaries using _getRandom', () => {
+            const overlay = new WindOverlay(null);
+            overlay.field = sampleField;
+
+            const particle = overlay._spawn(true);
+            expect(particle.lat).toBeGreaterThanOrEqual(sampleField.minLat);
+            expect(particle.lat).toBeLessThanOrEqual(sampleField.maxLat);
+            expect(particle.lon).toBeGreaterThanOrEqual(sampleField.minLon);
+            expect(particle.lon).toBeLessThanOrEqual(sampleField.maxLon);
+            expect(particle.age).toBeGreaterThanOrEqual(0);
+            expect(particle.age).toBeLessThanOrEqual(CONFIG.WIND_FIELD_PARTICLE_LIFE);
+        });
+    });
 });
