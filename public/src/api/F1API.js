@@ -33,7 +33,6 @@ export class F1API {
                 }
             } catch (e) {
                 // Ignore parse errors, just fetch fresh
-                console.warn('Failed to parse cached schedule:', e);
             }
         }
 

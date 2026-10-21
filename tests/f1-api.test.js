@@ -338,7 +338,6 @@ describe('F1API', () => {
         });
 
         it('fetches fresh data if localStorage contains invalid JSON', async () => {
-            const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
             const mockRaces = [{ round: '5', raceName: 'Invalid Cache GP' }];
             SafeStorage.getItem.mockReturnValueOnce('invalid-json');
             mockFetch.mockResolvedValueOnce({
@@ -353,8 +352,6 @@ describe('F1API', () => {
             expect(result).toEqual(mockRaces);
             expect(mockFetch).toHaveBeenCalledTimes(1);
             expect(SafeStorage.setItem).toHaveBeenCalledWith('f1_schedule_cache', expect.any(String));
-            expect(warnSpy).toHaveBeenCalledWith('Failed to parse cached schedule:', expect.any(SyntaxError));
-            warnSpy.mockRestore();
         });
 
         it('bypasses localStorage cache if races is not an array (poisoned cache)', async () => {
