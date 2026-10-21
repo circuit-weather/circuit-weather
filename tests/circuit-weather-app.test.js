@@ -790,6 +790,48 @@ describe('CircuitWeatherApp Pure Methods', () => {
     });
 
     // ---------------------------------------------------------------
+    // updateSessionForecast
+    // ---------------------------------------------------------------
+    describe('updateSessionForecast', () => {
+        beforeEach(() => {
+            app.weatherClient.getForecast = vi.fn().mockResolvedValue({ available: true });
+            app.renderForecast = vi.fn();
+        });
+
+        it('returns early when selectedRace is null', async () => {
+            app.selectedRace = null;
+            await app.updateSessionForecast(new Date(), 'race');
+            expect(app.weatherClient.getForecast).not.toHaveBeenCalled();
+            expect(app.renderForecast).not.toHaveBeenCalled();
+        });
+
+        it('returns early when selectedRace.location is null or undefined', async () => {
+            app.selectedRace = { name: 'Test GP', location: null };
+            await app.updateSessionForecast(new Date(), 'race');
+            expect(app.weatherClient.getForecast).not.toHaveBeenCalled();
+            expect(app.renderForecast).not.toHaveBeenCalled();
+
+            app.selectedRace = { name: 'Test GP' };
+            await app.updateSessionForecast(new Date(), 'race');
+            expect(app.weatherClient.getForecast).not.toHaveBeenCalled();
+            expect(app.renderForecast).not.toHaveBeenCalled();
+        });
+
+        it('fetches forecast and calls renderForecast when location is present', async () => {
+            const sessionTime = new Date('2024-05-05T14:00:00Z');
+            app.selectedRace = {
+                name: 'Test GP',
+                location: { lat: '26.0325', long: '50.5106' }
+            };
+
+            await app.updateSessionForecast(sessionTime, 'race');
+
+            expect(app.weatherClient.getForecast).toHaveBeenCalledWith('26.0325', '50.5106', sessionTime);
+            expect(app.renderForecast).toHaveBeenCalledWith({ available: true }, sessionTime, 'race');
+        });
+    });
+
+    // ---------------------------------------------------------------
     // renderForecast — outcome: renders weather data or shows unavailable
     // ---------------------------------------------------------------
     describe('renderForecast', () => {
