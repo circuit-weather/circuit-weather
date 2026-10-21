@@ -493,12 +493,18 @@ export class WeatherRadar {
         const poolSize = 3;
         let index = 0;
 
-        const workers = new Array(Math.min(poolSize, sequence.length)).fill(0).map(async () => {
+        const workerCount = Math.min(poolSize, sequence.length);
+        const workers = new Array(workerCount);
+        const workerTask = async () => {
             while (index < sequence.length) {
                 const currentIndex = sequence[index++];
                 await this.preloadFrame(currentIndex);
             }
-        });
+        };
+
+        for (let i = 0; i < workerCount; i++) {
+            workers[i] = workerTask();
+        }
 
         await Promise.all(workers);
     }
