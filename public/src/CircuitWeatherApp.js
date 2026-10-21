@@ -437,9 +437,7 @@ export class CircuitWeatherApp {
                 for (let j = 0; j < addedNodes.length; j++) {
                     const node = addedNodes[j];
                     if (node.nodeType === Node.ELEMENT_NODE) {
-                        // Intentionally unchanged: caching addedNodes.length and adding a firstElementChild pre-check are micro-optimisations on a
-                        // tiny, infrequent mutation list (Mapbox control additions). querySelector already short-circuits on empty nodes; no measurable gain.
-                        if (node.matches(controlSelector) || node.querySelector(controlSelector) !== null) {
+                        if (node.matches(controlSelector) || (node.firstElementChild !== null && node.querySelector(controlSelector) !== null)) {
                             observer.observe(node);
                             shouldUpdate = true;
                         }
