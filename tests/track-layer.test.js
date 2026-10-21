@@ -212,12 +212,10 @@ describe('TrackLayer', () => {
             ok: false,
             status: 404
         });
-        const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
         await trackLayer.loadTrack(circuitId);
 
         expect(trackLayer.layer).toBeNull();
-        expect(consoleSpy).toHaveBeenCalledWith('Failed to load track layout:', expect.any(Error));
     });
 
     it('should abort rendering if circuit ID changes during fetch', async () => {

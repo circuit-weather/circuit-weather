@@ -249,7 +249,6 @@ export class TrackLayer {
             return center;
 
         } catch (error) {
-            console.warn('Failed to load track layout:', error);
             return null;
         }
     }
