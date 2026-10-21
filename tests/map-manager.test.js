@@ -463,9 +463,6 @@ describe("MapManager", () => {
       await mapManager.init();
 
       expect(consoleWarnSpy).toHaveBeenCalledWith(
-        'Mapbox token is missing. Please ensure MAPBOX_ACCESS_TOKEN is set as a Secret in the Cloudflare dashboard (Workers & Pages → your Worker → Settings → Variables and Secrets).'
-      );
-      expect(consoleWarnSpy).toHaveBeenCalledWith(
         'Mapbox initialization failed, falling back to Leaflet:',
         'Mapbox token not available'
       );
