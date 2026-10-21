@@ -1289,6 +1289,20 @@ describe('CircuitWeatherApp Pure Methods', () => {
             consoleSpy.mockRestore();
         });
 
+        it('handles Open-Meteo cache/fetch failure during updateLiveWeatherForCircuit without updating widget', async () => {
+            app.updateLiveWeatherForCircuit = CircuitWeatherApp.prototype.updateLiveWeatherForCircuit.bind(app);
+            app.currentCircuitCenter = [26.0, 50.0];
+            const cacheError = new Error('Open-Meteo cache retrieval failed: 503 Service Unavailable');
+            app.weatherClient.getForecast = vi.fn().mockRejectedValue(cacheError);
+            const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+            await expect(app.updateLiveWeatherForCircuit()).resolves.not.toThrow();
+
+            expect(consoleSpy).toHaveBeenCalledWith('Failed to update live weather:', cacheError);
+            expect(app.mapWeatherWidget.update).not.toHaveBeenCalled();
+            consoleSpy.mockRestore();
+        });
+
         it('scheduleLiveWeatherUpdate debounces rapid calls into a single update', () => {
             // updateLiveWeatherForCircuit is mocked in beforeEach
             app.scheduleLiveWeatherUpdate();
