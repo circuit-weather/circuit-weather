@@ -5,6 +5,7 @@ import { RadarPlayback } from './RadarPlayback.js';
 import { RadarFrames } from './RadarFrames.js';
 import { RadarPolling } from './RadarPolling.js';
 import { RadarReconcile } from './RadarReconcile.js';
+import { RadarTimeFormatter } from './RadarTimeFormatter.js';
 
 export class WeatherRadar {
     constructor(map) {
@@ -620,15 +621,7 @@ export class WeatherRadar {
      * @returns {number} Effective time in milliseconds
      */
     calculateEffectiveTime(timestamp) {
-        // Palette UX: Calculate the "drift" between the latest radar data and real-time.
-        // We apply this drift to ALL frames in the playback so that the countdown
-        // updates every minute and maintains consistent spacing during cycling.
-        let drift = 0;
-        const latestFrame = this.frames[this.pastFrameCount - 1];
-        if (latestFrame) {
-            drift = Date.now() - (latestFrame.time * 1000);
-        }
-        return (timestamp * 1000) + drift;
+        return RadarTimeFormatter.calculateEffectiveTime(timestamp, this.frames, this.pastFrameCount);
     }
 
     /**
@@ -637,27 +630,7 @@ export class WeatherRadar {
      * @returns {{ relativeText: string, accessibleText: string } | null}
      */
     getSessionRelativeTimeInfo(effectiveTimeMs) {
-        if (this.sessionTime === null) return null;
-
-        const diff = (effectiveTimeMs - this.sessionTime.getTime()) / CONFIG.ONE_MINUTE_MS;
-        // Only show session-relative if the session is within 7 days (10080 minutes) of the frame's effective time
-        if (Math.abs(diff) > 7 * 24 * 60) {
-            return null;
-        }
-
-        const absDiff = Math.abs(Math.round(diff));
-        const durationText = this.formatDuration(absDiff);
-
-        let relativeText = '';
-        if (Math.abs(diff) < 1) {
-            relativeText = i18n.t('radar.sessionStart');
-        } else if (diff < 0) {
-            relativeText = i18n.t('radar.beforeSession', { duration: durationText });
-        } else {
-            relativeText = i18n.t('radar.afterSession', { duration: durationText });
-        }
-
-        return { relativeText, accessibleText: relativeText };
+        return RadarTimeFormatter.getSessionRelativeTimeInfo(effectiveTimeMs, this.sessionTime);
     }
 
     /**
@@ -667,28 +640,7 @@ export class WeatherRadar {
      * @returns {{ relativeText: string, accessibleText: string }}
      */
     getStandardRelativeTimeInfo(timestamp, effectiveTimeMs) {
-        const diffSec = timestamp - (Date.now() / 1000);
-
-        if (diffSec > 60) {
-            const forecastText = i18n.t('radar.forecast');
-            return { relativeText: forecastText, accessibleText: forecastText };
-        }
-
-        // Palette UX: For past frames when no session is selected, show "X mins ago"
-        const diffMin = Math.round((Date.now() - effectiveTimeMs) / CONFIG.ONE_MINUTE_MS);
-
-        if (diffMin < 1) {
-            return {
-                relativeText: i18n.t('radar.live'),
-                accessibleText: i18n.t('radar.liveAria')
-            };
-        }
-
-        const relativeText = diffMin === 1
-            ? i18n.t('radar.minutesAgo', { count: diffMin })
-            : i18n.t('radar.minutesAgoPlural', { count: diffMin });
-
-        return { relativeText, accessibleText: relativeText };
+        return RadarTimeFormatter.getStandardRelativeTimeInfo(timestamp, effectiveTimeMs);
     }
 
     updateTimeDisplay(timestamp) {
@@ -825,24 +777,6 @@ export class WeatherRadar {
      * @returns {string} e.g. "1 day 2 hours 30 minutes"
      */
     formatDuration(totalMinutes) {
-        const days = Math.floor(totalMinutes / (24 * 60));
-        const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
-        const minutes = totalMinutes % 60;
-
-        const parts = [];
-        if (days > 0) {
-            const dayLabel = days === 1 ? i18n.t('countdown.day') : i18n.t('countdown.dayPlural');
-            parts.push(`${days} ${dayLabel}`);
-        }
-        if (hours > 0) {
-            const hourLabel = hours === 1 ? i18n.t('countdown.hour') : i18n.t('countdown.hourPlural');
-            parts.push(`${hours} ${hourLabel}`);
-        }
-
-        // Always show minutes to prevent justification jumps in the UI
-        const minuteLabel = minutes === 1 ? i18n.t('countdown.minute') : i18n.t('countdown.minutePlural');
-        parts.push(`${minutes} ${minuteLabel}`);
-
-        return parts.join(' ');
+        return RadarTimeFormatter.formatDuration(totalMinutes);
     }
 }
