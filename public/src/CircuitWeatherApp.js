@@ -1149,13 +1149,18 @@ export class CircuitWeatherApp {
 
     startWeatherRefreshInterval() {
         // Clear any existing interval
-        if (this.weatherRefreshInterval) {
-            clearInterval(this.weatherRefreshInterval);
-        }
+        this.stopWeatherRefreshInterval();
 
         this.weatherRefreshInterval = setInterval(() => {
             this.updateLiveWeatherForCircuit();
         }, CONFIG.WEATHER_REFRESH_INTERVAL_MS);
+    }
+
+    stopWeatherRefreshInterval() {
+        if (this.weatherRefreshInterval) {
+            clearInterval(this.weatherRefreshInterval);
+            this.weatherRefreshInterval = null;
+        }
     }
 
     startSessionForecastInterval() {

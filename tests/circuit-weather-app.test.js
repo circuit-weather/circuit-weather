@@ -1253,6 +1253,32 @@ describe('CircuitWeatherApp Pure Methods', () => {
             clearIntervalSpy.mockRestore();
         });
 
+        describe('stopWeatherRefreshInterval', () => {
+            it('clears active interval and sets weatherRefreshInterval to null', () => {
+                app.weatherRefreshInterval = 999;
+                const clearIntervalSpy = vi.spyOn(global, 'clearInterval');
+
+                app.stopWeatherRefreshInterval();
+
+                expect(clearIntervalSpy).toHaveBeenCalledWith(999);
+                expect(app.weatherRefreshInterval).toBeNull();
+
+                clearIntervalSpy.mockRestore();
+            });
+
+            it('does nothing if weatherRefreshInterval is null', () => {
+                app.weatherRefreshInterval = null;
+                const clearIntervalSpy = vi.spyOn(global, 'clearInterval');
+
+                app.stopWeatherRefreshInterval();
+
+                expect(clearIntervalSpy).not.toHaveBeenCalled();
+                expect(app.weatherRefreshInterval).toBeNull();
+
+                clearIntervalSpy.mockRestore();
+            });
+        });
+
         it('updateLiveWeatherForCircuit fetches forecast when circuit is selected', async () => {
              // We need to restore the mock since we overwrote it in beforeEach
              app.updateLiveWeatherForCircuit = CircuitWeatherApp.prototype.updateLiveWeatherForCircuit.bind(app);
