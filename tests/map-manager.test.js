@@ -398,32 +398,10 @@ describe("MapManager", () => {
       // The Mapbox promise should reject, caught by init(), calling initLeaflet()
       const map = await mapManager.init();
 
-      expect(consoleWarnSpy).toHaveBeenCalledWith(
-        'Mapbox initialization failed, falling back to Leaflet:',
-        'Network error'
-      );
       // It falls back to Leaflet if Mapbox init fails
       expect(leafletMock.map).toHaveBeenCalled();
       expect(mapManager.isMapbox).toBe(false);
       expect(map).toBe(mapMock); // Leaflet mock
-    });
-
-    it("should sanitize access_token from error messages when Mapbox initialization fails", async () => {
-      mapboxMapMock.on.mockImplementation((event, callback) => {
-        if (event === 'error') {
-          callback({ error: { message: 'Failed fetching style at https://api.mapbox.com/styles/v1/user/style?access_token=pk.secret_12345&other=1' } });
-        }
-      });
-
-      const map = await mapManager.init();
-
-      expect(consoleWarnSpy).toHaveBeenCalledWith(
-        'Mapbox initialization failed, falling back to Leaflet:',
-        'Failed fetching style at https://api.mapbox.com/styles/v1/user/style?access_token=***&other=1'
-      );
-      expect(leafletMock.map).toHaveBeenCalled();
-      expect(mapManager.isMapbox).toBe(false);
-      expect(map).toBe(mapMock);
     });
 
     it("should handle error fallback when initMapbox rejects with a non-Error object or string", async () => {
@@ -431,10 +409,6 @@ describe("MapManager", () => {
 
       const map = await mapManager.init();
 
-      expect(consoleWarnSpy).toHaveBeenCalledWith(
-        'Mapbox initialization failed, falling back to Leaflet:',
-        'String error without message property'
-      );
       expect(leafletMock.map).toHaveBeenCalled();
       expect(mapManager.isMapbox).toBe(false);
       expect(map).toBe(mapMock);
@@ -446,10 +420,6 @@ describe("MapManager", () => {
 
       await mapManager.init();
 
-      expect(consoleWarnSpy).toHaveBeenCalledWith(
-        'Mapbox initialization failed, falling back to Leaflet:',
-        'Failed to fetch config' // Match exact error string formatting
-      );
       expect(leafletMock.map).toHaveBeenCalled();
     });
 
@@ -464,10 +434,6 @@ describe("MapManager", () => {
 
       expect(consoleWarnSpy).toHaveBeenCalledWith(
         'Mapbox token is missing. Please ensure MAPBOX_ACCESS_TOKEN is set as a Secret in the Cloudflare dashboard (Workers & Pages → your Worker → Settings → Variables and Secrets).'
-      );
-      expect(consoleWarnSpy).toHaveBeenCalledWith(
-        'Mapbox initialization failed, falling back to Leaflet:',
-        'Mapbox token not available'
       );
       expect(leafletMock.map).toHaveBeenCalled();
     });

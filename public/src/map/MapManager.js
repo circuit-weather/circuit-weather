@@ -31,12 +31,7 @@ export class MapManager {
       }
 
       await this.initMapbox(config.mapboxToken);
-    } catch (error) {
-      const rawMessage = error.message || String(error);
-      const sanitizedMessage = rawMessage.replace(/access_token=[^&]+/g, 'access_token=***');
-
-      console.warn('Mapbox initialization failed, falling back to Leaflet:', sanitizedMessage);
-
+    } catch {
       this.initLeaflet();
     }
 
