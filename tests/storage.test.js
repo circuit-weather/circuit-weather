@@ -44,18 +44,13 @@ describe('SafeStorage', () => {
     expect(result).toBeNull();
   });
 
-  it('fails silently and logs warning when localStorage.setItem throws', () => {
+  it('fails silently when localStorage.setItem throws', () => {
     const error = new Error('Quota Exceeded');
     mockLocalStorage.setItem.mockImplementation(() => {
       throw error;
     });
 
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-
     expect(() => SafeStorage.setItem('key', 'value')).not.toThrow();
-    expect(warnSpy).toHaveBeenCalledWith('Storage write error:', error);
-
-    warnSpy.mockRestore();
   });
 
   it('returns null when accessing localStorage property itself throws SecurityError on getItem', () => {
@@ -69,7 +64,7 @@ describe('SafeStorage', () => {
     expect(result).toBeNull();
   });
 
-  it('fails silently and logs warning when accessing localStorage property itself throws on setItem', () => {
+  it('fails silently when accessing localStorage property itself throws on setItem', () => {
     const error = new Error('SecurityError: Access to localStorage is denied');
     vi.stubGlobal('localStorage', {
       get setItem() {
@@ -77,11 +72,6 @@ describe('SafeStorage', () => {
       }
     });
 
-    const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-
     expect(() => SafeStorage.setItem('key', 'value')).not.toThrow();
-    expect(warnSpy).toHaveBeenCalledWith('Storage write error:', error);
-
-    warnSpy.mockRestore();
   });
 });
