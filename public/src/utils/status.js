@@ -1,4 +1,27 @@
 /**
+ * Retrieves or caches the start timestamp in milliseconds for a session object.
+ * @param {Object} session - The session object.
+ * @param {Date} [parsedStart] - Optional pre-parsed Date object.
+ * @returns {number} - Timestamp in ms, or NaN if invalid.
+ */
+function getSessionStartMs(session, parsedStart) {
+    if (parsedStart) return parsedStart.getTime();
+    if (typeof session._startMs === 'number') return session._startMs;
+    if (!session.date || !session.time) return NaN;
+
+    const ms = new Date(`${session.date}T${session.time}`).getTime();
+    if (!Number.isNaN(ms)) {
+        Object.defineProperty(session, '_startMs', {
+            value: ms,
+            enumerable: false,
+            writable: true,
+            configurable: true
+        });
+    }
+    return ms;
+}
+
+/**
  * Determines the status of a session based on current time.
  * @param {Object} session - The session object (must have date and time).
  * @param {Date} now - The current date/time.
@@ -6,21 +29,22 @@
  * @returns {string} - 'LIVE', 'FUTURE', 'PAST', or 'UNKNOWN'.
  */
 export function getSessionStatus(session, now, parsedStart) {
-    if (!session || !session.date || !session.time) return 'UNKNOWN';
+    if (!session || (!parsedStart && (!session.date || !session.time))) return 'UNKNOWN';
 
-    const start = parsedStart || new Date(`${session.date}T${session.time}`);
-    // Assume 2 hours duration for most sessions, 3 hours for race.
-    let durationHours = 2;
-    if (session.id === 'race') {
-        durationHours = 3;
+    const startMs = getSessionStartMs(session, parsedStart);
+    if (Number.isNaN(startMs)) return 'UNKNOWN';
+
+    const nowMs = now.getTime();
+    if (nowMs < startMs) {
+        return 'FUTURE';
     }
 
-    const end = new Date(start.getTime() + durationHours * 60 * 60 * 1000);
+    // Assume 2 hours duration for most sessions, 3 hours for race.
+    const durationHours = session.id === 'race' ? 3 : 2;
+    const endMs = startMs + durationHours * 60 * 60 * 1000;
 
-    if (now >= start && now <= end) {
+    if (nowMs <= endMs) {
         return 'LIVE';
-    } else if (now < start) {
-        return 'FUTURE';
     } else {
         return 'PAST';
     }
@@ -35,35 +59,36 @@ export function getSessionStatus(session, now, parsedStart) {
 export function getRoundStatus(race, now) {
     if (!race || !race.sessions || race.sessions.length === 0) return 'UNKNOWN';
 
-    // Find earliest start and latest end
-    let minStart = null;
-    let maxEnd = null;
+    const nowMs = now.getTime();
+    let minStartMs = Infinity;
+    let maxEndMs = -Infinity;
     let anySessionLive = false;
 
-    race.sessions.forEach(session => {
-        if (!session.date || !session.time) return;
-        const start = new Date(`${session.date}T${session.time}`);
+    for (let i = 0; i < race.sessions.length; i++) {
+        const session = race.sessions[i];
+        if (!session.date || !session.time) continue;
 
-        let durationHours = 2;
-        if (session.id === 'race') durationHours = 4; // Use 4h for round-level "Live" to be safe
+        const startMs = getSessionStartMs(session);
+        if (Number.isNaN(startMs)) continue;
 
-        const end = new Date(start.getTime() + durationHours * 60 * 60 * 1000);
+        const durationHours = session.id === 'race' ? 4 : 2; // Use 4h for round-level "Live" to be safe
+        const endMs = startMs + durationHours * 60 * 60 * 1000;
 
-        if (!minStart || start < minStart) minStart = start;
-        if (!maxEnd || end > maxEnd) maxEnd = end;
+        if (startMs < minStartMs) minStartMs = startMs;
+        if (endMs > maxEndMs) maxEndMs = endMs;
 
-        if (now >= start && now <= end) {
+        if (nowMs >= startMs && nowMs <= endMs) {
             anySessionLive = true;
         }
-    });
+    }
 
-    if (!minStart || !maxEnd) return 'UNKNOWN';
+    if (minStartMs === Infinity || maxEndMs === -Infinity) return 'UNKNOWN';
 
     if (anySessionLive) {
         return 'LIVE';
-    } else if (now >= minStart && now <= maxEnd) {
+    } else if (nowMs >= minStartMs && nowMs <= maxEndMs) {
         return 'CURRENT';
-    } else if (now < minStart) {
+    } else if (nowMs < minStartMs) {
         return 'FUTURE';
     } else {
         return 'PAST';
