@@ -48,7 +48,6 @@ export function getRaceEndTime(race) {
  * @returns {number} - The index of the first active race, or races.length if none.
  */
 export function findFirstActiveRaceIndex(races, now) {
-    if (!Array.isArray(races)) return 0;
     let low = 0;
     let high = races.length - 1;
     let firstActiveIndex = races.length;
@@ -74,12 +73,10 @@ export function findFirstActiveRaceIndex(races, now) {
  * @returns {Object|null} - { round, sessionId } or null.
  */
 export function getGloballyNextSession(races, now) {
-    if (!Array.isArray(races) || races.length === 0) return null;
     const firstActiveIndex = findFirstActiveRaceIndex(races, now);
 
     for (let i = firstActiveIndex; i < races.length; i++) {
         const race = races[i];
-        if (!race || !Array.isArray(race.sessions)) continue;
         for (let j = 0; j < race.sessions.length; j++) {
             const s = race.sessions[j];
             if (getSessionStatus(s, now) === 'FUTURE') {

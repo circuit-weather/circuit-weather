@@ -6,21 +6,6 @@ import { getWindDirection } from '../utils/wind.js';
  * error states, loading skeletons, and weather metrics.
  */
 export class ForecastRenderer {
-    /**
-     * @param {Object} [weatherClient] Optional WeatherClient instance for relative time and descriptions.
-     */
-    constructor(weatherClient = null) {
-        this.weatherClient = weatherClient;
-    }
-
-    /**
-     * Sets or updates the weather client instance.
-     * @param {Object} weatherClient
-     */
-    setWeatherClient(weatherClient) {
-        this.weatherClient = weatherClient;
-    }
-
     createErrorIconSvg(svgNS = "http://www.w3.org/2000/svg") {
         const svg = document.createElementNS(svgNS, "svg");
         svg.setAttribute("viewBox", "0 0 24 24");
@@ -241,10 +226,10 @@ export class ForecastRenderer {
         return dl;
     }
 
-    createTimelineItemElement(hour, sessionTime, units, weatherClient = this.weatherClient) {
-        const relTime = weatherClient ? weatherClient.getRelativeTime(hour.time, sessionTime) : '';
-        const desc = weatherClient ? weatherClient.getWeatherDescription(hour.code) : '';
-        const a11yTime = weatherClient ? weatherClient.getAccessibleRelativeTime(hour.time, sessionTime) : '';
+    createTimelineItemElement(hour, sessionTime, units, weatherClient) {
+        const relTime = weatherClient.getRelativeTime(hour.time, sessionTime);
+        const desc = weatherClient.getWeatherDescription(hour.code);
+        const a11yTime = weatherClient.getAccessibleRelativeTime(hour.time, sessionTime);
         const temp = Math.round(hour.temp);
         const ariaLabel = i18n.t('weather.timelineAria', {
             time: a11yTime,
@@ -296,7 +281,7 @@ export class ForecastRenderer {
         return li;
     }
 
-    createTimelineElement(hourlyWeather, sessionTime, units, weatherClient = this.weatherClient) {
+    createTimelineElement(hourlyWeather, sessionTime, units, weatherClient) {
         const section = document.createElement('section');
         section.className = 'weather-timeline';
         section.id = 'weatherTimeline';
@@ -316,7 +301,7 @@ export class ForecastRenderer {
         return section;
     }
 
-    createForecastDashboard(weather, sessionTime, weatherClient = this.weatherClient) {
+    createForecastDashboard(weather, sessionTime, weatherClient) {
         const dashboard = document.createElement('article');
         dashboard.className = 'weather-dashboard';
 

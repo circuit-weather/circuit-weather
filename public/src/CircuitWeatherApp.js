@@ -34,7 +34,7 @@ export class CircuitWeatherApp {
         this.sidebarManager = null;
         this.f1Api = new F1API();
         this.weatherClient = new WeatherClient();
-        this.forecastRenderer = new ForecastRenderer(this.weatherClient);
+        this.forecastRenderer = new ForecastRenderer();
         this.radar = null;
         this.trackLayer = null;
         this.rangeCircles = null;
@@ -876,7 +876,6 @@ export class CircuitWeatherApp {
         if (content) content.style.display = 'block';
         if (unavailable) unavailable.style.display = 'none';
 
-        this.forecastRenderer.setWeatherClient(this.weatherClient);
         const dashboard = this.forecastRenderer.createForecastDashboard(weather, sessionTime, this.weatherClient);
 
         if (content) {

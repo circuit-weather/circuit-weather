@@ -42,9 +42,10 @@ export class SeoManager {
      * @param {string} desc
      */
     static updateMetaTags(title, desc) {
+        // Update Title: Crucial for primary SERP display and browser history
         document.title = title;
 
-        let child = document.head ? document.head.firstElementChild : null;
+        let child = document.head.firstElementChild;
         while (child) {
             const tag = child.tagName;
             if (tag === 'META') {
@@ -78,15 +79,10 @@ export class SeoManager {
             breadcrumbScript = document.createElement('script');
             breadcrumbScript.id = 'dynamic-breadcrumb-ld';
             breadcrumbScript.type = 'application/ld+json';
-            if (document.head) {
-                document.head.appendChild(breadcrumbScript);
-            }
+            document.head.appendChild(breadcrumbScript);
         }
 
-        const baseUrl = (typeof window !== 'undefined' && window.location && window.location.origin)
-            ? window.location.origin
-            : 'https://circuit-weather.racing';
-
+        const baseUrl = window.location.origin || 'https://circuit-weather.racing';
         const breadcrumbs = {
             "@context": "https://schema.org",
             "@type": "BreadcrumbList",
@@ -140,9 +136,7 @@ export class SeoManager {
                 jsonLdScript = document.createElement('script');
                 jsonLdScript.id = 'dynamic-json-ld';
                 jsonLdScript.type = 'application/ld+json';
-                if (document.head) {
-                    document.head.appendChild(jsonLdScript);
-                }
+                document.head.appendChild(jsonLdScript);
             }
 
             const startObj = new Date(`${selectedSession.date}T${selectedSession.time}`);
@@ -152,8 +146,6 @@ export class SeoManager {
             // requirements for Event schema, preventing 'Missing field "endDate"' warnings in Rich Results.
             const endObj = new Date(startObj.getTime() + 2 * 60 * 60 * 1000);
             const sessionEnd = endObj.toISOString();
-
-            const href = (typeof window !== 'undefined' && window.location) ? window.location.href : '';
 
             // Scout: sport, url and image give search engines richer context about the
             // entity for better indexing.
@@ -166,7 +158,7 @@ export class SeoManager {
                 "startDate": sessionStart,
                 "endDate": sessionEnd,
                 "eventStatus": "https://schema.org/EventScheduled",
-                "url": href,
+                "url": window.location.href,
                 "image": "https://circuit-weather.racing/icon-512.png",
                 // Scout: Added organizer entity to explicitly link the event to Formula 1 for knowledge graph integration.
                 "organizer": {
