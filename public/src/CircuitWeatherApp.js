@@ -632,7 +632,7 @@ export class CircuitWeatherApp {
         const now = new Date();
         let nextFound = false;
 
-        this.races.forEach(race => {
+        for (const race of this.races) {
             const option = document.createElement('option');
             option.value = race.round;
             const date = new Date(race.date);
@@ -656,7 +656,7 @@ export class CircuitWeatherApp {
             option.textContent = formatStatusLabel(label, status, isNext);
 
             fragment.appendChild(option);
-        });
+        }
 
         select.appendChild(fragment);
     }
