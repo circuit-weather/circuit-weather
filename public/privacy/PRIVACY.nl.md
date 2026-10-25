@@ -1,6 +1,6 @@
 # Privacybeleid
 
-**Laatst bijgewerkt:** januari 2026
+**Laatst bijgewerkt:** oktober 2026
 
 **Let op:** Deze vertaling is automatisch gegenereerd. Bij verschillen is de Engelse versie doorslaggevend.
 
@@ -24,7 +24,7 @@ De applicatie maakt echter gebruik van diensten en infrastructuur van derden, di
 
 Deze website wordt gehost op **Cloudflare Workers** (met Static Assets), die zowel de website leveren als de API aandrijven.
 
-- **Privacyproxy:** Verzoeken om F1-schema's, circuitlayouts, Leaflet-assets, Mapbox GL JS-assets en alle RainViewer-radartegels lopen via onze Cloudflare Worker.
+- **Privacyproxy:** Verzoeken om F1-schema's, circuitlayouts, Leaflet-assets, Mapbox GL JS-assets en alle radartegels en weerswaarschuwingen (LibreWXR, met RainViewer als reserve) lopen via onze Cloudflare Worker.
 - **Geavanceerde caching:** API-antwoorden worden aan de edge gecachet om bandbreedtegebruik en belasting van bronservers te beperken.
 - **Verwerkte gegevens:** Cloudflare verwerkt het IP-adres en metadata van verzoeken om de site te leveren en te beveiligen.
 - **Privacybeleid:** [cloudflare.com/privacypolicy](https://www.cloudflare.com/privacypolicy/)
@@ -49,9 +49,15 @@ Uw browser kan rechtstreeks verbinding maken met diensten van derden voor kaarte
 - **Verzonden gegevens:** IP-adres (standaard webverzoek) en de coördinaten van het geselecteerde circuit.
 - **Privacybeleid:** [open-meteo.com/en/features#terms](https://open-meteo.com/en/features#terms)
 
+**LibreWXR**
+
+- **Doel:** Primaire bron voor neerslagradar, de regenverwachting voor 1 uur, satellietwolken, bliksem, onweerscellen en officiële weerswaarschuwingen.
+- **Verzonden gegevens:** Niets rechtstreeks. Verzoeken lopen via onze Worker, die LibreWXR alleen de afgeronde coördinaten van het gekozen circuit stuurt (voor weerswaarschuwingen).
+- **Privacybeleid:** [librewxr.net](https://librewxr.net/)
+
 **RainViewer**
 
-- **Doel:** Radarlagen.
+- **Doel:** Reserve-radarlagen, alleen gebruikt als LibreWXR niet beschikbaar is.
 - **Verzonden gegevens:** Niets rechtstreeks. Radargegevens lopen via onze Worker.
 - **Privacybeleid:** [rainviewer.com/privacy](https://www.rainviewer.com/privacy.html)
 
@@ -86,6 +92,7 @@ Uw browser kan rechtstreeks verbinding maken met diensten van derden voor kaarte
 
 - **Jolpica F1:** F1-schemagegevens (24 uur edge-cache; een laatst bekende geldige kopie wordt tot 30 dagen bewaard als terugval als de bron niet beschikbaar is).
 - **GitHub (bacinger/f1-circuits):** GeoJSON-circuitbestanden (24 uur edge-cache).
+- **LibreWXR:** Radarmetadata (1 minuut cache), radartegels (2 uur edge-cache; verwachtingstegels 5 minuten), satelliettegels (12 uur edge-cache) en weerswaarschuwingen (5 minuten cache). Kortlevende reservekopieën van de metadata (30 minuten) en waarschuwingen (1 uur) worden bewaard voor het geval LibreWXR niet beschikbaar is.
 - **RainViewer:** Radarmetadata (1 minuut cache) en tegels (2 uur edge-cache).
 - **Leaflet (via Unpkg):** Assets van de kaartinteractiebibliotheek (via proxy om veiligheidsredenen, 1 jaar immutable cache).
 - **Mapbox (via Mapbox CDN):** Assets van de kaartinteractiebibliotheek (via proxy om veiligheidsredenen, 1 jaar immutable cache).
@@ -98,6 +105,9 @@ Voorkeursinstellingen worden lokaal in uw browser opgeslagen:
 - **unit:** `metric` of `imperial`
 - **language:** uw gekozen taal (bijv. `nl`, `en-GB`)
 - **windOverlay:** `true` of `false` (onthoudt of de windanimatielaag is ingeschakeld)
+- **radarColour:** het nummer van het gekozen radarkleurenschema
+- **radarArrows, radarCells, radarLightning, radarSatellite:** `true` of `false` (onthoudt welke extra radarlagen zijn ingeschakeld)
+- **weatherAlerts:** `true` of `false` (onthoudt of weerswaarschuwingen worden getoond)
 - **f1_schedule_cache:** cachet de F1-schemagegevens (7 dagen cache)
 
 Deze gegevens blijven op uw apparaat en worden niet naar onze servers verzonden.

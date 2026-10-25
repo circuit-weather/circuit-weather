@@ -381,86 +381,152 @@ describe("Worker Logic", () => {
   });
 
   describe("Radar API (/api/radar)", () => {
-    it("fetches rainviewer data and caches it", async () => {
-      const mockRadarData = {
-        version: "2.0",
-        host: "https://x.com",
-        radar: {},
-      };
-      mockFetch.mockResolvedValueOnce(
-        new Response(JSON.stringify(mockRadarData), {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        }),
-      );
+    const LIBREWXR_URL = "https://api.librewxr.net/public/weather-maps.json";
+    const RAINVIEWER_URL = "https://api.rainviewer.com/public/weather-maps.json";
+    const RADAR_CACHE_KEY = "https://circuit-weather.racing/__cache/radar-v2";
 
-      const req = createRequest("/api/radar");
-      const res = await worker.fetch(req, global.env, global.ctx);
+    const jsonResponse = (data, status = 200, headers = {}) =>
+      new Response(JSON.stringify(data), {
+        status,
+        headers: { "Content-Type": "application/json", ...headers },
+      });
+
+    const libreWxrData = {
+      version: "2.0",
+      host: "https://api.librewxr.net",
+      radar: {
+        past: [{ time: 1000, path: "/v2/radar/1000" }],
+        nowcast: [{ time: 1600, path: "/v2/radar/1600" }],
+        colorSchemes: [{ id: 2, name: "Universal Blue" }],
+      },
+      satellite: { infrared: [{ time: 900, path: "/v2/satellite/900" }] },
+    };
+
+    const rainViewerData = {
+      version: "2.0",
+      host: "https://tilecache.rainviewer.com",
+      radar: { past: [{ time: 1000, path: "/v2/radar/abc123" }], nowcast: [] },
+    };
+
+    it("serves normalised LibreWXR metadata and caches it", async () => {
+      mockFetch.mockResolvedValueOnce(jsonResponse(libreWxrData));
+
+      const res = await worker.fetch(createRequest("/api/radar"), global.env, global.ctx);
 
       expect(res.status).toBe(200);
-      expect(await res.json()).toEqual(mockRadarData);
-      expect(mockCache.put).toHaveBeenCalled();
+      expect(res.headers.get("X-Radar-Provider")).toBe("librewxr");
+      const data = await res.json();
+      expect(data).toEqual({
+        version: "2.0",
+        provider: "librewxr",
+        maxZoom: 12,
+        radar: {
+          past: [{ time: 1000, path: "/v2/radar/1000" }],
+          nowcast: [{ time: 1600, path: "/v2/radar/1600" }],
+        },
+        satellite: { infrared: [{ time: 900, path: "/v2/satellite/900" }] },
+        colorSchemes: [{ id: 2, name: "Universal Blue" }],
+      });
+      expect(mockFetch).toHaveBeenCalledTimes(1);
+      expect(mockFetch.mock.calls[0][0]).toBe(LIBREWXR_URL);
+      expect(cacheStore.has(RADAR_CACHE_KEY)).toBe(true);
     });
 
-    it("handles upstream errors gracefully (empty response)", async () => {
+    it("falls back to RainViewer when LibreWXR errors", async () => {
       const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-      mockFetch.mockResolvedValueOnce(new Response("Error", { status: 500 }));
+      mockFetch
+        .mockResolvedValueOnce(new Response("Error", { status: 503 }))
+        .mockResolvedValueOnce(jsonResponse(rainViewerData));
 
-      const req = createRequest("/api/radar");
-      const res = await worker.fetch(req, global.env, global.ctx);
+      const res = await worker.fetch(createRequest("/api/radar"), global.env, global.ctx);
 
       expect(res.status).toBe(200);
       const data = await res.json();
-      // Ensure we get the empty radar structure defined in getEmptyRadarResponse
-      expect(data.radar).toBeDefined();
-      expect(data.radar.past).toEqual([]);
-      expect(res.headers.get("X-Upstream-Status")).toBe("500");
-      expect(errorSpy).toHaveBeenCalled();
+      expect(data.provider).toBe("rainviewer");
+      expect(data.maxZoom).toBe(7);
+      expect(data.radar.past).toEqual([{ time: 1000, path: "/rainviewer/v2/radar/abc123" }]);
+      expect(mockFetch.mock.calls[1][0]).toBe(RAINVIEWER_URL);
+      expect(errorSpy).toHaveBeenCalledWith("Upstream Radar API Error (librewxr): Status 503");
       errorSpy.mockRestore();
     });
 
-    it("handles fetch exceptions gracefully", async () => {
+    it("falls back to RainViewer when LibreWXR returns no usable frames", async () => {
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      mockFetch
+        .mockResolvedValueOnce(jsonResponse({ radar: { past: [{ time: 1, path: "/evil" }] } }))
+        .mockResolvedValueOnce(jsonResponse(rainViewerData));
+
+      const res = await worker.fetch(createRequest("/api/radar"), global.env, global.ctx);
+
+      expect((await res.json()).provider).toBe("rainviewer");
+      expect(errorSpy).toHaveBeenCalledWith("Upstream Radar API (librewxr) returned no usable frames");
+      errorSpy.mockRestore();
+    });
+
+    it("falls back to RainViewer when LibreWXR throws", async () => {
       const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
       const networkError = new Error("Network error");
-      mockFetch.mockRejectedValueOnce(networkError);
+      mockFetch
+        .mockRejectedValueOnce(networkError)
+        .mockResolvedValueOnce(jsonResponse(rainViewerData));
 
-      const req = createRequest("/api/radar");
-      const res = await worker.fetch(req, global.env, global.ctx);
+      const res = await worker.fetch(createRequest("/api/radar"), global.env, global.ctx);
 
-      expect(res.status).toBe(502);
-      const data = await res.json();
-      expect(data.error.message).toBe("Failed to fetch radar data");
-      expect(errorSpy).toHaveBeenCalledWith("Radar Fetch Error:", networkError);
+      expect((await res.json()).provider).toBe("rainviewer");
+      expect(errorSpy).toHaveBeenCalledWith("Radar Fetch Error (librewxr):", networkError);
       errorSpy.mockRestore();
     });
 
-    it("blocks invalid content-type from upstream radar", async () => {
+    it("returns the empty radar structure when both providers error", async () => {
       const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-      mockFetch.mockResolvedValueOnce(
-        new Response(JSON.stringify({}), {
+      mockFetch
+        .mockResolvedValueOnce(new Response("Error", { status: 500 }))
+        .mockResolvedValueOnce(new Response("Error", { status: 500 }));
+
+      const res = await worker.fetch(createRequest("/api/radar"), global.env, global.ctx);
+
+      expect(res.status).toBe(200);
+      const data = await res.json();
+      expect(data.radar.past).toEqual([]);
+      expect(res.headers.get("X-Upstream-Status")).toBe("500");
+      expect(mockCache.put).not.toHaveBeenCalled();
+      errorSpy.mockRestore();
+    });
+
+    it("returns 502 when both providers are unreachable", async () => {
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      mockFetch.mockRejectedValue(new Error("Network error"));
+
+      const res = await worker.fetch(createRequest("/api/radar"), global.env, global.ctx);
+
+      expect(res.status).toBe(502);
+      expect((await res.json()).error.message).toBe("Failed to fetch radar data");
+      errorSpy.mockRestore();
+    });
+
+    it("blocks invalid content-type from both providers", async () => {
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      mockFetch.mockImplementation(async () =>
+        new Response(JSON.stringify(libreWxrData), {
           status: 200,
           headers: { "Content-Type": "text/html" },
         }),
       );
 
-      const req = createRequest("/api/radar");
-      const res = await worker.fetch(req, global.env, global.ctx);
+      const res = await worker.fetch(createRequest("/api/radar"), global.env, global.ctx);
 
       expect(res.status).toBe(200);
       const data = await res.json();
-      // Returns empty radar response for invalid content type
       expect(data.radar.past).toEqual([]);
-      expect(errorSpy).toHaveBeenCalled();
+      expect(res.headers.get("X-Upstream-Status")).toBe("0");
+      expect(errorSpy).toHaveBeenCalledWith(
+        "Upstream Radar Invalid Content-Type (librewxr): text/html (parsed: text/html)",
+      );
       errorSpy.mockRestore();
     });
 
     it("sets CORS headers when valid Origin is provided", async () => {
-      mockFetch.mockResolvedValueOnce(
-        new Response(JSON.stringify({ radar: { past: [] } }), {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        }),
-      );
+      mockFetch.mockResolvedValueOnce(jsonResponse(libreWxrData));
 
       const req = createRequest("/api/radar", {
         headers: { Origin: "https://circuit-weather.racing" },
@@ -474,35 +540,58 @@ describe("Worker Logic", () => {
       expect(res.headers.get("Vary")).toBe("Origin");
     });
 
-    it("handles upstream rate limit (429) for radar", async () => {
+    it("handles upstream rate limit (429) when both providers fail", async () => {
       const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
-      mockFetch.mockResolvedValueOnce(
-        new Response(JSON.stringify({ error: "Rate Limit" }), {
-          status: 429,
-          headers: { "Content-Type": "application/json", "Retry-After": "60" },
-        }),
-      );
+      mockFetch
+        .mockResolvedValueOnce(new Response("Error", { status: 500 }))
+        .mockResolvedValueOnce(jsonResponse({ error: "Rate Limit" }, 429, { "Retry-After": "60" }));
 
-      const req = createRequest("/api/radar");
-      const res = await worker.fetch(req, global.env, global.ctx);
+      const res = await worker.fetch(createRequest("/api/radar"), global.env, global.ctx);
 
       expect(res.status).toBe(429);
       const data = await res.json();
       expect(data.error.message).toBe("Upstream Rate Limit");
       expect(res.headers.get("Retry-After")).toBe("60");
-      expect(errorSpy).toHaveBeenCalled();
+      errorSpy.mockRestore();
+    });
+
+    it("does not log upstream errors in production", async () => {
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      mockFetch
+        .mockResolvedValueOnce(new Response("Error", { status: 500 }))
+        .mockResolvedValueOnce(jsonResponse({}, 200, { "Content-Type": "text/html" }))
+        .mockRejectedValueOnce(new Error("Network error"))
+        .mockResolvedValueOnce(jsonResponse({ radar: {} }));
+
+      const env = { ENVIRONMENT: "production" };
+      await worker.fetch(createRequest("/api/radar"), env, global.ctx);
+      await worker.fetch(createRequest("/api/radar"), env, global.ctx);
+
+      expect(errorSpy).not.toHaveBeenCalled();
+      errorSpy.mockRestore();
+    });
+
+    it("serves the last-known-good metadata when both providers fail", async () => {
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      mockFetch.mockResolvedValueOnce(jsonResponse(libreWxrData));
+      await worker.fetch(createRequest("/api/radar"), global.env, global.ctx);
+      expect(cacheStore.has("https://circuit-weather.racing/__cache/radar-v2-stale")).toBe(true);
+
+      // Fresh copy expires; both providers are now down
+      cacheStore.delete(RADAR_CACHE_KEY);
+      mockFetch.mockResolvedValue(new Response("Error", { status: 503 }));
+      const res = await worker.fetch(createRequest("/api/radar"), global.env, global.ctx);
+
+      expect(res.status).toBe(200);
+      expect(res.headers.get("X-Cache")).toBe("STALE");
+      expect(res.headers.get("Cache-Control")).toBe("public, max-age=60");
+      expect((await res.json()).provider).toBe("librewxr");
       errorSpy.mockRestore();
     });
 
     it("returns cached response for radar with valid origin", async () => {
-      const cachedData = { version: "2.0", host: "https://x.com", radar: {} };
-      const cacheResponse = new Response(JSON.stringify(cachedData), {
-        headers: { "Content-Type": "application/json" },
-      });
-      cacheStore.set(
-        "https://api.rainviewer.com/public/weather-maps.json",
-        cacheResponse,
-      );
+      const cachedData = { version: "2.0", provider: "librewxr", radar: {} };
+      cacheStore.set(RADAR_CACHE_KEY, jsonResponse(cachedData));
 
       const req = createRequest("/api/radar", {
         headers: { Origin: "https://circuit-weather.racing" },
@@ -519,17 +608,10 @@ describe("Worker Logic", () => {
     });
 
     it("returns cached response for radar without CORS when origin is missing", async () => {
-      const cachedData = { version: "2.0", host: "https://x.com", radar: {} };
-      const cacheResponse = new Response(JSON.stringify(cachedData), {
-        headers: { "Content-Type": "application/json" },
-      });
-      cacheStore.set(
-        "https://api.rainviewer.com/public/weather-maps.json",
-        cacheResponse,
-      );
+      const cachedData = { version: "2.0", provider: "librewxr", radar: {} };
+      cacheStore.set(RADAR_CACHE_KEY, jsonResponse(cachedData));
 
-      const req = createRequest("/api/radar");
-      const res = await worker.fetch(req, global.env, global.ctx);
+      const res = await worker.fetch(createRequest("/api/radar"), global.env, global.ctx);
 
       expect(res.status).toBe(200);
       expect(await res.json()).toEqual(cachedData);
@@ -550,15 +632,9 @@ describe("Worker Logic", () => {
     });
 
     it("returns radar response without CORS when origin is missing", async () => {
-      mockFetch.mockResolvedValueOnce(
-        new Response(JSON.stringify({ radar: { past: [] } }), {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        }),
-      );
+      mockFetch.mockResolvedValueOnce(jsonResponse(libreWxrData));
 
-      const req = createRequest("/api/radar"); // No Origin header by default
-      const res = await worker.fetch(req, global.env, global.ctx);
+      const res = await worker.fetch(createRequest("/api/radar"), global.env, global.ctx);
 
       expect(res.status).toBe(200);
       expect(res.headers.get("Access-Control-Allow-Origin")).toBeNull();
@@ -866,7 +942,7 @@ describe("Worker Logic", () => {
         }),
       );
 
-      const req = createRequest("/api/tiles/v2/radar/1/2/3/512/1/1_1.png");
+      const req = createRequest("/api/tiles/v2/radar/1/512/2/3/1/2/1_1.png");
       const res = await worker.fetch(req, global.env, global.ctx);
 
       expect(res.status).toBe(200);
@@ -893,7 +969,7 @@ describe("Worker Logic", () => {
         }),
       );
 
-      const req = createRequest("/api/tiles/v2/radar/1/2/3/512/1/1_1.png");
+      const req = createRequest("/api/tiles/v2/radar/1/512/2/3/1/2/1_1.png");
       const res = await worker.fetch(req, global.env, global.ctx);
 
       expect(res.status).toBe(200);
@@ -924,7 +1000,7 @@ describe("Worker Logic", () => {
         }),
       );
 
-      const req = createRequest("/api/tiles/v2/radar/1/2/3/512/1/1_1.png", {
+      const req = createRequest("/api/tiles/v2/radar/1/512/2/3/1/2/1_1.png", {
         headers: { Origin: "https://circuit-weather.racing" },
       });
       const res = await worker.fetch(req, global.env, global.ctx);
@@ -945,7 +1021,7 @@ describe("Worker Logic", () => {
         }),
       );
 
-      const req = createRequest("/api/tiles/v2/radar/1/2/3/512/1/1_1.png");
+      const req = createRequest("/api/tiles/v2/radar/1/512/2/3/1/2/1_1.png");
       const res = await worker.fetch(req, global.env, global.ctx);
 
       expect(res.status).toBe(200);
@@ -968,7 +1044,7 @@ describe("Worker Logic", () => {
       );
 
       // The URL implies a png, but upstream returns html
-      const req = createRequest("/api/tiles/v2/radar/1.png");
+      const req = createRequest("/api/tiles/v2/radar/1/512/2/3/1/2/1_1.png");
       const res = await worker.fetch(req, global.env, global.ctx);
 
       expect(res.status).toBe(502); // Bad Gateway
@@ -985,7 +1061,7 @@ describe("Worker Logic", () => {
         }),
       );
 
-      const req = createRequest("/api/tiles/v2/radar/missing.png");
+      const req = createRequest("/api/tiles/v2/radar/2/512/2/3/1/2/1_1.png");
       const res = await worker.fetch(req, global.env, global.ctx);
 
       expect(res.status).toBe(404);
@@ -1005,7 +1081,7 @@ describe("Worker Logic", () => {
         }),
       );
 
-      const req = createRequest("/api/tiles/v2/radar/missing.png", {
+      const req = createRequest("/api/tiles/v2/radar/2/512/2/3/1/2/1_1.png", {
         headers: { Origin: "https://evil.com" }
       });
       const res = await worker.fetch(req, global.env, global.ctx);
@@ -1022,7 +1098,7 @@ describe("Worker Logic", () => {
         }),
       );
 
-      const req = createRequest("/api/tiles/v2/radar/missing.png", {
+      const req = createRequest("/api/tiles/v2/radar/2/512/2/3/1/2/1_1.png", {
         headers: { Origin: "https://circuit-weather.racing" },
       });
       const res = await worker.fetch(req, global.env, global.ctx);
@@ -1045,7 +1121,7 @@ describe("Worker Logic", () => {
         }),
       );
 
-      const req = createRequest("/api/tiles/v2/radar/limit.png");
+      const req = createRequest("/api/tiles/v2/radar/3/512/2/3/1/2/1_1.png");
       const res = await worker.fetch(req, global.env, global.ctx);
 
       expect(res.status).toBe(429);
@@ -1060,7 +1136,7 @@ describe("Worker Logic", () => {
         }),
       );
 
-      const req = createRequest("/api/tiles/v2/radar/error.png");
+      const req = createRequest("/api/tiles/v2/radar/4/512/2/3/1/2/1_1.png");
       const res = await worker.fetch(req, global.env, global.ctx);
 
       expect(res.status).toBe(500);
@@ -1071,7 +1147,7 @@ describe("Worker Logic", () => {
       const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
       mockFetch.mockRejectedValueOnce(new Error("Network error"));
 
-      const req = createRequest("/api/tiles/v2/radar/error.png");
+      const req = createRequest("/api/tiles/v2/radar/4/512/2/3/1/2/1_1.png");
       const res = await worker.fetch(req, global.env, global.ctx);
 
       expect(res.status).toBe(502);

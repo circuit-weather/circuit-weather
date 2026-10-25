@@ -244,7 +244,7 @@ export class WeatherClient {
         // 3. Round to nearest integer to handle any slight drifts (though usually exact)
         const roundedDiff = Math.round(diffHours);
 
-        if (roundedDiff === 0) return i18n.t('radar.sessionStart');
+        if (roundedDiff === 0) return i18n.t('forecast.start');
         if (roundedDiff < 0) return `${roundedDiff}${i18n.t('countdown.hourShort')}`;
         return `+${roundedDiff}${i18n.t('countdown.hourShort')}`;
     }

@@ -66,7 +66,7 @@ describe('Worker Logic - Tile Errors', () => {
       }
     }));
 
-    const req = createRequest('/api/tiles/v2/radar/1/2/3/512/1/1_1.png');
+    const req = createRequest('/api/tiles/v2/radar/1/512/2/3/1/2/1_1.png');
     const res = await worker.fetch(req, global.env, global.ctx);
 
     expect(res.status).toBe(429);
@@ -83,7 +83,7 @@ describe('Worker Logic - Tile Errors', () => {
       headers: { 'Content-Type': 'text/html' }
     }));
 
-    const req = createRequest('/api/tiles/v2/radar/1/2/3/512/1/1_1.png');
+    const req = createRequest('/api/tiles/v2/radar/1/512/2/3/1/2/1_1.png');
     const res = await worker.fetch(req, global.env, global.ctx);
 
     expect(res.status).toBe(500);
@@ -106,7 +106,7 @@ describe('Worker Logic - Tile Errors', () => {
       }
     }));
 
-    const req = createRequest('/api/tiles/v2/radar/1/2/3/512/1/1_1.png', {
+    const req = createRequest('/api/tiles/v2/radar/1/512/2/3/1/2/1_1.png', {
       headers: { Origin: 'http://localhost:8787' }
     });
     const res = await worker.fetch(req, global.env, global.ctx);
@@ -125,7 +125,7 @@ describe('Worker Logic - Tile Errors', () => {
       }
     }));
 
-    const req = createRequest('/api/tiles/v2/radar/1/2/3/512/1/1_1.png', {
+    const req = createRequest('/api/tiles/v2/radar/1/512/2/3/1/2/1_1.png', {
       headers: { Origin: 'https://evil.com' }
     });
     const res = await worker.fetch(req, global.env, global.ctx);
@@ -140,7 +140,7 @@ describe('Worker Logic - Tile Errors', () => {
       headers: { 'Content-Type': 'text/html' }
     }));
 
-    const req = createRequest('/api/tiles/v2/radar/1/2/3/512/1/1_1.png', {
+    const req = createRequest('/api/tiles/v2/radar/1/512/2/3/1/2/1_1.png', {
       headers: { Origin: 'https://evil.com' }
     });
     const res = await worker.fetch(req, global.env, global.ctx);
@@ -153,7 +153,7 @@ describe('Worker Logic - Tile Errors', () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     mockFetch.mockRejectedValueOnce(new Error('Network error'));
 
-    const req = createRequest('/api/tiles/v2/radar/1/2/3/512/1/1_1.png');
+    const req = createRequest('/api/tiles/v2/radar/1/512/2/3/1/2/1_1.png');
     const res = await worker.fetch(req, global.env, global.ctx);
 
     expect(res.status).toBe(502);
@@ -170,7 +170,7 @@ describe('Worker Logic - Tile Errors', () => {
       headers: { 'Content-Type': 'text/html' }
     }));
 
-    const req = createRequest('/api/tiles/v2/radar/1/2/3/512/1/1_1.png');
+    const req = createRequest('/api/tiles/v2/radar/1/512/2/3/1/2/1_1.png');
     const res = await worker.fetch(req, global.env, global.ctx);
 
     expect(res.status).toBe(502);
@@ -187,7 +187,7 @@ describe('Worker Logic - Tile Errors', () => {
       headers: { 'Content-Type': 'text/html' }
     }));
 
-    const req = createRequest('/api/tiles/v2/radar/1/2/3/512/1/1_1.png');
+    const req = createRequest('/api/tiles/v2/radar/1/512/2/3/1/2/1_1.png');
     const res = await worker.fetch(req, global.env, global.ctx);
 
     expect(res.status).toBe(404);
@@ -201,7 +201,7 @@ describe('Worker Logic - Tile Errors', () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     mockFetch.mockRejectedValueOnce(new Error('Network error in production'));
 
-    const req = createRequest('/api/tiles/v2/radar/1/2/3/512/1/1_1.png');
+    const req = createRequest('/api/tiles/v2/radar/1/512/2/3/1/2/1_1.png');
     const prodEnv = { ENVIRONMENT: 'production' };
     const res = await worker.fetch(req, prodEnv, global.ctx);
 
@@ -216,7 +216,7 @@ describe('Worker Logic - Tile Errors', () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     mockFetch.mockRejectedValueOnce(new DOMException('The operation was aborted', 'TimeoutError'));
 
-    const req = createRequest('/api/tiles/v2/radar/1/2/3/512/1/1_1.png');
+    const req = createRequest('/api/tiles/v2/radar/1/512/2/3/1/2/1_1.png');
     const res = await worker.fetch(req, global.env, global.ctx);
 
     expect(res.status).toBe(502);
@@ -231,7 +231,7 @@ describe('Worker Logic - Tile Errors', () => {
     const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
     mockFetch.mockRejectedValueOnce(new Error('Connection reset'));
 
-    const req = createRequest('/api/tiles/v2/radar/1/2/3/512/1/1_1.png', {
+    const req = createRequest('/api/tiles/v2/radar/1/512/2/3/1/2/1_1.png', {
       headers: { Origin: 'https://circuit-weather.racing' }
     });
     const res = await worker.fetch(req, global.env, global.ctx);
@@ -255,7 +255,7 @@ describe('Worker Logic - Tile Errors', () => {
       }
     });
 
-    const req = createRequest('/api/tiles/v2/radar/1/2/3/512/1/1_1.png');
+    const req = createRequest('/api/tiles/v2/radar/1/512/2/3/1/2/1_1.png');
     const res = await worker.fetch(req, global.env, global.ctx);
 
     expect(res.status).toBe(502);

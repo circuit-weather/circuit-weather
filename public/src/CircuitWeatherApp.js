@@ -5,6 +5,7 @@ import { TrackLayer } from './map/TrackLayer.js';
 import { WeatherRadar } from './map/WeatherRadar.js';
 import { RangeCircles } from './map/RangeCircles.js';
 import { WindOverlay } from './map/WindOverlay.js';
+import { WeatherAlerts } from './map/WeatherAlerts.js';
 import { MapWeatherWidget } from './map/MapWeatherWidget.js';
 import { RecentreControl } from './map/RecentreControl.js';
 import { CountdownTimer } from './ui/CountdownTimer.js';
@@ -12,6 +13,7 @@ import { Router } from './routing/Router.js';
 import { MapManager } from './map/MapManager.js';
 import { ThemeManager } from './ui/ThemeManager.js';
 import { SidebarManager } from './ui/SidebarManager.js';
+import { LayerSettings } from './ui/LayerSettings.js';
 import { SeoManager } from './ui/SeoManager.js';
 import { ForecastRenderer } from './ui/ForecastRenderer.js';
 import { getSessionStatus, getRoundStatus, formatStatusLabel } from './utils/status.js';
@@ -39,6 +41,8 @@ export class CircuitWeatherApp {
         this.trackLayer = null;
         this.rangeCircles = null;
         this.windOverlay = null;
+        this.weatherAlerts = null;
+        this.layerSettings = null;
         this.countdown = new CountdownTimer();
         this.recentreControl = null;
         this.currentCircuitCenter = null;
@@ -98,7 +102,14 @@ export class CircuitWeatherApp {
 
         this.rangeCircles = new RangeCircles(map);
         this.trackLayer = new TrackLayer(map);
-        this.radar = new WeatherRadar(map);
+        this.layerSettings = new LayerSettings((key, settings) => this.handleLayerSettingChange(key, settings));
+        const layers = this.layerSettings.get();
+        this.radar = new WeatherRadar(map, {
+            onMetadata: (metadata) => this.layerSettings.applyMetadata(metadata),
+        });
+        this.radar.setTileOptions(this.layerSettings.getTileOptions());
+        this.radar.setSatelliteEnabled(layers.satellite);
+        this.weatherAlerts = new WeatherAlerts(map, { enabled: layers.alerts });
         this.windOverlay = new WindOverlay(map, {
             onToggle: (enabled) => { if (enabled) this.updateWindField(); },
             onViewChange: () => { this.updateWindField(); },
@@ -415,6 +426,19 @@ export class CircuitWeatherApp {
         if (this.windOverlay) {
             this.windOverlay.updateTheme();
         }
+        if (this.weatherAlerts) {
+            this.weatherAlerts.updateTheme();
+        }
+    }
+
+    handleLayerSettingChange(key, settings) {
+        if (key === 'alerts') {
+            if (this.weatherAlerts) this.weatherAlerts.setEnabled(settings.alerts);
+        } else if (key === 'satellite') {
+            if (this.radar) this.radar.setSatelliteEnabled(settings.satellite);
+        } else if (this.radar) {
+            this.radar.setTileOptions(this.layerSettings.getTileOptions());
+        }
     }
 
     bindEvents() {
@@ -443,6 +467,7 @@ export class CircuitWeatherApp {
                     this.countdown.show(false);
                     this.trackLayer.clear();
                     this.rangeCircles.clear();
+                    if (this.weatherAlerts) this.weatherAlerts.setLocation(null, null);
                     
                     // Clear the forecast update since no session is active anymore
                     this.stopSessionForecastInterval();
@@ -538,6 +563,9 @@ export class CircuitWeatherApp {
         this.rangeCircles.draw([lat, lng]);
         if (this.recentreControl) {
             this.recentreControl.setCircuit([lat, lng]);
+        }
+        if (this.weatherAlerts) {
+            this.weatherAlerts.setLocation(lat, lng);
         }
     }
 
@@ -722,10 +750,10 @@ export class CircuitWeatherApp {
             const sessionTime = new Date(`${session.date}T${session.time}`);
 
             // Start countdown
-            this.countdown.start(sessionTime, `${this.selectedRace.name} - ${session.name}`);
+            this.countdown.start(sessionTime, `${session.name} · ${this.selectedRace.name}`);
 
             // Set session time for radar relative display
-            this.radar.setSessionTime(sessionTime);
+            this.radar.setSessionTime(sessionTime, session.name);
 
             // Load radar and session forecast in parallel
             // Note: We don't force a "Live" weather update here, as that's handled by selectRound

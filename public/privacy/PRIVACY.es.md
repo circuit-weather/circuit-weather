@@ -1,6 +1,6 @@
 # Política de privacidad
 
-**Última actualización:** Enero 2026
+**Última actualización:** Octubre 2026
 
 **Aviso:** Esta traducción se ha generado automáticamente. En caso de discrepancia, prevalece la versión en inglés.
 
@@ -24,7 +24,7 @@ La aplicación depende de servicios de terceros e infraestructura que pueden pro
 
 El sitio está alojado en **Cloudflare Workers**.
 
-- **Proxy de privacidad:** Las peticiones de calendario F1, trazados, recursos Leaflet, recursos Mapbox GL JS y tiles de RainViewer pasan por nuestro Worker.
+- **Proxy de privacidad:** Las peticiones de calendario F1, trazados, recursos Leaflet, recursos Mapbox GL JS y tiles de radar y avisos meteorológicos (LibreWXR, con RainViewer como respaldo) pasan por nuestro Worker.
 - **Caché avanzada:** Las respuestas API se cachean en el borde para reducir tráfico y carga en servicios externos.
 - **Datos procesados:** Cloudflare procesa IP y metadatos de petición para entregar y proteger el sitio.
 - **Política:** [cloudflare.com/privacypolicy](https://www.cloudflare.com/privacypolicy/)
@@ -49,9 +49,15 @@ Tu navegador puede conectarse directamente a servicios de terceros para mapas, t
 - **Datos enviados:** IP y coordenadas del circuito seleccionado.
 - **Política:** [open-meteo.com/en/features#terms](https://open-meteo.com/en/features#terms)
 
+**LibreWXR**
+
+- **Propósito:** Fuente principal del radar de precipitación, el pronóstico de lluvia a 1 hora, las nubes por satélite, los rayos, las células tormentosas y los avisos meteorológicos oficiales.
+- **Datos enviados:** Ninguno directamente. Las peticiones pasan por nuestro Worker, que solo envía a LibreWXR las coordenadas redondeadas del circuito seleccionado (para los avisos).
+- **Política:** [librewxr.net](https://librewxr.net/)
+
 **RainViewer**
 
-- **Propósito:** Capas de radar.
+- **Propósito:** Capas de radar de respaldo, solo cuando LibreWXR no está disponible.
 - **Datos enviados:** Ninguno directamente. Los datos de radar se sirven por proxy.
 - **Política:** [rainviewer.com/privacy](https://www.rainviewer.com/privacy.html)
 
@@ -86,6 +92,7 @@ Tu navegador puede conectarse directamente a servicios de terceros para mapas, t
 
 - **Jolpica F1:** Calendario F1 (caché de borde de 24 horas; se conserva una última copia válida hasta 30 días como respaldo si la fuente no está disponible).
 - **GitHub (bacinger/f1-circuits):** Archivos GeoJSON de circuitos (caché de borde de 24 horas).
+- **LibreWXR:** Metadatos de radar (caché de 1 minuto), tiles de radar (caché de borde de 2 horas; tiles de pronóstico 5 minutos), tiles de satélite (caché de borde de 12 horas) y avisos meteorológicos (caché de 5 minutos). Se guardan copias de respaldo de corta duración de los metadatos (30 minutos) y los avisos (1 hora) por si LibreWXR no está disponible.
 - **RainViewer:** Metadatos de radar (caché de 1 minuto) y tiles (caché de borde de 2 horas).
 - **Leaflet (vía Unpkg):** Recursos de librería de mapas (con proxy por seguridad, caché inmutable de 1 año).
 - **Mapbox (vía Mapbox CDN):** Recursos de librería de mapas (con proxy por seguridad, caché inmutable de 1 año).
@@ -98,6 +105,9 @@ El navegador guarda preferencias locales:
 - **unit:** `metric` o `imperial`
 - **language:** su idioma seleccionado (ej. `es`, `en-US`)
 - **windOverlay:** `true` o `false` (recuerda si la capa de animación de viento está habilitada)
+- **radarColour:** el número del esquema de colores del radar seleccionado
+- **radarArrows, radarCells, radarLightning, radarSatellite:** `true` o `false` (recuerda qué capas adicionales del radar están habilitadas)
+- **weatherAlerts:** `true` o `false` (recuerda si se muestran los avisos meteorológicos)
 - **f1_schedule_cache:** guarda en caché los datos del calendario de F1 (caché de 7 días)
 
 Estos datos permanecen en tu dispositivo y no se envían a nuestros servidores.

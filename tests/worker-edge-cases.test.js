@@ -152,7 +152,7 @@ describe('Worker Edge Cases', () => {
         it('handles preflight OPTIONS across various API routes', async () => {
             const routes = [
                 '/api/f1/current',
-                '/api/tiles/v2/radar/1.png',
+                '/api/tiles/v2/radar/1/512/2/3/1/2/1_1.png',
                 '/api/assets/leaflet.js',
                 '/api/track/bahrain',
             ];

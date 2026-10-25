@@ -1,6 +1,6 @@
 # Politique de confidentialité
 
-**Dernière mise à jour :** Janvier 2026
+**Dernière mise à jour :** Octobre 2026
 
 **Avis :** Cette traduction a été générée automatiquement. En cas de divergence, la version anglaise fait foi.
 
@@ -24,7 +24,7 @@ L'application s'appuie toutefois sur des services tiers qui peuvent traiter des 
 
 Le site est hébergé sur **Cloudflare Workers**.
 
-- **Proxy de confidentialité :** Les requêtes F1, tracés, assets Leaflet, assets Mapbox GL JS et tuiles RainViewer passent par notre Worker.
+- **Proxy de confidentialité :** Les requêtes F1, tracés, assets Leaflet, assets Mapbox GL JS et tuiles radar et alertes météo (LibreWXR, avec RainViewer en secours) passent par notre Worker.
 - **Cache avancé :** Les réponses API sont mises en cache en edge.
 - **Données traitées :** Cloudflare traite IP et métadonnées de requête pour fournir et sécuriser le site.
 - **Politique :** [cloudflare.com/privacypolicy](https://www.cloudflare.com/privacypolicy/)
@@ -49,9 +49,15 @@ Votre navigateur peut se connecter directement à certains services tiers.
 - **Données envoyées :** IP et coordonnées du circuit sélectionné.
 - **Politique :** [open-meteo.com/en/features#terms](https://open-meteo.com/en/features#terms)
 
+**LibreWXR**
+
+- **But :** Source principale du radar de précipitations, de la prévision de pluie à 1 heure, des nuages satellite, de la foudre, des cellules orageuses et des alertes météo officielles.
+- **Données envoyées :** Aucune en direct. Les requêtes passent par notre Worker, qui n'envoie à LibreWXR que les coordonnées arrondies du circuit sélectionné (pour les alertes).
+- **Politique :** [librewxr.net](https://librewxr.net/)
+
 **RainViewer**
 
-- **But :** Couches radar.
+- **But :** Couches radar de secours, utilisées uniquement si LibreWXR est indisponible.
 - **Données envoyées :** Aucune en direct, car le radar est proxyfié.
 - **Politique :** [rainviewer.com/privacy](https://www.rainviewer.com/privacy.html)
 
@@ -86,6 +92,7 @@ Votre navigateur peut se connecter directement à certains services tiers.
 
 - **Jolpica F1 :** (cache edge de 24 heures ; une dernière copie valide est conservée jusqu’à 30 jours comme solution de repli si la source est indisponible).
 - **GitHub (bacinger/f1-circuits) :** (cache edge de 24 heures).
+- **LibreWXR :** Métadonnées radar (cache d'une minute), tuiles radar (cache edge de 2 heures ; tuiles de prévision 5 minutes), tuiles satellite (cache edge de 12 heures) et alertes météo (cache de 5 minutes). Des copies de secours de courte durée des métadonnées (30 minutes) et des alertes (1 heure) sont conservées au cas où LibreWXR serait indisponible.
 - **RainViewer :** Métadonnées radar (cache d'une minute) et tuiles (cache edge de 2 heures).
 - **Leaflet (via Unpkg) :** Assets de bibliothèque de carte (proxyfiés par sécurité, cache immuable d'un an).
 - **Mapbox (via Mapbox CDN) :** Assets de bibliothèque de carte (proxyfiés par sécurité, cache immuable d'un an).
@@ -98,6 +105,9 @@ Les préférences sont stockées localement dans le navigateur :
 - **unit:** `metric` ou `imperial`
 - **language:** votre langue sélectionnée (ex: `fr`, `en-US`)
 - **windOverlay:** `true` ou `false` (mémorise si le calque d'animation du vent est activé)
+- **radarColour:** le numéro de la palette de couleurs radar choisie
+- **radarArrows, radarCells, radarLightning, radarSatellite:** `true` ou `false` (mémorise les couches radar supplémentaires activées)
+- **weatherAlerts:** `true` ou `false` (mémorise si les alertes météo sont affichées)
 - **f1_schedule_cache:** met en cache les données du calendrier de la F1 (cache de 7 jours)
 
 Ces données restent sur votre appareil et ne sont pas envoyées à nos serveurs.

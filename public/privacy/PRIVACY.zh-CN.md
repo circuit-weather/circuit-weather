@@ -1,6 +1,6 @@
 # 隐私政策
 
-**最后更新:** 2026年1月
+**最后更新:** 2026年10月
 
 **注意:** 本译文由机器翻译生成。如有歧义，以英文版本为准。
 
@@ -24,7 +24,7 @@ Circuit Weather 是一个开源网站应用，用于显示 Formula 1 赛道的�
 
 网站部署在 **Cloudflare Workers**。
 
-- **隐私代理:** F1 赛历、赛道布局、Leaflet 资源、Mapbox GL JS 资源和 RainViewer 雷达瓦片通过 Worker 代理。
+- **隐私代理:** F1 赛历、赛道布局、Leaflet 资源、Mapbox GL JS 资源和 雷达瓦片和天气预警 (LibreWXR，RainViewer 作为备用)通过 Worker 代理。
 - **边缘缓存:** API 响应在边缘节点缓存，以降低带宽和上游负载。
 - **处理数据:** Cloudflare 会处理 IP 与请求元数据以完成分发和安全防护。
 - **隐私政策:** [cloudflare.com/privacypolicy](https://www.cloudflare.com/privacypolicy/)
@@ -49,9 +49,15 @@ Circuit Weather 是一个开源网站应用，用于显示 Formula 1 赛道的�
 - **发送数据:** IP 地址与所选赛道坐标。
 - **隐私政策:** [open-meteo.com/en/features#terms](https://open-meteo.com/en/features#terms)
 
+**LibreWXR**
+
+- **用途:** 降水雷达、1 小时降雨预报、卫星云图、闪电、雷暴单体和官方天气预警的主要来源。
+- **发送数据:** 不直接发送。请求通过我们的 Worker 代理，仅向 LibreWXR 发送所选赛道的近似坐标 (用于天气预警)。
+- **隐私政策:** [librewxr.net](https://librewxr.net/)
+
 **RainViewer**
 
-- **用途:** 提供雷达图层。
+- **用途:** 备用雷达图层，仅在 LibreWXR 不可用时使用。
 - **发送数据:** 不直接发送（通过 Worker 代理）。
 - **隐私政策:** [rainviewer.com/privacy](https://www.rainviewer.com/privacy.html)
 
@@ -86,6 +92,7 @@ Circuit Weather 是一个开源网站应用，用于显示 Formula 1 赛道的�
 
 - **Jolpica F1:** (24 小时边缘缓存；如数据源不可用，最近一次有效的副本将作为备用保留最多 30 天).
 - **GitHub (bacinger/f1-circuits):** (24 小时边缘缓存).
+- **LibreWXR:** 雷达元数据 (1 分钟缓存)、雷达瓦片 (2 小时边缘缓存；预报瓦片 5 分钟)、卫星瓦片 (12 小时边缘缓存) 和天气预警 (5 分钟缓存). 为防 LibreWXR 不可用，会短期保留元数据 (30 分钟) 和预警 (1 小时) 的备份副本。
 - **RainViewer:** 雷达元数据 (1 分钟缓存) 和瓦片 (2 小时边缘缓存).
 - **Leaflet (通过 Unpkg):** 地图交互库资产 (为了安全而进行代理, 1 年不可变缓存)。
 - **Mapbox (通过 Mapbox CDN):** 地图交互库资产 (为了安全而进行代理, 1 年不可变缓存)。
@@ -98,6 +105,9 @@ Circuit Weather 是一个开源网站应用，用于显示 Formula 1 赛道的�
 - **unit:** `metric` 或 `imperial`
 - **language:** 您选择的语言 (如 `zh-CN`, `en-US`)
 - **windOverlay:** `true` 或 `false` (记住风场动画图层是否启用)
+- **radarColour:** 所选雷达配色方案的编号
+- **radarArrows, radarCells, radarLightning, radarSatellite:** `true` 或 `false` (记住启用了哪些额外的雷达图层)
+- **weatherAlerts:** `true` 或 `false` (记住是否显示天气预警)
 - **f1_schedule_cache:** 缓存 F1 赛程数据 (7天缓存)
 
 这些数据仅保存在你的设备上，不会发送到我们的服务器。

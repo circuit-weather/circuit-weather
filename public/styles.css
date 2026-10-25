@@ -11,7 +11,9 @@
     --color-text: #0f172a;
     --color-text-secondary: #64748b;
     --color-border: #e2e8f0;
-    --color-forecast-track: #dbeafe;
+    --color-forecast-track: #93c5fd;
+    --color-forecast-text: #1d4ed8;
+    --color-live-text: #c40500;
     /* Light blue for forecast */
     --color-primary: #e10600;
     --color-primary-hover: #b30500;
@@ -63,7 +65,9 @@
     --color-text: #f1f5f9;
     --color-text-secondary: #94a3b8;
     --color-border: #334155;
-    --color-forecast-track: #1e40af;
+    --color-forecast-track: #2563eb;
+    --color-forecast-text: #93c5fd;
+    --color-live-text: #ff6b5b;
     /* Dark blue for forecast */
     --sidebar-bg: rgba(30, 41, 59, 0.92);
     --color-range-circle: #ff6b5b;
@@ -354,6 +358,137 @@ body {
     outline: 2px solid var(--color-primary);
     outline-offset: 2px;
 }
+
+.pref-switch:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Radar layers section */
+.control-section--layers {
+    margin-top: var(--spacing-md);
+    padding-top: var(--spacing-md);
+    border-top: 1px solid var(--color-border);
+}
+
+.control-section-heading {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-text);
+    margin: 0;
+}
+
+.control-hint {
+    margin: 0;
+    font-size: 0.7rem;
+    color: var(--color-text-secondary);
+}
+
+/* Weather warnings */
+.alerts-section {
+    margin-top: var(--spacing-md);
+    padding: var(--spacing-md);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-left: 3px solid #d7263d;
+    border-radius: var(--radius-lg);
+}
+
+.alerts-section[hidden] {
+    display: none;
+}
+
+.alerts-section h2 {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-text-secondary);
+    margin: 0 0 var(--spacing-sm);
+}
+
+.alerts-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    max-height: 18rem;
+    overflow-y: auto;
+}
+
+.alert-item + .alert-item {
+    padding-top: var(--spacing-sm);
+    border-top: 1px solid var(--color-border);
+}
+
+.alert-title {
+    margin: 4px 0 2px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.alert-popup .alert-title {
+    display: block;
+}
+
+/* Map popups keep the library's white background in both themes */
+.alert-popup .alert-title,
+.alert-popup .alert-regions,
+.alert-popup .alert-until {
+    color: #1e293b;
+}
+
+.alert-regions,
+.alert-until,
+.alert-description {
+    margin: 2px 0;
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    overflow-wrap: anywhere;
+}
+
+.alert-description {
+    white-space: pre-line;
+}
+
+.alert-item summary,
+.alert-link {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.alert-item summary:hover,
+.alert-link:hover {
+    color: var(--color-primary);
+}
+
+.alert-popup .alert-link {
+    color: #475569;
+}
+
+.alert-severity {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 999px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #fff;
+}
+
+/* Colours match SEVERITY_COLOURS in public/src/map/WeatherAlerts.js */
+.alert-severity--extreme { background: #9b1c9b; }
+.alert-severity--severe { background: #d7263d; }
+.alert-severity--moderate { background: #f28c28; color: #1a1a1a; }
+.alert-severity--minor { background: #e8c547; color: #1a1a1a; }
+.alert-severity--unknown { background: #7d8597; }
 
 /* Animated wind overlay canvas (sits above the basemap/radar, below controls) */
 .wind-flow-canvas {
@@ -1025,12 +1160,56 @@ body {
     font-variant-numeric: tabular-nums;
 }
 
+/* The frame being shown is the main reading; the range ends are secondary */
+.radar-time {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--color-text);
+}
+
 .radar-relative {
-    font-size: 0.6rem;
+    font-size: 0.7rem;
     text-align: center;
     color: var(--color-text-secondary);
     margin-top: 1px;
     width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.radar-relative[data-state="live"] {
+    color: var(--color-live-text);
+    font-weight: 600;
+}
+
+.radar-relative[data-state="forecast"] {
+    color: var(--color-forecast-text);
+    font-weight: 600;
+}
+
+.radar-slider-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    height: 14px;
+}
+
+/* Marks "now" (the latest observed frame); forecast frames sit to its right.
+   WeatherRadar.updateSlider() sets its left offset. */
+.radar-now-marker {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    margin-left: -1px;
+    background: var(--color-text-secondary);
+    border-radius: 1px;
+    pointer-events: none;
+}
+
+.radar-now-marker[hidden] {
+    display: none;
 }
 
 /* Radar Speed Button */

@@ -150,7 +150,7 @@ describe("Worker F1 API stale fallback", () => {
       const body = await res.json();
 
       expect(body.upstreams.jolpica).toBe(429);
-      expect(mockFetch).toHaveBeenCalledTimes(2);
+      expect(mockFetch).toHaveBeenCalledTimes(3);
       expect(mockFetch.mock.calls.map(([url]) => url)).not.toContain(SCHEDULE_URL);
     });
 

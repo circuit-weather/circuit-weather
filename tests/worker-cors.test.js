@@ -116,7 +116,7 @@ const scenarios = [
   },
   {
     name: "tile proxy (/api/tiles/*)",
-    path: "/api/tiles/v2/radar/1.png",
+    path: "/api/tiles/v2/radar/1/512/2/3/1/2/1_1.png",
     primeHit: async () => {
       mockFetch.mockResolvedValue(
         new Response("image-data", {
@@ -124,7 +124,7 @@ const scenarios = [
           headers: { "Content-Type": "image/png" },
         }),
       );
-      await worker.fetch(createRequest("/api/tiles/v2/radar/1.png"), global.env, global.ctx);
+      await worker.fetch(createRequest("/api/tiles/v2/radar/1/512/2/3/1/2/1_1.png"), global.env, global.ctx);
     },
   },
   {

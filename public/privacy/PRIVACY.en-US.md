@@ -1,6 +1,6 @@
 # Privacy Policy
 
-**Last updated:** January 2026
+**Last updated:** October 2026
 
 ## Overview
 
@@ -22,7 +22,7 @@ However, the application relies on third-party services and infrastructure which
 
 This website is hosted on **Cloudflare Workers** (using Static Assets), which serves both the website and powers its API.
 
-- **Privacy proxy:** Requests for F1 schedules, track layouts, Leaflet assets, Mapbox GL JS assets, and all RainViewer radar tiles are proxied through our Cloudflare Worker.
+- **Privacy proxy:** Requests for F1 schedules, track layouts, Leaflet assets, Mapbox GL JS assets, and all radar tiles and weather warnings (LibreWXR, with RainViewer as a backup) are proxied through our Cloudflare Worker.
 - **Advanced caching:** API responses are cached at the edge to minimize bandwidth usage and upstream load.
 - **Data processed:** Cloudflare processes IP address and request metadata to deliver and protect the site.
 - **Privacy policy:** [cloudflare.com/privacypolicy](https://www.cloudflare.com/privacypolicy/)
@@ -47,9 +47,15 @@ Your browser may connect directly to third-party services for maps, tiles, and w
 - **Data sent:** IP address (standard web request) and selected circuit coordinates.
 - **Privacy policy:** [open-meteo.com/en/features#terms](https://open-meteo.com/en/features#terms)
 
+**LibreWXR**
+
+- **Purpose:** Primary source for precipitation radar, the 1-hour rain forecast, satellite clouds, lightning, storm cells and official weather warnings.
+- **Data sent:** None directly. Requests are proxied through our Worker, which sends LibreWXR only the rounded coordinates of the selected circuit (for weather warnings).
+- **Privacy policy:** [librewxr.net](https://librewxr.net/)
+
 **RainViewer**
 
-- **Purpose:** Radar layers.
+- **Purpose:** Backup radar layers, used only when LibreWXR is unavailable.
 - **Data sent:** None directly. Radar data is proxied through our Worker.
 - **Privacy policy:** [rainviewer.com/privacy](https://www.rainviewer.com/privacy.html)
 
@@ -84,6 +90,7 @@ Your browser may connect directly to third-party services for maps, tiles, and w
 
 - **Jolpica F1:** F1 schedule data (24-hour edge cache; a last-known-good copy is kept for up to 30 days as a fallback if the source is unavailable).
 - **GitHub (bacinger/f1-circuits):** GeoJSON track files (24-hour edge cache).
+- **LibreWXR:** Radar metadata (1-minute cache), radar tiles (2-hour edge cache; forecast tiles 5 minutes), satellite tiles (12-hour edge cache) and weather warnings (5-minute cache). Short-lived backup copies of the metadata (30 minutes) and warnings (1 hour) are kept in case LibreWXR is unavailable.
 - **RainViewer:** Radar metadata (1-minute cache) and tiles (2-hour edge cache).
 - **Leaflet (via Unpkg):** Map interaction library assets (proxied for security, 1-year immutable cache).
 - **Mapbox (via Mapbox CDN):** Map interaction library assets (proxied for security, 1-year immutable cache).
@@ -96,6 +103,9 @@ Preference settings are stored locally in your browser:
 - **unit:** `metric` or `imperial`
 - **language:** your selected locale (e.g., `en-US`, `fr`)
 - **windOverlay:** `true` or `false` (remembers if the wind animation layer is enabled)
+- **radarColour:** the selected radar colour scheme number
+- **radarArrows, radarCells, radarLightning, radarSatellite:** `true` or `false` (remembers which extra radar layers are enabled)
+- **weatherAlerts:** `true` or `false` (remembers if weather warnings are shown)
 - **f1_schedule_cache:** caches the F1 schedule data (7-day cache)
 
 This data remains on your device and is not sent to our servers.

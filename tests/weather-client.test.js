@@ -154,7 +154,7 @@ describe('WeatherClient', () => {
         const sessionHourTs = Math.floor(new Date('2023-03-05T14:00:00Z').getTime() / 1000);
 
         it('returns "Session start" for the session start hour', () => {
-            expect(client.getRelativeTime(sessionHourTs, sessionTime)).toBe('Session start');
+            expect(client.getRelativeTime(sessionHourTs, sessionTime)).toBe('Start');
         });
 
         it('returns negative label for hours before session', () => {

@@ -5,15 +5,32 @@ import { RadarPlayback } from './RadarPlayback.js';
 import { RadarFrames } from './RadarFrames.js';
 import { RadarPolling } from './RadarPolling.js';
 import { RadarReconcile } from './RadarReconcile.js';
+import { SatelliteLayer } from './SatelliteLayer.js';
+
+// How long before a session the playback label mentions it ("35 min before Race")
+const SESSION_CONTEXT_BEFORE_MIN = 6 * 60;
 
 export class WeatherRadar {
-    constructor(map) {
+    /**
+     * @param {Object} map - Mapbox GL or Leaflet map
+     * @param {Object} [options]
+     * @param {Function} [options.onMetadata] - Called with each radar metadata
+     *   result (provider, colour schemes, ...) so the UI can match its capabilities
+     */
+    constructor(map, options = {}) {
         this.map = map;
+        this.onMetadata = options.onMetadata || (() => {});
+        this.provider = null;
+        this.maxZoom = CONFIG.RADAR_FALLBACK_MAX_ZOOM;
+        // Colour scheme + storm overlays requested on every tile (LibreWXR only)
+        this.tileOptions = { colour: CONFIG.RADAR_DEFAULT_COLOUR, arrows: false, cells: false, lightning: false };
+        this.satellite = new SatelliteLayer(map);
         this.frames = [];
         this.layers = [];
         this.visibleLayerIndex = -1;
         this.currentFrame = 0;
         this.sessionTime = null;
+        this.sessionName = null;
         this.pastFrameCount = 0;
         this.pendingFrames = null;
 
@@ -46,7 +63,7 @@ export class WeatherRadar {
             applyFrameUpdate: (frames) => this.applyFrameUpdate(frames),
             setPendingFrames: (frames) => { this.pendingFrames = frames; },
             onPastCountChange: (count) => { this.pastFrameCount = count; },
-            fetchFrames: () => RadarFrames.getFramesFromApi()
+            fetchFrames: () => this.fetchMetadata()
         });
     }
 
@@ -73,6 +90,7 @@ export class WeatherRadar {
             slider: document.getElementById('radarSlider'),
             time: document.getElementById('radarTime'),
             relative: document.getElementById('radarRelative'),
+            nowMarker: document.getElementById('radarNowMarker'),
             timeStart: document.getElementById('radarTimeStart'),
             timeEnd: document.getElementById('radarTimeEnd'),
             controls: document.getElementById('radarControls')
@@ -129,6 +147,7 @@ export class WeatherRadar {
         document.removeEventListener('i18n:change', this.handleLanguageChange);
         this.errorToast.destroy();
         this.playback.destroy();
+        this.satellite.destroy();
         this.polling.stopPolling();
         if (this.relativeTimeInterval) {
             clearInterval(this.relativeTimeInterval);
@@ -138,15 +157,76 @@ export class WeatherRadar {
         this.clearLayers();
     }
 
-    setSessionTime(sessionTime) {
+    /**
+     * @param {Date|null} sessionTime
+     * @param {string|null} [sessionName] - e.g. "Race", used in the playback label
+     */
+    setSessionTime(sessionTime, sessionName = null) {
         this.sessionTime = sessionTime;
+        this.sessionName = sessionName;
+    }
+
+    /**
+     * Fetches radar metadata and applies the provider-level parts (zoom limit,
+     * satellite frame). Frame updates are left to the caller.
+     */
+    async fetchMetadata() {
+        const result = await RadarFrames.getFramesFromApi(this.getTileOptions());
+        if (result.frames.length > 0) {
+            this.provider = result.provider;
+            this.maxZoom = Math.min(result.maxZoom, CONFIG.RADAR_MAX_TILE_ZOOM);
+            this.satellite.setFrame(result.satellite);
+            this.onMetadata(result);
+        }
+        return result;
     }
 
     async fetchAndFilter() {
-        const result = await RadarFrames.getFramesFromApi();
+        const result = await this.fetchMetadata();
         this.frames = result.frames;
         this.pastFrameCount = result.pastCount;
         return this.frames;
+    }
+
+    isDarkMap() {
+        return document.documentElement?.getAttribute('data-theme') === 'dark';
+    }
+
+    getTileOptions() {
+        return { ...this.tileOptions, darkMap: this.isDarkMap() };
+    }
+
+    get attribution() {
+        return CONFIG.RADAR_ATTRIBUTION[this.provider] || CONFIG.RADAR_ATTRIBUTION.rainviewer;
+    }
+
+    /**
+     * Update the colour scheme / storm overlays. Rebuilds the frame layers when
+     * the tile URLs change, keeping the current playback position.
+     * @param {{ colour?: number, arrows?: boolean, cells?: boolean, lightning?: boolean }} options
+     */
+    setTileOptions(options) {
+        const next = { ...this.tileOptions, ...options };
+        const changed = Object.keys(next).some(key => next[key] !== this.tileOptions[key]);
+        this.tileOptions = next;
+        if (changed) this.rebuildFrameUrls();
+    }
+
+    setSatelliteEnabled(enabled) {
+        this.satellite.setEnabled(enabled);
+    }
+
+    rebuildFrameUrls() {
+        const options = this.getTileOptions();
+        const withUrl = frame => ({ ...frame, url: RadarFrames.buildTileUrl(frame, this.provider, options) });
+        if (this.pendingFrames) this.pendingFrames = this.pendingFrames.map(withUrl);
+        if (this.frames.length === 0) return;
+
+        const index = this.currentFrame;
+        this.frames = this.frames.map(withUrl);
+        this.createLayers();
+        this.currentFrame = Math.min(index, this.frames.length - 1);
+        this.showFrame(this.currentFrame);
     }
 
     async load() {
@@ -216,7 +296,10 @@ export class WeatherRadar {
         this.layers = new Array(this.frames.length).fill(null);
         this.visibleLayerIndex = -1;
 
-        this.currentFrame = this.frames.length - 1;
+        // Start on the latest observed frame rather than the end of the nowcast
+        this.currentFrame = this.pastFrameCount > 0
+            ? Math.min(this.pastFrameCount, this.frames.length) - 1
+            : this.frames.length - 1;
 
         // Force map to recalculate size
         if (this.map.invalidateSize) {
@@ -304,12 +387,13 @@ export class WeatherRadar {
                 type: 'raster',
                 tiles: [frame.url],
                 tileSize: 512,
-                // RainViewer free tier limit is tile zoom 7 (Jan 2026).
-                // Unlike Leaflet (which uses zoomOffset: -1 to subtract 1 from map zoom),
-                // Mapbox fills {z} directly with no offset. maxzoom: 7 ensures Mapbox
-                // never requests tiles beyond zoom 7, matching the Leaflet behaviour.
-                maxzoom: 7,
-                minzoom: 1
+                // Provider tile zoom limit: 12 for LibreWXR, 7 for the RainViewer
+                // fallback (free tier, Jan 2026). Unlike Leaflet (which uses
+                // zoomOffset: -1 to subtract 1 from map zoom), Mapbox fills {z}
+                // directly with no offset, so maxzoom is the limit itself.
+                maxzoom: this.maxZoom,
+                minzoom: 1,
+                attribution: this.attribution
             });
         }
         if (!map.getLayer(layerId)) {
@@ -339,9 +423,10 @@ export class WeatherRadar {
      * Layers are added to map only in showFrame() to control tile requests.
      *
      * Configuration notes:
-     * - maxNativeZoom: 7 - RainViewer free tier limit as of Jan 2026
-     *   Higher zoom levels will scale the zoom-7 tiles (pseudo-zoom)
-     * - tileSize: 256 - Standard tile size
+     * - maxNativeZoom: provider limit + 1 (zoomOffset: -1) - LibreWXR serves
+     *   tile zoom 12, the RainViewer fallback zoom 7. Higher map zoom levels
+     *   scale the last native tiles (pseudo-zoom)
+     * - tileSize: 512 with zoomOffset: -1 - a quarter of the requests of 256px tiles
      * - keepBuffer: 2 - Keeps 2 tiles outside viewport for smooth panning
      *
      * @param {Object} frame - Frame data with url, time, path
@@ -355,12 +440,12 @@ export class WeatherRadar {
             opacity: 0.01,
             zIndex: 100 + index,
 
-            // RainViewer free tier limit (Jan 2026) is tile zoom 7.
-            // With zoomOffset: -1, map zoom 8 requests tile zoom 7.
-            maxNativeZoom: 8,
+            // With zoomOffset: -1, map zoom N+1 requests tile zoom N (the provider limit).
+            maxNativeZoom: this.maxZoom + 1,
             minNativeZoom: 1,
 
             maxZoom: 18,
+            attribution: this.attribution,
             updateWhenIdle: true, // Bolt Optimization: Only load tiles when panning stops (reduces requests)
             updateWhenZooming: false,
             keepBuffer: 2, // Restored for smoother animation; Serial Loader handles the initial burst
@@ -559,9 +644,9 @@ export class WeatherRadar {
      * - Toggle opacity to show/hide frames (prevents flash from re-adding)
      * - Preload next frame at opacity 0 so tiles load before transition
      *
-     * RATE LIMITING (RainViewer free tier - as of Jan 2026):
-     * - maxNativeZoom: 7 prevents requests at invalid zoom levels
-     * - Smart polling syncs with RainViewer's 10-min update cycle
+     * RATE LIMITING:
+     * - maxNativeZoom/maxzoom (provider limit) prevents requests at invalid zoom levels
+     * - Smart polling syncs with the radar's 10-min update cycle
      * - Tiles cache in browser after first load, so zoom/pan after initial
      *   load hits cache rather than making new requests
      *
@@ -632,63 +717,54 @@ export class WeatherRadar {
     }
 
     /**
-     * Calculates session-relative time strings if within the valid window.
+     * Describes a frame relative to now: "Live", "20 min ago" or "Forecast +20 min".
+     * Forecast frames are measured from the latest observed frame, so the
+     * nowcast reads as minutes ahead of the live radar.
+     * @param {number} timestamp - Unix timestamp in seconds
      * @param {number} effectiveTimeMs - Effective frame time in milliseconds
-     * @returns {{ relativeText: string, accessibleText: string } | null}
+     * @returns {{ text: string, accessibleText: string, state: 'live'|'past'|'forecast' }}
      */
-    getSessionRelativeTimeInfo(effectiveTimeMs) {
-        if (this.sessionTime === null) return null;
+    getNowRelativeInfo(timestamp, effectiveTimeMs) {
+        const latestPast = this.frames[this.pastFrameCount - 1];
+        const isForecast = latestPast ? timestamp > latestPast.time : timestamp - (Date.now() / 1000) > 60;
 
-        const diff = (effectiveTimeMs - this.sessionTime.getTime()) / CONFIG.ONE_MINUTE_MS;
-        // Only show session-relative if the session is within 7 days (10080 minutes) of the frame's effective time
-        if (Math.abs(diff) > 7 * 24 * 60) {
-            return null;
+        if (isForecast) {
+            const minutesAhead = latestPast
+                ? Math.round((timestamp - latestPast.time) / 60)
+                : Math.round((timestamp * 1000 - Date.now()) / CONFIG.ONE_MINUTE_MS);
+            const text = i18n.t('radar.forecastIn', { duration: this.formatDuration(minutesAhead) });
+            return { text, accessibleText: text, state: 'forecast' };
         }
 
-        const absDiff = Math.abs(Math.round(diff));
-        const durationText = this.formatDuration(absDiff);
-
-        let relativeText = '';
-        if (Math.abs(diff) < 1) {
-            relativeText = i18n.t('radar.sessionStart');
-        } else if (diff < 0) {
-            relativeText = i18n.t('radar.beforeSession', { duration: durationText });
-        } else {
-            relativeText = i18n.t('radar.afterSession', { duration: durationText });
+        const minutesAgo = Math.round((Date.now() - effectiveTimeMs) / CONFIG.ONE_MINUTE_MS);
+        if (minutesAgo < 1) {
+            return { text: i18n.t('radar.live'), accessibleText: i18n.t('radar.liveAria'), state: 'live' };
         }
-
-        return { relativeText, accessibleText: relativeText };
+        const text = i18n.t('radar.ago', { duration: this.formatDuration(minutesAgo) });
+        return { text, accessibleText: text, state: 'past' };
     }
 
     /**
-     * Calculates standard real-time relative display strings (forecast / live / ago).
-     * @param {number} timestamp - Unix timestamp in seconds
+     * Describes a frame relative to the selected session, only while the session
+     * is close enough for that to help: "35 min before Race", "Race start",
+     * "1 h 10 min into Race".
      * @param {number} effectiveTimeMs - Effective frame time in milliseconds
-     * @returns {{ relativeText: string, accessibleText: string }}
+     * @returns {string|null}
      */
-    getStandardRelativeTimeInfo(timestamp, effectiveTimeMs) {
-        const diffSec = timestamp - (Date.now() / 1000);
+    getSessionContext(effectiveTimeMs) {
+        if (!this.sessionTime) return null;
 
-        if (diffSec > 60) {
-            const forecastText = i18n.t('radar.forecast');
-            return { relativeText: forecastText, accessibleText: forecastText };
+        const diff = Math.round((effectiveTimeMs - this.sessionTime.getTime()) / CONFIG.ONE_MINUTE_MS);
+        if (diff < -SESSION_CONTEXT_BEFORE_MIN || diff > CONFIG.RACE_DURATION_BUFFER_HOURS * 60) {
+            return null;
         }
 
-        // Palette UX: For past frames when no session is selected, show "X mins ago"
-        const diffMin = Math.round((Date.now() - effectiveTimeMs) / CONFIG.ONE_MINUTE_MS);
-
-        if (diffMin < 1) {
-            return {
-                relativeText: i18n.t('radar.live'),
-                accessibleText: i18n.t('radar.liveAria')
-            };
-        }
-
-        const relativeText = diffMin === 1
-            ? i18n.t('radar.minutesAgo', { count: diffMin })
-            : i18n.t('radar.minutesAgoPlural', { count: diffMin });
-
-        return { relativeText, accessibleText: relativeText };
+        const session = this.sessionName || i18n.t('radar.sessionFallback');
+        if (diff === 0) return i18n.t('radar.namedSessionStart', { session });
+        const duration = this.formatDuration(Math.abs(diff));
+        return diff < 0
+            ? i18n.t('radar.beforeNamedSession', { duration, session })
+            : i18n.t('radar.intoNamedSession', { duration, session });
     }
 
     updateTimeDisplay(timestamp) {
@@ -704,23 +780,19 @@ export class WeatherRadar {
         // Scout: Added datetime attribute to <time> element for semantic SEO value and machine-readability
         this.ui.time.setAttribute('datetime', date.toISOString());
 
-        let relativeText = '';
-        let accessibleText = '';
+        const nowInfo = this.getNowRelativeInfo(timestamp, effectiveTimeMs);
+        const sessionContext = this.getSessionContext(effectiveTimeMs);
+        const relativeText = sessionContext ? `${nowInfo.text} · ${sessionContext}` : nowInfo.text;
+        const accessibleText = sessionContext ? `${nowInfo.accessibleText}, ${sessionContext}` : nowInfo.accessibleText;
 
         if (this.ui.relative) {
-            const timeInfo = this.getSessionRelativeTimeInfo(effectiveTimeMs) ||
-                this.getStandardRelativeTimeInfo(timestamp, effectiveTimeMs);
-
-            relativeText = timeInfo.relativeText;
-            accessibleText = timeInfo.accessibleText;
             this.ui.relative.textContent = relativeText;
+            this.ui.relative.setAttribute('data-state', nowInfo.state);
         }
 
         if (this.ui.slider) {
             // Palette A11y: Use full descriptive text for screen readers
-            const ariaSuffix = accessibleText || relativeText;
-            const ariaText = ariaSuffix ? `${timeStr}, ${ariaSuffix}` : timeStr;
-            this.ui.slider.setAttribute('aria-valuetext', ariaText);
+            this.ui.slider.setAttribute('aria-valuetext', `${timeStr}, ${accessibleText}`);
         }
     }
 
@@ -729,16 +801,24 @@ export class WeatherRadar {
             this.ui.slider.max = this.frames.length - 1;
             this.ui.slider.value = this.currentFrame;
 
-            // Create a visual split between past and forecast frames
-            if (this.frames.length > 1 && this.pastFrameCount > 0) {
-                const forecastStartIndex = this.pastFrameCount;
-                const splitPercentage = (forecastStartIndex / (this.frames.length - 1)) * 100;
+            // Split the track at "now" (the latest observed frame): forecast frames sit to its right
+            const hasForecast = this.frames.length > 1 && this.pastFrameCount > 0 && this.pastFrameCount < this.frames.length;
+            if (this.ui.nowMarker) {
+                this.ui.nowMarker.hidden = !hasForecast;
+            }
+            if (hasForecast) {
+                // Range inputs inset the thumb (12px) by half its width at each end
+                const nowPosition = (this.pastFrameCount - 1) / (this.frames.length - 1);
+                const split = `calc(6px + (100% - 12px) * ${nowPosition})`;
+                if (this.ui.nowMarker) {
+                    this.ui.nowMarker.style.left = split;
+                }
 
                 // Apply a gradient background to the slider track
                 this.ui.slider.style.background = `linear-gradient(to right,
                     var(--color-border) 0%,
-                    var(--color-border) ${splitPercentage}%,
-                    var(--color-forecast-track) ${splitPercentage}%,
+                    var(--color-border) ${split},
+                    var(--color-forecast-track) ${split},
                     var(--color-forecast-track) 100%)`;
             } else {
                 // Default style if no forecast frames
@@ -795,6 +875,16 @@ export class WeatherRadar {
      * so we need to re-add the active and preloaded layers to the map.
      */
     updateTheme() {
+        this.satellite.updateTheme();
+
+        // Storm overlays are drawn in light ink on dark maps and vice versa, so
+        // their tile URLs depend on the theme. A rebuild also re-adds Mapbox layers.
+        const usesInk = this.provider === 'librewxr' && (this.tileOptions.arrows || this.tileOptions.cells);
+        if (usesInk) {
+            this.rebuildFrameUrls();
+            return;
+        }
+
         const isMapbox = !this.map.hasLayer;
         if (!isMapbox) return;
 
@@ -819,30 +909,15 @@ export class WeatherRadar {
     }
 
     /**
-     * Formats a duration in minutes into a readable string.
-     * Always includes minutes to prevent layout jumps during playback.
+     * Formats a duration in minutes compactly for the playback bar.
      * @param {number} totalMinutes
-     * @returns {string} e.g. "1 day 2 hours 30 minutes"
+     * @returns {string} e.g. "45 min", "2 h", "1 h 5 min"
      */
     formatDuration(totalMinutes) {
-        const days = Math.floor(totalMinutes / (24 * 60));
-        const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
+        const hours = Math.floor(totalMinutes / 60);
         const minutes = totalMinutes % 60;
-
-        const parts = [];
-        if (days > 0) {
-            const dayLabel = days === 1 ? i18n.t('countdown.day') : i18n.t('countdown.dayPlural');
-            parts.push(`${days} ${dayLabel}`);
-        }
-        if (hours > 0) {
-            const hourLabel = hours === 1 ? i18n.t('countdown.hour') : i18n.t('countdown.hourPlural');
-            parts.push(`${hours} ${hourLabel}`);
-        }
-
-        // Always show minutes to prevent justification jumps in the UI
-        const minuteLabel = minutes === 1 ? i18n.t('countdown.minute') : i18n.t('countdown.minutePlural');
-        parts.push(`${minutes} ${minuteLabel}`);
-
-        return parts.join(' ');
+        if (hours === 0) return i18n.t('radar.durationMinutes', { minutes });
+        if (minutes === 0) return i18n.t('radar.durationHours', { hours });
+        return i18n.t('radar.durationHoursMinutes', { hours, minutes });
     }
 }

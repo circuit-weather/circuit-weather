@@ -423,59 +423,59 @@ describe('WeatherRadar Lifecycle & Playback', () => {
     // updateTimeDisplay — session-relative time
     // ---------------------------------------------------------------
     describe('updateTimeDisplay', () => {
-        it('shows relative time when session time is set', () => {
-            radar.sessionTime = new Date(100000 * 1000); // Unix 100000
-            radar.updateTimeDisplay(100000); // Same as session
+        // Each frame is shown as the live frame (no frames loaded, clock at the frame time)
+        const showAt = (timestamp) => {
+            vi.setSystemTime(timestamp * 1000);
+            radar.updateTimeDisplay(timestamp);
+        };
 
-            expect(radar.ui.relative.textContent).toBe('Session start');
+        beforeEach(() => {
+            vi.useFakeTimers();
+            radar.frames = [];
+            radar.pastFrameCount = 0;
         });
 
-        it('shows minutes before session', () => {
-            radar.sessionTime = new Date(100000 * 1000);
-            // 30 minutes before
-            radar.updateTimeDisplay(100000 - 30 * 60);
-
-            expect(radar.ui.relative.textContent).toBe('30 minutes before session');
+        afterEach(() => {
+            vi.useRealTimers();
         });
 
-        it('shows hours and minutes before session', () => {
-            radar.sessionTime = new Date(100000 * 1000);
-            // 90 minutes before (1h 30m)
-            radar.updateTimeDisplay(100000 - 90 * 60);
-
-            expect(radar.ui.relative.textContent).toBe('1 hour 30 minutes before session');
+        it('shows the session start when the frame is at the session start', () => {
+            radar.setSessionTime(new Date(100000 * 1000), 'Race');
+            showAt(100000);
+            expect(radar.ui.relative.textContent).toBe('Live · Race start');
         });
 
-        it('shows days, hours and minutes before session', () => {
-            radar.sessionTime = new Date(100000 * 1000);
-            // 2 days, 3 hours, 45 minutes before
-            const mins = (2 * 24 * 60) + (3 * 60) + 45;
-            radar.updateTimeDisplay(100000 - mins * 60);
-
-            expect(radar.ui.relative.textContent).toBe('2 days 3 hours 45 minutes before session');
+        it('shows minutes before the session', () => {
+            radar.setSessionTime(new Date(100000 * 1000), 'Race');
+            showAt(100000 - 30 * 60);
+            expect(radar.ui.relative.textContent).toBe('Live · 30 min before Race');
         });
 
-        it('shows exactly 1 hour and 0 minutes before session', () => {
-            radar.sessionTime = new Date(100000 * 1000);
-            radar.updateTimeDisplay(100000 - 60 * 60);
-            expect(radar.ui.relative.textContent).toBe('1 hour 0 minutes before session');
+        it('shows hours and minutes before the session', () => {
+            radar.setSessionTime(new Date(100000 * 1000), 'FP1');
+            showAt(100000 - 90 * 60);
+            expect(radar.ui.relative.textContent).toBe('Live · 1 h 30 min before FP1');
         });
 
-        it('shows exactly 1 day and 0 minutes before session', () => {
-            radar.sessionTime = new Date(100000 * 1000);
-            radar.updateTimeDisplay(100000 - 24 * 60 * 60);
-            expect(radar.ui.relative.textContent).toBe('1 day 0 minutes before session');
+        it('shows whole hours before the session', () => {
+            radar.setSessionTime(new Date(100000 * 1000), 'Sprint');
+            showAt(100000 - 60 * 60);
+            expect(radar.ui.relative.textContent).toBe('Live · 1 h before Sprint');
         });
 
-        it('shows 0 minutes when very close to session start', () => {
-            radar.sessionTime = new Date(100000 * 1000);
-            // 10 seconds before (rounds to 0 minutes, should trigger "Session start" or "0 minutes before" depending on logic)
-            // Current logic in WeatherRadar.js:
-            // Math.abs(diff) < 1 -> "Session start"
-            // diff < 0 -> "X before"
-            // Let's test 30 seconds before (0.5 mins)
-            radar.updateTimeDisplay(100000 - 30);
-            expect(radar.ui.relative.textContent).toBe('Session start');
+        it('leaves out sessions further away than the context window', () => {
+            radar.setSessionTime(new Date(100000 * 1000), 'Race');
+            showAt(100000 - 24 * 60 * 60);
+            expect(radar.ui.relative.textContent).toBe('Live');
+
+            showAt(100000 + 5 * 60 * 60);
+            expect(radar.ui.relative.textContent).toBe('Live');
+        });
+
+        it('treats frames within half a minute of the start as the start', () => {
+            radar.setSessionTime(new Date(100000 * 1000));
+            showAt(100000 - 20);
+            expect(radar.ui.relative.textContent).toBe('Live · session start');
         });
 
         it('does nothing when timestamp is null', () => {
@@ -483,25 +483,18 @@ describe('WeatherRadar Lifecycle & Playback', () => {
             // Should not throw or modify textContent
         });
 
-        it('shows "Forecast" when timestamp is > 60s in the future and no session time is set', () => {
-             // Set system time to 100000
-             const now = 100000 * 1000;
-             vi.setSystemTime(now);
+        it('shows how far ahead a future frame is when no frames are loaded', () => {
+            vi.setSystemTime(100000 * 1000);
+            radar.sessionTime = null;
 
-             // Ensure no session time
-             radar.sessionTime = null;
+            radar.updateTimeDisplay(100000 + 10 * 60);
 
-             // Timestamp 61 seconds in the future
-             const futureTimestamp = 100000 + 61;
-
-             radar.updateTimeDisplay(futureTimestamp);
-
-             expect(radar.ui.relative.textContent).toBe('Forecast');
-             expect(radar.ui.slider.setAttribute).toHaveBeenCalledWith(
-                 'aria-valuetext',
-                 expect.stringContaining('Forecast')
-             );
-         });
+            expect(radar.ui.relative.textContent).toBe('Forecast +10 min');
+            expect(radar.ui.slider.setAttribute).toHaveBeenCalledWith(
+                'aria-valuetext',
+                expect.stringContaining('Forecast +10 min')
+            );
+        });
     });
 
     // ---------------------------------------------------------------
@@ -639,12 +632,10 @@ describe('WeatherRadar Lifecycle & Playback', () => {
             expect(radar.layers[0]).not.toBeNull();
         });
 
-        it('formatDuration calculates correctly for >1 days, >1 hours, >1 minutes', () => {
-            const minutesInDay = 24 * 60;
-            const minutesInHour = 60;
-            const total = (2 * minutesInDay) + (2 * minutesInHour) + 2;
-            const result = radar.formatDuration(total);
-            expect(result).toBe('2 days 2 hours 2 minutes');
+        it('formatDuration formats minutes, hours and both compactly', () => {
+            expect(radar.formatDuration(45)).toBe('45 min');
+            expect(radar.formatDuration(120)).toBe('2 h');
+            expect(radar.formatDuration(122)).toBe('2 h 2 min');
         });
 
         it('togglePlay pauses if playing, plays if not playing', () => {

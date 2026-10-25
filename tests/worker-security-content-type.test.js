@@ -127,7 +127,7 @@ describe('Worker Security: Strict Content-Type Validation', () => {
       // Distinctive payload so we can tell the proxied data apart from the
       // empty-radar fallback (which has past: []). Exercises the charset
       // normalization (split(';')[0]) on the radar handler.
-      const upstream = { radar: { past: [{ time: 111 }], nowcast: [] }, host: 'up' };
+      const upstream = { radar: { past: [{ time: 111, path: '/v2/radar/111' }], nowcast: [] } };
       mockFetch.mockResolvedValueOnce(new Response(JSON.stringify(upstream), {
         status: 200,
         headers: { 'Content-Type': 'application/json; charset=utf-8' }
@@ -146,8 +146,8 @@ describe('Worker Security: Strict Content-Type Validation', () => {
       const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
       // Non-empty upstream payload: if validation wrongly accepted the type the
       // proxied data (past length 1) would surface instead of the empty fallback.
-      const upstream = { radar: { past: [{ time: 999 }], nowcast: [] }, host: 'up' };
-      mockFetch.mockResolvedValueOnce(new Response(JSON.stringify(upstream), {
+      const upstream = { radar: { past: [{ time: 999, path: '/v2/radar/999' }], nowcast: [] } };
+      mockFetch.mockImplementation(async () => new Response(JSON.stringify(upstream), {
         status: 200,
         headers: { 'Content-Type': 'application/json-evil' }
       }));
@@ -250,7 +250,7 @@ describe('Worker Security: Strict Content-Type Validation', () => {
             headers: { 'Content-Type': 'image/png' }
         }));
 
-        const req = createRequest('/api/tiles/test.png');
+        const req = createRequest('/api/tiles/v2/radar/1/512/2/3/1/2/1_1.png');
         const res = await worker.fetch(req, global.env, global.ctx);
         expect(res.status).toBe(200);
     });
@@ -262,7 +262,7 @@ describe('Worker Security: Strict Content-Type Validation', () => {
             headers: { 'Content-Type': 'image/png-evil' }
         }));
 
-        const req = createRequest('/api/tiles/test.png');
+        const req = createRequest('/api/tiles/v2/radar/1/512/2/3/1/2/1_1.png');
         const res = await worker.fetch(req, global.env, global.ctx);
 
         // Strict comparison must reject image/png-evil (a startsWith check would

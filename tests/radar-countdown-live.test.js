@@ -90,7 +90,7 @@ describe('WeatherRadar Live Countdown', () => {
         radar.updateTimeDisplay(frameTime);
 
         // Should show 5 minutes before (from current time)
-        expect(radar.ui.relative.textContent).toBe('5 minutes before session');
+        expect(radar.ui.relative.textContent).toBe('Live · 5 min before session');
     });
 
     it('applies real-time drift to historical frames session offset', () => {
@@ -110,7 +110,7 @@ describe('WeatherRadar Live Countdown', () => {
 
         // T=980 + 5m drift = T=985.
         // Session start at T=1000. 1000 - 985 = 15 minutes before.
-        expect(radar.ui.relative.textContent).toBe('15 minutes before session');
+        expect(radar.ui.relative.textContent).toBe('10 min ago · 15 min before session');
     });
 
     it('shows "Live" for latest frame when no session is active', () => {
@@ -131,7 +131,7 @@ describe('WeatherRadar Live Countdown', () => {
         expect(radar.ui.relative.textContent).toBe('Live');
     });
 
-    it('shows "X mins ago" for past frames when no session is active', () => {
+    it('shows "X min ago" for past frames when no session is active', () => {
         radar.sessionTime = null;
 
         // Latest at T=990. Historical at T=980.
@@ -147,10 +147,10 @@ describe('WeatherRadar Live Countdown', () => {
 
         // T=980 + 5m drift = T=985.
         // Current time is T=995. 995 - 985 = 10 mins ago.
-        expect(radar.ui.relative.textContent).toBe('10 mins ago');
+        expect(radar.ui.relative.textContent).toBe('10 min ago');
     });
 
-    it('shows "Session start" when time is exactly at session start', () => {
+    it('shows the session start when time is exactly at session start', () => {
         const sessionTime = new Date(1000 * 60000);
         radar.setSessionTime(sessionTime);
 
@@ -163,10 +163,10 @@ describe('WeatherRadar Live Countdown', () => {
 
         radar.updateTimeDisplay(frameTime);
 
-        expect(radar.ui.relative.textContent).toBe('Session start');
+        expect(radar.ui.relative.textContent).toBe('Live · session start');
     });
 
-    it('shows "after session" when time is after session start', () => {
+    it('shows how far into the session the frame is', () => {
         const sessionTime = new Date(1000 * 60000);
         radar.setSessionTime(sessionTime);
 
@@ -179,29 +179,65 @@ describe('WeatherRadar Live Countdown', () => {
 
         radar.updateTimeDisplay(frameTime);
 
-        expect(radar.ui.relative.textContent).toBe('10 minutes after session');
+        expect(radar.ui.relative.textContent).toBe('Live · 10 min into session');
     });
 
-    it('formats long durations correctly (days, hours, minutes)', () => {
+    it('formats hours and minutes compactly', () => {
         const sessionTime = new Date(1000 * 60000);
-        radar.setSessionTime(sessionTime);
+        radar.setSessionTime(sessionTime, 'Race');
 
-        // 1 day, 2 hours, 3 minutes before session
-        // 1440 + 120 + 3 = 1563 minutes
-        const diffMins = 1563;
-        const frameTime = (1000 - diffMins) * 60;
+        // 2 hours 5 minutes before the session
+        const frameTime = (1000 - 125) * 60;
         radar.frames = [{ time: frameTime }];
         radar.pastFrameCount = 1;
         radar.visibleLayerIndex = 0;
-
-        vi.setSystemTime(new Date((1000 - diffMins) * 60000));
+        vi.setSystemTime(new Date((1000 - 125) * 60000));
 
         radar.updateTimeDisplay(frameTime);
-
-        expect(radar.ui.relative.textContent).toBe('1 day 2 hours 3 minutes before session');
+        expect(radar.ui.relative.textContent).toBe('Live · 2 h 5 min before Race');
+        expect(radar.ui.slider.setAttribute).toHaveBeenCalledWith('aria-valuetext', expect.stringContaining('Live radar, 2 h 5 min before Race'));
     });
 
-    it('shows "Forecast" for future frames when no session is active', () => {
+    it('formats whole hours without minutes', () => {
+        radar.setSessionTime(new Date(1000 * 60000), 'Qualifying');
+        const frameTime = (1000 + 120) * 60;
+        radar.frames = [{ time: frameTime }];
+        radar.pastFrameCount = 1;
+        vi.setSystemTime(new Date((1000 + 120) * 60000));
+
+        radar.updateTimeDisplay(frameTime);
+        expect(radar.ui.relative.textContent).toBe('Live · 2 h into Qualifying');
+    });
+
+    it('leaves out the session when it is more than 6 hours away', () => {
+        radar.setSessionTime(new Date(1000 * 60000), 'Race');
+        const frameTime = (1000 - 1563) * 60;
+        radar.frames = [{ time: frameTime }];
+        radar.pastFrameCount = 1;
+        vi.setSystemTime(new Date((1000 - 1563) * 60000));
+
+        radar.updateTimeDisplay(frameTime);
+        expect(radar.ui.relative.textContent).toBe('Live');
+    });
+
+    it('measures forecast frames from the latest observed frame and marks their state', () => {
+        radar.sessionTime = null;
+        radar.frames = [{ time: 990 * 60 }, { time: 1000 * 60 }, { time: 1030 * 60 }];
+        radar.pastFrameCount = 2;
+        vi.setSystemTime(new Date(1004 * 60000));
+
+        radar.updateTimeDisplay(1030 * 60);
+        expect(radar.ui.relative.textContent).toBe('Forecast +30 min');
+        expect(radar.ui.relative.setAttribute).toHaveBeenCalledWith('data-state', 'forecast');
+
+        radar.updateTimeDisplay(990 * 60);
+        expect(radar.ui.relative.setAttribute).toHaveBeenLastCalledWith('data-state', 'past');
+
+        radar.updateTimeDisplay(1000 * 60);
+        expect(radar.ui.relative.setAttribute).toHaveBeenLastCalledWith('data-state', 'live');
+    });
+
+    it('shows how far ahead future frames are when no session is active', () => {
         radar.sessionTime = null;
 
         // Future frame (e.g., 5 mins ahead)
@@ -215,7 +251,7 @@ describe('WeatherRadar Live Countdown', () => {
 
         radar.updateTimeDisplay(frameTime);
 
-        expect(radar.ui.relative.textContent).toBe('Forecast');
+        expect(radar.ui.relative.textContent).toBe('Forecast +5 min');
     });
 
     it('handles negative or invalid visibleLayerIndex gracefully', () => {
@@ -275,7 +311,7 @@ describe('WeatherRadar Live Countdown', () => {
         expect(radar.showFrame).toHaveBeenCalledWith(1);
     });
 
-    it('shows "1 min ago" and "2 mins ago" correctly for singular/plural', () => {
+    it('shows "1 min ago" and "2 min ago" for recent frames', () => {
         radar.sessionTime = null;
 
         // System time is T=1000
@@ -292,7 +328,7 @@ describe('WeatherRadar Live Countdown', () => {
 
         // Check 2 mins ago
         radar.updateTimeDisplay(1000 - 120);
-        expect(radar.ui.relative.textContent).toBe('2 mins ago');
+        expect(radar.ui.relative.textContent).toBe('2 min ago');
     });
 
     it('falls back to standard relative display when the session is far in the future', () => {

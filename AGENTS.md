@@ -13,7 +13,7 @@ Circuit Weather is a real-time F1 race circuit weather radar application. It dis
 | Frontend | Vanilla HTML/CSS/JS                                       |
 | Mapping  | Mapbox GL JS (Primary) & Leaflet.js with Carto (Fallback) |
 | Backend  | Cloudflare Workers with Static Assets                     |
-| APIs     | Jolpica F1, RainViewer, Open-Meteo, GitHub (Tracks)       |
+| APIs     | Jolpica F1, LibreWXR, RainViewer, Open-Meteo, GitHub      |
 
 ---
 
@@ -37,7 +37,8 @@ Circuit Weather is a real-time F1 race circuit weather radar application. It dis
 | --------------- | ---------------------------------------------------------------- | -------------------- |
 | Jolpica F1 API  | Race schedule data (24-hour cache, 30-day last-known-good copy)  | Proxied (Cached)     |
 | OpenF1          | Fallback race schedule data                                      | Direct (Client-side) |
-| RainViewer      | Weather radar tiles (2-hour cache) and metadata (1-minute cache) | Proxied (Cached)     |
+| LibreWXR        | Primary radar, nowcast and storm overlay tiles (2-hour cache; nowcast 5 minutes), satellite tiles (12-hour cache), metadata (1-minute cache, 30-minute last-known-good copy) and weather warnings (5-minute cache, 1-hour last-known-good copy) | Proxied (Cached)     |
+| RainViewer      | Backup radar tiles (2-hour cache) and metadata (1-minute cache), used when LibreWXR fails | Proxied (Cached)     |
 | Open-Meteo      | Weather forecasts                                                | Direct (Client-side) |
 | Mapbox API      | Primary map basemap tiles and rendering                          | Direct (Client-side) |
 | Carto           | Fallback map basemap tiles                                       | Direct (Client-side) |
@@ -51,7 +52,7 @@ Circuit Weather is a real-time F1 race circuit weather radar application. It dis
 ### Data Handling
 
 - **No first-party cookies** used (third-party widgets may use cookies - see PRIVACY.md)
-- **localStorage only** for theme/unit/language/windOverlay preferences and f1_schedule_cache
+- **localStorage only** for theme/unit/language/windOverlay/radar layer (radarColour, radarArrows, radarCells, radarLightning, radarSatellite, weatherAlerts) preferences and f1_schedule_cache
 - **No PII collected** - See PRIVACY.md
 
 ### Language & Spelling
@@ -90,8 +91,9 @@ circuit-weather/
 │   ├── _headers      # Custom HTTP headers (CSP, security)
 │   └── PRIVACY.md
 ├── src/
-│   ├── worker.js       # Cloudflare Worker (API proxy + asset serving)
-│   └── worker-utils.js # Shared worker utilities
+│   ├── worker.js          # Cloudflare Worker (API proxy + asset serving)
+│   ├── worker-utils.js    # Shared worker utilities
+│   └── radar-providers.js # LibreWXR/RainViewer metadata, tile routing and alert sanitising
 ├── tests/              # Unit tests
 ├── .jules/             # Jules AI agent config (MUST be lowercase)
 ├── wrangler.toml       # Cloudflare config
@@ -176,12 +178,13 @@ mode = "smart"
    - Distance labels on circles
 
 3. **Weather Radar**
-   - Live radar tiles from RainViewer (V2 API)
-   - **Historical Only**: Free tier API no longer supports forecast/nowcast data
-   - Animated playback of past 2 hours
-   - Timeline slider (adaptive range)
-   - Session-relative time display ("5m before", "10m after")
-   - Must handle RainViewer's zoom limit (maxNativeZoom: 8)
+   - Live radar tiles from LibreWXR (RainViewer V2-compatible API), with RainViewer as an automatic fallback
+   - Animated playback of past 2 hours plus LibreWXR's experimental 1-hour nowcast (forecast frames are marked on the slider)
+   - Timeline slider (adaptive range), starting on the latest observed frame
+   - Playback label relative to now ("20 min ago", "Live", "Forecast +20 min"), plus the selected session when it is within 6 hours ("35 min before Race", "1 h 10 min into Race")
+   - Provider zoom limits come from `/api/radar` (`maxZoom`: 12 for LibreWXR, 7 for RainViewer). The client caps animation tiles at `CONFIG.RADAR_MAX_TILE_ZOOM` (8): radar data is ~1 km resolution, and each extra zoom level multiplies tile requests across every animation frame (zoom 9 meant ~150 tiles and ~170 MB of decoded images per view)
+   - Optional LibreWXR extras: colour schemes, storm motion arrows, storm cells, lightning (Americas only) and satellite clouds
+   - Attribution: LibreWXR data is CC BY 4.0 and must be credited on the map (plus "Radar-DPC" for Italian data)
 
 4. **Session Countdown**
    - Countdown timer to selected session start
@@ -218,13 +221,20 @@ mode = "smart"
     - Can be toggled on or off via UI
     - Persists in localStorage
 
+11. **Weather Warnings**
+    - Official WMO CAP alerts from LibreWXR for a box around the selected circuit
+    - Drawn as severity-coloured polygons on the map and listed in the sidebar
+    - Alert text is third-party content: render it with `textContent` only
+    - Can be toggled on or off via UI (on by default); persists in localStorage
+
 ### API Endpoints
 
 | Endpoint        | Purpose                                                                                                      |
 | --------------- | ------------------------------------------------------------------------------------------------------------ |
 | `/api/f1/*`     | Proxies to Jolpica F1 API with 24-hour edge caching; serves a 30-day last-known-good copy if Jolpica fails   |
-| `/api/radar`    | Proxies to RainViewer Maps API with 1-minute caching (initializes animation)                                 |
-| `/api/tiles/*`  | Proxies to RainViewer tile API with 2-hour edge caching (512px optimized)                                    |
+| `/api/radar`    | LibreWXR radar metadata (RainViewer fallback), normalised with `provider` and `maxZoom`, 1-minute caching; serves a 30-minute last-known-good copy if both fail |
+| `/api/tiles/*`  | Proxies LibreWXR radar/satellite tiles (and `/rainviewer/...` fallback tiles) with 2-hour edge caching; nowcast tiles 5 minutes, satellite tiles 12 hours |
+| `/api/alerts`   | Proxies LibreWXR weather alerts for `?lat=&lon=` (±2° box) with 5-minute caching and a 1-hour last-known-good copy (expired alerts dropped); output is sanitised GeoJSON |
 | `/api/track/*`  | Proxies to GitHub for GeoJSON track data with 24-hour caching                                                |
 | `/api/assets/*` | Proxies to Unpkg (Leaflet) and Mapbox CDNs for map library assets with 1-year immutable caching (strict CSP) |
 | `/api/health`   | System status check (connectivity to upstreams, version, env) with 60-second caching                         |
@@ -240,10 +250,11 @@ mode = "smart"
 
 ## Known Limitations
 
-1. **RainViewer Zoom Limit** - Free tier limits to zoom level 7 (Jan 2026). We use **512px tiles** with `zoomOffset: -1` and `maxNativeZoom: 8` to emulate higher resolution while reducing requests.
-2. **Radar Opacity** - Tiles must be added with small opacity (0.01) initially to trigger loading.
-3. **F1 API Rate Limits** - Edge caching via Worker mitigates this.
-4. **Current Weather Rate Limits** - The live current weather widget triggers an Open-Meteo API call per circuit change, which may hit 429 rate limits during high traffic.
+1. **Radar Zoom Limits** - LibreWXR serves tiles up to zoom 12; the RainViewer fallback free tier is limited to zoom 7 (Jan 2026). We use **512px tiles** with `zoomOffset: -1` (Leaflet `maxNativeZoom` = limit + 1) to reduce requests.
+2. **LibreWXR Public Instance** - Best-effort with no published uptime or rate limits, which is why RainViewer stays as a fallback. The nowcast is experimental, lightning only covers the Americas, and radar coverage outside the US, Canada, Europe, Japan and parts of Asia comes from satellite estimates and model data.
+3. **Radar Opacity** - Tiles must be added with small opacity (0.01) initially to trigger loading.
+4. **F1 API Rate Limits** - Edge caching via Worker mitigates this.
+5. **Current Weather Rate Limits** - The live current weather widget triggers an Open-Meteo API call per circuit change, which may hit 429 rate limits during high traffic.
 
 ---
 
