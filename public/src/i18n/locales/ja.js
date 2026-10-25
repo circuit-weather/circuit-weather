@@ -5,6 +5,7 @@ export const ja = {
     sponsor: "スポンサー",
   },
   common: {
+    scheduleData: "スケジュールデータ:",
     countryFlagFallback: "国旗",
     countryFlag: "{{country}}の国旗",
     github: "GitHubでソースコードを表示",
@@ -26,8 +27,10 @@ export const ja = {
     session: "セッションデータを読み込み中...",
   },
   controls: {
-    onlyF1Supported: "現在はF1のみサポートされています",
     f1: "F1",
+    f2: "F2",
+    f3: "F3",
+    fe: "フォーミュラE",
     series: "シリーズ",
     round: "ラウンド",
     roundLabel: "R{{round}}: {{name}} ({{date}})",

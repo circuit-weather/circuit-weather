@@ -72,8 +72,9 @@ export class SeoManager {
      * context for nested routes.
      * @param {Object|null} selectedRace
      * @param {Object|null} selectedSession
+     * @param {string} [series] URL series segment
      */
-    static updateBreadcrumbJsonLd(selectedRace, selectedSession) {
+    static updateBreadcrumbJsonLd(selectedRace, selectedSession, series = 'f1') {
         let breadcrumbScript = document.getElementById('dynamic-breadcrumb-ld');
         if (!breadcrumbScript) {
             breadcrumbScript = document.createElement('script');
@@ -101,7 +102,7 @@ export class SeoManager {
                 "@type": "ListItem",
                 "position": 2,
                 "name": selectedRace.name,
-                "item": `${baseUrl}/f1/${selectedRace.round}`
+                "item": `${baseUrl}/${series}/${selectedRace.round}`
             });
 
             if (selectedSession) {
@@ -109,7 +110,7 @@ export class SeoManager {
                     "@type": "ListItem",
                     "position": 3,
                     "name": selectedSession.name,
-                    "item": `${baseUrl}/f1/${selectedRace.round}/${selectedSession.id}`
+                    "item": `${baseUrl}/${series}/${selectedRace.round}/${selectedSession.id}`
                 });
             }
         }
@@ -202,11 +203,12 @@ export class SeoManager {
      * Dynamic titles and meta tags improve SERP visibility and rich social sharing.
      * @param {Object|null} selectedRace
      * @param {Object|null} selectedSession
+     * @param {string} [series] URL series segment
      */
-    static updatePageMetadata(selectedRace, selectedSession) {
+    static updatePageMetadata(selectedRace, selectedSession, series = 'f1') {
         const { title, desc } = SeoManager.getPageTitleAndDesc(selectedRace, selectedSession);
         SeoManager.updateMetaTags(title, desc);
-        SeoManager.updateBreadcrumbJsonLd(selectedRace, selectedSession);
+        SeoManager.updateBreadcrumbJsonLd(selectedRace, selectedSession, series);
         SeoManager.updateEventJsonLd(selectedRace, selectedSession, desc);
     }
 }

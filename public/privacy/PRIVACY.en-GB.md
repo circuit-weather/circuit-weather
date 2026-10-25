@@ -89,6 +89,7 @@ Your browser may connect directly to third-party services for maps, tiles, and w
 ### Data Sources (Proxied)
 
 - **Jolpica F1:** F1 schedule data (24-hour edge cache; a last-known-good copy is kept for up to 30 days as a fallback if the source is unavailable).
+- **TheSportsDB:** Formula 2, Formula 3 and Formula E schedule and circuit data (refreshed between hourly and monthly depending on how close each round is; the last fetched copy is kept for up to 180 days as a fallback).
 - **GitHub (bacinger/f1-circuits):** GeoJSON track files (24-hour edge cache).
 - **LibreWXR:** Radar metadata (1-minute cache), radar tiles (2-hour edge cache; forecast tiles 5 minutes), satellite tiles (12-hour edge cache) and weather warnings (5-minute cache). Short-lived backup copies of the metadata (30 minutes) and warnings (1 hour) are kept in case LibreWXR is unavailable.
 - **RainViewer:** Radar metadata (1-minute cache) and tiles (2-hour edge cache).
@@ -107,6 +108,7 @@ Preference settings are stored locally in your browser:
 - **radarArrows, radarCells, radarLightning, radarSatellite:** `true` or `false` (remembers which extra radar layers are enabled)
 - **weatherAlerts:** `true` or `false` (remembers if weather warnings are shown)
 - **f1_schedule_cache:** caches the F1 schedule data (7-day cache)
+- **series_schedule_cache:** caches the Formula 2, Formula 3 and Formula E schedule data (7-day cache; 5 minutes while the schedule is still loading)
 
 This data remains on your device and is not sent to our servers.
 

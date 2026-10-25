@@ -150,9 +150,11 @@
                 <section class="control-section" aria-label="Race Selection" data-i18n-attr="aria-label:nav.raceSelection">
                     <div class="control-group">
                         <label for="seriesSelect" data-i18n="controls.series">Series</label>
-                        <select id="seriesSelect" class="select" disabled aria-disabled="true"
-                            title="Only Formula 1 is currently supported" data-i18n-attr="title:controls.onlyF1Supported">
+                        <select id="seriesSelect" class="select">
                             <option value="f1" data-i18n="controls.f1">Formula 1</option>
+                            <option value="f2" data-i18n="controls.f2">Formula 2</option>
+                            <option value="f3" data-i18n="controls.f3">Formula 3</option>
+                            <option value="fe" data-i18n="controls.fe">Formula E</option>
                         </select>
                     </div>
                     <div class="control-group">
@@ -322,6 +324,12 @@
                     <line x1="12" y1="17" x2="12.01" y2="17"></line>
                 </svg>
                 <span data-i18n="errors.usingFallbackSource">Primary schedule source unavailable — showing data from a backup source.</span>
+            </aside>
+
+            <!-- TheSportsDB's terms require crediting it as the data source; shown for non-F1 series -->
+            <aside class="schedule-credit" id="scheduleCredit" hidden>
+                <span data-i18n="common.scheduleData">Schedule data:</span>
+                <a href="https://www.thesportsdb.com" target="_blank" rel="noopener noreferrer">TheSportsDB</a>
             </aside>
 
             <footer class="sidebar-footer">

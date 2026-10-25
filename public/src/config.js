@@ -4,6 +4,8 @@
 
 export const CONFIG = {
     f1ApiBase: '/api/f1',
+    // Other series (TheSportsDB via the Worker - see src/handlers/schedule.js)
+    scheduleApiBase: '/api/schedule',
     // Radar metadata (LibreWXR, with RainViewer as a fallback - see src/radar-providers.js)
     rainViewerApi: '/api/radar',
     alertsApi: '/api/alerts',
@@ -70,6 +72,11 @@ export const CONFIG = {
 };
 // SEC: Prevent runtime tampering with configuration
 Object.freeze(CONFIG);
+
+// Selectable series (the options in index.html #seriesSelect). The id is the first
+// URL segment (/f2/3/feature-race). F1 comes from Jolpica (F1API); the rest from
+// /api/schedule/{id} (SeriesAPI), which must list the same ids in src/thesportsdb.js.
+export const SERIES_IDS = Object.freeze(['f1', 'f2', 'f3', 'fe']);
 
 // Country code mappings for flags (ISO 3166-1 alpha-2)
 export const COUNTRY_CODES = {

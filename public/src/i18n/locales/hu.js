@@ -5,6 +5,7 @@ export const hu = {
     sponsor: "Támogató",
   },
   common: {
+    scheduleData: "Versenynaptár adatai:",
     countryFlagFallback: "Országzászló",
     countryFlag: "{{country}} zászlaja",
     github: "Forráskód megtekintése a GitHubon",
@@ -26,8 +27,10 @@ export const hu = {
     switchToDark: "Váltás sötét módra",
   },
   controls: {
-    onlyF1Supported: "Jelenleg csak a Forma-1 támogatott",
     f1: "Forma-1",
+    f2: "Forma-2",
+    f3: "Forma-3",
+    fe: "Formula E",
     series: "Sorozat",
     round: "Forduló",
     roundLabel: "R{{round}}: {{name}} ({{date}})",

@@ -5,6 +5,7 @@ export const zhCN = {
     sponsor: "赞助商",
   },
   common: {
+    scheduleData: "赛历数据：",
     countryFlagFallback: "国旗",
     countryFlag: "{{country}} 国旗",
     github: "在 GitHub 上查看源代码",
@@ -23,8 +24,10 @@ export const zhCN = {
   },
   loading: { schedule: "正在加载比赛赛历...", session: "正在加载赛段数据..." },
   controls: {
-    onlyF1Supported: "目前仅支持 F1",
     f1: "F1",
+    f2: "F2",
+    f3: "F3",
+    fe: "电动方程式",
     series: "系列赛",
     round: "分站",
     roundLabel: "R{{round}}: {{name}} ({{date}})",

@@ -5,6 +5,7 @@ export const ptBR = {
     sponsor: "Patrocinador",
   },
   common: {
+    scheduleData: "Dados do calendário:",
     countryFlagFallback: "Bandeira do país",
     countryFlag: "Bandeira de {{country}}",
     github: "Ver código-fonte no GitHub",
@@ -26,8 +27,10 @@ export const ptBR = {
     session: "Carregando dados da sessão...",
   },
   controls: {
-    onlyF1Supported: "Atualmente, apenas a Fórmula 1 é suportada",
     f1: "Fórmula 1",
+    f2: "Fórmula 2",
+    f3: "Fórmula 3",
+    fe: "Fórmula E",
     series: "Série",
     round: "Etapa",
     roundLabel: "R{{round}}: {{name}} ({{date}})",

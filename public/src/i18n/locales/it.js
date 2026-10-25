@@ -5,6 +5,7 @@ export const it = {
     sponsor: "Sponsor",
   },
   common: {
+    scheduleData: "Dati del calendario:",
     countryFlagFallback: "Bandiera del paese",
     countryFlag: "Bandiera: {{country}}",
     github: "Visualizza il codice sorgente su GitHub",
@@ -26,8 +27,10 @@ export const it = {
     session: "Caricamento dati sessione...",
   },
   controls: {
-    onlyF1Supported: "Attualmente e supportata solo la Formula 1",
     f1: "Formula 1",
+    f2: "Formula 2",
+    f3: "Formula 3",
+    fe: "Formula E",
     series: "Serie",
     round: "Round",
     roundLabel: "R{{round}}: {{name}} ({{date}})",

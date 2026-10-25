@@ -13,7 +13,7 @@ Circuit Weather is a real-time F1 race circuit weather radar application. It dis
 | Frontend | Vanilla HTML/CSS/JS                                       |
 | Mapping  | Mapbox GL JS (Primary) & Leaflet.js with Carto (Fallback) |
 | Backend  | Cloudflare Workers with Static Assets                     |
-| APIs     | Jolpica F1, LibreWXR, RainViewer, Open-Meteo, GitHub      |
+| APIs     | Jolpica F1, TheSportsDB, LibreWXR, RainViewer, Open-Meteo, GitHub |
 
 ---
 
@@ -37,6 +37,7 @@ Circuit Weather is a real-time F1 race circuit weather radar application. It dis
 | --------------- | ---------------------------------------------------------------- | -------------------- |
 | Jolpica F1 API  | Race schedule data (24-hour cache, 30-day last-known-good copy)  | Proxied (Cached)     |
 | OpenF1          | Fallback race schedule data                                      | Direct (Client-side) |
+| TheSportsDB     | F2, F3 and Formula E schedules and venue coordinates (season state refreshed hourly to monthly per round, 180-day last-known-good copy; 30 requests/minute free tier, throttled in the Worker) | Proxied (Cached)     |
 | LibreWXR        | Primary radar, nowcast and storm overlay tiles (2-hour cache; nowcast 5 minutes), satellite tiles (12-hour cache), metadata (1-minute cache, 30-minute last-known-good copy) and weather warnings (5-minute cache, 1-hour last-known-good copy) | Proxied (Cached)     |
 | RainViewer      | Backup radar tiles (2-hour cache) and metadata (1-minute cache), used when LibreWXR fails | Proxied (Cached)     |
 | Open-Meteo      | Weather forecasts                                                | Direct (Client-side) |
@@ -52,7 +53,7 @@ Circuit Weather is a real-time F1 race circuit weather radar application. It dis
 ### Data Handling
 
 - **No first-party cookies** used (third-party widgets may use cookies - see PRIVACY.md)
-- **localStorage only** for theme/unit/language/windOverlay/radar layer (radarColour, radarArrows, radarCells, radarLightning, radarSatellite, weatherAlerts) preferences and f1_schedule_cache
+- **localStorage only** for theme/unit/language/windOverlay/radar layer (radarColour, radarArrows, radarCells, radarLightning, radarSatellite, weatherAlerts) preferences, f1_schedule_cache and series_schedule_cache
 - **No PII collected** - See PRIVACY.md
 
 ### Language & Spelling
@@ -94,8 +95,10 @@ circuit-weather/
 │   ├── worker.js          # Cloudflare Worker router (rate limiting, method/hotlink checks, dispatch)
 │   ├── worker-utils.js    # Shared worker utilities
 │   ├── radar-providers.js # LibreWXR/RainViewer metadata, tile routing and alert sanitising
+│   ├── thesportsdb.js     # TheSportsDB client: throttle, coordinates, schedule normalising
 │   └── handlers/          # Route handlers, one module per API domain
 │       ├── f1.js          # /api/f1/* (Jolpica proxy + last-known-good copy)
+│       ├── schedule.js    # /api/schedule/{series} (TheSportsDB, F2/F3/Formula E)
 │       ├── radar.js       # /api/radar, /api/tiles/*, /api/alerts
 │       ├── track.js       # /api/track/*
 │       ├── assets.js      # /api/assets/*
@@ -163,6 +166,7 @@ mode = "smart"
 - Environment variables:
   - `MAPBOX_ACCESS_TOKEN` (optional): Required to use the primary Mapbox GL JS renderer. If omitted, the app falls back to Leaflet.js.
   - `ENVIRONMENT` (optional): Defaults to 'production'.
+  - `THESPORTSDB_API_KEY` (optional, secret): TheSportsDB API key for the F2/F3/Formula E schedules. Set it with `wrangler secret put THESPORTSDB_API_KEY` (or Settings → Variables and Secrets in the Cloudflare dashboard). If omitted, the public free key (`123`) is used. A premium key raises the rate limit; also raise `UPSTREAM_LIMIT_PER_MINUTE` in `src/thesportsdb.js` to match.
   - `DEBUG` (optional): Set to 'true' to enable detailed debug logging (e.g., exposing unredacted tile proxy paths in logs) when not in production.
 - **Note:** An `.env.example` file is intentionally omitted. This project is standalone and does not intend to onboard human developers, so it doesn't require others to know how to configure or run it.
 - No build step required (vanilla JS)
@@ -174,9 +178,10 @@ mode = "smart"
 ### Core Features
 
 1. **Series/Round/Session Selection**
-   - Series dropdown (F1 only currently)
+   - Series dropdown: Formula 1 (Jolpica, OpenF1 fallback), Formula 2, Formula 3 and Formula E (TheSportsDB via `/api/schedule/{series}`)
    - Round dropdown shows all races in current season with dates
-   - Session dropdown shows FP1-3, Sprint/Qualifying/Race with times
+   - Session dropdown shows each series' sessions with times (F1: FP1-3, Sprint/Qualifying/Race; others: the session names TheSportsDB lists, e.g. Practice, Sprint Race, Feature Race)
+   - TheSportsDB must be credited as the data source whenever its data is shown (sidebar credit line)
 
 2. **Map Display**
    - Centred on selected circuit
@@ -199,7 +204,7 @@ mode = "smart"
    - Hidden if target time has passed or session is live
 
 5. **URL Routing**
-   - Format: `/f1/{round}/{session}`
+   - Format: `/{series}/{round}/{session}` (e.g. `/f1/3/race`, `/f2/13/feature-race`)
    - Shareable links
    - Browser back/forward support
 
@@ -239,6 +244,7 @@ mode = "smart"
 | Endpoint        | Purpose                                                                                                      |
 | --------------- | ------------------------------------------------------------------------------------------------------------ |
 | `/api/f1/*`     | Proxies to Jolpica F1 API with 24-hour edge caching; serves a 30-day last-known-good copy if Jolpica fails   |
+| `/api/schedule/{series}` | F2/F3/Formula E season (`f2`, `f3`, `fe`) built round by round from TheSportsDB, with at most 10 upstream calls per request, a 20/minute per-isolate throttle and a 60-second pause after a 429. Returns Ergast-shaped races with a `sessions` array and `complete: false` (cached 1 minute) while still filling; complete schedules are cached 15 minutes |
 | `/api/radar`    | LibreWXR radar metadata (RainViewer fallback), normalised with `provider` and `maxZoom`, 1-minute caching; serves a 30-minute last-known-good copy if both fail |
 | `/api/tiles/*`  | Proxies LibreWXR radar/satellite tiles (and `/rainviewer/...` fallback tiles) with 2-hour edge caching; nowcast tiles 5 minutes, satellite tiles 12 hours |
 | `/api/alerts`   | Proxies LibreWXR weather alerts for `?lat=&lon=` (±2° box) with 5-minute caching and a 1-hour last-known-good copy (expired alerts dropped); output is sanitised GeoJSON |
@@ -261,7 +267,8 @@ mode = "smart"
 2. **LibreWXR Public Instance** - Best-effort with no published uptime or rate limits, which is why RainViewer stays as a fallback. The nowcast is experimental, lightning only covers the Americas, and radar coverage outside the US, Canada, Europe, Japan and parts of Asia comes from satellite estimates and model data.
 3. **Radar Opacity** - Tiles must be added with small opacity (0.01) initially to trigger loading.
 4. **F1 API Rate Limits** - Edge caching via Worker mitigates this.
-5. **Current Weather Rate Limits** - The live current weather widget triggers an Open-Meteo API call per circuit change, which may hit 429 rate limits during high traffic.
+5. **TheSportsDB Free Tier** - 30 requests/minute and only 15 events from the season endpoint, so `/api/schedule/{series}` builds a season over a few requests (nearest the next round first) and the client re-fetches partial schedules. Its data has gaps: F3 rounds and some late-season F2 rounds list only races, some Formula E rounds have no venue (no coordinates), and only venues F1 also races on get a track outline (F2/F3 only; Formula E runs different layouts).
+6. **Current Weather Rate Limits** - The live current weather widget triggers an Open-Meteo API call per circuit change, which may hit 429 rate limits during high traffic.
 
 ---
 

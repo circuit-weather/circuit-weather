@@ -91,6 +91,7 @@ Il browser può connettersi direttamente ad alcuni servizi per mappe, tile e wid
 ### Fonti dati (proxy)
 
 - **Jolpica F1:** (cache edge di 24 ore; un’ultima copia valida viene conservata fino a 30 giorni come riserva se la fonte non è disponibile).
+- **TheSportsDB:** Calendario e dati dei circuiti di Formula 2, Formula 3 e Formula E (aggiornati da ogni ora a ogni mese in base alla vicinanza di ciascun round; l’ultima copia ottenuta viene conservata fino a 180 giorni come riserva).
 - **GitHub (bacinger/f1-circuits):** (cache edge di 24 ore).
 - **LibreWXR:** Metadati radar (cache di 1 minuto), tile radar (cache edge di 2 ore; tile di previsione 5 minuti), tile satellitari (cache edge di 12 ore) e allerte meteo (cache di 5 minuti). Copie di riserva di breve durata dei metadati (30 minuti) e delle allerte (1 ora) vengono conservate nel caso LibreWXR non sia disponibile.
 - **RainViewer:** Metadati radar (cache di 1 minuto) e tile (cache edge di 2 ore).
@@ -109,6 +110,7 @@ Preferenze salvate localmente nel browser:
 - **radarArrows, radarCells, radarLightning, radarSatellite:** `true` o `false` (ricorda quali livelli radar aggiuntivi sono abilitati)
 - **weatherAlerts:** `true` o `false` (ricorda se le allerte meteo sono visibili)
 - **f1_schedule_cache:** memorizza i dati del calendario F1 (cache di 7 giorni)
+- **series_schedule_cache:** memorizza i dati del calendario di Formula 2, Formula 3 e Formula E (cache di 7 giorni; 5 minuti mentre il calendario è ancora in caricamento)
 
 Questi dati restano sul tuo dispositivo e non vengono inviati ai nostri server.
 

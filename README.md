@@ -13,14 +13,14 @@ This web app is completely and unashamedly vibe coded primarily using Google ant
 
 ## What it does
 
-The site provides a live weather radar overlay on top of the circuit map. You can see past weather movement and a short rain forecast on the radar, official weather warnings near the circuit, and a weather forecast card provides a short-term forecast to predict if rain is incoming. It automatically loads the schedule for the current F1 season, allowing you to jump between different rounds and sessions (like Qualifying or the Race).
+The site provides a live weather radar overlay on top of the circuit map. You can see past weather movement and a short rain forecast on the radar, official weather warnings near the circuit, and a weather forecast card provides a short-term forecast to predict if rain is incoming. It automatically loads the schedule for the current F1 season, allowing you to jump between different rounds and sessions (like Qualifying or the Race), and you can switch to Formula 2, Formula 3 or Formula E.
 
 Key features include:
 
 - **Live Radar:** Visualise rain moving across the track with a 2-hour history and a 1-hour rain forecast, zoomable right down to the circuit.
 - **Weather Warnings:** See official severe weather warnings near the circuit on the map and in the sidebar.
 - **Radar Layers:** Optionally add storm motion arrows, storm cells, lightning, satellite clouds and alternative radar colour schemes.
-- **Race Schedule:** Browse all circuits from the current F1 season with session start times.
+- **Race Schedule:** Browse all circuits from the current Formula 1, Formula 2, Formula 3 and Formula E seasons with session start times.
 - **Distance Markers:** Toggle range circles to gauge how far the rain is from the track (in km or miles).
 - **Theme Support:** Automatically adapts to your system's dark or light mode, or you can toggle it manually.
 - **Deep Linking:** Navigate directly to a specific race or session via the URL.
@@ -36,7 +36,7 @@ The application is built with vanilla HTML, CSS, and native ES modules, keeping 
 
 The frontend is organised into small, maintainable modules located in `public/src/`. It uses native browser support for ES modules (`import`/`export`), which means there is **no build step** required. The files are served directly as-is, making the development workflow extremely simple.
 
-External API and asset requests (Jolpica F1, LibreWXR and RainViewer, GitHub for track layouts, Unpkg for Leaflet assets, and Mapbox CDN for Mapbox GL JS assets) are proxied through a **Cloudflare Worker** to cache data at the edge, enforce strict Content Security Policy (CSP), and protect user privacy. Weather forecasts are fetched directly from Open-Meteo by the client to ensure reliability, and fallback F1 schedule data is fetched directly from OpenF1 by the client to bypass datacenter IP blocks. Optimised **512px tile caching** is used to reduce request volume by 75% compared to standard implementations.
+External API and asset requests (Jolpica F1, TheSportsDB, LibreWXR and RainViewer, GitHub for track layouts, Unpkg for Leaflet assets, and Mapbox CDN for Mapbox GL JS assets) are proxied through a **Cloudflare Worker** to cache data at the edge, enforce strict Content Security Policy (CSP), and protect user privacy. Weather forecasts are fetched directly from Open-Meteo by the client to ensure reliability, and fallback F1 schedule data is fetched directly from OpenF1 by the client to bypass datacenter IP blocks. Optimised **512px tile caching** is used to reduce request volume by 75% compared to standard implementations.
 
 The primary map tiles and rendering are provided by Mapbox. When falling back to Leaflet, map tiles are provided by Carto (based on OpenStreetMap data), ensuring a clean look that works well with the weather overlays.
 
@@ -46,6 +46,7 @@ Huge thanks to the free APIs and data sources that make this possible:
 
 - **[Jolpica F1](https://jolpi.ca/)** for the race data.
 - **[OpenF1](https://openf1.org/)** for the fallback race data.
+- **[TheSportsDB](https://www.thesportsdb.com/)** for the Formula 2, Formula 3 and Formula E race data.
 - **[LibreWXR](https://librewxr.net/)** for the weather radar, rain nowcast, satellite imagery, lightning, storm cells and weather warnings (data CC BY 4.0).
 - **[RainViewer](https://www.rainviewer.com/)** for the backup weather radar.
 - **[Open-Meteo](https://open-meteo.com/)** for the weather forecasts.

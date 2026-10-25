@@ -5,6 +5,7 @@ export const ko = {
     sponsor: "스폰서",
   },
   common: {
+    scheduleData: "일정 데이터:",
     countryFlagFallback: "국기",
     countryFlag: "{{country}} 국기",
     github: "GitHub에서 소스 코드 보기",
@@ -26,8 +27,10 @@ export const ko = {
     switchToDark: "다크 모드로 전환",
   },
   controls: {
-    onlyF1Supported: "현재 포뮬러 1만 지원됩니다",
     f1: "포뮬러 1",
+    f2: "포뮬러 2",
+    f3: "포뮬러 3",
+    fe: "포뮬러 E",
     series: "시리즈",
     round: "라운드",
     roundLabel: "R{{round}}: {{name}} ({{date}})",

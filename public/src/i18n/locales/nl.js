@@ -5,6 +5,7 @@ export const nl = {
     sponsor: "Sponsor",
   },
   common: {
+    scheduleData: "Kalendergegevens:",
     countryFlagFallback: "Landvlag",
     countryFlag: "Vlag van {{country}}",
     github: "Bekijk broncode op GitHub",
@@ -26,8 +27,10 @@ export const nl = {
     switchToDark: "Overschakelen naar donkere modus",
   },
   controls: {
-    onlyF1Supported: "Alleen de Formule 1 wordt momenteel ondersteund",
     f1: "Formule 1",
+    f2: "Formule 2",
+    f3: "Formule 3",
+    fe: "Formule E",
     series: "Serie",
     round: "Ronde",
     roundLabel: "R{{round}}: {{name}} ({{date}})",

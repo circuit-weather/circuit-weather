@@ -20,6 +20,11 @@ export function getRaceEndTime(race) {
     if (raceSession && raceSession.date && raceSession.time) {
         end = new Date(`${raceSession.date}T${raceSession.time}`);
         end.setHours(end.getHours() + CONFIG.RACE_DURATION_BUFFER_HOURS);
+    } else if (race.date && race.time) {
+        // No session called 'race' (e.g. the F2/F3 Feature Race): the round's own
+        // date/time is its headline race
+        end = new Date(`${race.date}T${race.time}`);
+        end.setHours(end.getHours() + CONFIG.RACE_DURATION_BUFFER_HOURS);
     } else {
         // Fallback if no time (shouldn't happen for recent races)
         end = new Date(race.date);

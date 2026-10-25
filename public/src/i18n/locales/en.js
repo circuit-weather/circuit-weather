@@ -5,6 +5,7 @@ export const en = {
     sponsor: "Sponsor",
   },
   common: {
+    scheduleData: "Schedule data:",
     countryFlagFallback: "Country flag",
     countryFlag: "{{country}} flag",
     github: "View Source Code on GitHub",
@@ -26,8 +27,10 @@ export const en = {
     switchToDark: "Switch to dark mode",
   },
   controls: {
-    onlyF1Supported: "Only Formula 1 is currently supported",
     f1: "Formula 1",
+    f2: "Formula 2",
+    f3: "Formula 3",
+    fe: "Formula E",
     series: "Series",
     round: "Round",
     roundLabel: "R{{round}}: {{name}} ({{date}})",

@@ -796,6 +796,21 @@ body {
     margin-top: 0.1rem;
 }
 
+.schedule-credit {
+    padding: var(--spacing-xs) var(--spacing-md);
+    border-top: 1px solid var(--color-border);
+    font-size: 0.7rem;
+    color: var(--color-text-secondary);
+}
+
+.schedule-credit[hidden] {
+    display: none;
+}
+
+.schedule-credit a {
+    color: inherit;
+}
+
 .sidebar-footer {
     padding: var(--spacing-sm) var(--spacing-md);
     border-top: 1px solid var(--color-border);
