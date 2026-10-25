@@ -11,7 +11,9 @@
     --color-text: #0f172a;
     --color-text-secondary: #64748b;
     --color-border: #e2e8f0;
-    --color-forecast-track: #dbeafe;
+    --color-forecast-track: #93c5fd;
+    --color-forecast-text: #1d4ed8;
+    --color-live-text: #c40500;
     /* Light blue for forecast */
     --color-primary: #e10600;
     --color-primary-hover: #b30500;
@@ -63,7 +65,9 @@
     --color-text: #f1f5f9;
     --color-text-secondary: #94a3b8;
     --color-border: #334155;
-    --color-forecast-track: #1e40af;
+    --color-forecast-track: #2563eb;
+    --color-forecast-text: #93c5fd;
+    --color-live-text: #ff6b5b;
     /* Dark blue for forecast */
     --sidebar-bg: rgba(30, 41, 59, 0.92);
     --color-range-circle: #ff6b5b;
@@ -461,11 +465,6 @@ body {
 .alert-item summary:hover,
 .alert-link:hover {
     color: var(--color-primary);
-}
-
-.alert-link {
-    display: inline-block;
-    margin-bottom: 2px;
 }
 
 .alert-popup .alert-link {
@@ -1160,12 +1159,56 @@ body {
     font-variant-numeric: tabular-nums;
 }
 
+/* The frame being shown is the main reading; the range ends are secondary */
+.radar-time {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: var(--color-text);
+}
+
 .radar-relative {
-    font-size: 0.6rem;
+    font-size: 0.7rem;
     text-align: center;
     color: var(--color-text-secondary);
     margin-top: 1px;
     width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.radar-relative[data-state="live"] {
+    color: var(--color-live-text);
+    font-weight: 600;
+}
+
+.radar-relative[data-state="forecast"] {
+    color: var(--color-forecast-text);
+    font-weight: 600;
+}
+
+.radar-slider-wrap {
+    position: relative;
+    display: flex;
+    align-items: center;
+    height: 14px;
+}
+
+/* Marks "now" (the latest observed frame); forecast frames sit to its right.
+   WeatherRadar.updateSlider() sets its left offset. */
+.radar-now-marker {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    margin-left: -1px;
+    background: var(--color-text-secondary);
+    border-radius: 1px;
+    pointer-events: none;
+}
+
+.radar-now-marker[hidden] {
+    display: none;
 }
 
 /* Radar Speed Button */

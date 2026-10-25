@@ -761,13 +761,13 @@ describe('CircuitWeatherApp Pure Methods', () => {
             await app.selectSession('race');
             expect(app.countdown.start).toHaveBeenCalledWith(
                 expect.any(Date),
-                'Bahrain Grand Prix - Race'
+                'Race · Bahrain Grand Prix'
             );
         });
 
         it('sets radar session time', async () => {
             await app.selectSession('race');
-            expect(app.radar.setSessionTime).toHaveBeenCalledWith(expect.any(Date));
+            expect(app.radar.setSessionTime).toHaveBeenCalledWith(expect.any(Date), expect.any(String));
         });
 
         it('loads radar data', async () => {

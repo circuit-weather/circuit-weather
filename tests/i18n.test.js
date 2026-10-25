@@ -30,7 +30,7 @@ describe('i18n', () => {
         i18n.init();
 
         expect(i18n.locale).toBe('es');
-        expect(i18n.t('controls.session')).toBe('Sesion');
+        expect(i18n.t('controls.session')).toBe('Sesión');
     });
 
     it('falls back to english for unsupported locales', () => {

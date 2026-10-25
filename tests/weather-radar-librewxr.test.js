@@ -179,6 +179,25 @@ describe('WeatherRadar with LibreWXR', () => {
         expect(map._layers.has('radar-layer-2')).toBe(true);
     });
 
+    it('marks "now" on the slider and colours the forecast part of the track', async () => {
+        document.body.innerHTML = '<input id="radarSlider" type="range"><span id="radarNowMarker" hidden></span>';
+        radar = new WeatherRadar(createLeafletMap());
+        await radar.fetchAndFilter();
+        radar.updateSlider();
+
+        const marker = document.getElementById('radarNowMarker');
+        expect(marker.hidden).toBe(false);
+        // Latest observed frame is index 1 of 3 frames
+        expect(marker.style.left).toMatch(/^calc\(6px \+ .*0\.5/);
+        expect(document.getElementById('radarSlider').style.background).toContain('var(--color-forecast-track)');
+
+        // No forecast frames: no marker, plain track
+        radar.pastFrameCount = radar.frames.length;
+        radar.updateSlider();
+        expect(marker.hidden).toBe(true);
+        document.body.innerHTML = '';
+    });
+
     it('toggles the satellite layer beneath the radar', async () => {
         const map = createMapboxMap();
         radar = new WeatherRadar(map);

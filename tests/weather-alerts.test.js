@@ -11,7 +11,7 @@ const alert = (props) => ({
 });
 
 const ALERTS = [
-    alert({ title: 'Minor thing', severity: 'minor' }),
+    alert({ title: 'Minor thing', severity: 'minor', uri: 'https://example.org/minor' }),
     alert({
         title: 'Big storm',
         severity: 'severe',
@@ -104,10 +104,14 @@ describe('WeatherAlerts', () => {
         expect(link.href).toBe('https://example.org/cap.xml');
         expect(link.rel).toBe('noopener noreferrer');
 
+        expect(storm.querySelector('.alert-until').textContent).toMatch(/· Source$/);
+        expect(items[1].querySelector('.alert-until').textContent).toBe('Source');
+
         const odd = items[2];
         expect(odd.querySelector('.alert-severity').className).toContain('alert-severity--unknown');
         expect(odd.querySelector('a')).toBeNull();
         expect(odd.querySelector('time')).toBeNull();
+        expect(odd.querySelector('.alert-until')).toBeNull();
         expect(odd.querySelector('details')).toBeNull();
 
         // Re-renders on language change

@@ -181,7 +181,7 @@ mode = "smart"
    - Live radar tiles from LibreWXR (RainViewer V2-compatible API), with RainViewer as an automatic fallback
    - Animated playback of past 2 hours plus LibreWXR's experimental 1-hour nowcast (forecast frames are marked on the slider)
    - Timeline slider (adaptive range), starting on the latest observed frame
-   - Session-relative time display ("5m before", "10m after")
+   - Playback label relative to now ("20 min ago", "Live", "Forecast +20 min"), plus the selected session when it is within 6 hours ("35 min before Race", "1 h 10 min into Race")
    - Provider zoom limits come from `/api/radar` (`maxZoom`: 12 for LibreWXR, 7 for RainViewer)
    - Optional LibreWXR extras: colour schemes, storm motion arrows, storm cells, lightning (Americas only) and satellite clouds
    - Attribution: LibreWXR data is CC BY 4.0 and must be credited on the map (plus "Radar-DPC" for Italian data)

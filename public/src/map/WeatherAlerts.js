@@ -4,8 +4,10 @@ import { i18n } from '../i18n/index.js';
 const SOURCE_ID = 'weather-alerts-source';
 const FILL_LAYER_ID = 'weather-alerts-fill';
 const LINE_LAYER_ID = 'weather-alerts-line';
-// Warning areas often overlap, so keep the fill faint; the outline carries the colour
-const ALERT_FILL_OPACITY = 0.02;
+// Warning areas often overlap (nine stacked areas tinted the whole map at São
+// Paulo), so they are drawn as outlines. The transparent fill still catches
+// clicks/taps for the popup.
+const ALERT_FILL_OPACITY = 0;
 
 // CAP severity → colour (shared by the map polygons and the list badges)
 export const SEVERITY_COLOURS = Object.freeze({
@@ -190,7 +192,7 @@ export class WeatherAlerts {
             id: LINE_LAYER_ID,
             type: 'line',
             source: SOURCE_ID,
-            paint: { 'line-color': colour, 'line-width': 1.5, 'line-opacity': 0.8 }
+            paint: { 'line-color': colour, 'line-width': 2, 'line-opacity': 0.9 }
         }, beforeId);
         this.map.on('click', FILL_LAYER_ID, this.handleMapClick);
         this.hasMapboxLayers = true;
@@ -200,7 +202,7 @@ export class WeatherAlerts {
         this.leafletLayer = L.geoJSON(collection, {
             style: (feature) => {
                 const colour = SEVERITY_COLOURS[WeatherAlerts.severityOf(feature)];
-                return { color: colour, weight: 1.5, opacity: 0.8, fillColor: colour, fillOpacity: ALERT_FILL_OPACITY };
+                return { color: colour, weight: 2, opacity: 0.9, fillColor: colour, fillOpacity: ALERT_FILL_OPACITY };
             },
             onEachFeature: (feature, layer) => {
                 layer.bindPopup(() => this.createPopupContent(feature));
@@ -300,17 +302,18 @@ export class WeatherAlerts {
             fragment.appendChild(area);
         }
 
+        // Validity and source share one line to keep the list compact
+        const meta = document.createElement('p');
+        meta.className = 'alert-until';
+
         const expiryDate = expires ? new Date(expires) : null;
         if (expiryDate && !Number.isNaN(expiryDate.getTime())) {
-            const until = document.createElement('p');
-            until.className = 'alert-until';
             const time = document.createElement('time');
             time.setAttribute('datetime', expiryDate.toISOString());
             time.textContent = new Intl.DateTimeFormat(i18n.locale, {
                 weekday: 'short', hour: '2-digit', minute: '2-digit', hour12: false
             }).format(expiryDate);
-            until.append(`${i18n.t('alerts.until')} `, time);
-            fragment.appendChild(until);
+            meta.append(`${i18n.t('alerts.until')} `, time);
         }
 
         if (WeatherAlerts.isSafeLink(uri)) {
@@ -320,9 +323,11 @@ export class WeatherAlerts {
             link.target = '_blank';
             link.rel = 'noopener noreferrer';
             link.textContent = i18n.t('alerts.source');
-            fragment.appendChild(link);
+            if (meta.childNodes.length) meta.append(' · ');
+            meta.appendChild(link);
         }
 
+        if (meta.childNodes.length) fragment.appendChild(meta);
         return fragment;
     }
 

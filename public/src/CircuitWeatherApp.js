@@ -1084,10 +1084,10 @@ export class CircuitWeatherApp {
             const sessionTime = new Date(`${session.date}T${session.time}`);
 
             // Start countdown
-            this.countdown.start(sessionTime, `${this.selectedRace.name} - ${session.name}`);
+            this.countdown.start(sessionTime, `${session.name} · ${this.selectedRace.name}`);
 
             // Set session time for radar relative display
-            this.radar.setSessionTime(sessionTime);
+            this.radar.setSessionTime(sessionTime, session.name);
 
             // Load radar and session forecast in parallel
             // Note: We don't force a "Live" weather update here, as that's handled by selectRound

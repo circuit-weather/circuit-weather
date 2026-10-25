@@ -167,20 +167,6 @@
                             <option value="" data-i18n="controls.selectRoundFirst">Select a round first</option>
                         </select>
                     </div>
-                    <div class="control-group control-group--units">
-                        <span id="unitsLabel" class="control-label" data-i18n="controls.units">Units</span>
-                        <div class="unit-toggle" id="unitToggle" role="group" aria-labelledby="unitsLabel">
-                            <button class="unit-option" data-unit="metric" type="button" aria-label="Kilometres"
-                                title="Kilometres" aria-pressed="false" data-i18n-attr="aria-label:controls.metricLabel,title:controls.metricLabel">km</button>
-                            <button class="unit-option active" data-unit="imperial" type="button" aria-label="Miles"
-                                title="Miles" aria-pressed="true" data-i18n-attr="aria-label:controls.imperialLabel,title:controls.imperialLabel">mi</button>
-                        </div>
-                    </div>
-                    <div class="control-group control-group--toggle">
-                        <span id="windOverlayLabel" class="control-label" data-i18n="controls.windOverlay">Wind overlay</span>
-                        <button class="pref-switch" id="windOverlayToggle" type="button" role="switch"
-                            aria-checked="false" aria-labelledby="windOverlayLabel"></button>
-                    </div>
                 </section>
 
                 <!-- Race Info Banner -->
@@ -256,14 +242,22 @@
                     <p data-i18n="forecast.selectSessionPrompt">Select a session to view forecast</p>
                 </section>
 
-                <!-- Radar layers (storm overlays, satellite and warnings come from LibreWXR) -->
+                <!-- Map options: units, wind, and radar layers (storm overlays, satellite and warnings come from LibreWXR) -->
                 <section class="control-section control-section--layers" aria-labelledby="layersHeading">
-                    <h2 class="control-section-heading" id="layersHeading" data-i18n="layers.heading">Radar layers</h2>
-                    <div class="control-group">
-                        <label for="radarColourSelect" data-i18n="layers.colourScheme">Radar colours</label>
-                        <select id="radarColourSelect" class="select" disabled aria-disabled="true">
-                            <option value="2">Universal Blue</option>
-                        </select>
+                    <h2 class="control-section-heading" id="layersHeading" data-i18n="layers.heading">Map options</h2>
+                    <div class="control-group control-group--units">
+                        <span id="unitsLabel" class="control-label" data-i18n="controls.units">Units</span>
+                        <div class="unit-toggle" id="unitToggle" role="group" aria-labelledby="unitsLabel">
+                            <button class="unit-option" data-unit="metric" type="button" aria-label="Kilometres"
+                                title="Kilometres" aria-pressed="false" data-i18n-attr="aria-label:controls.metricLabel,title:controls.metricLabel">km</button>
+                            <button class="unit-option active" data-unit="imperial" type="button" aria-label="Miles"
+                                title="Miles" aria-pressed="true" data-i18n-attr="aria-label:controls.imperialLabel,title:controls.imperialLabel">mi</button>
+                        </div>
+                    </div>
+                    <div class="control-group control-group--toggle">
+                        <span id="windOverlayLabel" class="control-label" data-i18n="controls.windOverlay">Wind overlay</span>
+                        <button class="pref-switch" id="windOverlayToggle" type="button" role="switch"
+                            aria-checked="false" aria-labelledby="windOverlayLabel"></button>
                     </div>
                     <div class="control-group control-group--toggle">
                         <span id="weatherAlertsToggleLabel" class="control-label" data-i18n="layers.warnings">Weather warnings</span>
@@ -292,6 +286,12 @@
                             aria-describedby="radarLightningHint"></button>
                     </div>
                     <p class="control-hint" id="radarLightningHint" data-i18n="layers.lightningHint">Lightning data covers the Americas only.</p>
+                    <div class="control-group control-group--select">
+                        <label for="radarColourSelect" data-i18n="layers.colourScheme">Radar colours</label>
+                        <select id="radarColourSelect" class="select" disabled aria-disabled="true">
+                            <option value="2">Universal Blue</option>
+                        </select>
+                    </div>
                 </section>
             </nav>
 
@@ -402,8 +402,11 @@
                     </svg>
                 </button>
                 <div class="radar-timeline">
-                    <input type="range" id="radarSlider" class="radar-slider" min="0" max="100" value="100"
-                        aria-label="Radar playback position" data-i18n-attr="aria-label:radar.playbackPosition">
+                    <div class="radar-slider-wrap">
+                        <input type="range" id="radarSlider" class="radar-slider" min="0" max="100" value="100"
+                            aria-label="Radar playback position" data-i18n-attr="aria-label:radar.playbackPosition">
+                        <span class="radar-now-marker" id="radarNowMarker" aria-hidden="true" hidden></span>
+                    </div>
                     <!-- Scout: Upgraded generic span elements to semantic time tags to help search engines and assistive technologies better understand and parse temporal data within the radar timeline. -->
                     <div class="radar-time-info">
                         <time class="radar-time-start" id="radarTimeStart">--:--</time>

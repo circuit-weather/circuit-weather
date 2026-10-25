@@ -7,6 +7,9 @@ import { RadarPolling } from './RadarPolling.js';
 import { RadarReconcile } from './RadarReconcile.js';
 import { SatelliteLayer } from './SatelliteLayer.js';
 
+// How long before a session the playback label mentions it ("35 min before Race")
+const SESSION_CONTEXT_BEFORE_MIN = 6 * 60;
+
 export class WeatherRadar {
     /**
      * @param {Object} map - Mapbox GL or Leaflet map
@@ -27,6 +30,7 @@ export class WeatherRadar {
         this.visibleLayerIndex = -1;
         this.currentFrame = 0;
         this.sessionTime = null;
+        this.sessionName = null;
         this.pastFrameCount = 0;
         this.pendingFrames = null;
 
@@ -86,6 +90,7 @@ export class WeatherRadar {
             slider: document.getElementById('radarSlider'),
             time: document.getElementById('radarTime'),
             relative: document.getElementById('radarRelative'),
+            nowMarker: document.getElementById('radarNowMarker'),
             timeStart: document.getElementById('radarTimeStart'),
             timeEnd: document.getElementById('radarTimeEnd'),
             controls: document.getElementById('radarControls')
@@ -152,8 +157,13 @@ export class WeatherRadar {
         this.clearLayers();
     }
 
-    setSessionTime(sessionTime) {
+    /**
+     * @param {Date|null} sessionTime
+     * @param {string|null} [sessionName] - e.g. "Race", used in the playback label
+     */
+    setSessionTime(sessionTime, sessionName = null) {
         this.sessionTime = sessionTime;
+        this.sessionName = sessionName;
     }
 
     /**
@@ -707,63 +717,54 @@ export class WeatherRadar {
     }
 
     /**
-     * Calculates session-relative time strings if within the valid window.
+     * Describes a frame relative to now: "Live", "20 min ago" or "Forecast +20 min".
+     * Forecast frames are measured from the latest observed frame, so the
+     * nowcast reads as minutes ahead of the live radar.
+     * @param {number} timestamp - Unix timestamp in seconds
      * @param {number} effectiveTimeMs - Effective frame time in milliseconds
-     * @returns {{ relativeText: string, accessibleText: string } | null}
+     * @returns {{ text: string, accessibleText: string, state: 'live'|'past'|'forecast' }}
      */
-    getSessionRelativeTimeInfo(effectiveTimeMs) {
-        if (this.sessionTime === null) return null;
+    getNowRelativeInfo(timestamp, effectiveTimeMs) {
+        const latestPast = this.frames[this.pastFrameCount - 1];
+        const isForecast = latestPast ? timestamp > latestPast.time : timestamp - (Date.now() / 1000) > 60;
 
-        const diff = (effectiveTimeMs - this.sessionTime.getTime()) / CONFIG.ONE_MINUTE_MS;
-        // Only show session-relative if the session is within 7 days (10080 minutes) of the frame's effective time
-        if (Math.abs(diff) > 7 * 24 * 60) {
-            return null;
+        if (isForecast) {
+            const minutesAhead = latestPast
+                ? Math.round((timestamp - latestPast.time) / 60)
+                : Math.round((timestamp * 1000 - Date.now()) / CONFIG.ONE_MINUTE_MS);
+            const text = i18n.t('radar.forecastIn', { duration: this.formatDuration(minutesAhead) });
+            return { text, accessibleText: text, state: 'forecast' };
         }
 
-        const absDiff = Math.abs(Math.round(diff));
-        const durationText = this.formatDuration(absDiff);
-
-        let relativeText = '';
-        if (Math.abs(diff) < 1) {
-            relativeText = i18n.t('radar.sessionStart');
-        } else if (diff < 0) {
-            relativeText = i18n.t('radar.beforeSession', { duration: durationText });
-        } else {
-            relativeText = i18n.t('radar.afterSession', { duration: durationText });
+        const minutesAgo = Math.round((Date.now() - effectiveTimeMs) / CONFIG.ONE_MINUTE_MS);
+        if (minutesAgo < 1) {
+            return { text: i18n.t('radar.live'), accessibleText: i18n.t('radar.liveAria'), state: 'live' };
         }
-
-        return { relativeText, accessibleText: relativeText };
+        const text = i18n.t('radar.ago', { duration: this.formatDuration(minutesAgo) });
+        return { text, accessibleText: text, state: 'past' };
     }
 
     /**
-     * Calculates standard real-time relative display strings (forecast / live / ago).
-     * @param {number} timestamp - Unix timestamp in seconds
+     * Describes a frame relative to the selected session, only while the session
+     * is close enough for that to help: "35 min before Race", "Race start",
+     * "1 h 10 min into Race".
      * @param {number} effectiveTimeMs - Effective frame time in milliseconds
-     * @returns {{ relativeText: string, accessibleText: string }}
+     * @returns {string|null}
      */
-    getStandardRelativeTimeInfo(timestamp, effectiveTimeMs) {
-        const diffSec = timestamp - (Date.now() / 1000);
+    getSessionContext(effectiveTimeMs) {
+        if (!this.sessionTime) return null;
 
-        if (diffSec > 60) {
-            const forecastText = i18n.t('radar.forecast');
-            return { relativeText: forecastText, accessibleText: forecastText };
+        const diff = Math.round((effectiveTimeMs - this.sessionTime.getTime()) / CONFIG.ONE_MINUTE_MS);
+        if (diff < -SESSION_CONTEXT_BEFORE_MIN || diff > CONFIG.RACE_DURATION_BUFFER_HOURS * 60) {
+            return null;
         }
 
-        // Palette UX: For past frames when no session is selected, show "X mins ago"
-        const diffMin = Math.round((Date.now() - effectiveTimeMs) / CONFIG.ONE_MINUTE_MS);
-
-        if (diffMin < 1) {
-            return {
-                relativeText: i18n.t('radar.live'),
-                accessibleText: i18n.t('radar.liveAria')
-            };
-        }
-
-        const relativeText = diffMin === 1
-            ? i18n.t('radar.minutesAgo', { count: diffMin })
-            : i18n.t('radar.minutesAgoPlural', { count: diffMin });
-
-        return { relativeText, accessibleText: relativeText };
+        const session = this.sessionName || i18n.t('radar.sessionFallback');
+        if (diff === 0) return i18n.t('radar.namedSessionStart', { session });
+        const duration = this.formatDuration(Math.abs(diff));
+        return diff < 0
+            ? i18n.t('radar.beforeNamedSession', { duration, session })
+            : i18n.t('radar.intoNamedSession', { duration, session });
     }
 
     updateTimeDisplay(timestamp) {
@@ -779,23 +780,19 @@ export class WeatherRadar {
         // Scout: Added datetime attribute to <time> element for semantic SEO value and machine-readability
         this.ui.time.setAttribute('datetime', date.toISOString());
 
-        let relativeText = '';
-        let accessibleText = '';
+        const nowInfo = this.getNowRelativeInfo(timestamp, effectiveTimeMs);
+        const sessionContext = this.getSessionContext(effectiveTimeMs);
+        const relativeText = sessionContext ? `${nowInfo.text} · ${sessionContext}` : nowInfo.text;
+        const accessibleText = sessionContext ? `${nowInfo.accessibleText}, ${sessionContext}` : nowInfo.accessibleText;
 
         if (this.ui.relative) {
-            const timeInfo = this.getSessionRelativeTimeInfo(effectiveTimeMs) ||
-                this.getStandardRelativeTimeInfo(timestamp, effectiveTimeMs);
-
-            relativeText = timeInfo.relativeText;
-            accessibleText = timeInfo.accessibleText;
             this.ui.relative.textContent = relativeText;
+            this.ui.relative.setAttribute('data-state', nowInfo.state);
         }
 
         if (this.ui.slider) {
             // Palette A11y: Use full descriptive text for screen readers
-            const ariaSuffix = accessibleText || relativeText;
-            const ariaText = ariaSuffix ? `${timeStr}, ${ariaSuffix}` : timeStr;
-            this.ui.slider.setAttribute('aria-valuetext', ariaText);
+            this.ui.slider.setAttribute('aria-valuetext', `${timeStr}, ${accessibleText}`);
         }
     }
 
@@ -804,16 +801,24 @@ export class WeatherRadar {
             this.ui.slider.max = this.frames.length - 1;
             this.ui.slider.value = this.currentFrame;
 
-            // Create a visual split between past and forecast frames
-            if (this.frames.length > 1 && this.pastFrameCount > 0) {
-                const forecastStartIndex = this.pastFrameCount;
-                const splitPercentage = (forecastStartIndex / (this.frames.length - 1)) * 100;
+            // Split the track at "now" (the latest observed frame): forecast frames sit to its right
+            const hasForecast = this.frames.length > 1 && this.pastFrameCount > 0 && this.pastFrameCount < this.frames.length;
+            if (this.ui.nowMarker) {
+                this.ui.nowMarker.hidden = !hasForecast;
+            }
+            if (hasForecast) {
+                // Range inputs inset the thumb (12px) by half its width at each end
+                const nowPosition = (this.pastFrameCount - 1) / (this.frames.length - 1);
+                const split = `calc(6px + (100% - 12px) * ${nowPosition})`;
+                if (this.ui.nowMarker) {
+                    this.ui.nowMarker.style.left = split;
+                }
 
                 // Apply a gradient background to the slider track
                 this.ui.slider.style.background = `linear-gradient(to right,
                     var(--color-border) 0%,
-                    var(--color-border) ${splitPercentage}%,
-                    var(--color-forecast-track) ${splitPercentage}%,
+                    var(--color-border) ${split},
+                    var(--color-forecast-track) ${split},
                     var(--color-forecast-track) 100%)`;
             } else {
                 // Default style if no forecast frames
@@ -904,30 +909,15 @@ export class WeatherRadar {
     }
 
     /**
-     * Formats a duration in minutes into a readable string.
-     * Always includes minutes to prevent layout jumps during playback.
+     * Formats a duration in minutes compactly for the playback bar.
      * @param {number} totalMinutes
-     * @returns {string} e.g. "1 day 2 hours 30 minutes"
+     * @returns {string} e.g. "45 min", "2 h", "1 h 5 min"
      */
     formatDuration(totalMinutes) {
-        const days = Math.floor(totalMinutes / (24 * 60));
-        const hours = Math.floor((totalMinutes % (24 * 60)) / 60);
+        const hours = Math.floor(totalMinutes / 60);
         const minutes = totalMinutes % 60;
-
-        const parts = [];
-        if (days > 0) {
-            const dayLabel = days === 1 ? i18n.t('countdown.day') : i18n.t('countdown.dayPlural');
-            parts.push(`${days} ${dayLabel}`);
-        }
-        if (hours > 0) {
-            const hourLabel = hours === 1 ? i18n.t('countdown.hour') : i18n.t('countdown.hourPlural');
-            parts.push(`${hours} ${hourLabel}`);
-        }
-
-        // Always show minutes to prevent justification jumps in the UI
-        const minuteLabel = minutes === 1 ? i18n.t('countdown.minute') : i18n.t('countdown.minutePlural');
-        parts.push(`${minutes} ${minuteLabel}`);
-
-        return parts.join(' ');
+        if (hours === 0) return i18n.t('radar.durationMinutes', { minutes });
+        if (minutes === 0) return i18n.t('radar.durationHours', { hours });
+        return i18n.t('radar.durationHoursMinutes', { hours, minutes });
     }
 }
