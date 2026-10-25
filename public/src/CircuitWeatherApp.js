@@ -12,9 +12,11 @@ import { Router } from './routing/Router.js';
 import { MapManager } from './map/MapManager.js';
 import { ThemeManager } from './ui/ThemeManager.js';
 import { SidebarManager } from './ui/SidebarManager.js';
+import { SeoManager } from './ui/SeoManager.js';
+import { ForecastRenderer } from './ui/ForecastRenderer.js';
 import { getSessionStatus, getRoundStatus, formatStatusLabel } from './utils/status.js';
+import { getRaceEndTime, findFirstActiveRaceIndex, getGloballyNextSession } from './utils/schedule.js';
 import { i18n } from './i18n/index.js';
-import { getWindDirection } from './utils/wind.js';
 
 const sessionTimeFormatter = new Intl.DateTimeFormat(undefined, {
     weekday: 'short',
@@ -32,6 +34,7 @@ export class CircuitWeatherApp {
         this.sidebarManager = null;
         this.f1Api = new F1API();
         this.weatherClient = new WeatherClient();
+        this.forecastRenderer = new ForecastRenderer();
         this.radar = null;
         this.trackLayer = null;
         this.rangeCircles = null;
@@ -176,188 +179,36 @@ export class CircuitWeatherApp {
     }
 
     _createErrorIconSvg(svgNS = "http://www.w3.org/2000/svg") {
-        const svg = document.createElementNS(svgNS, "svg");
-        svg.setAttribute("viewBox", "0 0 24 24");
-        svg.setAttribute("fill", "none");
-        svg.setAttribute("stroke", "currentColor");
-        svg.setAttribute("stroke-width", "2");
-
-        const circle = document.createElementNS(svgNS, "circle");
-        circle.setAttribute("cx", "12");
-        circle.setAttribute("cy", "12");
-        circle.setAttribute("r", "10");
-
-        const line1 = document.createElementNS(svgNS, "line");
-        line1.setAttribute("x1", "12");
-        line1.setAttribute("y1", "8");
-        line1.setAttribute("x2", "12");
-        line1.setAttribute("y2", "12");
-
-        const line2 = document.createElementNS(svgNS, "line");
-        line2.setAttribute("x1", "12");
-        line2.setAttribute("y1", "16");
-        line2.setAttribute("x2", "12.01");
-        line2.setAttribute("y2", "16");
-
-        svg.appendChild(circle);
-        svg.appendChild(line1);
-        svg.appendChild(line2);
-        return svg;
+        return this.forecastRenderer.createErrorIconSvg(svgNS);
     }
 
     _createLoadingSpinnerSvg(svgNS = "http://www.w3.org/2000/svg") {
-        const btnSvg = document.createElementNS(svgNS, "svg");
-        btnSvg.setAttribute("aria-hidden", "true");
-        btnSvg.setAttribute("style", "width: 1rem; height: 1rem; margin-right: 0.5rem; animation: spin 1s linear infinite;");
-        btnSvg.setAttribute("viewBox", "0 0 24 24");
-        btnSvg.setAttribute("fill", "none");
-        btnSvg.setAttribute("stroke", "currentColor");
-        btnSvg.setAttribute("stroke-width", "2");
-
-        const path = document.createElementNS(svgNS, "path");
-        path.setAttribute("stroke-linecap", "round");
-        path.setAttribute("stroke-linejoin", "round");
-        path.setAttribute("d", "M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83");
-
-        btnSvg.appendChild(path);
-        return btnSvg;
+        return this.forecastRenderer.createLoadingSpinnerSvg(svgNS);
     }
 
     renderError(message) {
-        const sidebarContent = document.querySelector('.sidebar-content');
-        if (!sidebarContent) return;
-
-        sidebarContent.textContent = '';
-        const errorState = document.createElement('div');
-        errorState.className = 'error-state';
-
-        const errorIcon = document.createElement('div');
-        errorIcon.className = 'error-icon';
-        const svgNS = "http://www.w3.org/2000/svg";
-        errorIcon.appendChild(this._createErrorIconSvg(svgNS));
-        errorState.appendChild(errorIcon);
-
-        // The error heading uses h2 to maintain correct hierarchy under the h1 sidebar-header when replacing sidebar content.
-        const h2 = document.createElement('h2');
-        h2.setAttribute('data-i18n', 'errors.connectionFailed');
-        h2.textContent = i18n.t('errors.connectionFailed');
-        errorState.appendChild(h2);
-
-        const p = document.createElement('p');
-        p.textContent = message;
-        errorState.appendChild(p);
-
-        const btn = document.createElement('button');
-        btn.className = 'retry-btn';
-        btn.type = 'button';
-        btn.setAttribute('data-i18n', 'common.retry');
-        btn.setAttribute('data-i18n-attr', 'aria-label:errors.retryConnection');
-        btn.setAttribute('aria-label', i18n.t('errors.retryConnection'));
-        btn.textContent = i18n.t('common.retry');
-        errorState.appendChild(btn);
-
-        sidebarContent.appendChild(errorState);
-
-        btn.addEventListener('click', () => {
-            btn.disabled = true;
-            btn.setAttribute('aria-disabled', 'true');
-            // Palette UX: Add loading spinner to async submit button
-            btn.textContent = '';
-            btn.appendChild(this._createLoadingSpinnerSvg(svgNS));
-            btn.appendChild(document.createTextNode(i18n.t('common.retrying')));
-
-            btn.setAttribute('aria-label', i18n.t('errors.retryingConnection'));
-            window.location.reload();
-        });
+        return this.forecastRenderer.renderError(message);
     }
 
     /**
      * End of a race weekend's running, used to decide which round is "next".
-     *
-     * The result is memoised on the race object as a timestamp rather than a
-     * Date: a schedule's session times never change once parsed, and handing
-     * every caller a fresh Date keeps the cache safe from the in-place
-     * `setHours()` mutation this file uses elsewhere.
      */
     getRaceEndTime(race) {
-        if (!race) return new Date(NaN);
-        if (typeof race._endTimeMs === 'number') return new Date(race._endTimeMs);
-
-        let end;
-        const raceSession = Array.isArray(race.sessions) ? race.sessions.find(s => s.id === 'race') : null;
-        if (raceSession && raceSession.date && raceSession.time) {
-            end = new Date(`${raceSession.date}T${raceSession.time}`);
-            end.setHours(end.getHours() + CONFIG.RACE_DURATION_BUFFER_HOURS);
-        } else {
-            // Fallback if no time (shouldn't happen for recent races)
-            end = new Date(race.date);
-            end.setHours(end.getHours() + CONFIG.RACE_DAY_END_HOUR);
-        }
-
-        // An unparseable date yields NaN; leave it uncached so a later fix to
-        // the schedule data is picked up rather than frozen in.
-        if (!Number.isNaN(end.getTime())) {
-            Object.defineProperty(race, '_endTimeMs', {
-                value: end.getTime(),
-                enumerable: false,
-                writable: true,
-                configurable: true
-            });
-        } else {
-            delete race._endTimeMs;
-        }
-        return end;
+        return getRaceEndTime(race);
     }
 
     /**
      * Finds the index of the first race that has not yet ended.
-     * @param {Date} now - The current date/time.
-     * @returns {number} - The index of the first active race, or this.races.length if none.
      */
     _findFirstActiveRaceIndex(now) {
-        let low = 0;
-        let high = this.races.length - 1;
-        let firstActiveIndex = this.races.length;
-
-        while (low <= high) {
-            const mid = Math.floor((low + high) / 2);
-            if (this.getRaceEndTime(this.races[mid]) > now) {
-                firstActiveIndex = mid;
-                // Keep searching left for potentially earlier active races
-                high = mid - 1;
-            } else {
-                // Race has ended, search right
-                low = mid + 1;
-            }
-        }
-        return firstActiveIndex;
+        return findFirstActiveRaceIndex(this.races, now);
     }
 
     /**
      * Finds the overall next session in the entire season across all rounds.
-     * @param {Date} now - The current date/time.
-     * @returns {Object|null} - { round, sessionId } or null.
      */
     getGloballyNextSession(now) {
-        // Optimization: Races are chronologically ordered, use binary search
-        // to find the first race that hasn't ended yet to skip O(N) iteration
-        // and Date object instantiation for races entirely in the past.
-        // Deliberately scans every session of the first active race and all later races instead of
-        // assuming nextRace.sessions[0] is the next FUTURE session: session order is not guaranteed by
-        // the schedule APIs and sessions may be missing/malformed, so each is checked with getSessionStatus.
-        // The binary search above already removes past races; this loop is cheap. Do not 'optimise' it.
-        const firstActiveIndex = this._findFirstActiveRaceIndex(now);
-
-        for (let i = firstActiveIndex; i < this.races.length; i++) {
-            const race = this.races[i];
-            for (let j = 0; j < race.sessions.length; j++) {
-                const s = race.sessions[j];
-                if (getSessionStatus(s, now) === 'FUTURE') {
-                    return { round: race.round, sessionId: s.id };
-                }
-            }
-        }
-        return null;
+        return getGloballyNextSession(this.races, now);
     }
 
     autoSelectNextRound() {
@@ -661,209 +512,24 @@ export class CircuitWeatherApp {
         select.appendChild(fragment);
     }
 
-    /**
-     * Determines page title and description based on selected race and session.
-     * @private
-     * @returns {{title: string, desc: string}}
-     */
     _getPageTitleAndDesc() {
-        const defaultTitle = i18n.t('meta.defaultTitle');
-        const defaultDesc = i18n.t('meta.defaultDesc');
-
-        let title = defaultTitle;
-        let desc = defaultDesc;
-
-        if (this.selectedRace && this.selectedSession) {
-            // Specific session page: "Bahrain GP Qualifying Weather - Circuit Weather"
-            title = i18n.t('meta.sessionTitle', {
-                raceName: this.selectedRace.name,
-                sessionName: this.selectedSession.name,
-            });
-            desc = i18n.t('meta.sessionDesc', {
-                raceName: this.selectedRace.name,
-                sessionName: this.selectedSession.name,
-            });
-        } else if (this.selectedRace) {
-            // Race page: "Bahrain GP Weather - Circuit Weather"
-            title = i18n.t('meta.raceTitle', { raceName: this.selectedRace.name });
-            desc = i18n.t('meta.raceDesc', { raceName: this.selectedRace.name });
-        }
-        // If neither, defaults are preserved
-
-        return { title, desc };
+        return SeoManager.getPageTitleAndDesc(this.selectedRace, this.selectedSession);
     }
 
-    /**
-     * Updates document title and meta/canonical tags in head.
-     * @private
-     * @param {string} title
-     * @param {string} desc
-     */
     _updateMetaTags(title, desc) {
-        // Update Title: Crucial for primary SERP display and browser history
-        document.title = title;
-
-        // Bolt Optimization: Batch metadata updates in a single DOM traversal
-        // Prevents layout thrashing and reduces expensive querySelector calls (7x faster)
-        let child = document.head.firstElementChild;
-        while (child) {
-            const tag = child.tagName;
-            if (tag === 'META') {
-                const name = child.getAttribute('name');
-                const property = child.getAttribute('property');
-
-                if (name === 'description' || name === 'twitter:description' || property === 'og:description') {
-                    child.setAttribute('content', desc);
-                } else if (name === 'twitter:title' || property === 'og:title') {
-                    child.setAttribute('content', title);
-                } else if (name === 'twitter:url' || property === 'og:url') {
-                    child.setAttribute('content', window.location.href);
-                }
-            } else if (tag === 'LINK' && child.getAttribute('rel') === 'canonical') {
-                child.setAttribute('href', window.location.href);
-            }
-            child = child.nextElementSibling;
-        }
+        SeoManager.updateMetaTags(title, desc);
     }
 
-    /**
-     * Injects dynamic BreadcrumbList JSON-LD structured data.
-     * Scout: Improves SERP display by giving search engines clear navigational
-     * context for nested routes.
-     * @private
-     */
     _updateBreadcrumbJsonLd() {
-        let breadcrumbScript = document.getElementById('dynamic-breadcrumb-ld');
-        if (!breadcrumbScript) {
-            breadcrumbScript = document.createElement('script');
-            breadcrumbScript.id = 'dynamic-breadcrumb-ld';
-            breadcrumbScript.type = 'application/ld+json';
-            document.head.appendChild(breadcrumbScript);
-        }
-
-        const baseUrl = window.location.origin || 'https://circuit-weather.racing';
-        const breadcrumbs = {
-            "@context": "https://schema.org",
-            "@type": "BreadcrumbList",
-            "itemListElement": [
-                {
-                    "@type": "ListItem",
-                    "position": 1,
-                    "name": "Circuit Weather",
-                    "item": baseUrl
-                }
-            ]
-        };
-
-        if (this.selectedRace) {
-            breadcrumbs.itemListElement.push({
-                "@type": "ListItem",
-                "position": 2,
-                "name": this.selectedRace.name,
-                "item": `${baseUrl}/f1/${this.selectedRace.round}`
-            });
-
-            if (this.selectedSession) {
-                breadcrumbs.itemListElement.push({
-                    "@type": "ListItem",
-                    "position": 3,
-                    "name": this.selectedSession.name,
-                    "item": `${baseUrl}/f1/${this.selectedRace.round}/${this.selectedSession.id}`
-                });
-            }
-        }
-
-        // SEC: Sanitize JSON string for inline script injection to prevent XSS
-        breadcrumbScript.textContent = JSON.stringify(breadcrumbs)
-            .replace(/</g, '\\u003c')
-            .replace(/>/g, '\\u003e')
-            .replace(/&/g, '\\u0026');
+        SeoManager.updateBreadcrumbJsonLd(this.selectedRace, this.selectedSession);
     }
 
-    /**
-     * Injects or removes SportsEvent JSON-LD structured data for selected session.
-     * Scout: Improves rich snippets in SERP by providing explicit event details
-     * (SportsEvent) to search engines.
-     * @private
-     * @param {string} desc
-     */
     _updateEventJsonLd(desc) {
-        if (this.selectedRace && this.selectedSession && this.selectedSession.date && this.selectedSession.time) {
-            let jsonLdScript = document.getElementById('dynamic-json-ld');
-            if (!jsonLdScript) {
-                jsonLdScript = document.createElement('script');
-                jsonLdScript.id = 'dynamic-json-ld';
-                jsonLdScript.type = 'application/ld+json';
-                document.head.appendChild(jsonLdScript);
-            }
-
-            const startObj = new Date(`${this.selectedSession.date}T${this.selectedSession.time}`);
-            const sessionStart = startObj.toISOString();
-
-            // Scout: Calculate an estimated end time (2 hours after start) to satisfy search engine
-            // requirements for Event schema, preventing 'Missing field "endDate"' warnings in Rich Results.
-            const endObj = new Date(startObj.getTime() + 2 * 60 * 60 * 1000);
-            const sessionEnd = endObj.toISOString();
-
-            // Scout: sport, url and image give search engines richer context about the
-            // entity for better indexing.
-            const schema = {
-                "@context": "https://schema.org",
-                "@type": "SportsEvent",
-                "name": `${this.selectedRace.name} - ${this.selectedSession.name}`,
-                "description": desc,
-                "sport": "Formula 1",
-                "startDate": sessionStart,
-                "endDate": sessionEnd,
-                "eventStatus": "https://schema.org/EventScheduled",
-                "url": window.location.href,
-                "image": "https://circuit-weather.racing/icon-512.png",
-                // Scout: Added organizer entity to explicitly link the event to Formula 1 for knowledge graph integration.
-                "organizer": {
-                    "@type": "Organization",
-                    "name": "Formula 1",
-                    "url": "https://www.formula1.com"
-                },
-                "location": {
-                    "@type": "Place",
-                    "name": this.selectedRace.circuit ? this.selectedRace.circuit.circuitName : (this.selectedRace.location ? this.selectedRace.location.country : ""),
-                    "address": {
-                        "@type": "PostalAddress",
-                        "addressCountry": this.selectedRace.location ? this.selectedRace.location.country : ""
-                    },
-                    // Scout: Injected precise GeoCoordinates into the Place schema.
-                    // Value: Helps search engines exactly geolocate the event for better local search relevance and map integrations.
-                    "geo": {
-                        "@type": "GeoCoordinates",
-                        "latitude": this.selectedRace.location ? this.selectedRace.location.lat : "",
-                        "longitude": this.selectedRace.location ? this.selectedRace.location.long : ""
-                    }
-                }
-            };
-
-            // SEC: Sanitize JSON string for inline script injection to prevent XSS
-            jsonLdScript.textContent = JSON.stringify(schema)
-                .replace(/</g, '\\u003c')
-                .replace(/>/g, '\\u003e')
-                .replace(/&/g, '\\u0026');
-        } else {
-            // Remove the dynamic schema if no specific session is selected
-            const existingScript = document.getElementById('dynamic-json-ld');
-            if (existingScript && existingScript.parentNode) {
-                existingScript.parentNode.removeChild(existingScript);
-            }
-        }
+        SeoManager.updateEventJsonLd(this.selectedRace, this.selectedSession, desc);
     }
 
-    /**
-     * Updates the document title and metadata for SEO and browser history context.
-     * Dynamic titles and meta tags improve SERP visibility and rich social sharing.
-     */
     updatePageMetadata() {
-        const { title, desc } = this._getPageTitleAndDesc();
-        this._updateMetaTags(title, desc);
-        this._updateBreadcrumbJsonLd();
-        this._updateEventJsonLd(desc);
+        SeoManager.updatePageMetadata(this.selectedRace, this.selectedSession);
     }
 
     centreOnCircuit(lat, lng) {
@@ -1188,40 +854,15 @@ export class CircuitWeatherApp {
     }
 
     renderForecastSkeleton() {
-        const content = this.ui.forecastContent;
-        const unavailable = this.ui.forecastUnavailable;
-
-        if (unavailable) unavailable.style.display = 'none';
-        if (content) {
-            // Palette A11y: Mark region as busy during loading
-            content.setAttribute('aria-busy', 'true');
-            content.style.display = 'block';
-            content.textContent = '';
-            const template = document.getElementById('forecast-skeleton-template');
-            if (template && typeof template.cloneNode === 'function') {
-                 if (template.content) {
-                     content.appendChild(template.content.cloneNode(true));
-                 } else {
-                     const clone = template.cloneNode(true);
-                     while(clone.firstChild) {
-                         content.appendChild(clone.firstChild);
-                     }
-                 }
-            }
-        }
+        this.forecastRenderer.renderForecastSkeleton(this.ui.forecastContent, this.ui.forecastUnavailable);
     }
-
 
     renderForecast(weather, sessionTime, sessionId, overrideNow = null) {
         // Updates Sidebar Forecast Panel ONLY
-
-        // Guard: If no session is currently selected (e.g., user switched rounds while fetching),
-        // or if the session ID doesn't match the requested one, do not render.
         if (!this.selectedSession || (sessionId && this.selectedSession.id !== sessionId)) {
             return;
         }
 
-        // Palette A11y: Clear busy state
         const content = this.ui.forecastContent;
         if (content) content.removeAttribute('aria-busy');
 
@@ -1235,12 +876,8 @@ export class CircuitWeatherApp {
         if (content) content.style.display = 'block';
         if (unavailable) unavailable.style.display = 'none';
 
-        // Rebuild Dashboard HTML
-        // Note: We rebuild the entire dashboard here because renderForecastSkeleton() destroys
-        // the internal structure (including IDs), causing cached references to become detached.
-        const dashboard = this._createForecastDashboard(weather, sessionTime);
+        const dashboard = this.forecastRenderer.createForecastDashboard(weather, sessionTime, this.weatherClient);
 
-        // Inject into content
         if (content) {
             content.textContent = '';
             content.appendChild(dashboard);
@@ -1248,226 +885,35 @@ export class CircuitWeatherApp {
     }
 
     _renderUnavailableForecast(weather, content, unavailable, overrideNow) {
-        if (content) content.style.display = 'none';
-        if (unavailable) {
-            unavailable.style.display = 'block';
-
-            // Palette UX: Provide helpful guidance on when data will be available
-            const p = unavailable.querySelector('p');
-            if (p) {
-                if (weather.reason === 'too_far' && weather.availableFrom) {
-                    const now = overrideNow || new Date();
-                    if (weather.availableFrom > now) {
-                        const dateStr = weather.availableFrom.toLocaleDateString(undefined, {
-                            month: 'short',
-                            day: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit'
-                        });
-                        p.textContent = i18n.t('forecast.availableFrom', { date: dateStr });
-                    } else {
-                        p.textContent = i18n.t('forecast.availableSoon');
-                    }
-                } else if (weather.reason === 'error') {
-                    p.textContent = i18n.t('forecast.unavailable');
-                } else {
-                    // Default fallback
-                    p.textContent = i18n.t('forecast.availableCloser');
-                }
-            }
-        }
+        this.forecastRenderer.renderUnavailableForecast(weather, content, unavailable, overrideNow);
     }
 
     _createForecastDashboard(weather, sessionTime) {
-        const dashboard = document.createElement('article');
-        dashboard.className = 'weather-dashboard';
-
-        // Find the hourly forecast item closest to the session start time
-        let sessionWeather = null;
-        if (weather.hourly && weather.hourly.length > 0) {
-            const sessionTs = Math.floor(sessionTime.getTime() / 1000);
-            sessionWeather = weather.hourly.reduce((prev, curr) =>
-                Math.abs(curr.time - sessionTs) < Math.abs(prev.time - sessionTs) ? curr : prev
-            );
-        }
-
-        if (sessionWeather) {
-            const dl = this._createCurrentWeatherElement(sessionWeather, weather.units, weather.hourly);
-            dashboard.appendChild(dl);
-        }
-
-        // Timeline Logic
-        if (weather.hourly) {
-            const section = this._createTimelineElement(weather.hourly, sessionTime, weather.units);
-            dashboard.appendChild(section);
-        }
-
-        return dashboard;
+        return this.forecastRenderer.createForecastDashboard(weather, sessionTime, this.weatherClient);
     }
 
     _createMetricElement(i18nKey, valueId, valueText) {
-        const div = document.createElement('div');
-        div.className = 'weather-metric';
-        const dt = document.createElement('dt');
-        dt.className = 'weather-label';
-        dt.setAttribute('data-i18n', i18nKey);
-        dt.textContent = i18n.t(i18nKey);
-        const dd = document.createElement('dd');
-        dd.className = 'weather-value';
-        dd.id = valueId;
-        dd.textContent = valueText;
-        div.appendChild(dt);
-        div.appendChild(dd);
-        return div;
+        return this.forecastRenderer.createMetricElement(i18nKey, valueId, valueText);
     }
 
     _createWindArrowSvg(rotation) {
-        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-        svg.setAttribute('class', 'icon-wind-arrow');
-        svg.setAttribute('style', `transform: rotate(${rotation}deg); width: 14px; height: 14px;`);
-        svg.setAttribute('viewBox', '0 0 24 24');
-        svg.setAttribute('fill', 'none');
-        svg.setAttribute('stroke', 'currentColor');
-        svg.setAttribute('stroke-width', '2.5');
-        svg.setAttribute('stroke-linecap', 'round');
-        svg.setAttribute('stroke-linejoin', 'round');
-        svg.setAttribute('aria-hidden', 'true');
-
-        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        line.setAttribute('x1', '12');
-        line.setAttribute('y1', '19');
-        line.setAttribute('x2', '12');
-        line.setAttribute('y2', '5');
-        svg.appendChild(line);
-
-        const polyline = document.createElementNS('http://www.w3.org/2000/svg', 'polyline');
-        polyline.setAttribute('points', '5 12 12 5 19 12');
-        svg.appendChild(polyline);
-
-        return svg;
+        return this.forecastRenderer.createWindArrowSvg(rotation);
     }
 
     _createWindMetricElement(wind, dir, speedUnit, dirUnit) {
-        // Wind Direction Logic
-        const windInfo = getWindDirection(dir);
-        // Rotation: Input 0 (N) -> Blows South -> Arrow (Up) needs 180 deg rotation
-        // Coerced to a number: this is the one value here that lands in a style
-        // attribute rather than as text, and `getWindDirection` derives it with
-        // `degrees + 180` — a non-numeric windDir from upstream would concatenate
-        // instead of add and carry arbitrary text into the CSS.
-        const rotation = Number(windInfo.rotation) || 0;
-
-        const divWind = this._createMetricElement('weather.wind', 'weatherWind', `${wind} ${speedUnit}`);
-        const ddWindDir = document.createElement('dd');
-        ddWindDir.className = 'weather-sub';
-        ddWindDir.id = 'weatherWindDir';
-        ddWindDir.title = `${dir}${dirUnit || i18n.t('units.degrees') || '°'}`;
-        ddWindDir.setAttribute('aria-label', i18n.t('weather.windDirection', { direction: windInfo.text, degrees: dir }));
-
-        ddWindDir.appendChild(document.createTextNode(windInfo.text + ' '));
-        ddWindDir.appendChild(this._createWindArrowSvg(rotation));
-
-        divWind.appendChild(ddWindDir);
-        return divWind;
+        return this.forecastRenderer.createWindMetricElement(wind, dir, speedUnit, dirUnit);
     }
 
     _createCurrentWeatherElement(sessionWeather, units, hourlyData) {
-        const temp = Math.round(sessionWeather.temp);
-        const wind = Math.round(sessionWeather.windSpeed);
-        const dir = sessionWeather.windDir;
-        // Intentionally kept as Math.max(...map): hourlyData is a small (<= 24 entries) array, so the spread is safe and clearer.
-        // A reduce rewrite is a pointless micro-optimisation and changes the empty-array result (-Infinity vs 0).
-        const maxPrecip = Math.max(...hourlyData.map(h => h.precipProb));
-
-        const dl = document.createElement('dl');
-        dl.className = 'weather-current';
-
-        // Temperature metric
-        dl.appendChild(this._createMetricElement('weather.temp', 'weatherTemp', `${temp}${units.temperature_2m}`));
-
-        // Rain metric
-        dl.appendChild(this._createMetricElement('weather.rain', 'weatherRain', `${maxPrecip}%`));
-
-        // Wind metric
-        const divWind = this._createWindMetricElement(wind, dir, units.wind_speed_10m, units.wind_direction_10m);
-        dl.appendChild(divWind);
-
-        return dl;
+        return this.forecastRenderer.createCurrentWeatherElement(sessionWeather, units, hourlyData);
     }
 
     _createTimelineElement(hourlyWeather, sessionTime, units) {
-        const section = document.createElement('section');
-        section.className = 'weather-timeline';
-        section.id = 'weatherTimeline';
-        section.tabIndex = 0;
-        section.setAttribute('data-i18n-attr', 'aria-label:forecast.hourlyForecast');
-        section.setAttribute('aria-label', i18n.t('forecast.hourlyForecast'));
-
-        const ol = document.createElement('ol');
-        ol.className = 'weather-timeline-list';
-
-        for (const hour of hourlyWeather) {
-            const li = this._createTimelineItemElement(hour, sessionTime, units);
-            ol.appendChild(li);
-        }
-
-        section.appendChild(ol);
-        return section;
+        return this.forecastRenderer.createTimelineElement(hourlyWeather, sessionTime, units, this.weatherClient);
     }
 
     _createTimelineItemElement(hour, sessionTime, units) {
-        const relTime = this.weatherClient.getRelativeTime(hour.time, sessionTime);
-        const desc = this.weatherClient.getWeatherDescription(hour.code);
-        const a11yTime = this.weatherClient.getAccessibleRelativeTime(hour.time, sessionTime);
-        const temp = Math.round(hour.temp);
-        const ariaLabel = i18n.t('weather.timelineAria', {
-            time: a11yTime,
-            description: desc,
-            temp,
-            rain: hour.precipProb,
-            wind: hour.windSpeed,
-            windUnit: units.wind_speed_10m,
-        });
-
-        const isoDateTime = new Date(hour.time * 1000).toISOString();
-
-        const li = document.createElement('li');
-        li.className = 'weather-timeline-item';
-        li.setAttribute('aria-label', ariaLabel);
-
-        const timeEl = document.createElement('time');
-        timeEl.setAttribute('datetime', isoDateTime);
-        timeEl.className = 'weather-timeline-time';
-        timeEl.setAttribute('aria-hidden', 'true');
-        timeEl.textContent = relTime;
-        li.appendChild(timeEl);
-
-        const conditionDiv = document.createElement('div');
-        conditionDiv.className = 'weather-timeline-condition';
-        conditionDiv.setAttribute('aria-hidden', 'true');
-        conditionDiv.appendChild(document.createTextNode(desc + ' '));
-
-        const windDiv = document.createElement('div');
-        windDiv.className = 'weather-timeline-wind';
-        windDiv.textContent = `${hour.windSpeed} ${units.wind_speed_10m}`;
-        conditionDiv.appendChild(windDiv);
-        li.appendChild(conditionDiv);
-
-        const tempDiv = document.createElement('div');
-        tempDiv.className = 'weather-timeline-temp';
-        tempDiv.setAttribute('aria-hidden', 'true');
-
-        const tempValDiv = document.createElement('div');
-        tempValDiv.textContent = `${temp}${units.temperature_2m}`;
-        tempDiv.appendChild(tempValDiv);
-
-        const precipDiv = document.createElement('div');
-        precipDiv.className = 'weather-timeline-precip';
-        precipDiv.textContent = `${hour.precipProb}%`;
-        tempDiv.appendChild(precipDiv);
-
-        li.appendChild(tempDiv);
-        return li;
+        return this.forecastRenderer.createTimelineItemElement(hour, sessionTime, units, this.weatherClient);
     }
 
     async handleRoute({ series, round, session }) {
