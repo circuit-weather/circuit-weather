@@ -40,6 +40,13 @@ const TIMEOUT_API_TILES = 5000;
 const TIMEOUT_API_TRACKS = 10000;
 const TIMEOUT_API_ASSETS = 10000;
 
+// Jolpica rate-limits by IP, and Workers share Cloudflare's egress IPs with other
+// tenants, so 429s can happen regardless of our own traffic. Each successful F1 API
+// response is also kept as a long-lived "last known good" copy under a separate
+// cache key, and served when Jolpica fails rather than returning an error.
+const STALE_API_TTL = 30 * 24 * 60 * 60; // 30 days
+const JOLPICA_SCHEDULE_URL = 'https://api.jolpi.ca/ergast/f1/current.json';
+
 const VENDOR_ASSETS = new Map([
   // Leaflet Assets
   ['leaflet.js', {
@@ -214,6 +221,13 @@ function handleOptions(request) {
 }
 
 /**
+ * How long to cache an upstream failure (error or stale fallback) before retrying upstream.
+ */
+function getErrorCacheTTL(status) {
+  return status === 429 ? 300 : 60;
+}
+
+/**
  * Helper to cache and return an error response
  */
 // Intentionally keeps 'cache' as an explicit required parameter (no 'caches.default' default): every caller passes the cache
@@ -221,7 +235,7 @@ function handleOptions(request) {
 // Defaulting it is a no-benefit refactor that obscures this.
 function cacheAndReturnError({ request, cache, cacheKey, status, message, extraDetails = {}, ctx }) {
   // Cache error response to prevent hammering upstream
-  const errorCacheTTL = status === 429 ? 300 : 60;
+  const errorCacheTTL = getErrorCacheTTL(status);
 
   const errorBody = JSON.stringify({
     error: {
@@ -367,7 +381,7 @@ async function fetchAndCacheApiRequest({ request, env, ctx, upstreamUrl, cache, 
     const status = upstreamResponse.status;
 
     if (!upstreamResponse.ok) {
-      return cacheAndReturnError({ request, cache, cacheKey, status, message: 'Upstream API error', ctx });
+      return serveStaleOrError({ request, cache, cacheKey, upstreamUrl, status, message: 'Upstream API error', ctx });
     }
 
     // SEC: Strict Content-Type Validation
@@ -379,11 +393,12 @@ async function fetchAndCacheApiRequest({ request, env, ctx, upstreamUrl, cache, 
       if (env.ENVIRONMENT !== 'production') {
         console.error(`Upstream Invalid Content-Type: ${contentType} (parsed: ${mime})`);
       }
-      return cacheAndReturnError({ request, cache, cacheKey, status: 502, message: 'Invalid upstream content type', ctx });
+      return serveStaleOrError({ request, cache, cacheKey, upstreamUrl, status: 502, message: 'Invalid upstream content type', ctx });
     }
 
     // Bolt Optimization: Stream response instead of buffering text
-    const [cacheBody, clientBody] = upstreamResponse.body.tee();
+    const [cacheBody, rest] = upstreamResponse.body.tee();
+    const [staleBody, clientBody] = rest.tee();
 
     // Create cacheable response (24 hours)
     // We store '*' in cache as a fallback, but we always override on delivery
@@ -404,6 +419,14 @@ async function fetchAndCacheApiRequest({ request, env, ctx, upstreamUrl, cache, 
     // Save to cache
     ctx.waitUntil(cache.put(cacheKey, cacheResponse));
 
+    // Save the long-lived "last known good" copy
+    const staleHeaders = new Headers(cacheHeaders);
+    staleHeaders.set('Cache-Control', `public, max-age=${STALE_API_TTL}`);
+    ctx.waitUntil(cache.put(getStaleApiCacheKey(upstreamUrl), new Response(staleBody, {
+      status: 200,
+      headers: staleHeaders,
+    })));
+
     // Prepare response for client with strict CORS
     const clientHeaders = new Headers(cacheHeaders);
     setCorsHeaders(clientHeaders, request);
@@ -417,8 +440,56 @@ async function fetchAndCacheApiRequest({ request, env, ctx, upstreamUrl, cache, 
     if (env.ENVIRONMENT !== 'production') {
       console.error('API Fetch Error:', error); // Log internal details
     }
+    const staleResponse = await serveStale({ request, cache, cacheKey, upstreamUrl, status: 502, ctx });
+    if (staleResponse) return staleResponse;
     return createErrorResponse(request, 502, 'Failed to fetch from upstream');
   }
+}
+
+/**
+ * Cache key for the long-lived "last known good" copy of an F1 API response.
+ */
+function getStaleApiCacheKey(upstreamUrl) {
+  const staleUrl = new URL(upstreamUrl);
+  staleUrl.searchParams.set('cw_stale', '1');
+  return new Request(staleUrl.toString());
+}
+
+/**
+ * Serves the last known good F1 API response after an upstream failure, if one is cached.
+ * The stale copy is also written to the primary cache key for the usual error TTL, so
+ * upstream isn't retried on every request while it is failing.
+ * @returns {Promise<Response|null>} null if no stale copy is available
+ */
+async function serveStale({ request, cache, cacheKey, upstreamUrl, status, ctx }) {
+  let stale;
+  try {
+    stale = await cache.match(getStaleApiCacheKey(upstreamUrl));
+  } catch {
+    return null;
+  }
+  if (!stale) return null;
+
+  const body = await stale.text();
+  const headers = new Headers(stale.headers);
+  headers.set('Cache-Control', `public, max-age=${getErrorCacheTTL(status)}`);
+  headers.set('X-Cache', 'STALE');
+  headers.set('X-Upstream-Status', status.toString());
+
+  ctx.waitUntil(cache.put(cacheKey, new Response(body, { status: 200, headers })));
+
+  const clientHeaders = new Headers(headers);
+  setCorsHeaders(clientHeaders, request);
+  return new Response(body, { status: 200, headers: clientHeaders });
+}
+
+/**
+ * Serves the last known good F1 API response if available, otherwise caches and returns the error.
+ */
+async function serveStaleOrError({ request, cache, cacheKey, upstreamUrl, status, message, ctx }) {
+  const staleResponse = await serveStale({ request, cache, cacheKey, upstreamUrl, status, ctx });
+  if (staleResponse) return staleResponse;
+  return cacheAndReturnError({ request, cache, cacheKey, status, message, ctx });
 }
 
 /**
@@ -743,6 +814,16 @@ async function checkAllUpstreams(upstreams, env) {
 }
 
 /**
+ * Returns the upstream status recorded on a cached API response, or null if none is cached.
+ */
+async function getCachedUpstreamStatus(cache, upstreamUrl) {
+  const cached = await cache.match(new Request(upstreamUrl));
+  if (!cached) return null;
+  const status = Number(cached.headers.get('X-Upstream-Status'));
+  return status > 0 ? status : cached.status;
+}
+
+/**
  * Handle Health Check request
  * Checks connectivity to key upstream APIs and returns basic system status.
  */
@@ -765,12 +846,18 @@ async function handleHealthRequest(request, env, ctx, url) {
   }
 
   const upstreams = {
-    jolpica: 'https://api.jolpi.ca/ergast/f1/current.json',
+    jolpica: JOLPICA_SCHEDULE_URL,
     rainviewer: 'https://api.rainviewer.com/public/weather-maps.json',
     github: 'https://raw.githubusercontent.com/bacinger/f1-circuits/master/circuits/au-1953.geojson'
   };
 
+  // Avoid spending Jolpica's per-IP rate limit on health probes: report the status of
+  // the most recent schedule fetch when one is cached, and only probe when none is.
+  const cachedJolpicaStatus = await getCachedUpstreamStatus(cache, JOLPICA_SCHEDULE_URL);
+  if (cachedJolpicaStatus !== null) delete upstreams.jolpica;
+
   const results = await checkAllUpstreams(upstreams, env);
+  if (cachedJolpicaStatus !== null) results.jolpica = cachedJolpicaStatus;
 
   // Create cacheable response
   const body = JSON.stringify({

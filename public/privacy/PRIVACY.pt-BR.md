@@ -84,7 +84,7 @@ O navegador pode se conectar diretamente a serviços de terceiros para mapas, ti
 
 ### Fontes de dados (proxy)
 
-- **Jolpica F1:** (cache de borda de 24 horas).
+- **Jolpica F1:** (cache de borda de 24 horas; uma última cópia válida é mantida por até 30 dias como alternativa caso a fonte esteja indisponível).
 - **GitHub (bacinger/f1-circuits):** (cache de borda de 24 horas).
 - **RainViewer:** Metadados de radar (cache de 1 minuto) e tiles (cache de borda de 2 horas).
 - **Leaflet (via Unpkg):** Recursos de biblioteca de mapas (com proxy por segurança, cache imutável de 1 ano).

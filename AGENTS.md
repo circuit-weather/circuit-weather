@@ -35,7 +35,7 @@ Circuit Weather is a real-time F1 race circuit weather radar application. It dis
 
 | Service         | Purpose                                                          | Connection           |
 | --------------- | ---------------------------------------------------------------- | -------------------- |
-| Jolpica F1 API  | Race schedule data (24-hour cache)                               | Proxied (Cached)     |
+| Jolpica F1 API  | Race schedule data (24-hour cache, 30-day last-known-good copy)  | Proxied (Cached)     |
 | OpenF1          | Fallback race schedule data                                      | Direct (Client-side) |
 | RainViewer      | Weather radar tiles (2-hour cache) and metadata (1-minute cache) | Proxied (Cached)     |
 | Open-Meteo      | Weather forecasts                                                | Direct (Client-side) |
@@ -222,7 +222,7 @@ mode = "smart"
 
 | Endpoint        | Purpose                                                                                                      |
 | --------------- | ------------------------------------------------------------------------------------------------------------ |
-| `/api/f1/*`     | Proxies to Jolpica F1 API with 24-hour edge caching                                                          |
+| `/api/f1/*`     | Proxies to Jolpica F1 API with 24-hour edge caching; serves a 30-day last-known-good copy if Jolpica fails   |
 | `/api/radar`    | Proxies to RainViewer Maps API with 1-minute caching (initializes animation)                                 |
 | `/api/tiles/*`  | Proxies to RainViewer tile API with 2-hour edge caching (512px optimized)                                    |
 | `/api/track/*`  | Proxies to GitHub for GeoJSON track data with 24-hour caching                                                |

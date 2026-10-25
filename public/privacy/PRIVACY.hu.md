@@ -84,7 +84,7 @@ A böngészője közvetlenül is csatlakozhat harmadik féltől származó szolg
 
 ### Adatforrások (Proxizva)
 
-- **Jolpica F1:** F1-es naptár adatok (24 órás edge cache).
+- **Jolpica F1:** F1-es naptár adatok (24 órás edge cache; az utolsó érvényes másolatot legfeljebb 30 napig tartjuk meg tartalékként, ha a forrás nem érhető el).
 - **GitHub (bacinger/f1-circuits):** GeoJSON pályafájlok (24 órás edge cache).
 - **RainViewer:** Radar metaadatok (1 perces cache) és csempék (2 órás edge cache).
 - **Leaflet (a Unpkg-en keresztül):** Térkép interakciós könyvtár eszközei (biztonsági okokból proxizva, 1 éves módosíthatatlan cache).

@@ -84,7 +84,7 @@ Uw browser kan rechtstreeks verbinding maken met diensten van derden voor kaarte
 
 ### Gegevensbronnen (via proxy)
 
-- **Jolpica F1:** F1-schemagegevens (24 uur edge-cache).
+- **Jolpica F1:** F1-schemagegevens (24 uur edge-cache; een laatst bekende geldige kopie wordt tot 30 dagen bewaard als terugval als de bron niet beschikbaar is).
 - **GitHub (bacinger/f1-circuits):** GeoJSON-circuitbestanden (24 uur edge-cache).
 - **RainViewer:** Radarmetadata (1 minuut cache) en tegels (2 uur edge-cache).
 - **Leaflet (via Unpkg):** Assets van de kaartinteractiebibliotheek (via proxy om veiligheidsredenen, 1 jaar immutable cache).
