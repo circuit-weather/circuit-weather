@@ -255,6 +255,47 @@ describe('F1API', () => {
             errorSpy.mockRestore();
         });
 
+        it('falls back to an expired localStorage schedule when both sources fail', async () => {
+            const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+            const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+            const expired = {
+                timestamp: Date.now() - api.CACHE_DURATION_MS - 1000,
+                races: [{ round: '1', raceName: 'Old Grand Prix' }],
+                source: 'openf1',
+            };
+            SafeStorage.getItem.mockReturnValueOnce(JSON.stringify(expired));
+            mockFetch
+                .mockResolvedValueOnce({ ok: false, status: 429 }) // Jolpica
+                .mockResolvedValueOnce({ ok: false, status: 401 }) // OpenF1 meetings
+                .mockResolvedValueOnce({ ok: false, status: 401 }); // OpenF1 sessions
+
+            const result = await api.getSchedule();
+
+            expect(result).toEqual(expired.races);
+            expect(api.scheduleSource).toBe('openf1');
+            // The expired copy is not re-saved, so the next load still retries the sources
+            expect(SafeStorage.setItem).not.toHaveBeenCalled();
+            warnSpy.mockRestore();
+            errorSpy.mockRestore();
+        });
+
+        it('prefers a fresh fetch over an expired localStorage schedule', async () => {
+            const expired = {
+                timestamp: Date.now() - api.CACHE_DURATION_MS - 1000,
+                races: [{ round: '1', raceName: 'Old Grand Prix' }],
+            };
+            SafeStorage.getItem.mockReturnValueOnce(JSON.stringify(expired));
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: () => Promise.resolve({ MRData: { RaceTable: { Races: [{ round: '1', raceName: 'New Grand Prix' }] } } }),
+            });
+
+            const result = await api.getSchedule();
+
+            expect(result[0].raceName).toBe('New Grand Prix');
+            expect(api.scheduleSource).toBe('jolpica');
+        });
+
         it('handles network rejections in both Jolpica and OpenF1 fallback', async () => {
             const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
             const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});

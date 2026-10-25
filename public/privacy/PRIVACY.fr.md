@@ -84,7 +84,7 @@ Votre navigateur peut se connecter directement à certains services tiers.
 
 ### Sources de données (proxyfiées)
 
-- **Jolpica F1 :** (cache edge de 24 heures).
+- **Jolpica F1 :** (cache edge de 24 heures ; une dernière copie valide est conservée jusqu’à 30 jours comme solution de repli si la source est indisponible).
 - **GitHub (bacinger/f1-circuits) :** (cache edge de 24 heures).
 - **RainViewer :** Métadonnées radar (cache d'une minute) et tuiles (cache edge de 2 heures).
 - **Leaflet (via Unpkg) :** Assets de bibliothèque de carte (proxyfiés par sécurité, cache immuable d'un an).

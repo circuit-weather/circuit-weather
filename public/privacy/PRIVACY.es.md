@@ -84,7 +84,7 @@ Tu navegador puede conectarse directamente a servicios de terceros para mapas, t
 
 ### Fuentes de datos (con proxy)
 
-- **Jolpica F1:** Calendario F1 (caché de borde de 24 horas).
+- **Jolpica F1:** Calendario F1 (caché de borde de 24 horas; se conserva una última copia válida hasta 30 días como respaldo si la fuente no está disponible).
 - **GitHub (bacinger/f1-circuits):** Archivos GeoJSON de circuitos (caché de borde de 24 horas).
 - **RainViewer:** Metadatos de radar (caché de 1 minuto) y tiles (caché de borde de 2 horas).
 - **Leaflet (vía Unpkg):** Recursos de librería de mapas (con proxy por seguridad, caché inmutable de 1 año).

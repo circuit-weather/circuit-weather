@@ -84,7 +84,7 @@ Der Browser kann für Karten, Tiles und Widgets direkt mit Drittanbietern kommun
 
 ### Datenquellen (proxy)
 
-- **Jolpica F1:** (24-Stunden-Edge-Cache).
+- **Jolpica F1:** (24-Stunden-Edge-Cache; eine zuletzt gültige Kopie wird bis zu 30 Tage als Ausweichlösung aufbewahrt, falls die Quelle nicht verfügbar ist).
 - **GitHub (bacinger/f1-circuits):** (24-Stunden-Edge-Cache).
 - **RainViewer:** Radarmetadaten (1-Minuten-Cache) und Kacheln (2-Stunden-Edge-Cache).
 - **Leaflet (über Unpkg):** Interaktionsbibliothek für Karten (aus Sicherheitsgründen geproxyt, 1-Jahr-Immutable-Cache).

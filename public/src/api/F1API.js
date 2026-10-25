@@ -17,19 +17,19 @@ export class F1API {
         if (this.cache.has(cacheKey)) return this.cache.get(cacheKey);
 
         // Try to get from localStorage first
+        // An expired cache is kept as a last resort if every source fails below.
+        let expiredCache = null;
         const cachedDataStr = SafeStorage.getItem(this.LOCAL_STORAGE_KEY);
         if (cachedDataStr) {
             try {
                 const cachedData = JSON.parse(cachedDataStr);
                 const now = Date.now();
                 // SEC: Validate that cachedData.races is an Array to prevent application logic bypass/errors from poisoned localStorage
-                if (cachedData.timestamp && (now - cachedData.timestamp < this.CACHE_DURATION_MS) && Array.isArray(cachedData.races)) {
-                    this.cache.set(cacheKey, cachedData.races);
-                    // Preserve the originating source so the fallback notice stays
-                    // accurate while serving cached data (default to primary for
-                    // caches written before sources were tracked).
-                    this.scheduleSource = cachedData.source ?? 'jolpica';
-                    return cachedData.races;
+                if (cachedData.timestamp && Array.isArray(cachedData.races)) {
+                    if (now - cachedData.timestamp < this.CACHE_DURATION_MS) {
+                        return this.useStoredSchedule(cacheKey, cachedData);
+                    }
+                    expiredCache = cachedData;
                 }
             } catch (e) {
                 // Ignore parse errors, just fetch fresh
@@ -52,8 +52,21 @@ export class F1API {
             return this.cacheSchedule(cacheKey, races, 'openf1');
         } catch (openF1Error) {
             console.error('OpenF1 fallback also failed:', openF1Error);
+            // The schedule rarely changes, so an expired copy beats showing nothing.
+            // OpenF1 refuses keyless requests during live sessions, so this matters
+            // most when Jolpica is also failing mid-session.
+            if (expiredCache) return this.useStoredSchedule(cacheKey, expiredCache);
             throw new Error('F1_SCHEDULE_UNAVAILABLE:jolpica,openf1:ALL_SOURCES_FAILED');
         }
+    }
+
+    useStoredSchedule(cacheKey, cachedData) {
+        this.cache.set(cacheKey, cachedData.races);
+        // Preserve the originating source so the fallback notice stays
+        // accurate while serving cached data (default to primary for
+        // caches written before sources were tracked).
+        this.scheduleSource = cachedData.source ?? 'jolpica';
+        return cachedData.races;
     }
 
     // NOTE: Jolpica (Ergast-compatible) is Formula 1 only. There is no F2/F3

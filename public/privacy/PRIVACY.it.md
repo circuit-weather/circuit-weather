@@ -84,7 +84,7 @@ Il browser può connettersi direttamente ad alcuni servizi per mappe, tile e wid
 
 ### Fonti dati (proxy)
 
-- **Jolpica F1:** (cache edge di 24 ore).
+- **Jolpica F1:** (cache edge di 24 ore; un’ultima copia valida viene conservata fino a 30 giorni come riserva se la fonte non è disponibile).
 - **GitHub (bacinger/f1-circuits):** (cache edge di 24 ore).
 - **RainViewer:** Metadati radar (cache di 1 minuto) e tile (cache edge di 2 ore).
 - **Leaflet (via Unpkg):** Asset della libreria mappa (proxati per sicurezza, cache immutabile di 1 anno).

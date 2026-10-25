@@ -82,7 +82,7 @@ Your browser may connect directly to third-party services for maps, tiles, and w
 
 ### Data Sources (Proxied)
 
-- **Jolpica F1:** F1 schedule data (24-hour edge cache).
+- **Jolpica F1:** F1 schedule data (24-hour edge cache; a last-known-good copy is kept for up to 30 days as a fallback if the source is unavailable).
 - **GitHub (bacinger/f1-circuits):** GeoJSON track files (24-hour edge cache).
 - **RainViewer:** Radar metadata (1-minute cache) and tiles (2-hour edge cache).
 - **Leaflet (via Unpkg):** Map interaction library assets (proxied for security, 1-year immutable cache).
