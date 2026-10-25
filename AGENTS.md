@@ -91,9 +91,16 @@ circuit-weather/
 │   ├── _headers      # Custom HTTP headers (CSP, security)
 │   └── PRIVACY.md
 ├── src/
-│   ├── worker.js          # Cloudflare Worker (API proxy + asset serving)
+│   ├── worker.js          # Cloudflare Worker router (rate limiting, method/hotlink checks, dispatch)
 │   ├── worker-utils.js    # Shared worker utilities
-│   └── radar-providers.js # LibreWXR/RainViewer metadata, tile routing and alert sanitising
+│   ├── radar-providers.js # LibreWXR/RainViewer metadata, tile routing and alert sanitising
+│   └── handlers/          # Route handlers, one module per API domain
+│       ├── f1.js          # /api/f1/* (Jolpica proxy + last-known-good copy)
+│       ├── radar.js       # /api/radar, /api/tiles/*, /api/alerts
+│       ├── track.js       # /api/track/*
+│       ├── assets.js      # /api/assets/*
+│       ├── health.js      # /api/health
+│       └── config.js      # /api/config
 ├── tests/              # Unit tests
 ├── .jules/             # Jules AI agent config (MUST be lowercase)
 ├── wrangler.toml       # Cloudflare config
