@@ -355,6 +355,141 @@ body {
     outline-offset: 2px;
 }
 
+.pref-switch:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Radar layers section */
+.control-section--layers {
+    margin-top: var(--spacing-md);
+    padding-top: var(--spacing-md);
+    border-top: 1px solid var(--color-border);
+}
+
+.control-section-heading {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-text-secondary);
+    margin: 0;
+}
+
+.control-hint {
+    margin: 0;
+    font-size: 0.7rem;
+    color: var(--color-text-secondary);
+}
+
+/* Weather warnings */
+.alerts-section {
+    margin-top: var(--spacing-md);
+    padding: var(--spacing-md);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-left: 3px solid #d7263d;
+    border-radius: var(--radius-lg);
+}
+
+.alerts-section[hidden] {
+    display: none;
+}
+
+.alerts-section h2 {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--color-text-secondary);
+    margin: 0 0 var(--spacing-sm);
+}
+
+.alerts-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--spacing-sm);
+    max-height: 18rem;
+    overflow-y: auto;
+}
+
+.alert-item + .alert-item {
+    padding-top: var(--spacing-sm);
+    border-top: 1px solid var(--color-border);
+}
+
+.alert-title {
+    margin: 4px 0 2px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-text);
+}
+
+.alert-popup .alert-title {
+    display: block;
+}
+
+/* Map popups keep the library's white background in both themes */
+.alert-popup .alert-title,
+.alert-popup .alert-regions,
+.alert-popup .alert-until {
+    color: #1e293b;
+}
+
+.alert-regions,
+.alert-until,
+.alert-description {
+    margin: 2px 0;
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    overflow-wrap: anywhere;
+}
+
+.alert-description {
+    white-space: pre-line;
+}
+
+.alert-item summary,
+.alert-link {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.alert-item summary:hover,
+.alert-link:hover {
+    color: var(--color-primary);
+}
+
+.alert-link {
+    display: inline-block;
+    margin-bottom: 2px;
+}
+
+.alert-popup .alert-link {
+    color: #475569;
+}
+
+.alert-severity {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 999px;
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #fff;
+}
+
+/* Colours match SEVERITY_COLOURS in public/src/map/WeatherAlerts.js */
+.alert-severity--extreme { background: #9b1c9b; }
+.alert-severity--severe { background: #d7263d; }
+.alert-severity--moderate { background: #f28c28; color: #1a1a1a; }
+.alert-severity--minor { background: #e8c547; color: #1a1a1a; }
+.alert-severity--unknown { background: #7d8597; }
+
 /* Animated wind overlay canvas (sits above the basemap/radar, below controls) */
 .wind-flow-canvas {
     position: absolute;

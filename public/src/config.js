@@ -4,7 +4,9 @@
 
 export const CONFIG = {
     f1ApiBase: '/api/f1',
+    // Radar metadata (LibreWXR, with RainViewer as a fallback - see src/radar-providers.js)
     rainViewerApi: '/api/radar',
+    alertsApi: '/api/alerts',
     trackApi: '/api/track',
     weatherApi: 'https://api.open-meteo.com/v1/forecast',
     // Use Carto basemaps (reliable, free, no key) - used as fallback
@@ -19,6 +21,16 @@ export const CONFIG = {
     defaultZoom: 3,
     circuitZoom: 10,
     radarOpacity: 0.65,
+    // Used when the radar metadata does not report a max zoom (RainViewer free tier limit)
+    RADAR_FALLBACK_MAX_ZOOM: 7,
+    RADAR_DEFAULT_COLOUR: 2, // Universal Blue
+    RADAR_ATTRIBUTION: Object.freeze({
+        librewxr: 'Radar &copy; <a href="https://librewxr.net" target="_blank" rel="noopener noreferrer">LibreWXR</a> (CC BY 4.0), Radar-DPC',
+        rainviewer: 'Radar &copy; <a href="https://www.rainviewer.com" target="_blank" rel="noopener noreferrer">RainViewer</a>',
+    }),
+    // Satellite imagery is coarse; capping its zoom saves requests without losing detail
+    SATELLITE_MAX_ZOOM: 8,
+    satelliteOpacity: 0.55,
     // Speed options: slower = higher ms, faster = lower ms
     radarSpeeds: [
         { label: '0.5x', speed: 2000 },
@@ -42,6 +54,7 @@ export const CONFIG = {
     TILE_LOAD_TIMEOUT_MS: 3000, // 3 seconds
     MIN_POLL_DELAY_MS: 30000, // 30 seconds
     WEATHER_CACHE_MAX_ENTRIES: 50,
+    ALERTS_REFRESH_INTERVAL_MS: 300000, // 5 minutes, matches the worker's alerts cache
 
     // Wind overlay (animated flow particles over the map)
     WIND_FIELD_GRID: 6, // Grid is N x N points (one batched Open-Meteo request)

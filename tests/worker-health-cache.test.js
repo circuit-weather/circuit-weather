@@ -93,12 +93,13 @@ describe("Worker Health Check Caching", () => {
     const body = await res.json();
     expect(body.status).toBe("ok");
 
-    // Check that all 3 upstreams are marked unreachable
+    // Check that all 4 upstreams are marked unreachable
     expect(body.upstreams.jolpica).toContain("unreachable");
+    expect(body.upstreams.librewxr).toContain("unreachable");
     expect(body.upstreams.rainviewer).toContain("unreachable");
     expect(body.upstreams.github).toContain("unreachable");
 
-    expect(mockFetch).toHaveBeenCalledTimes(3);
+    expect(mockFetch).toHaveBeenCalledTimes(4);
     expect(mockCache.put).toHaveBeenCalled();
     errorSpy.mockRestore();
   });
@@ -115,8 +116,8 @@ describe("Worker Health Check Caching", () => {
     const req1 = createRequest("/api/health");
     const res1 = await worker.fetch(req1, global.env, global.ctx);
     expect(res1.status).toBe(200);
-    // Should call 3 upstreams
-    expect(mockFetch).toHaveBeenCalledTimes(3);
+    // Should call 4 upstreams
+    expect(mockFetch).toHaveBeenCalledTimes(4);
     // Should save to cache
     expect(mockCache.put).toHaveBeenCalled();
 
@@ -129,7 +130,7 @@ describe("Worker Health Check Caching", () => {
     expect(res2.status).toBe(200);
 
     // Should NOT call any more upstreams
-    expect(mockFetch).toHaveBeenCalledTimes(3);
+    expect(mockFetch).toHaveBeenCalledTimes(4);
     // Should return cache hit
     expect(res2.headers.get("X-Cache")).toBe("HIT");
   });

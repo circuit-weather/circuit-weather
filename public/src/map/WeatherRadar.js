@@ -5,10 +5,23 @@ import { RadarPlayback } from './RadarPlayback.js';
 import { RadarFrames } from './RadarFrames.js';
 import { RadarPolling } from './RadarPolling.js';
 import { RadarReconcile } from './RadarReconcile.js';
+import { SatelliteLayer } from './SatelliteLayer.js';
 
 export class WeatherRadar {
-    constructor(map) {
+    /**
+     * @param {Object} map - Mapbox GL or Leaflet map
+     * @param {Object} [options]
+     * @param {Function} [options.onMetadata] - Called with each radar metadata
+     *   result (provider, colour schemes, ...) so the UI can match its capabilities
+     */
+    constructor(map, options = {}) {
         this.map = map;
+        this.onMetadata = options.onMetadata || (() => {});
+        this.provider = null;
+        this.maxZoom = CONFIG.RADAR_FALLBACK_MAX_ZOOM;
+        // Colour scheme + storm overlays requested on every tile (LibreWXR only)
+        this.tileOptions = { colour: CONFIG.RADAR_DEFAULT_COLOUR, arrows: false, cells: false, lightning: false };
+        this.satellite = new SatelliteLayer(map);
         this.frames = [];
         this.layers = [];
         this.visibleLayerIndex = -1;
@@ -46,7 +59,7 @@ export class WeatherRadar {
             applyFrameUpdate: (frames) => this.applyFrameUpdate(frames),
             setPendingFrames: (frames) => { this.pendingFrames = frames; },
             onPastCountChange: (count) => { this.pastFrameCount = count; },
-            fetchFrames: () => RadarFrames.getFramesFromApi()
+            fetchFrames: () => this.fetchMetadata()
         });
     }
 
@@ -129,6 +142,7 @@ export class WeatherRadar {
         document.removeEventListener('i18n:change', this.handleLanguageChange);
         this.errorToast.destroy();
         this.playback.destroy();
+        this.satellite.destroy();
         this.polling.stopPolling();
         if (this.relativeTimeInterval) {
             clearInterval(this.relativeTimeInterval);
@@ -142,11 +156,67 @@ export class WeatherRadar {
         this.sessionTime = sessionTime;
     }
 
+    /**
+     * Fetches radar metadata and applies the provider-level parts (zoom limit,
+     * satellite frame). Frame updates are left to the caller.
+     */
+    async fetchMetadata() {
+        const result = await RadarFrames.getFramesFromApi(this.getTileOptions());
+        if (result.frames.length > 0) {
+            this.provider = result.provider;
+            this.maxZoom = result.maxZoom;
+            this.satellite.setFrame(result.satellite);
+            this.onMetadata(result);
+        }
+        return result;
+    }
+
     async fetchAndFilter() {
-        const result = await RadarFrames.getFramesFromApi();
+        const result = await this.fetchMetadata();
         this.frames = result.frames;
         this.pastFrameCount = result.pastCount;
         return this.frames;
+    }
+
+    isDarkMap() {
+        return document.documentElement?.getAttribute('data-theme') === 'dark';
+    }
+
+    getTileOptions() {
+        return { ...this.tileOptions, darkMap: this.isDarkMap() };
+    }
+
+    get attribution() {
+        return CONFIG.RADAR_ATTRIBUTION[this.provider] || CONFIG.RADAR_ATTRIBUTION.rainviewer;
+    }
+
+    /**
+     * Update the colour scheme / storm overlays. Rebuilds the frame layers when
+     * the tile URLs change, keeping the current playback position.
+     * @param {{ colour?: number, arrows?: boolean, cells?: boolean, lightning?: boolean }} options
+     */
+    setTileOptions(options) {
+        const next = { ...this.tileOptions, ...options };
+        const changed = Object.keys(next).some(key => next[key] !== this.tileOptions[key]);
+        this.tileOptions = next;
+        if (changed) this.rebuildFrameUrls();
+    }
+
+    setSatelliteEnabled(enabled) {
+        this.satellite.setEnabled(enabled);
+    }
+
+    rebuildFrameUrls() {
+        const options = this.getTileOptions();
+        const withUrl = frame => ({ ...frame, url: RadarFrames.buildTileUrl(frame, this.provider, options) });
+        if (this.pendingFrames) this.pendingFrames = this.pendingFrames.map(withUrl);
+        if (this.frames.length === 0) return;
+
+        const index = this.currentFrame;
+        this.frames = this.frames.map(withUrl);
+        this.createLayers();
+        this.currentFrame = Math.min(index, this.frames.length - 1);
+        this.showFrame(this.currentFrame);
     }
 
     async load() {
@@ -216,7 +286,10 @@ export class WeatherRadar {
         this.layers = new Array(this.frames.length).fill(null);
         this.visibleLayerIndex = -1;
 
-        this.currentFrame = this.frames.length - 1;
+        // Start on the latest observed frame rather than the end of the nowcast
+        this.currentFrame = this.pastFrameCount > 0
+            ? Math.min(this.pastFrameCount, this.frames.length) - 1
+            : this.frames.length - 1;
 
         // Force map to recalculate size
         if (this.map.invalidateSize) {
@@ -304,12 +377,13 @@ export class WeatherRadar {
                 type: 'raster',
                 tiles: [frame.url],
                 tileSize: 512,
-                // RainViewer free tier limit is tile zoom 7 (Jan 2026).
-                // Unlike Leaflet (which uses zoomOffset: -1 to subtract 1 from map zoom),
-                // Mapbox fills {z} directly with no offset. maxzoom: 7 ensures Mapbox
-                // never requests tiles beyond zoom 7, matching the Leaflet behaviour.
-                maxzoom: 7,
-                minzoom: 1
+                // Provider tile zoom limit: 12 for LibreWXR, 7 for the RainViewer
+                // fallback (free tier, Jan 2026). Unlike Leaflet (which uses
+                // zoomOffset: -1 to subtract 1 from map zoom), Mapbox fills {z}
+                // directly with no offset, so maxzoom is the limit itself.
+                maxzoom: this.maxZoom,
+                minzoom: 1,
+                attribution: this.attribution
             });
         }
         if (!map.getLayer(layerId)) {
@@ -339,9 +413,10 @@ export class WeatherRadar {
      * Layers are added to map only in showFrame() to control tile requests.
      *
      * Configuration notes:
-     * - maxNativeZoom: 7 - RainViewer free tier limit as of Jan 2026
-     *   Higher zoom levels will scale the zoom-7 tiles (pseudo-zoom)
-     * - tileSize: 256 - Standard tile size
+     * - maxNativeZoom: provider limit + 1 (zoomOffset: -1) - LibreWXR serves
+     *   tile zoom 12, the RainViewer fallback zoom 7. Higher map zoom levels
+     *   scale the last native tiles (pseudo-zoom)
+     * - tileSize: 512 with zoomOffset: -1 - a quarter of the requests of 256px tiles
      * - keepBuffer: 2 - Keeps 2 tiles outside viewport for smooth panning
      *
      * @param {Object} frame - Frame data with url, time, path
@@ -355,12 +430,12 @@ export class WeatherRadar {
             opacity: 0.01,
             zIndex: 100 + index,
 
-            // RainViewer free tier limit (Jan 2026) is tile zoom 7.
-            // With zoomOffset: -1, map zoom 8 requests tile zoom 7.
-            maxNativeZoom: 8,
+            // With zoomOffset: -1, map zoom N+1 requests tile zoom N (the provider limit).
+            maxNativeZoom: this.maxZoom + 1,
             minNativeZoom: 1,
 
             maxZoom: 18,
+            attribution: this.attribution,
             updateWhenIdle: true, // Bolt Optimization: Only load tiles when panning stops (reduces requests)
             updateWhenZooming: false,
             keepBuffer: 2, // Restored for smoother animation; Serial Loader handles the initial burst
@@ -559,9 +634,9 @@ export class WeatherRadar {
      * - Toggle opacity to show/hide frames (prevents flash from re-adding)
      * - Preload next frame at opacity 0 so tiles load before transition
      *
-     * RATE LIMITING (RainViewer free tier - as of Jan 2026):
-     * - maxNativeZoom: 7 prevents requests at invalid zoom levels
-     * - Smart polling syncs with RainViewer's 10-min update cycle
+     * RATE LIMITING:
+     * - maxNativeZoom/maxzoom (provider limit) prevents requests at invalid zoom levels
+     * - Smart polling syncs with the radar's 10-min update cycle
      * - Tiles cache in browser after first load, so zoom/pan after initial
      *   load hits cache rather than making new requests
      *
@@ -795,6 +870,16 @@ export class WeatherRadar {
      * so we need to re-add the active and preloaded layers to the map.
      */
     updateTheme() {
+        this.satellite.updateTheme();
+
+        // Storm overlays are drawn in light ink on dark maps and vice versa, so
+        // their tile URLs depend on the theme. A rebuild also re-adds Mapbox layers.
+        const usesInk = this.provider === 'librewxr' && (this.tileOptions.arrows || this.tileOptions.cells);
+        if (usesInk) {
+            this.rebuildFrameUrls();
+            return;
+        }
+
         const isMapbox = !this.map.hasLayer;
         if (!isMapbox) return;
 

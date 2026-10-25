@@ -149,7 +149,9 @@ vi.mock('../public/src/map/WeatherRadar.js', () => ({
         return {
             load: vi.fn().mockResolvedValue(),
             setSessionTime: vi.fn(),
-            setSession: vi.fn()
+            setSession: vi.fn(),
+            setTileOptions: vi.fn(),
+            setSatelliteEnabled: vi.fn()
         }
     })
 }));
@@ -1549,6 +1551,55 @@ describe('CircuitWeatherApp Pure Methods', () => {
     });
 
     // ---------------------------------------------------------------
+    // Radar layers + weather warnings
+    // ---------------------------------------------------------------
+    describe('radar layers and weather warnings', () => {
+        beforeEach(() => {
+            app.radar = { setTileOptions: vi.fn(), setSatelliteEnabled: vi.fn() };
+            app.weatherAlerts = { setEnabled: vi.fn(), setLocation: vi.fn(), updateTheme: vi.fn() };
+            app.layerSettings = { getTileOptions: vi.fn(() => ({ colour: 6, arrows: true })) };
+        });
+
+        it('routes each setting to the layer it controls', () => {
+            app.handleLayerSettingChange('alerts', { alerts: false });
+            expect(app.weatherAlerts.setEnabled).toHaveBeenCalledWith(false);
+
+            app.handleLayerSettingChange('satellite', { satellite: true });
+            expect(app.radar.setSatelliteEnabled).toHaveBeenCalledWith(true);
+
+            app.handleLayerSettingChange('arrows', { arrows: true });
+            expect(app.radar.setTileOptions).toHaveBeenCalledWith({ colour: 6, arrows: true });
+        });
+
+        it('tolerates missing layers', () => {
+            app.radar = null;
+            app.weatherAlerts = null;
+            expect(() => {
+                app.handleLayerSettingChange('alerts', { alerts: true });
+                app.handleLayerSettingChange('satellite', { satellite: true });
+                app.handleLayerSettingChange('colour', { colour: 1 });
+            }).not.toThrow();
+        });
+
+        it('moves warnings with the circuit and refreshes them on theme change', async () => {
+            app.mapManager.setView = vi.fn();
+            app.mapManager.setTheme = vi.fn().mockResolvedValue();
+            app.rangeCircles = { draw: vi.fn(), updateTheme: vi.fn() };
+            app.recentreControl = null;
+            app.trackLayer = null;
+
+            app.centreOnCircuit(52, -1);
+            expect(app.weatherAlerts.setLocation).toHaveBeenCalledWith(52, -1);
+
+            await app.handleThemeChange('dark');
+            expect(app.weatherAlerts.updateTheme).toHaveBeenCalled();
+
+            app.weatherAlerts = null;
+            expect(() => app.centreOnCircuit(1, 1)).not.toThrow();
+        });
+    });
+
+    // ---------------------------------------------------------------
     // bindEvents — outcome: events are attached to DOM elements
     // ---------------------------------------------------------------
     describe('bindEvents', () => {
@@ -1603,6 +1654,7 @@ describe('CircuitWeatherApp Pure Methods', () => {
             app.countdown.show = vi.fn();
             app.trackLayer.clear = vi.fn();
             app.rangeCircles.clear = vi.fn();
+            app.weatherAlerts = { setLocation: vi.fn() };
             app.ui.forecastSection = createMockElement('forecastSection');
             app.ui.raceInfoBanner = createMockElement('raceInfoBanner');
             app.ui.sessionEmptyState = createMockElement('sessionEmptyState');
@@ -1623,6 +1675,7 @@ describe('CircuitWeatherApp Pure Methods', () => {
             expect(app.countdown.show).toHaveBeenCalledWith(false);
             expect(app.trackLayer.clear).toHaveBeenCalled();
             expect(app.rangeCircles.clear).toHaveBeenCalled();
+            expect(app.weatherAlerts.setLocation).toHaveBeenCalledWith(null, null);
             expect(app.stopSessionForecastInterval).toHaveBeenCalled();
             expect(app.updatePageMetadata).toHaveBeenCalled();
             expect(app.ui.sessionSelect.disabled).toBe(true);

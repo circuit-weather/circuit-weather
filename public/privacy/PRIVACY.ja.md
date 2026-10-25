@@ -1,6 +1,6 @@
 # プライバシーポリシー
 
-**最終更新:** 2026年1月
+**最終更新:** 2026年10月
 
 **ご注意:** この翻訳は機械翻訳です。内容に相違がある場合は英語版が優先されます。
 
@@ -24,7 +24,7 @@ Circuit Weather は、Formula 1 サーキット向けのリアルタイム天気
 
 本サイトは **Cloudflare Workers** 上で運用されています。
 
-- **プライバシープロキシ:** F1 スケジュール、トラックレイアウト、Leaflet アセット、Mapbox GL JS アセット、RainViewer タイルは Worker 経由で配信されます。
+- **プライバシープロキシ:** F1 スケジュール、トラックレイアウト、Leaflet アセット、Mapbox GL JS アセット、レーダータイルと気象警報 (LibreWXR、予備として RainViewer)は Worker 経由で配信されます。
 - **エッジキャッシュ:** API 応答はエッジにキャッシュされ、帯域と上流負荷を削減します。
 - **処理データ:** Cloudflare は配信とセキュリティのため IP とリクエストメタデータを処理します。
 - **ポリシー:** [cloudflare.com/privacypolicy](https://www.cloudflare.com/privacypolicy/)
@@ -49,9 +49,15 @@ Circuit Weather は、Formula 1 サーキット向けのリアルタイム天気
 - **送信データ:** IP アドレスおよび選択サーキット座標。
 - **ポリシー:** [open-meteo.com/en/features#terms](https://open-meteo.com/en/features#terms)
 
+**LibreWXR**
+
+- **目的:** 降水レーダー、1時間の降雨予報、衛星雲画像、落雷、雷雨セル、公式の気象警報の主な提供元。
+- **送信データ:** 直接送信なし。リクエストは Worker 経由でプロキシされ、LibreWXR には選択したサーキットの丸めた座標のみを送信します (気象警報用)。
+- **ポリシー:** [librewxr.net](https://librewxr.net/)
+
 **RainViewer**
 
-- **目的:** レーダーレイヤーの提供。
+- **目的:** 予備のレーダーレイヤー (LibreWXR が利用できない場合のみ)。
 - **送信データ:** 直接送信なし（Worker 経由でプロキシ）。
 - **ポリシー:** [rainviewer.com/privacy](https://www.rainviewer.com/privacy.html)
 
@@ -86,6 +92,7 @@ Circuit Weather は、Formula 1 サーキット向けのリアルタイム天気
 
 - **Jolpica F1:** (24時間エッジキャッシュ。提供元が利用できない場合の代替として、最後に取得できた正常なコピーを最大30日間保持します).
 - **GitHub (bacinger/f1-circuits):** (24時間エッジキャッシュ).
+- **LibreWXR:** レーダーメタデータ (1分間キャッシュ)、レーダー・衛星タイル (2時間エッジキャッシュ、予報タイルは5分間)、気象警報 (5分間キャッシュ).
 - **RainViewer:** レーダーメタデータ (1分間キャッシュ) とタイル (2時間エッジキャッシュ).
 - **Leaflet (Unpkg 経由):** マップライブラリアセット (セキュリティのためプロキシされます、1年間不変キャッシュ)。
 - **Mapbox (Mapbox CDN 経由):** マップライブラリアセット (セキュリティのためプロキシされます、1年間不変キャッシュ)。
@@ -98,6 +105,9 @@ Circuit Weather は、Formula 1 サーキット向けのリアルタイム天気
 - **unit:** `metric` または `imperial`
 - **language:** 選択した言語 (例: `ja`, `en-US`)
 - **windOverlay:** `true` または `false` (風のアニメーションレイヤーが有効かどうかを記憶します)
+- **radarColour:** 選択したレーダー配色の番号
+- **radarArrows, radarCells, radarLightning, radarSatellite:** `true` または `false` (どの追加レーダーレイヤーが有効かを記憶します)
+- **weatherAlerts:** `true` または `false` (気象警報を表示するかどうかを記憶します)
 - **f1_schedule_cache:** F1のスケジュールデータをキャッシュします (7日間キャッシュ)
 
 これらのデータは端末内に保存され、当方のサーバーへ送信されることはありません。

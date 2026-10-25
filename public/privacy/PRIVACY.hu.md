@@ -1,6 +1,6 @@
 # Adatvédelmi Irányelvek
 
-**Utolsó frissítés:** 2026. Január
+**Utolsó frissítés:** 2026. Október
 
 **Megjegyzés:** Ez a fordítás gépi úton készült. Eltérés esetén az angol nyelvű változat az irányadó.
 
@@ -24,7 +24,7 @@ Az alkalmazás azonban harmadik féltől származó szolgáltatásokra és infra
 
 Ez a weboldal a **Cloudflare Workers** szolgáltatáson (Static Assets használatával) fut, amely a weboldalt szolgálja ki és az API-t is működteti.
 
-- **Adatvédelmi proxy:** Az F1-es naptár, a pályarajzok, a Leaflet eszközök, a Mapbox GL JS eszközök és a RainViewer radar csempék kéréseit a Cloudflare Workerünk proxizza.
+- **Adatvédelmi proxy:** Az F1-es naptár, a pályarajzok, a Leaflet eszközök, a Mapbox GL JS eszközök és a radarcsempék és időjárási figyelmeztetések (LibreWXR, tartalékként RainViewer) kéréseit a Cloudflare Workerünk proxizza.
 - **Fejlett gyorsítótárazás:** Az API-válaszokat a peremen (edge) gyorsítótárazzuk a sávszélesség-használat és a feltöltési terhelés minimalizálása érdekében.
 - **Feldolgozott adatok:** A Cloudflare feldolgozza az IP-címeket és a kérések metaadatait a weboldal kézbesítése és védelme érdekében.
 - **Adatvédelmi irányelvek:** [cloudflare.com/privacypolicy](https://www.cloudflare.com/privacypolicy/)
@@ -49,9 +49,15 @@ A böngészője közvetlenül is csatlakozhat harmadik féltől származó szolg
 - **Küldött adatok:** IP-cím (szabványos webes kérés) és a kiválasztott pálya koordinátái.
 - **Adatvédelmi irányelvek:** [open-meteo.com/en/features#terms](https://open-meteo.com/en/features#terms)
 
+**LibreWXR**
+
+- **Cél:** A csapadékradar, az 1 órás esőelőrejelzés, a műholdas felhőkép, a villámok, a zivatarcellák és a hivatalos időjárási figyelmeztetések elsődleges forrása.
+- **Küldött adatok:** Közvetlenül semmi. A kéréseket a Workerünk proxizza, amely csak a kiválasztott pálya kerekített koordinátáit küldi el a LibreWXR-nek (a figyelmeztetésekhez).
+- **Adatvédelmi irányelvek:** [librewxr.net](https://librewxr.net/)
+
 **RainViewer**
 
-- **Cél:** Radar rétegek.
+- **Cél:** Tartalék radar rétegek, csak ha a LibreWXR nem érhető el.
 - **Küldött adatok:** Közvetlenül semmi. A radaradatokat a Workerünk proxizza.
 - **Adatvédelmi irányelvek:** [rainviewer.com/privacy](https://www.rainviewer.com/privacy.html)
 
@@ -86,6 +92,7 @@ A böngészője közvetlenül is csatlakozhat harmadik féltől származó szolg
 
 - **Jolpica F1:** F1-es naptár adatok (24 órás edge cache; az utolsó érvényes másolatot legfeljebb 30 napig tartjuk meg tartalékként, ha a forrás nem érhető el).
 - **GitHub (bacinger/f1-circuits):** GeoJSON pályafájlok (24 órás edge cache).
+- **LibreWXR:** Radar metaadatok (1 perces cache), radar- és műholdas csempék (2 órás edge cache; előrejelzési csempék 5 perc) és időjárási figyelmeztetések (5 perces cache).
 - **RainViewer:** Radar metaadatok (1 perces cache) és csempék (2 órás edge cache).
 - **Leaflet (a Unpkg-en keresztül):** Térkép interakciós könyvtár eszközei (biztonsági okokból proxizva, 1 éves módosíthatatlan cache).
 - **Mapbox (a Mapbox CDN-en keresztül):** Térkép interakciós könyvtár eszközei (biztonsági okokból proxizva, 1 éves módosíthatatlan cache).
@@ -98,6 +105,9 @@ A beállításokat a böngészője helyileg tárolja:
 - **unit (mértékegység):** `metric` (metrikus) vagy `imperial` (birodalmi)
 - **language (nyelv):** a kiválasztott nyelv (pl. `hu`, `en-US`)
 - **windOverlay:** `true` vagy `false` (megjegyzi, hogy a szélanimációs réteg be van-e kapcsolva)
+- **radarColour:** a kiválasztott radar színséma száma
+- **radarArrows, radarCells, radarLightning, radarSatellite:** `true` vagy `false` (megjegyzi, mely további radarrétegek vannak bekapcsolva)
+- **weatherAlerts:** `true` vagy `false` (megjegyzi, hogy megjelennek-e az időjárási figyelmeztetések)
 - **f1_schedule_cache:** gyorsítótárazza az F1 naptáradatokat (7 napos gyorsítótár)
 
 Ezek az adatok az Ön eszközén maradnak, és nem kerülnek elküldésre a szervereinkre.

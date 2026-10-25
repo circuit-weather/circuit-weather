@@ -1,6 +1,6 @@
 # Datenschutzerklärung
 
-**Zuletzt aktualisiert:** Januar 2026
+**Zuletzt aktualisiert:** Oktober 2026
 
 **Hinweis:** Diese Übersetzung wurde maschinell erstellt. Bei Abweichungen ist die englische Fassung maßgeblich.
 
@@ -24,7 +24,7 @@ Zur Funktion nutzt die Anwendung Drittanbieter, die übliche Webanfragedaten (z.
 
 Die Website wird auf **Cloudflare Workers** betrieben.
 
-- **Privacy-Proxy:** F1-Kalender, Streckenlayouts, Leaflet-Assets, Mapbox GL JS-Assets und RainViewer-Tiles laufen über unseren Worker.
+- **Privacy-Proxy:** F1-Kalender, Streckenlayouts, Leaflet-Assets, Mapbox GL JS-Assets und Radar-Tiles und Wetterwarnungen (LibreWXR, mit RainViewer als Ersatz) laufen über unseren Worker.
 - **Edge-Cache:** API-Antworten werden am Edge zwischengespeichert.
 - **Verarbeitete Daten:** Cloudflare verarbeitet IP und Request-Metadaten für Auslieferung und Sicherheit.
 - **Datenschutz:** [cloudflare.com/privacypolicy](https://www.cloudflare.com/privacypolicy/)
@@ -49,9 +49,15 @@ Der Browser kann für Karten, Tiles und Widgets direkt mit Drittanbietern kommun
 - **Gesendete Daten:** IP-Adresse und Koordinaten der gewählten Strecke.
 - **Datenschutz:** [open-meteo.com/en/features#terms](https://open-meteo.com/en/features#terms)
 
+**LibreWXR**
+
+- **Zweck:** Hauptquelle für Niederschlagsradar, die 1-Stunden-Regenvorhersage, Satellitenwolken, Blitze, Gewitterzellen und amtliche Wetterwarnungen.
+- **Gesendete Daten:** Keine direkte Verbindung. Anfragen laufen über unseren Worker, der LibreWXR nur die gerundeten Koordinaten der gewählten Strecke übermittelt (für Wetterwarnungen).
+- **Datenschutz:** [librewxr.net](https://librewxr.net/)
+
 **RainViewer**
 
-- **Zweck:** Radar-Layer.
+- **Zweck:** Ersatz-Radar-Layer, nur wenn LibreWXR nicht verfügbar ist.
 - **Gesendete Daten:** Keine direkte Verbindung; Daten werden über unseren Worker bereitgestellt.
 - **Datenschutz:** [rainviewer.com/privacy](https://www.rainviewer.com/privacy.html)
 
@@ -86,6 +92,7 @@ Der Browser kann für Karten, Tiles und Widgets direkt mit Drittanbietern kommun
 
 - **Jolpica F1:** (24-Stunden-Edge-Cache; eine zuletzt gültige Kopie wird bis zu 30 Tage als Ausweichlösung aufbewahrt, falls die Quelle nicht verfügbar ist).
 - **GitHub (bacinger/f1-circuits):** (24-Stunden-Edge-Cache).
+- **LibreWXR:** Radarmetadaten (1-Minuten-Cache), Radar- und Satellitenkacheln (2-Stunden-Edge-Cache; Vorhersagekacheln 5 Minuten) und Wetterwarnungen (5-Minuten-Cache).
 - **RainViewer:** Radarmetadaten (1-Minuten-Cache) und Kacheln (2-Stunden-Edge-Cache).
 - **Leaflet (über Unpkg):** Interaktionsbibliothek für Karten (aus Sicherheitsgründen geproxyt, 1-Jahr-Immutable-Cache).
 - **Mapbox (über Mapbox CDN):** Interaktionsbibliothek für Karten (aus Sicherheitsgründen geproxyt, 1-Jahr-Immutable-Cache).
@@ -98,6 +105,9 @@ Lokale Einstellungen im Browser:
 - **unit:** `metric` oder `imperial`
 - **language:** Ihre ausgewählte Sprache (z. B. `de`, `en-US`)
 - **windOverlay:** `true` oder `false` (speichert, ob die Windanimations-Ebene aktiviert ist)
+- **radarColour:** die Nummer des gewählten Radar-Farbschemas
+- **radarArrows, radarCells, radarLightning, radarSatellite:** `true` oder `false` (speichert, welche zusätzlichen Radarebenen aktiviert sind)
+- **weatherAlerts:** `true` oder `false` (speichert, ob Wetterwarnungen angezeigt werden)
 - **f1_schedule_cache:** speichert die F1-Kalenderdaten zwischen (7-Tage-Cache)
 
 Diese Daten verbleiben auf Ihrem Gerät und werden nicht an unsere Server gesendet.

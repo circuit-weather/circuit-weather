@@ -11,7 +11,7 @@
  * - Network-only for API calls (weather data must be fresh)
  */
 
-const CACHE_VERSION = '1.2.0';
+const CACHE_VERSION = '1.3.0';
 const CACHE_NAME = `circuit-weather-v${CACHE_VERSION}`;
 
 // App shell resources to pre-cache on install
@@ -33,8 +33,11 @@ const APP_SHELL = [
     '/src/map/WeatherRadar.js',
     '/src/map/RadarErrorToast.js',
     '/src/map/RadarPlayback.js',
+    '/src/map/SatelliteLayer.js',
+    '/src/map/WeatherAlerts.js',
     '/src/routing/Router.js',
     '/src/ui/CountdownTimer.js',
+    '/src/ui/LayerSettings.js',
     '/src/ui/PrivacyModal.js',
     '/src/ui/SidebarManager.js',
     '/src/ui/ThemeManager.js',

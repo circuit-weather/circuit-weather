@@ -6,6 +6,7 @@
  * - /api/health
  * - /api/radar
  * - /api/tiles/*
+ * - /api/alerts
  * - /api/track/*
  * - /api/assets/*
  * - /api/config
@@ -32,6 +33,15 @@ import {
   getSecureRandom,
   getParsedMimeType
 } from './worker-utils.js';
+import {
+  LIBREWXR_METADATA_URL,
+  RAINVIEWER_METADATA_URL,
+  normaliseLibreWxrMetadata,
+  normaliseRainViewerMetadata,
+  resolveTileUpstream,
+  buildAlertsUpstreamUrl,
+  sanitiseAlerts
+} from './radar-providers.js';
 
 // Per-upstream timeouts to prevent resource exhaustion while allowing for slow upstreams
 const TIMEOUT_API_F1 = 5000;
@@ -39,6 +49,15 @@ const TIMEOUT_API_RADAR = 8000;
 const TIMEOUT_API_TILES = 5000;
 const TIMEOUT_API_TRACKS = 10000;
 const TIMEOUT_API_ASSETS = 10000;
+const TIMEOUT_API_ALERTS = 8000;
+
+// The radar response merges two providers, so it is cached under its own key
+// rather than either upstream URL.
+const RADAR_CACHE_KEY_URL = 'https://circuit-weather.racing/__cache/radar-v2';
+
+// Weather alerts change slowly; 5 minutes keeps them fresh without hammering upstream.
+const ALERTS_TTL = 300;
+const MAX_ALERTS_BYTES = 5 * 1024 * 1024;
 
 // Jolpica rate-limits by IP, and Workers share Cloudflare's egress IPs with other
 // tenants, so 429s can happen regardless of our own traffic. Each successful F1 API
@@ -166,6 +185,11 @@ export default {
       // Handle radar tile requests (Optimized Cache)
       if (path.startsWith('/api/tiles/')) {
         return handleTileRequest(request, env, ctx, url);
+      }
+
+      // Handle weather alert requests
+      if (path === '/api/alerts') {
+        return handleAlertsRequest(request, env, ctx, url);
       }
 
       // Handle track requests
@@ -847,7 +871,8 @@ async function handleHealthRequest(request, env, ctx, url) {
 
   const upstreams = {
     jolpica: JOLPICA_SCHEDULE_URL,
-    rainviewer: 'https://api.rainviewer.com/public/weather-maps.json',
+    librewxr: LIBREWXR_METADATA_URL,
+    rainviewer: RAINVIEWER_METADATA_URL,
     github: 'https://raw.githubusercontent.com/bacinger/f1-circuits/master/circuits/au-1953.geojson'
   };
 
@@ -1034,8 +1059,12 @@ async function handleTileRequest(request, env, ctx, url) {
   if (validatedOrError instanceof Response) return validatedOrError;
   const decodedTilePath = validatedOrError;
 
-  const upstreamUrl = `https://tilecache.rainviewer.com${decodedTilePath}`;
-  const cacheKey = new Request(upstreamUrl);
+  const resolved = resolveTileUpstream(decodedTilePath, url.searchParams, Date.now());
+  if (!resolved) {
+    return createErrorResponse(request, 400, 'Invalid tile path');
+  }
+  const { upstreamUrl, cacheKeyUrl, ttl: successTtl } = resolved;
+  const cacheKey = new Request(cacheKeyUrl);
   const cache = caches.default;
 
   // 1. Check Cache
@@ -1069,7 +1098,7 @@ async function handleTileRequest(request, env, ctx, url) {
     // 3. Cache Determination
     // Cache success (2xx) or benign error (404). Do NOT cache 429/5xx.
     const shouldCache = upstreamResponse.ok || status === 404;
-    const ttl = upstreamResponse.ok ? 7200 : 60;
+    const ttl = upstreamResponse.ok ? successTtl : 60;
 
     if (shouldCache) {
       // SEC: Strict MIME comparison, not a substring check.
@@ -1119,7 +1148,7 @@ async function checkRadarCache(request, cache, cacheKey) {
 }
 
 /**
- * Perform upstream fetch to RainViewer API.
+ * Perform upstream fetch to a radar metadata API.
  * Takes the URL from the caller so the fetch target and the cache key
  * cannot drift apart.
  */
@@ -1134,82 +1163,81 @@ async function fetchRadarData(upstreamUrl) {
 }
 
 /**
- * Validate upstream radar response status and Content-Type.
- * Returns an error Response if invalid, or null if response is valid.
+ * Fetch and normalise one radar provider's metadata.
+ * Never throws: returns `{ data }` on success, otherwise `{ status }` (the
+ * upstream HTTP status, or 0 for a network failure / unusable body).
  */
-function handleRadarUpstreamError(request, env, upstreamResponse) {
-  const status = upstreamResponse.status;
+async function loadRadarProvider(env, name, upstreamUrl, normalise) {
+  try {
+    const upstreamResponse = await fetchRadarData(upstreamUrl);
+    const status = upstreamResponse.status;
 
-  if (!upstreamResponse.ok) {
+    if (!upstreamResponse.ok) {
+      if (env.ENVIRONMENT !== 'production') {
+        console.error(`Upstream Radar API Error (${name}): Status ${status}`);
+      }
+      return { status };
+    }
+
+    // SEC: Strict Content-Type Validation
+    // Prevent cache poisoning if upstream returns HTML error page (e.g. WAF/Maintenance) with 200 OK
+    const { contentType, mime } = getParsedMimeType(upstreamResponse);
+    if (mime !== 'application/json') {
+      if (env.ENVIRONMENT !== 'production') {
+        console.error(`Upstream Radar Invalid Content-Type (${name}): ${contentType} (parsed: ${mime})`);
+      }
+      return { status: 0, invalid: true };
+    }
+
+    // SEC: Rebuild the payload from validated fields only
+    const data = normalise(await upstreamResponse.json());
+    if (!data) {
+      if (env.ENVIRONMENT !== 'production') {
+        console.error(`Upstream Radar API (${name}) returned no usable frames`);
+      }
+      return { status: 0, invalid: true };
+    }
+    return { data };
+  } catch (error) {
     if (env.ENVIRONMENT !== 'production') {
-      console.error(`Upstream Radar API Error: Status ${status}`);
+      console.error(`Radar Fetch Error (${name}):`, error);
     }
-    if (status === 429) {
-      return createErrorResponse(request, 429, 'Upstream Rate Limit', {
-        'X-Upstream-Status': '429',
-        'Retry-After': '60'
-      });
-    }
-    const emptyResponse = getEmptyRadarResponse(request);
-    emptyResponse.headers.set('X-Upstream-Status', status.toString());
-    return emptyResponse;
+    return { status: 0 };
   }
-
-  // SEC: Strict Content-Type Validation
-  // Prevent cache poisoning if upstream returns HTML error page (e.g. WAF/Maintenance) with 200 OK
-  // Bolt Security: Use strict MIME comparison, not substring check
-  const { contentType, mime } = getParsedMimeType(upstreamResponse);
-
-  if (mime !== 'application/json') {
-    if (env.ENVIRONMENT !== 'production') {
-      console.error(`Upstream Radar Invalid Content-Type: ${contentType} (parsed: ${mime})`);
-    }
-    return getEmptyRadarResponse(request);
-  }
-
-  return null;
 }
 
 /**
- * Format and cache successful radar API response.
+ * Format and cache a normalised radar metadata response.
  */
-function formatCacheableRadarResponse(request, ctx, cache, cacheKey, upstreamResponse) {
-  const status = upstreamResponse.status;
-
-  // Bolt Optimization: Stream response instead of buffering text
-  const [cacheBody, clientBody] = upstreamResponse.body.tee();
+function formatCacheableRadarResponse(request, ctx, cache, cacheKey, data) {
+  const body = JSON.stringify(data);
 
   // 1. Prepare Response for Cache (1 minute)
   const cacheHeaders = new Headers({
     'Content-Type': 'application/json',
     'Cache-Control': 'public, max-age=60', // Worker Cache TTL
     'X-Cache': 'MISS',
-    'X-Upstream-Status': status.toString(),
+    'X-Radar-Provider': data.provider,
     'Access-Control-Allow-Origin': '*',
     ...API_SECURITY_HEADERS
   });
 
-  const cacheResponse = new Response(cacheBody, {
-    status: 200,
-    headers: cacheHeaders,
-  });
-
   // Save to cache
-  ctx.waitUntil(cache.put(cacheKey, cacheResponse));
+  ctx.waitUntil(cache.put(cacheKey, new Response(body, { status: 200, headers: cacheHeaders })));
 
   // 2. Prepare Response for Client (1 minute)
   const clientHeaders = new Headers(cacheHeaders);
   setCorsHeaders(clientHeaders, request);
-  clientHeaders.set('Cache-Control', 'public, max-age=60');
 
-  return new Response(clientBody, {
+  return new Response(body, {
     status: 200,
     headers: clientHeaders
   });
 }
 
 /**
- * Handle RainViewer API requests with caching
+ * Handle radar metadata requests with caching.
+ * LibreWXR is the primary source; RainViewer is used if LibreWXR fails.
  */
 async function handleRadarRequest(request, env, ctx) {
   // SEC: Ensure request is not from a script tag (XSSI protection)
@@ -1217,9 +1245,8 @@ async function handleRadarRequest(request, env, ctx) {
     return createErrorResponse(request, 403, 'Invalid fetch destination');
   }
 
-  const upstreamUrl = 'https://api.rainviewer.com/public/weather-maps.json';
-  // Canonical cache key
-  const cacheKey = new Request(upstreamUrl);
+  // Canonical cache key for the normalised (provider-merged) response
+  const cacheKey = new Request(RADAR_CACHE_KEY_URL);
   const cache = caches.default;
 
   // Check cache match
@@ -1228,20 +1255,100 @@ async function handleRadarRequest(request, env, ctx) {
     return cachedResponse;
   }
 
-  try {
-    const upstreamResponse = await fetchRadarData(upstreamUrl);
+  const primary = await loadRadarProvider(env, 'librewxr', LIBREWXR_METADATA_URL, normaliseLibreWxrMetadata);
+  if (primary.data) {
+    return formatCacheableRadarResponse(request, ctx, cache, cacheKey, primary.data);
+  }
 
-    const upstreamErrorResponse = handleRadarUpstreamError(request, env, upstreamResponse);
-    if (upstreamErrorResponse) {
-      return upstreamErrorResponse;
+  const fallback = await loadRadarProvider(env, 'rainviewer', RAINVIEWER_METADATA_URL, normaliseRainViewerMetadata);
+  if (fallback.data) {
+    return formatCacheableRadarResponse(request, ctx, cache, cacheKey, fallback.data);
+  }
+
+  // Both providers failed: report the fallback's failure mode
+  if (fallback.status === 429) {
+    return createErrorResponse(request, 429, 'Upstream Rate Limit', {
+      'X-Upstream-Status': '429',
+      'Retry-After': '60'
+    });
+  }
+  if (fallback.status === 0 && !fallback.invalid) {
+    return createErrorResponse(request, 502, 'Failed to fetch radar data');
+  }
+  const emptyResponse = getEmptyRadarResponse(request);
+  emptyResponse.headers.set('X-Upstream-Status', fallback.status.toString());
+  return emptyResponse;
+}
+
+/**
+ * Handle weather alert requests: /api/alerts?lat={lat}&lon={lon}
+ * Proxies LibreWXR's WMO CAP alerts for a box around the circuit.
+ */
+async function handleAlertsRequest(request, env, ctx, url) {
+  // SEC: Ensure request is not from a script tag (XSSI protection)
+  if (!checkFetchDest(request)) {
+    return createErrorResponse(request, 403, 'Invalid fetch destination');
+  }
+
+  const upstreamUrl = buildAlertsUpstreamUrl(url.searchParams);
+  if (!upstreamUrl) {
+    return createErrorResponse(request, 400, 'Invalid coordinates');
+  }
+
+  const cacheKey = new Request(upstreamUrl);
+  const cache = caches.default;
+  const cached = await cache.match(cacheKey);
+  if (cached) {
+    return createCacheHitResponse(cached, request);
+  }
+
+  try {
+    const upstreamResponse = await fetch(upstreamUrl, {
+      headers: {
+        'Accept': 'application/geo+json, application/json',
+        'User-Agent': 'CircuitWeather/1.0',
+      },
+      signal: AbortSignal.timeout(TIMEOUT_API_ALERTS),
+    });
+
+    if (!upstreamResponse.ok) {
+      if (env.ENVIRONMENT !== 'production') {
+        console.error(`Upstream Alerts API Error: Status ${upstreamResponse.status}`);
+      }
+      return createErrorResponse(request, 502, 'Upstream alerts error', {
+        'X-Upstream-Status': upstreamResponse.status.toString()
+      });
     }
 
-    return formatCacheableRadarResponse(request, ctx, cache, cacheKey, upstreamResponse);
+    const { mime } = getParsedMimeType(upstreamResponse);
+    const declaredLength = Number(upstreamResponse.headers.get('Content-Length'));
+    if ((mime !== 'application/json' && mime !== 'application/geo+json') || declaredLength > MAX_ALERTS_BYTES) {
+      return createErrorResponse(request, 502, 'Invalid upstream alerts response');
+    }
 
+    const text = await upstreamResponse.text();
+    if (text.length > MAX_ALERTS_BYTES) {
+      return createErrorResponse(request, 502, 'Invalid upstream alerts response');
+    }
+
+    // SEC: Rebuild the payload from validated fields only
+    const body = JSON.stringify(sanitiseAlerts(JSON.parse(text), Date.now()));
+    const headers = new Headers({
+      'Content-Type': 'application/geo+json',
+      'Cache-Control': `public, max-age=${ALERTS_TTL}`,
+      'X-Cache': 'MISS',
+      'Access-Control-Allow-Origin': '*',
+      ...API_SECURITY_HEADERS
+    });
+    ctx.waitUntil(cache.put(cacheKey, new Response(body, { status: 200, headers })));
+
+    const clientHeaders = new Headers(headers);
+    setCorsHeaders(clientHeaders, request);
+    return new Response(body, { status: 200, headers: clientHeaders });
   } catch (error) {
     if (env.ENVIRONMENT !== 'production') {
-      console.error('Radar Fetch Error:', error);
+      console.error('Alerts Fetch Error:', error);
     }
-    return createErrorResponse(request, 502, 'Failed to fetch radar data');
+    return createErrorResponse(request, 502, 'Failed to fetch weather alerts');
   }
 }

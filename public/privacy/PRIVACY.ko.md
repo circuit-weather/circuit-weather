@@ -1,6 +1,6 @@
 # 개인정보처리방침
 
-**최종 업데이트:** 2026년 1월
+**최종 업데이트:** 2026년 10월
 
 **안내:** 이 번역은 기계 번역입니다. 내용에 차이가 있는 경우 영문판이 우선합니다.
 
@@ -24,7 +24,7 @@ Circuit Weather는 포뮬러 1 서킷의 실시간 기상 레이더를 표시하
 
 이 웹사이트는 **Cloudflare Workers**(Static Assets 사용)에서 호스팅되며, 웹사이트 제공과 API 구동을 모두 담당합니다.
 
-- **프라이버시 프록시:** F1 일정, 트랙 레이아웃, Leaflet 에셋, Mapbox GL JS 에셋 및 모든 RainViewer 레이더 타일 요청은 저희 Cloudflare Worker를 통해 프록시됩니다.
+- **프라이버시 프록시:** F1 일정, 트랙 레이아웃, Leaflet 에셋, Mapbox GL JS 에셋 및 모든 레이더 타일 및 기상 특보(LibreWXR, 예비로 RainViewer) 요청은 저희 Cloudflare Worker를 통해 프록시됩니다.
 - **고급 캐싱:** API 응답은 엣지에 캐시되어 대역폭 사용량과 원본 서버 부하를 줄입니다.
 - **처리되는 데이터:** Cloudflare는 사이트 제공 및 보호를 위해 IP 주소와 요청 메타데이터를 처리합니다.
 - **개인정보처리방침:** [cloudflare.com/privacypolicy](https://www.cloudflare.com/privacypolicy/)
@@ -49,9 +49,15 @@ Circuit Weather는 포뮬러 1 서킷의 실시간 기상 레이더를 표시하
 - **전송되는 데이터:** IP 주소(표준 웹 요청) 및 선택한 서킷 좌표.
 - **개인정보처리방침:** [open-meteo.com/en/features#terms](https://open-meteo.com/en/features#terms)
 
+**LibreWXR**
+
+- **목적:** 강수 레이더, 1시간 강우 예보, 위성 구름, 낙뢰, 뇌우 세포 및 공식 기상 특보의 주요 제공원.
+- **전송되는 데이터:** 직접 전송되는 데이터 없음. 요청은 저희 Worker를 통해 프록시되며, LibreWXR에는 선택한 서킷의 반올림된 좌표만 전송됩니다(기상 특보용).
+- **개인정보처리방침:** [librewxr.net](https://librewxr.net/)
+
 **RainViewer**
 
-- **목적:** 레이더 레이어.
+- **목적:** 예비 레이더 레이어(LibreWXR를 사용할 수 없을 때만 사용).
 - **전송되는 데이터:** 직접 전송되는 데이터 없음. 레이더 데이터는 저희 Worker를 통해 프록시됩니다.
 - **개인정보처리방침:** [rainviewer.com/privacy](https://www.rainviewer.com/privacy.html)
 
@@ -86,6 +92,7 @@ Circuit Weather는 포뮬러 1 서킷의 실시간 기상 레이더를 표시하
 
 - **Jolpica F1:** F1 일정 데이터(24시간 엣지 캐시; 소스를 사용할 수 없는 경우를 대비해 마지막 정상 사본을 최대 30일간 보관).
 - **GitHub (bacinger/f1-circuits):** GeoJSON 트랙 파일(24시간 엣지 캐시).
+- **LibreWXR:** 레이더 메타데이터(1분 캐시), 레이더 및 위성 타일(2시간 엣지 캐시, 예보 타일 5분) 및 기상 특보(5분 캐시).
 - **RainViewer:** 레이더 메타데이터(1분 캐시) 및 타일(2시간 엣지 캐시).
 - **Leaflet (Unpkg 경유):** 지도 상호작용 라이브러리 에셋(보안을 위해 프록시, 1년 immutable 캐시).
 - **Mapbox (Mapbox CDN 경유):** 지도 상호작용 라이브러리 에셋(보안을 위해 프록시, 1년 immutable 캐시).
@@ -98,6 +105,9 @@ Circuit Weather는 포뮬러 1 서킷의 실시간 기상 레이더를 표시하
 - **unit:** `metric` 또는 `imperial`
 - **language:** 선택한 언어(예: `ko`, `en-US`)
 - **windOverlay:** `true` 또는 `false`(바람 애니메이션 레이어의 활성화 여부를 기억합니다)
+- **radarColour:** 선택한 레이더 색상 구성 번호
+- **radarArrows, radarCells, radarLightning, radarSatellite:** `true` 또는 `false`(활성화된 추가 레이더 레이어를 기억합니다)
+- **weatherAlerts:** `true` 또는 `false`(기상 특보 표시 여부를 기억합니다)
 - **f1_schedule_cache:** F1 일정 데이터를 캐시합니다(7일 캐시)
 
 이 데이터는 이용자의 기기에 남아 있으며 저희 서버로 전송되지 않습니다.
