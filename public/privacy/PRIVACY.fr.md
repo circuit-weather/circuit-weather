@@ -92,7 +92,7 @@ Votre navigateur peut se connecter directement à certains services tiers.
 
 - **Jolpica F1 :** (cache edge de 24 heures ; une dernière copie valide est conservée jusqu’à 30 jours comme solution de repli si la source est indisponible).
 - **GitHub (bacinger/f1-circuits) :** (cache edge de 24 heures).
-- **LibreWXR :** Métadonnées radar (cache d'une minute), tuiles radar et satellite (cache edge de 2 heures ; tuiles de prévision 5 minutes) et alertes météo (cache de 5 minutes).
+- **LibreWXR :** Métadonnées radar (cache d'une minute), tuiles radar (cache edge de 2 heures ; tuiles de prévision 5 minutes), tuiles satellite (cache edge de 12 heures) et alertes météo (cache de 5 minutes). Des copies de secours de courte durée des métadonnées (30 minutes) et des alertes (1 heure) sont conservées au cas où LibreWXR serait indisponible.
 - **RainViewer :** Métadonnées radar (cache d'une minute) et tuiles (cache edge de 2 heures).
 - **Leaflet (via Unpkg) :** Assets de bibliothèque de carte (proxyfiés par sécurité, cache immuable d'un an).
 - **Mapbox (via Mapbox CDN) :** Assets de bibliothèque de carte (proxyfiés par sécurité, cache immuable d'un an).

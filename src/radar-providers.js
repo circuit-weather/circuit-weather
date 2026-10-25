@@ -32,6 +32,9 @@ export const PROVIDER_MAX_ZOOM = Object.freeze({
 // so they are cached briefly and under a separate key (see resolveTileUpstream).
 export const TILE_TTL_PAST = 7200;
 export const TILE_TTL_NOWCAST = 300;
+// Satellite frames are hourly and LibreWXR keeps 12 hours of them; a frame's
+// tiles never change, so they can stay cached for that whole window.
+export const TILE_TTL_SATELLITE = 12 * 60 * 60;
 
 const MAX_FRAMES = 48;
 const MAX_COLOUR_SCHEMES = 32;
@@ -176,7 +179,7 @@ export function resolveTileUpstream(tilePath, searchParams, nowMs) {
   if (satellite) {
     if (Number(satellite[3]) > PROVIDER_MAX_ZOOM.librewxr) return null;
     const upstreamUrl = `${LIBREWXR_HOST}${tilePath}`;
-    return { upstreamUrl, cacheKeyUrl: upstreamUrl, ttl: TILE_TTL_PAST };
+    return { upstreamUrl, cacheKeyUrl: upstreamUrl, ttl: TILE_TTL_SATELLITE };
   }
 
   const rainviewer = RAINVIEWER_RADAR_TILE.exec(tilePath);

@@ -65,7 +65,8 @@ export const zhCN = {
     windSpeed: "风速",
   },
   layers: {
-    heading: "地图选项",
+    mapHeading: "地图",
+    heading: "雷达",
     colourScheme: "雷达配色",
     warnings: "天气预警",
     satellite: "卫星云图",

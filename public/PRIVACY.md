@@ -93,7 +93,7 @@ The following services provide the raw data that we process and cache via Cloudf
 
 - **Jolpica F1:** Historical and current F1 schedule data (24-hour edge cache; a last-known-good copy is kept for up to 30 days as a fallback if the source is unavailable).
 - **GitHub (bacinger/f1-circuits):** Stores static track layout files (GeoJSON) (24-hour edge cache).
-- **LibreWXR:** Radar metadata (1-minute cache), radar and satellite tiles (2-hour edge cache; forecast tiles 5 minutes) and weather warnings (5-minute cache).
+- **LibreWXR:** Radar metadata (1-minute cache), radar tiles (2-hour edge cache; forecast tiles 5 minutes), satellite tiles (12-hour edge cache) and weather warnings (5-minute cache). Short-lived backup copies of the metadata (30 minutes) and warnings (1 hour) are kept in case LibreWXR is unavailable.
 - **RainViewer:** Backup weather radar tiles (2-hour edge cache) and metadata (1-minute cache).
 - **Leaflet (via Unpkg):** Map interaction library assets (proxied for security, 1-year immutable cache).
 - **Mapbox (via Mapbox CDN):** Map interaction library assets (proxied for security, 1-year immutable cache).

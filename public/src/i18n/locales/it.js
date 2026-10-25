@@ -69,7 +69,8 @@ export const it = {
     windSpeed: "Velocita vento",
   },
   layers: {
-    heading: "Opzioni mappa",
+    mapHeading: "Mappa",
+    heading: "Radar",
     colourScheme: "Colori del radar",
     warnings: "Allerte meteo",
     satellite: "Nuvole da satellite",

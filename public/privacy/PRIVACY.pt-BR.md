@@ -92,7 +92,7 @@ O navegador pode se conectar diretamente a serviços de terceiros para mapas, ti
 
 - **Jolpica F1:** (cache de borda de 24 horas; uma última cópia válida é mantida por até 30 dias como alternativa caso a fonte esteja indisponível).
 - **GitHub (bacinger/f1-circuits):** (cache de borda de 24 horas).
-- **LibreWXR:** Metadados de radar (cache de 1 minuto), tiles de radar e satélite (cache de borda de 2 horas; tiles de previsão 5 minutos) e alertas meteorológicos (cache de 5 minutos).
+- **LibreWXR:** Metadados de radar (cache de 1 minuto), tiles de radar (cache de borda de 2 horas; tiles de previsão 5 minutos), tiles de satélite (cache de borda de 12 horas) e alertas meteorológicos (cache de 5 minutos). Cópias de reserva de curta duração dos metadados (30 minutos) e dos alertas (1 hora) são mantidas caso o LibreWXR esteja indisponível.
 - **RainViewer:** Metadados de radar (cache de 1 minuto) e tiles (cache de borda de 2 horas).
 - **Leaflet (via Unpkg):** Recursos de biblioteca de mapas (com proxy por segurança, cache imutável de 1 ano).
 - **Mapbox (via Mapbox CDN):** Recursos de biblioteca de mapas (com proxy por segurança, cache imutável de 1 ano).

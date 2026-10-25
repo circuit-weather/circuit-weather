@@ -244,6 +244,21 @@ describe('WeatherAlerts', () => {
         alerts.destroy();
     });
 
+    it('hides alerts once they expire, without waiting for a refresh', async () => {
+        vi.useFakeTimers();
+        vi.setSystemTime(new Date('2029-12-31T12:00:00Z'));
+        const alerts = new WeatherAlerts(createMapboxMap());
+        alerts.setLocation(52, -1);
+        await vi.advanceTimersByTimeAsync(0);
+        expect(document.querySelectorAll('.alert-item')).toHaveLength(3);
+
+        // 'Big storm' expires at 2030-01-01T12:00Z
+        vi.setSystemTime(new Date('2030-01-01T12:01:00Z'));
+        alerts.render();
+        expect([...document.querySelectorAll('.alert-title')].map(e => e.textContent)).toEqual(['Minor thing', 'Odd']);
+        alerts.destroy();
+    });
+
     it('validates links', () => {
         expect(WeatherAlerts.isSafeLink('http://example.org')).toBe(true);
         expect(WeatherAlerts.isSafeLink('ftp://example.org')).toBe(false);

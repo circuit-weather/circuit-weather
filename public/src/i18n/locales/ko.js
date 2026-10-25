@@ -69,7 +69,8 @@ export const ko = {
     windSpeed: "풍속",
   },
   layers: {
-    heading: "지도 설정",
+    mapHeading: "지도",
+    heading: "레이더",
     colourScheme: "레이더 색상",
     warnings: "기상 특보",
     satellite: "위성 구름",

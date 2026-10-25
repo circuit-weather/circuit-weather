@@ -140,7 +140,13 @@ export class WeatherAlerts {
     }
 
     get visibleAlerts() {
-        return this.enabled && this.location && this.alerts ? this.alerts : [];
+        if (!this.enabled || !this.location || !this.alerts) return [];
+        // Alerts can expire between refreshes (or arrive from the worker's stale copy)
+        const now = Date.now();
+        return this.alerts.filter(feature => {
+            const expires = Date.parse(feature.properties.expires);
+            return Number.isNaN(expires) || expires > now;
+        });
     }
 
     render() {

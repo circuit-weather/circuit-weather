@@ -4,7 +4,8 @@ import worker from '../src/worker.js';
 // Mock Cache API
 const cacheStore = new Map();
 const mockCache = {
-  match: vi.fn(async (request) => cacheStore.get(request.url) || undefined),
+  // Like the Cache API, every match returns a fresh Response
+  match: vi.fn(async (request) => cacheStore.get(request.url)?.clone()),
   put: vi.fn(async (request, response) => {
     cacheStore.set(request.url, response.clone());
   }),
@@ -197,6 +198,43 @@ describe('Worker LibreWXR routes', () => {
       expect(second.status).toBe(502);
       expect((await second.json()).error.message).toBe('Failed to fetch weather alerts');
       expect(errorSpy).toHaveBeenCalledWith('Alerts Fetch Error:', expect.any(Error));
+      errorSpy.mockRestore();
+    });
+
+    it('stores a last-known-good copy and serves it, minus expired alerts, when upstream fails', async () => {
+      const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+      const soon = String(Math.floor(Date.now() / 1000) + 60);
+      const body = {
+        type: 'FeatureCollection',
+        features: [
+          alertsBody.features[0],
+          { ...alertsBody.features[0], properties: { title: 'Ending soon', expires: soon } },
+        ],
+      };
+      mockFetch.mockResolvedValueOnce(geoJson(body));
+      await worker.fetch(createRequest('/api/alerts?lat=52.07&lon=-1.02'), env, ctx);
+      expect(cacheStore.has(`${UPSTREAM}&cw_stale=1`)).toBe(true);
+
+      // Fresh copy gone, the second alert has expired and LibreWXR is down
+      cacheStore.delete(UPSTREAM);
+      vi.useFakeTimers();
+      vi.setSystemTime(Date.now() + 5 * 60 * 1000);
+      mockFetch
+        .mockResolvedValueOnce(new Response('down', { status: 503 }))
+        .mockResolvedValueOnce(new Response('<html>', { status: 200, headers: { 'Content-Type': 'text/html' } }))
+        .mockRejectedValueOnce(new Error('timeout'));
+
+      for (let i = 0; i < 3; i++) {
+        const res = await worker.fetch(
+          createRequest('/api/alerts?lat=52.07&lon=-1.02', { Origin: 'https://circuit-weather.racing' }), env, ctx
+        );
+        expect(res.status).toBe(200);
+        expect(res.headers.get('X-Cache')).toBe('STALE');
+        expect(res.headers.get('Access-Control-Allow-Origin')).toBe('https://circuit-weather.racing');
+        const data = await res.json();
+        expect(data.features.map(f => f.properties.title)).toEqual(['Heavy rain']);
+      }
+      vi.useRealTimers();
       errorSpy.mockRestore();
     });
 

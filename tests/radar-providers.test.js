@@ -8,6 +8,7 @@ import {
   sanitiseAlerts,
   TILE_TTL_PAST,
   TILE_TTL_NOWCAST,
+  TILE_TTL_SATELLITE,
 } from '../src/radar-providers.js';
 
 const NOW_MS = 2_000_000 * 1000;
@@ -141,7 +142,7 @@ describe('resolveTileUpstream', () => {
     expect(resolveTileUpstream('/v2/satellite/900/512/6/3/4/0/0_0.png', params, NOW_MS)).toEqual({
       upstreamUrl: 'https://api.librewxr.net/v2/satellite/900/512/6/3/4/0/0_0.png',
       cacheKeyUrl: 'https://api.librewxr.net/v2/satellite/900/512/6/3/4/0/0_0.png',
-      ttl: TILE_TTL_PAST,
+      ttl: TILE_TTL_SATELLITE,
     });
     expect(resolveTileUpstream('/v2/satellite/900/512/13/3/4/0/0_0.png', none, NOW_MS)).toBeNull();
   });

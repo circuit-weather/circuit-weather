@@ -70,7 +70,8 @@ export const de = {
     windSpeed: "Windgeschwindigkeit",
   },
   layers: {
-    heading: "Kartenoptionen",
+    mapHeading: "Karte",
+    heading: "Radar",
     colourScheme: "Radarfarben",
     warnings: "Wetterwarnungen",
     satellite: "Satellitenwolken",

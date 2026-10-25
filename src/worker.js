@@ -55,8 +55,16 @@ const TIMEOUT_API_ALERTS = 8000;
 // rather than either upstream URL.
 const RADAR_CACHE_KEY_URL = 'https://circuit-weather.racing/__cache/radar-v2';
 
+// Last-known-good radar metadata, served if both radar providers fail. Its
+// frames' tiles stay in the edge cache (2 hours), so playback keeps working
+// through a short upstream outage.
+const RADAR_STALE_KEY_URL = 'https://circuit-weather.racing/__cache/radar-v2-stale';
+const RADAR_STALE_TTL = 30 * 60;
+
 // Weather alerts change slowly; 5 minutes keeps them fresh without hammering upstream.
 const ALERTS_TTL = 300;
+// Last-known-good alerts, served (minus any that have since expired) if LibreWXR fails.
+const ALERTS_STALE_TTL = 60 * 60;
 const MAX_ALERTS_BYTES = 5 * 1024 * 1024;
 
 // Jolpica rate-limits by IP, and Workers share Cloudflare's egress IPs with other
@@ -1222,8 +1230,11 @@ function formatCacheableRadarResponse(request, ctx, cache, cacheKey, data) {
     ...API_SECURITY_HEADERS
   });
 
-  // Save to cache
+  // Save to cache, plus a longer-lived last-known-good copy
   ctx.waitUntil(cache.put(cacheKey, new Response(body, { status: 200, headers: cacheHeaders })));
+  const staleHeaders = new Headers(cacheHeaders);
+  staleHeaders.set('Cache-Control', `public, max-age=${RADAR_STALE_TTL}`);
+  ctx.waitUntil(cache.put(new Request(RADAR_STALE_KEY_URL), new Response(body, { status: 200, headers: staleHeaders })));
 
   // 2. Prepare Response for Client (1 minute)
   const clientHeaders = new Headers(cacheHeaders);
@@ -1265,7 +1276,16 @@ async function handleRadarRequest(request, env, ctx) {
     return formatCacheableRadarResponse(request, ctx, cache, cacheKey, fallback.data);
   }
 
-  // Both providers failed: report the fallback's failure mode
+  // Both providers failed: serve the last-known-good metadata if we have it
+  const stale = await cache.match(new Request(RADAR_STALE_KEY_URL));
+  if (stale) {
+    return createCacheHitResponse(stale, request, {
+      'Cache-Control': 'public, max-age=60',
+      'X-Cache': 'STALE'
+    });
+  }
+
+  // Otherwise report the fallback's failure mode
   if (fallback.status === 429) {
     return createErrorResponse(request, 429, 'Upstream Rate Limit', {
       'X-Upstream-Status': '429',
@@ -1315,7 +1335,7 @@ async function handleAlertsRequest(request, env, ctx, url) {
       if (env.ENVIRONMENT !== 'production') {
         console.error(`Upstream Alerts API Error: Status ${upstreamResponse.status}`);
       }
-      return createErrorResponse(request, 502, 'Upstream alerts error', {
+      return await serveStaleAlertsOrError(request, cache, upstreamUrl, 'Upstream alerts error', {
         'X-Upstream-Status': upstreamResponse.status.toString()
       });
     }
@@ -1323,12 +1343,12 @@ async function handleAlertsRequest(request, env, ctx, url) {
     const { mime } = getParsedMimeType(upstreamResponse);
     const declaredLength = Number(upstreamResponse.headers.get('Content-Length'));
     if ((mime !== 'application/json' && mime !== 'application/geo+json') || declaredLength > MAX_ALERTS_BYTES) {
-      return createErrorResponse(request, 502, 'Invalid upstream alerts response');
+      return await serveStaleAlertsOrError(request, cache, upstreamUrl, 'Invalid upstream alerts response');
     }
 
     const text = await upstreamResponse.text();
     if (text.length > MAX_ALERTS_BYTES) {
-      return createErrorResponse(request, 502, 'Invalid upstream alerts response');
+      return await serveStaleAlertsOrError(request, cache, upstreamUrl, 'Invalid upstream alerts response');
     }
 
     // SEC: Rebuild the payload from validated fields only
@@ -1341,6 +1361,9 @@ async function handleAlertsRequest(request, env, ctx, url) {
       ...API_SECURITY_HEADERS
     });
     ctx.waitUntil(cache.put(cacheKey, new Response(body, { status: 200, headers })));
+    const staleHeaders = new Headers(headers);
+    staleHeaders.set('Cache-Control', `public, max-age=${ALERTS_STALE_TTL}`);
+    ctx.waitUntil(cache.put(getStaleAlertsCacheKey(upstreamUrl), new Response(body, { status: 200, headers: staleHeaders })));
 
     const clientHeaders = new Headers(headers);
     setCorsHeaders(clientHeaders, request);
@@ -1349,6 +1372,29 @@ async function handleAlertsRequest(request, env, ctx, url) {
     if (env.ENVIRONMENT !== 'production') {
       console.error('Alerts Fetch Error:', error);
     }
-    return createErrorResponse(request, 502, 'Failed to fetch weather alerts');
+    return await serveStaleAlertsOrError(request, cache, upstreamUrl, 'Failed to fetch weather alerts');
   }
+}
+
+function getStaleAlertsCacheKey(upstreamUrl) {
+  return new Request(`${upstreamUrl}&cw_stale=1`);
+}
+
+/**
+ * Serve the last-known-good alerts for this area, dropping any that expired
+ * since they were cached. Falls back to a 502 when there is no copy.
+ */
+async function serveStaleAlertsOrError(request, cache, upstreamUrl, message, errorHeaders = {}) {
+  const stale = await cache.match(getStaleAlertsCacheKey(upstreamUrl));
+  if (!stale) {
+    return createErrorResponse(request, 502, message, errorHeaders);
+  }
+
+  // The stored copy was already sanitised; re-running it only drops expired alerts
+  const body = JSON.stringify(sanitiseAlerts(await stale.json(), Date.now()));
+  const headers = new Headers(stale.headers);
+  headers.set('Cache-Control', 'public, max-age=60');
+  headers.set('X-Cache', 'STALE');
+  setCorsHeaders(headers, request);
+  return new Response(body, { status: 200, headers });
 }

@@ -242,9 +242,9 @@
                     <p data-i18n="forecast.selectSessionPrompt">Select a session to view forecast</p>
                 </section>
 
-                <!-- Map options: units, wind, and radar layers (storm overlays, satellite and warnings come from LibreWXR) -->
-                <section class="control-section control-section--layers" aria-labelledby="layersHeading">
-                    <h2 class="control-section-heading" id="layersHeading" data-i18n="layers.heading">Map options</h2>
+                <!-- Map options: units and overlays that are not radar (wind, warnings, satellite) -->
+                <section class="control-section control-section--layers" aria-labelledby="mapOptionsHeading">
+                    <h2 class="control-section-heading" id="mapOptionsHeading" data-i18n="layers.mapHeading">Map</h2>
                     <div class="control-group control-group--units">
                         <span id="unitsLabel" class="control-label" data-i18n="controls.units">Units</span>
                         <div class="unit-toggle" id="unitToggle" role="group" aria-labelledby="unitsLabel">
@@ -269,6 +269,11 @@
                         <button class="pref-switch" id="satelliteToggle" type="button" role="switch"
                             aria-checked="false" aria-labelledby="satelliteToggleLabel"></button>
                     </div>
+                </section>
+
+                <!-- Radar options (storm overlays and colour schemes come from LibreWXR) -->
+                <section class="control-section control-section--layers" aria-labelledby="layersHeading">
+                    <h2 class="control-section-heading" id="layersHeading" data-i18n="layers.heading">Radar</h2>
                     <div class="control-group control-group--toggle">
                         <span id="radarArrowsToggleLabel" class="control-label" data-i18n="layers.stormMotion">Storm motion</span>
                         <button class="pref-switch" id="radarArrowsToggle" type="button" role="switch"

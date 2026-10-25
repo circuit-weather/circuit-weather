@@ -37,7 +37,7 @@ Circuit Weather is a real-time F1 race circuit weather radar application. It dis
 | --------------- | ---------------------------------------------------------------- | -------------------- |
 | Jolpica F1 API  | Race schedule data (24-hour cache, 30-day last-known-good copy)  | Proxied (Cached)     |
 | OpenF1          | Fallback race schedule data                                      | Direct (Client-side) |
-| LibreWXR        | Primary radar, nowcast, satellite and storm overlay tiles (2-hour cache; nowcast 5 minutes), metadata (1-minute cache) and weather warnings (5-minute cache) | Proxied (Cached)     |
+| LibreWXR        | Primary radar, nowcast and storm overlay tiles (2-hour cache; nowcast 5 minutes), satellite tiles (12-hour cache), metadata (1-minute cache, 30-minute last-known-good copy) and weather warnings (5-minute cache, 1-hour last-known-good copy) | Proxied (Cached)     |
 | RainViewer      | Backup radar tiles (2-hour cache) and metadata (1-minute cache), used when LibreWXR fails | Proxied (Cached)     |
 | Open-Meteo      | Weather forecasts                                                | Direct (Client-side) |
 | Mapbox API      | Primary map basemap tiles and rendering                          | Direct (Client-side) |
@@ -232,9 +232,9 @@ mode = "smart"
 | Endpoint        | Purpose                                                                                                      |
 | --------------- | ------------------------------------------------------------------------------------------------------------ |
 | `/api/f1/*`     | Proxies to Jolpica F1 API with 24-hour edge caching; serves a 30-day last-known-good copy if Jolpica fails   |
-| `/api/radar`    | LibreWXR radar metadata (RainViewer fallback), normalised with `provider` and `maxZoom`, 1-minute caching     |
-| `/api/tiles/*`  | Proxies LibreWXR radar/satellite tiles (and `/rainviewer/...` fallback tiles) with 2-hour edge caching; nowcast tiles 5 minutes |
-| `/api/alerts`   | Proxies LibreWXR weather alerts for `?lat=&lon=` (±2° box) with 5-minute caching; output is sanitised GeoJSON  |
+| `/api/radar`    | LibreWXR radar metadata (RainViewer fallback), normalised with `provider` and `maxZoom`, 1-minute caching; serves a 30-minute last-known-good copy if both fail |
+| `/api/tiles/*`  | Proxies LibreWXR radar/satellite tiles (and `/rainviewer/...` fallback tiles) with 2-hour edge caching; nowcast tiles 5 minutes, satellite tiles 12 hours |
+| `/api/alerts`   | Proxies LibreWXR weather alerts for `?lat=&lon=` (±2° box) with 5-minute caching and a 1-hour last-known-good copy (expired alerts dropped); output is sanitised GeoJSON |
 | `/api/track/*`  | Proxies to GitHub for GeoJSON track data with 24-hour caching                                                |
 | `/api/assets/*` | Proxies to Unpkg (Leaflet) and Mapbox CDNs for map library assets with 1-year immutable caching (strict CSP) |
 | `/api/health`   | System status check (connectivity to upstreams, version, env) with 60-second caching                         |

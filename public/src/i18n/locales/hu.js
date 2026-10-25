@@ -71,7 +71,8 @@ export const hu = {
     windSpeed: "Szélsebesség",
   },
   layers: {
-    heading: "Térkép beállításai",
+    mapHeading: "Térkép",
+    heading: "Radar",
     colourScheme: "Radarszínek",
     warnings: "Időjárási figyelmeztetések",
     satellite: "Műholdas felhőkép",

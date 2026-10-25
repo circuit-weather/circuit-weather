@@ -92,7 +92,7 @@ Tu navegador puede conectarse directamente a servicios de terceros para mapas, t
 
 - **Jolpica F1:** Calendario F1 (caché de borde de 24 horas; se conserva una última copia válida hasta 30 días como respaldo si la fuente no está disponible).
 - **GitHub (bacinger/f1-circuits):** Archivos GeoJSON de circuitos (caché de borde de 24 horas).
-- **LibreWXR:** Metadatos de radar (caché de 1 minuto), tiles de radar y satélite (caché de borde de 2 horas; tiles de pronóstico 5 minutos) y avisos meteorológicos (caché de 5 minutos).
+- **LibreWXR:** Metadatos de radar (caché de 1 minuto), tiles de radar (caché de borde de 2 horas; tiles de pronóstico 5 minutos), tiles de satélite (caché de borde de 12 horas) y avisos meteorológicos (caché de 5 minutos). Se guardan copias de respaldo de corta duración de los metadatos (30 minutos) y los avisos (1 hora) por si LibreWXR no está disponible.
 - **RainViewer:** Metadatos de radar (caché de 1 minuto) y tiles (caché de borde de 2 horas).
 - **Leaflet (vía Unpkg):** Recursos de librería de mapas (con proxy por seguridad, caché inmutable de 1 año).
 - **Mapbox (vía Mapbox CDN):** Recursos de librería de mapas (con proxy por seguridad, caché inmutable de 1 año).

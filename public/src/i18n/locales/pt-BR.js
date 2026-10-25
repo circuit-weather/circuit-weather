@@ -69,7 +69,8 @@ export const ptBR = {
     windSpeed: "Velocidade do vento",
   },
   layers: {
-    heading: "Opções do mapa",
+    mapHeading: "Mapa",
+    heading: "Radar",
     colourScheme: "Cores do radar",
     warnings: "Alertas meteorológicos",
     satellite: "Nuvens por satélite",

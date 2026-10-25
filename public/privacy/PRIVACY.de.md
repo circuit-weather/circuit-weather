@@ -92,7 +92,7 @@ Der Browser kann für Karten, Tiles und Widgets direkt mit Drittanbietern kommun
 
 - **Jolpica F1:** (24-Stunden-Edge-Cache; eine zuletzt gültige Kopie wird bis zu 30 Tage als Ausweichlösung aufbewahrt, falls die Quelle nicht verfügbar ist).
 - **GitHub (bacinger/f1-circuits):** (24-Stunden-Edge-Cache).
-- **LibreWXR:** Radarmetadaten (1-Minuten-Cache), Radar- und Satellitenkacheln (2-Stunden-Edge-Cache; Vorhersagekacheln 5 Minuten) und Wetterwarnungen (5-Minuten-Cache).
+- **LibreWXR:** Radarmetadaten (1-Minuten-Cache), Radarkacheln (2-Stunden-Edge-Cache; Vorhersagekacheln 5 Minuten), Satellitenkacheln (12-Stunden-Edge-Cache) und Wetterwarnungen (5-Minuten-Cache). Kurzlebige Sicherungskopien der Metadaten (30 Minuten) und Warnungen (1 Stunde) werden für den Fall aufbewahrt, dass LibreWXR nicht erreichbar ist.
 - **RainViewer:** Radarmetadaten (1-Minuten-Cache) und Kacheln (2-Stunden-Edge-Cache).
 - **Leaflet (über Unpkg):** Interaktionsbibliothek für Karten (aus Sicherheitsgründen geproxyt, 1-Jahr-Immutable-Cache).
 - **Mapbox (über Mapbox CDN):** Interaktionsbibliothek für Karten (aus Sicherheitsgründen geproxyt, 1-Jahr-Immutable-Cache).

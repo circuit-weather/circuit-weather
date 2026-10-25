@@ -571,6 +571,24 @@ describe("Worker Logic", () => {
       errorSpy.mockRestore();
     });
 
+    it("serves the last-known-good metadata when both providers fail", async () => {
+      const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+      mockFetch.mockResolvedValueOnce(jsonResponse(libreWxrData));
+      await worker.fetch(createRequest("/api/radar"), global.env, global.ctx);
+      expect(cacheStore.has("https://circuit-weather.racing/__cache/radar-v2-stale")).toBe(true);
+
+      // Fresh copy expires; both providers are now down
+      cacheStore.delete(RADAR_CACHE_KEY);
+      mockFetch.mockResolvedValue(new Response("Error", { status: 503 }));
+      const res = await worker.fetch(createRequest("/api/radar"), global.env, global.ctx);
+
+      expect(res.status).toBe(200);
+      expect(res.headers.get("X-Cache")).toBe("STALE");
+      expect(res.headers.get("Cache-Control")).toBe("public, max-age=60");
+      expect((await res.json()).provider).toBe("librewxr");
+      errorSpy.mockRestore();
+    });
+
     it("returns cached response for radar with valid origin", async () => {
       const cachedData = { version: "2.0", provider: "librewxr", radar: {} };
       cacheStore.set(RADAR_CACHE_KEY, jsonResponse(cachedData));

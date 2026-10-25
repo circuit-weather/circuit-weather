@@ -90,7 +90,7 @@ Your browser may connect directly to third-party services for maps, tiles, and w
 
 - **Jolpica F1:** F1 schedule data (24-hour edge cache; a last-known-good copy is kept for up to 30 days as a fallback if the source is unavailable).
 - **GitHub (bacinger/f1-circuits):** GeoJSON track files (24-hour edge cache).
-- **LibreWXR:** Radar metadata (1-minute cache), radar and satellite tiles (2-hour edge cache; forecast tiles 5 minutes) and weather warnings (5-minute cache).
+- **LibreWXR:** Radar metadata (1-minute cache), radar tiles (2-hour edge cache; forecast tiles 5 minutes), satellite tiles (12-hour edge cache) and weather warnings (5-minute cache). Short-lived backup copies of the metadata (30 minutes) and warnings (1 hour) are kept in case LibreWXR is unavailable.
 - **RainViewer:** Radar metadata (1-minute cache) and tiles (2-hour edge cache).
 - **Leaflet (via Unpkg):** Map interaction library assets (proxied for security, 1-year immutable cache).
 - **Mapbox (via Mapbox CDN):** Map interaction library assets (proxied for security, 1-year immutable cache).

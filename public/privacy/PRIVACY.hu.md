@@ -92,7 +92,7 @@ A böngészője közvetlenül is csatlakozhat harmadik féltől származó szolg
 
 - **Jolpica F1:** F1-es naptár adatok (24 órás edge cache; az utolsó érvényes másolatot legfeljebb 30 napig tartjuk meg tartalékként, ha a forrás nem érhető el).
 - **GitHub (bacinger/f1-circuits):** GeoJSON pályafájlok (24 órás edge cache).
-- **LibreWXR:** Radar metaadatok (1 perces cache), radar- és műholdas csempék (2 órás edge cache; előrejelzési csempék 5 perc) és időjárási figyelmeztetések (5 perces cache).
+- **LibreWXR:** Radar metaadatok (1 perces cache), radarcsempék (2 órás edge cache; előrejelzési csempék 5 perc), műholdas csempék (12 órás edge cache) és időjárási figyelmeztetések (5 perces cache). A metaadatokról (30 perc) és a figyelmeztetésekről (1 óra) rövid ideig tartalék másolatot őrzünk arra az esetre, ha a LibreWXR nem érhető el.
 - **RainViewer:** Radar metaadatok (1 perces cache) és csempék (2 órás edge cache).
 - **Leaflet (a Unpkg-en keresztül):** Térkép interakciós könyvtár eszközei (biztonsági okokból proxizva, 1 éves módosíthatatlan cache).
 - **Mapbox (a Mapbox CDN-en keresztül):** Térkép interakciós könyvtár eszközei (biztonsági okokból proxizva, 1 éves módosíthatatlan cache).

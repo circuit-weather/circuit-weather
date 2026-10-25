@@ -92,7 +92,7 @@ Uw browser kan rechtstreeks verbinding maken met diensten van derden voor kaarte
 
 - **Jolpica F1:** F1-schemagegevens (24 uur edge-cache; een laatst bekende geldige kopie wordt tot 30 dagen bewaard als terugval als de bron niet beschikbaar is).
 - **GitHub (bacinger/f1-circuits):** GeoJSON-circuitbestanden (24 uur edge-cache).
-- **LibreWXR:** Radarmetadata (1 minuut cache), radar- en satelliettegels (2 uur edge-cache; verwachtingstegels 5 minuten) en weerswaarschuwingen (5 minuten cache).
+- **LibreWXR:** Radarmetadata (1 minuut cache), radartegels (2 uur edge-cache; verwachtingstegels 5 minuten), satelliettegels (12 uur edge-cache) en weerswaarschuwingen (5 minuten cache). Kortlevende reservekopieën van de metadata (30 minuten) en waarschuwingen (1 uur) worden bewaard voor het geval LibreWXR niet beschikbaar is.
 - **RainViewer:** Radarmetadata (1 minuut cache) en tegels (2 uur edge-cache).
 - **Leaflet (via Unpkg):** Assets van de kaartinteractiebibliotheek (via proxy om veiligheidsredenen, 1 jaar immutable cache).
 - **Mapbox (via Mapbox CDN):** Assets van de kaartinteractiebibliotheek (via proxy om veiligheidsredenen, 1 jaar immutable cache).

@@ -92,7 +92,7 @@ Il browser può connettersi direttamente ad alcuni servizi per mappe, tile e wid
 
 - **Jolpica F1:** (cache edge di 24 ore; un’ultima copia valida viene conservata fino a 30 giorni come riserva se la fonte non è disponibile).
 - **GitHub (bacinger/f1-circuits):** (cache edge di 24 ore).
-- **LibreWXR:** Metadati radar (cache di 1 minuto), tile radar e satellite (cache edge di 2 ore; tile di previsione 5 minuti) e allerte meteo (cache di 5 minuti).
+- **LibreWXR:** Metadati radar (cache di 1 minuto), tile radar (cache edge di 2 ore; tile di previsione 5 minuti), tile satellitari (cache edge di 12 ore) e allerte meteo (cache di 5 minuti). Copie di riserva di breve durata dei metadati (30 minuti) e delle allerte (1 ora) vengono conservate nel caso LibreWXR non sia disponibile.
 - **RainViewer:** Metadati radar (cache di 1 minuto) e tile (cache edge di 2 ore).
 - **Leaflet (via Unpkg):** Asset della libreria mappa (proxati per sicurezza, cache immutabile di 1 anno).
 - **Mapbox (via Mapbox CDN):** Asset della libreria mappa (proxati per sicurezza, cache immutabile di 1 anno).

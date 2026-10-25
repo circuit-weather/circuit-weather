@@ -69,7 +69,8 @@ export const ja = {
     windSpeed: "風速",
   },
   layers: {
-    heading: "地図の設定",
+    mapHeading: "地図",
+    heading: "レーダー",
     colourScheme: "レーダーの配色",
     warnings: "気象警報",
     satellite: "衛星雲画像",
