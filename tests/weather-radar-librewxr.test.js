@@ -76,11 +76,19 @@ describe('WeatherRadar with LibreWXR', () => {
         await radar.fetchAndFilter();
 
         expect(radar.provider).toBe('librewxr');
-        expect(radar.maxZoom).toBe(12);
+        // Capped below the provider's limit of 12 to keep tile counts down
+        expect(radar.maxZoom).toBe(CONFIG.RADAR_MAX_TILE_ZOOM);
         expect(radar.pastFrameCount).toBe(2);
         expect(radar.satellite.frame.url).toBe('/api/tiles/v2/satellite/90/512/{z}/{x}/{y}/0/0_0.png');
         expect(onMetadata).toHaveBeenCalledWith(expect.objectContaining({ provider: 'librewxr' }));
         expect(radar.attribution).toBe(CONFIG.RADAR_ATTRIBUTION.librewxr);
+    });
+
+    it('keeps the lower RainViewer limit when it is below the cap', async () => {
+        fetch.mockResolvedValueOnce({ ok: true, json: async () => ({ ...METADATA, provider: 'rainviewer', maxZoom: 7 }) });
+        radar = new WeatherRadar(createLeafletMap());
+        await radar.fetchMetadata();
+        expect(radar.maxZoom).toBe(7);
     });
 
     it('keeps the previous provider when the metadata has no frames', async () => {
@@ -97,7 +105,7 @@ describe('WeatherRadar with LibreWXR', () => {
         expect(onMetadata).not.toHaveBeenCalled();
     });
 
-    it('uses the provider zoom limit for Leaflet layers', async () => {
+    it('uses the capped zoom limit for Leaflet layers', async () => {
         radar = new WeatherRadar(createLeafletMap());
         await radar.fetchAndFilter();
         radar.createLayers();
@@ -106,11 +114,11 @@ describe('WeatherRadar with LibreWXR', () => {
         expect(radar.currentFrame).toBe(1);
         expect(L.tileLayer).toHaveBeenCalledWith(
             '/api/tiles/v2/radar/200/512/{z}/{x}/{y}/2/1_1.png',
-            expect.objectContaining({ maxNativeZoom: 13, attribution: CONFIG.RADAR_ATTRIBUTION.librewxr })
+            expect.objectContaining({ maxNativeZoom: CONFIG.RADAR_MAX_TILE_ZOOM + 1, attribution: CONFIG.RADAR_ATTRIBUTION.librewxr })
         );
     });
 
-    it('uses the provider zoom limit for Mapbox sources', async () => {
+    it('uses the capped zoom limit for Mapbox sources', async () => {
         const map = createMapboxMap();
         radar = new WeatherRadar(map);
         await radar.fetchAndFilter();
@@ -118,7 +126,7 @@ describe('WeatherRadar with LibreWXR', () => {
         radar.showFrame(0);
 
         expect(map._sources.get('radar-source-0')).toMatchObject({
-            maxzoom: 12,
+            maxzoom: CONFIG.RADAR_MAX_TILE_ZOOM,
             attribution: CONFIG.RADAR_ATTRIBUTION.librewxr,
         });
     });

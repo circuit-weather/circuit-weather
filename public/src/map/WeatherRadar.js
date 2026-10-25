@@ -174,7 +174,7 @@ export class WeatherRadar {
         const result = await RadarFrames.getFramesFromApi(this.getTileOptions());
         if (result.frames.length > 0) {
             this.provider = result.provider;
-            this.maxZoom = result.maxZoom;
+            this.maxZoom = Math.min(result.maxZoom, CONFIG.RADAR_MAX_TILE_ZOOM);
             this.satellite.setFrame(result.satellite);
             this.onMetadata(result);
         }

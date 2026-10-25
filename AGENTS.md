@@ -182,7 +182,7 @@ mode = "smart"
    - Animated playback of past 2 hours plus LibreWXR's experimental 1-hour nowcast (forecast frames are marked on the slider)
    - Timeline slider (adaptive range), starting on the latest observed frame
    - Playback label relative to now ("20 min ago", "Live", "Forecast +20 min"), plus the selected session when it is within 6 hours ("35 min before Race", "1 h 10 min into Race")
-   - Provider zoom limits come from `/api/radar` (`maxZoom`: 12 for LibreWXR, 7 for RainViewer)
+   - Provider zoom limits come from `/api/radar` (`maxZoom`: 12 for LibreWXR, 7 for RainViewer). The client caps animation tiles at `CONFIG.RADAR_MAX_TILE_ZOOM` (8): radar data is ~1 km resolution, and each extra zoom level multiplies tile requests across every animation frame (zoom 9 meant ~150 tiles and ~170 MB of decoded images per view)
    - Optional LibreWXR extras: colour schemes, storm motion arrows, storm cells, lightning (Americas only) and satellite clouds
    - Attribution: LibreWXR data is CC BY 4.0 and must be credited on the map (plus "Radar-DPC" for Italian data)
 

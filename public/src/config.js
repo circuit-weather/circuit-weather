@@ -23,6 +23,10 @@ export const CONFIG = {
     radarOpacity: 0.65,
     // Used when the radar metadata does not report a max zoom (RainViewer free tier limit)
     RADAR_FALLBACK_MAX_ZOOM: 7,
+    // Radar data is ~1 km resolution and a 512px tile at zoom 8 is already ~300 m/px,
+    // so higher tile zooms only add smoothing. Every animation frame is its own layer,
+    // so each extra zoom level multiplies tile requests and decoded images (~4x per level).
+    RADAR_MAX_TILE_ZOOM: 8,
     RADAR_DEFAULT_COLOUR: 2, // Universal Blue
     RADAR_ATTRIBUTION: Object.freeze({
         librewxr: 'Radar &copy; <a href="https://librewxr.net" target="_blank" rel="noopener noreferrer">LibreWXR</a> (CC BY 4.0), Radar-DPC',
