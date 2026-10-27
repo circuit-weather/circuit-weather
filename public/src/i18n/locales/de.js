@@ -163,6 +163,8 @@ export const de = {
       "Der F1-Rennkalender konnte nicht geladen werden. Die Datenquelle (api.jolpi.ca) ist derzeit nicht verfügbar – bitte versuchen Sie es später erneut.",
     scheduleAllUnavailable:
       "Der F1-Rennkalender konnte nicht geladen werden. Beide Datenquellen (api.jolpi.ca und api.openf1.org) sind derzeit nicht verfügbar – bitte versuchen Sie es später erneut.",
+    seriesScheduleUnavailable:
+      "Der Kalender für {{series}} konnte nicht von TheSportsDB geladen werden. Es wird automatisch erneut versucht – Sie können weiterhin eine andere Rennserie wählen.",
     usingFallbackSource:
       "Primäre Datenquelle (api.jolpi.ca) nicht verfügbar – Daten werden von der Backup-Quelle (api.openf1.org) angezeigt.",
     sessionError: "Session-Fehler",

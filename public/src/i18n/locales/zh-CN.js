@@ -152,6 +152,8 @@ export const zhCN = {
       "无法加载F1赛程。数据源 (api.jolpi.ca) 目前不可用，请稍后重试。",
     scheduleAllUnavailable:
       "无法加载F1赛程。两个数据源 (api.jolpi.ca 和 api.openf1.org) 目前均不可用，请稍后重试。",
+    seriesScheduleUnavailable:
+      "无法从 TheSportsDB 加载{{series}}赛历，正在自动重试。你仍可选择其他系列赛。",
     usingFallbackSource:
       "主数据源 (api.jolpi.ca) 不可用 — 正在显示备用数据源 (api.openf1.org) 的数据。",
     sessionError: "赛段错误",

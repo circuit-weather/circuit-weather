@@ -163,6 +163,8 @@ export const hu = {
       "Az F1-es versenynaptár nem tölthető be. Az adatforrás (api.jolpi.ca) jelenleg nem érhető el – kérjük, próbálja újra később.",
     scheduleAllUnavailable:
       "Az F1-es versenynaptár nem tölthető be. Mindkét adatforrás (api.jolpi.ca és api.openf1.org) jelenleg nem érhető el – kérjük, próbálja újra később.",
+    seriesScheduleUnavailable:
+      "A(z) {{series}} versenynaptárát nem sikerült betölteni a TheSportsDB-ről. Automatikusan újrapróbáljuk – közben másik sorozatot is választhat.",
     usingFallbackSource:
       "Az elsődleges adatforrás (api.jolpi.ca) nem érhető el – az adatok a tartalék forrásból (api.openf1.org) származnak.",
     sessionError: "Esemény hiba",

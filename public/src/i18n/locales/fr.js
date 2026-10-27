@@ -162,6 +162,8 @@ export const fr = {
       "Le calendrier F1 n'a pas pu être chargé. La source de données (api.jolpi.ca) est actuellement indisponible. Veuillez réessayer plus tard.",
     scheduleAllUnavailable:
       "Le calendrier F1 n'a pas pu être chargé. Les deux sources de données (api.jolpi.ca et api.openf1.org) semblent indisponibles. Veuillez réessayer plus tard.",
+    seriesScheduleUnavailable:
+      "Le calendrier {{series}} n’a pas pu être chargé depuis TheSportsDB. Nouvelle tentative automatique — vous pouvez toujours choisir une autre série.",
     usingFallbackSource:
       "La source principale (api.jolpi.ca) est indisponible — affichage des données de la source de secours (api.openf1.org).",
     sessionError: "Erreur de session",

@@ -161,6 +161,8 @@ export const ja = {
       "F1レーススケジュールを読み込めませんでした。データソース (api.jolpi.ca) が現在利用できません。後でもう一度お試しください。",
     scheduleAllUnavailable:
       "F1レーススケジュールを読み込めませんでした。両方のデータソース (api.jolpi.ca および api.openf1.org) が現在利用できないようです。後でもう一度お試しください。",
+    seriesScheduleUnavailable:
+      "TheSportsDBから{{series}}のスケジュールを読み込めませんでした。自動的に再試行します。別のシリーズを選ぶこともできます。",
     usingFallbackSource:
       "プライマリのデータソース (api.jolpi.ca) が利用できないため、バックアップソース (api.openf1.org) のデータを表示しています。",
     sessionError: "セッションエラー",

@@ -100,29 +100,36 @@ export class UpstreamThrottle {
 
 /**
  * Calls a TheSportsDB v1 endpoint.
- * @returns {Promise<{ok: true, data: object} | {ok: false, limited: boolean}>}
+ * @returns {Promise<{ok: true, data: object} | {ok: false, limited: boolean, reason: string}>}
  *   limited is true when the call was refused by the throttle or by a 429, so the
- *   caller should stop making further calls for now.
+ *   caller should stop making further calls for now. reason says why it failed
+ *   ('throttled', 'rate_limited', 'http_<status>', 'invalid_response', 'network') and
+ *   is safe to return to clients.
  */
 export async function fetchTheSportsDb(path, env, throttle) {
-  if (!throttle.tryAcquire()) return { ok: false, limited: true };
+  if (!throttle.tryAcquire()) return { ok: false, limited: true, reason: 'throttled' };
+  let response;
   try {
-    const response = await fetch(`${API_BASE}/${getApiKey(env)}/${path}`, {
+    response = await fetch(`${API_BASE}/${getApiKey(env)}/${path}`, {
       headers: { 'Accept': 'application/json', 'User-Agent': 'CircuitWeather/1.0' },
       signal: AbortSignal.timeout(TIMEOUT_MS),
     });
-    if (response.status === 429) {
-      throttle.startCooldown(Date.now() + RATE_LIMIT_COOLDOWN_MS);
-      return { ok: false, limited: true };
-    }
-    if (!response.ok) return { ok: false, limited: false };
-    // TheSportsDB serves JSON with a text/html content type on some endpoints, so
-    // parse the body rather than trusting the header.
-    return { ok: true, data: await response.json() };
   } catch (error) {
     // SEC: Never log the request URL: it contains the API key
     if (env?.ENVIRONMENT !== 'production') console.error('TheSportsDB fetch failed:', error?.name);
-    return { ok: false, limited: false };
+    return { ok: false, limited: false, reason: 'network' };
+  }
+  if (response.status === 429) {
+    throttle.startCooldown(Date.now() + RATE_LIMIT_COOLDOWN_MS);
+    return { ok: false, limited: true, reason: 'rate_limited' };
+  }
+  if (!response.ok) return { ok: false, limited: false, reason: `http_${response.status}` };
+  try {
+    // TheSportsDB serves JSON with a text/html content type on some endpoints, so
+    // parse the body rather than trusting the header. A bot challenge page fails here.
+    return { ok: true, data: await response.json() };
+  } catch {
+    return { ok: false, limited: false, reason: 'invalid_response' };
   }
 }
 

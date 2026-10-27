@@ -171,6 +171,12 @@
                     </div>
                 </section>
 
+                <!-- Schedule load failures: shown inline so the series picker and settings stay usable -->
+                <div class="schedule-error" id="scheduleError" role="alert" hidden>
+                    <span id="scheduleErrorText"></span>
+                    <button type="button" id="scheduleRetry" class="link-button" data-i18n="common.retry">Retry</button>
+                </div>
+
                 <!-- Race Info Banner -->
                 <section class="race-info-banner" id="raceInfoBanner" aria-labelledby="raceInfoName" style="display: none;">
                     <!-- Scout: Added a generic fallback alt text for SEO and accessibility before JS populates the country name -->

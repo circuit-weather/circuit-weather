@@ -161,6 +161,8 @@ export const it = {
       "Impossibile caricare il calendario F1. La fonte dei dati (api.jolpi.ca) è attualmente non disponibile. Riprova più tardi.",
     scheduleAllUnavailable:
       "Impossibile caricare il calendario F1. Entrambe le fonti di dati (api.jolpi.ca e api.openf1.org) risultano non disponibili. Riprova più tardi.",
+    seriesScheduleUnavailable:
+      "Impossibile caricare il calendario di {{series}} da TheSportsDB. Nuovo tentativo automatico in corso: puoi comunque scegliere un’altra serie.",
     usingFallbackSource:
       "La fonte primaria (api.jolpi.ca) non è disponibile: dati mostrati dalla fonte di backup (api.openf1.org).",
     sessionError: "Errore sessione",

@@ -98,7 +98,7 @@ describe('fetchTheSportsDb', () => {
   it('does not call upstream when the throttle refuses', async () => {
     const throttle = new UpstreamThrottle(0);
     const res = await fetchTheSportsDb('x', {}, throttle);
-    expect(res).toEqual({ ok: false, limited: true });
+    expect(res).toEqual({ ok: false, limited: true, reason: 'throttled' });
     expect(mockFetch).not.toHaveBeenCalled();
   });
 
@@ -107,20 +107,25 @@ describe('fetchTheSportsDb', () => {
     const throttle = new UpstreamThrottle();
     const before = Date.now();
     const res = await fetchTheSportsDb('x', {}, throttle);
-    expect(res).toEqual({ ok: false, limited: true });
+    expect(res).toEqual({ ok: false, limited: true, reason: 'rate_limited' });
     expect(throttle.cooldownUntil).toBeGreaterThanOrEqual(before + RATE_LIMIT_COOLDOWN_MS);
   });
 
   it('reports other HTTP errors as not limited', async () => {
     mockFetch.mockResolvedValue(jsonResponse({}, 500));
-    expect(await fetchTheSportsDb('x', {}, new UpstreamThrottle())).toEqual({ ok: false, limited: false });
+    expect(await fetchTheSportsDb('x', {}, new UpstreamThrottle())).toEqual({ ok: false, limited: false, reason: 'http_500' });
   });
 
   it('handles network errors without logging the key-bearing URL', async () => {
     mockFetch.mockRejectedValue(Object.assign(new Error('https://www.thesportsdb.com/api/v1/json/secret/x'), { name: 'TypeError' }));
     const res = await fetchTheSportsDb('x', { THESPORTSDB_API_KEY: 'secret' }, new UpstreamThrottle());
-    expect(res).toEqual({ ok: false, limited: false });
+    expect(res).toEqual({ ok: false, limited: false, reason: 'network' });
     expect(console.error).toHaveBeenCalledWith('TheSportsDB fetch failed:', 'TypeError');
+  });
+
+  it('reports a non-JSON body (e.g. a bot challenge page) as invalid', async () => {
+    mockFetch.mockResolvedValue(new Response('<html>Just a moment...</html>', { headers: { 'Content-Type': 'text/html' } }));
+    expect(await fetchTheSportsDb('x', {}, new UpstreamThrottle())).toEqual({ ok: false, limited: false, reason: 'invalid_response' });
   });
 
   it('stays quiet in production', async () => {

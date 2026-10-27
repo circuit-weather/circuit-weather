@@ -211,22 +211,25 @@ async function refreshLeague(state, leagueId, now, spend) {
 /**
  * Refreshes as much of the season state as the budget and rate limit allow.
  * Mutates state.
- * @returns {Promise<{changed: boolean, limited: boolean}>}
+ * @returns {Promise<{changed: boolean, limited: boolean, failure: string|null}>}
+ *   failure is the reason the first failed upstream call gave, if any
  */
 export async function fillState(state, leagueId, env, now) {
   let budget = FILL_BUDGET;
   let limited = false;
+  let failure = null;
   const before = JSON.stringify(state);
 
   const spend = async (path) => {
     budget--;
     const res = await fetchTheSportsDb(path, env, throttle);
     if (res.limited) limited = true;
+    if (!res.ok) failure ??= res.reason;
     return res;
   };
 
   await refreshLeague(state, leagueId, now, spend);
-  if (!state.season) return { changed: JSON.stringify(state) !== before, limited };
+  if (!state.season) return { changed: JSON.stringify(state) !== before, limited, failure };
 
   // Rounds, a batch at a time, re-planning after each batch so new rounds found by an
   // end-of-season probe are followed up in the same request.
@@ -278,7 +281,7 @@ export async function fillState(state, leagueId, env, now) {
     }));
   }
 
-  return { changed: JSON.stringify(state) !== before, limited };
+  return { changed: JSON.stringify(state) !== before, limited, failure };
 }
 
 export function assembleSchedule(state, now) {
@@ -317,15 +320,19 @@ export async function handleScheduleRequest(request, env, ctx, url) {
   const now = Date.now();
   const state = await loadState(cache, series);
 
+  // Why upstream gave nothing, returned with a 503 to make failures diagnosable
+  let failure = 'cooldown';
   if (!(await isCoolingDown(cache))) {
-    const { changed, limited } = await fillState(state, SERIES[series].leagueId, env, now);
-    if (changed) saveState(cache, state, ctx);
-    if (limited && throttle.isCoolingDown()) recordCooldown(cache, ctx);
+    const result = await fillState(state, SERIES[series].leagueId, env, now);
+    failure = result.failure;
+    if (result.changed) saveState(cache, state, ctx);
+    if (result.limited && throttle.isCoolingDown()) recordCooldown(cache, ctx);
   }
 
   const schedule = assembleSchedule(state, now);
   if (schedule.races.length === 0) {
-    return createErrorResponse(request, 503, 'Schedule unavailable', { 'Retry-After': '60' });
+    if (env.ENVIRONMENT !== 'production') console.error(`TheSportsDB ${series} schedule unavailable:`, failure);
+    return createErrorResponse(request, 503, 'Schedule unavailable', { 'Retry-After': '60' }, { reason: failure ?? 'no_data' });
   }
 
   const body = JSON.stringify(schedule);

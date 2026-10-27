@@ -1862,68 +1862,53 @@ describe('CircuitWeatherApp Pure Methods', () => {
             consoleSpy.mockRestore();
         });
 
-        it('renders fallback DOM error state when init schedule fetch fails with generic error', async () => {
+        it('keeps the sidebar usable when the init schedule fetch fails', async () => {
             app.mapManager.init = vi.fn().mockResolvedValue({ hasLayer: false, addControl: vi.fn() });
             const mockSidebar = createMockElement('sidebar-content');
             vi.spyOn(document, 'querySelector').mockImplementation(sel => {
                 if (sel === '.sidebar-content') return mockSidebar;
                 return createMockElement(sel);
             });
-
-            const error = new Error('Network failure');
-            app.f1Api.getSchedule.mockRejectedValue(error);
+            app.f1Api.getSchedule.mockRejectedValue(new Error('Network failure'));
             const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+            const renderErrorSpy = vi.spyOn(app, 'renderError');
 
             await app.init();
 
-            expect(mockSidebar.textContent).toBe('');
-            const appendedErrorState = mockSidebar.appendChild.mock.calls[0][0];
-            expect(appendedErrorState.className).toBe('error-state');
-
-            const p = appendedErrorState.appendChild.mock.calls.find(call => call[0].id === 'p')?.[0];
-            const btn = appendedErrorState.appendChild.mock.calls.find(call => call[0].className === 'retry-btn')?.[0];
-
-            expect(p).toBeDefined();
-            expect(p.textContent).toBe(i18n.t('errors.initFailed'));
-            expect(btn).toBeDefined();
-            expect(btn.className).toBe('retry-btn');
+            // The series picker and settings stay in place; the error is shown inline
+            expect(renderErrorSpy).not.toHaveBeenCalled();
+            expect(mockSidebar.appendChild).not.toHaveBeenCalled();
+            expect(app.ui.scheduleError.hidden).toBe(false);
+            expect(app.ui.scheduleErrorText.textContent).toBe(i18n.t('errors.scheduleUnavailable'));
+            expect(app.autoSelectNextRound).not.toHaveBeenCalled();
+            // The rest of the app still starts
+            expect(app.startWeatherRefreshInterval).toHaveBeenCalled();
             expect(app.showLoading).toHaveBeenCalledWith(false);
 
             consoleSpy.mockRestore();
         });
 
-        it('renders errors.scheduleAllUnavailable when all schedule sources fail with F1_SCHEDULE_UNAVAILABLE:jolpica,openf1:...', async () => {
-            // Arrange
+        it('shows errors.scheduleAllUnavailable inline when all F1 sources fail with F1_SCHEDULE_UNAVAILABLE:jolpica,openf1:...', async () => {
             app.mapManager.init = vi.fn().mockResolvedValue({ hasLayer: false, addControl: vi.fn() });
-            const error = new Error('F1_SCHEDULE_UNAVAILABLE:jolpica,openf1:ALL_SOURCES_FAILED');
-            app.f1Api.getSchedule.mockRejectedValue(error);
+            app.f1Api.getSchedule.mockRejectedValue(new Error('F1_SCHEDULE_UNAVAILABLE:jolpica,openf1:ALL_SOURCES_FAILED'));
             const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-            const renderErrorSpy = vi.spyOn(app, 'renderError').mockImplementation(() => {});
 
-            // Act
             await app.init();
 
-            // Assert
-            expect(renderErrorSpy).toHaveBeenCalledWith(i18n.t('errors.scheduleAllUnavailable'));
-            expect(app.showLoading).toHaveBeenCalledWith(false);
+            expect(app.ui.scheduleErrorText.textContent).toBe(i18n.t('errors.scheduleAllUnavailable'));
+            expect(app.ui.scheduleError.hidden).toBe(false);
 
             consoleSpy.mockRestore();
         });
 
-        it('renders errors.scheduleUnavailable when a single schedule source fails with F1_SCHEDULE_UNAVAILABLE:jolpica:...', async () => {
-            // Arrange
+        it('shows errors.scheduleUnavailable inline when a single F1 source fails with F1_SCHEDULE_UNAVAILABLE:jolpica:...', async () => {
             app.mapManager.init = vi.fn().mockResolvedValue({ hasLayer: false, addControl: vi.fn() });
-            const error = new Error('F1_SCHEDULE_UNAVAILABLE:jolpica:FETCH_FAILED');
-            app.f1Api.getSchedule.mockRejectedValue(error);
+            app.f1Api.getSchedule.mockRejectedValue(new Error('F1_SCHEDULE_UNAVAILABLE:jolpica:FETCH_FAILED'));
             const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-            const renderErrorSpy = vi.spyOn(app, 'renderError').mockImplementation(() => {});
 
-            // Act
             await app.init();
 
-            // Assert
-            expect(renderErrorSpy).toHaveBeenCalledWith(i18n.t('errors.scheduleUnavailable'));
-            expect(app.showLoading).toHaveBeenCalledWith(false);
+            expect(app.ui.scheduleErrorText.textContent).toBe(i18n.t('errors.scheduleUnavailable'));
 
             consoleSpy.mockRestore();
         });
@@ -2284,6 +2269,9 @@ describe('CircuitWeatherApp series selection', () => {
             sessionEmptyState: createMockElement('sessionEmptyState'),
             dataSourceNotice: createMockElement('dataSourceNotice'),
             scheduleCredit: createMockElement('scheduleCredit'),
+            scheduleError: createMockElement('scheduleError'),
+            scheduleErrorText: createMockElement('scheduleErrorText'),
+            scheduleRetry: createMockElement('scheduleRetry'),
             loadingOverlay: createMockElement('loadingOverlay'),
             forecastContent: createMockElement('forecastContent'),
             forecastUnavailable: createMockElement('forecastUnavailable'),
@@ -2409,14 +2397,98 @@ describe('CircuitWeatherApp series selection', () => {
             expect(app.series).toBe('f1');
         });
 
-        it('shows an error but still switches when the schedule fails', async () => {
+        it('shows a non-blocking, series-specific error and still switches when the schedule fails', async () => {
             vi.spyOn(console, 'error').mockImplementation(() => {});
             app.seriesApi = seriesApi(new Error('SERIES_SCHEDULE_UNAVAILABLE:f3'));
             expect(await app.selectSeries('f3')).toBe(false);
             expect(app.series).toBe('f3');
             expect(app.races).toEqual([]);
-            expect(app.renderError).toHaveBeenCalledWith(i18n.t('errors.scheduleUnavailable'));
+            // Never the blocking full-sidebar error, and never the F1/Jolpica message
+            expect(app.renderError).not.toHaveBeenCalled();
+            expect(app.ui.scheduleError.hidden).toBe(false);
+            expect(app.ui.scheduleErrorText.textContent).toBe(
+                i18n.t('errors.seriesScheduleUnavailable', { series: i18n.t('controls.f3') }));
+            expect(app.ui.scheduleErrorText.textContent).not.toContain('jolpi');
             expect(app.ui.scheduleCredit.hidden).toBe(false);
+            // Retries automatically
+            expect(app.scheduleRetryTimer).not.toBeNull();
+        });
+
+        it('recovers automatically once the schedule loads', async () => {
+            vi.spyOn(console, 'error').mockImplementation(() => {});
+            vi.spyOn(console, 'warn').mockImplementation(() => {});
+            app.autoSelectNextRound = vi.fn();
+            app.seriesApi = seriesApi(new Error('down'));
+            await app.selectSeries('f2');
+
+            // Still failing on the first retry: keeps retrying
+            await vi.advanceTimersByTimeAsync(65000);
+            expect(app.ui.scheduleError.hidden).toBe(false);
+            expect(app.scheduleRetryTimer).not.toBeNull();
+
+            app.seriesApi.getSchedule.mockResolvedValue({ races: [f2Race(13)], complete: true });
+            await vi.advanceTimersByTimeAsync(65000);
+            expect(app.ui.scheduleError.hidden).toBe(true);
+            expect(app.races).toHaveLength(1);
+            expect(app.autoSelectNextRound).toHaveBeenCalled();
+        });
+
+        it('gives up retrying a failed schedule after the retry limit', async () => {
+            vi.spyOn(console, 'error').mockImplementation(() => {});
+            vi.spyOn(console, 'warn').mockImplementation(() => {});
+            app.seriesApi = seriesApi(new Error('down'));
+            await app.selectSeries('f2');
+            await vi.advanceTimersByTimeAsync(65000 * 10);
+            // First load + 5 retries
+            expect(app.seriesApi.getSchedule).toHaveBeenCalledTimes(6);
+        });
+
+        it('does not auto-retry F1 (both F1 sources were already tried)', async () => {
+            vi.spyOn(console, 'error').mockImplementation(() => {});
+            app.f1Api.getSchedule.mockRejectedValue(new Error('F1_SCHEDULE_UNAVAILABLE:jolpica,openf1:ALL_SOURCES_FAILED'));
+            expect(await app.selectSeries('f1')).toBe(false);
+            expect(app.ui.scheduleErrorText.textContent).toBe(i18n.t('errors.scheduleAllUnavailable'));
+            expect(app.scheduleRetryTimer).toBeNull();
+        });
+
+        it('hides the error when another series loads', async () => {
+            vi.spyOn(console, 'error').mockImplementation(() => {});
+            app.seriesApi = seriesApi(new Error('down'));
+            await app.selectSeries('f2');
+            app.f1Api.getSchedule.mockResolvedValue([]);
+            await app.selectSeries('f1');
+            expect(app.ui.scheduleError.hidden).toBe(true);
+            expect(app.scheduleFailure).toBeNull();
+        });
+
+        it('retries from the Retry button and picks the next round', async () => {
+            vi.spyOn(console, 'error').mockImplementation(() => {});
+            app.autoSelectNextRound = vi.fn();
+            app.seriesApi = seriesApi(new Error('down'));
+            app.bindEvents();
+            await app.selectSeries('fe');
+
+            app.seriesApi.getSchedule.mockResolvedValue({ races: [f2Race(3)], complete: true });
+            const click = app.ui.scheduleRetry.addEventListener.mock.calls.find(([type]) => type === 'click')[1];
+            await click();
+            expect(app.ui.scheduleError.hidden).toBe(true);
+            expect(app.autoSelectNextRound).toHaveBeenCalled();
+        });
+
+        it('retranslates a visible error when the language changes', async () => {
+            vi.spyOn(console, 'error').mockImplementation(() => {});
+            app.seriesApi = seriesApi(new Error('down'));
+            await app.selectSeries('fe');
+            app.ui.scheduleErrorText.textContent = 'stale';
+            app.handleLanguageChange();
+            expect(app.ui.scheduleErrorText.textContent).toBe(
+                i18n.t('errors.seriesScheduleUnavailable', { series: i18n.t('controls.fe') }));
+        });
+
+        it('tolerates a missing error element', () => {
+            app.ui.scheduleError = null;
+            expect(() => app.showScheduleError('f2', new Error('x'))).not.toThrow();
+            expect(() => app.hideScheduleError()).not.toThrow();
         });
     });
 
@@ -2480,17 +2552,24 @@ describe('CircuitWeatherApp series selection', () => {
             expect(app.f1Api.getSchedule).not.toHaveBeenCalled();
         });
 
-        it('shows the schedule error when the starting series fails', async () => {
+        it('shows the series error inline when the starting series fails', async () => {
             vi.spyOn(console, 'error').mockImplementation(() => {});
             app.initUIElements = vi.fn();
             app.initMapComponents = vi.fn();
             app.bindEvents = vi.fn();
             app.showLoading = vi.fn();
-            app.router.getParams = vi.fn(() => ({ series: 'f2' }));
+            app.handleRoute = vi.fn();
+            app.startWeatherRefreshInterval = vi.fn();
+            app.startSessionForecastInterval = vi.fn();
+            app.router.getParams = vi.fn(() => ({ series: 'f2', round: '3' }));
             app.seriesApi = seriesApi(new Error('SERIES_SCHEDULE_UNAVAILABLE:f2'));
 
             await app.init();
-            expect(app.renderError).toHaveBeenCalledWith(i18n.t('errors.scheduleUnavailable'));
+            expect(app.renderError).not.toHaveBeenCalled();
+            expect(app.ui.scheduleErrorText.textContent).toBe(
+                i18n.t('errors.seriesScheduleUnavailable', { series: i18n.t('controls.f2') }));
+            expect(app.handleRoute).not.toHaveBeenCalled();
+            expect(app.startWeatherRefreshInterval).toHaveBeenCalled();
         });
 
         it('falls back to F1 for an unknown series in the URL', async () => {

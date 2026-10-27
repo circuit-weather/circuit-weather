@@ -161,6 +161,8 @@ export const nl = {
       "De F1-racekalender kon niet worden geladen. De gegevensbron (api.jolpi.ca) is momenteel niet beschikbaar. Probeer het later opnieuw.",
     scheduleAllUnavailable:
       "De F1-racekalender kon niet worden geladen. Beide gegevensbronnen (api.jolpi.ca en api.openf1.org) lijken niet beschikbaar. Probeer het later opnieuw.",
+    seriesScheduleUnavailable:
+      "Het {{series}}-schema kon niet worden geladen van TheSportsDB. We proberen het automatisch opnieuw — je kunt nog steeds een andere klasse kiezen.",
     usingFallbackSource:
       "Primaire gegevensbron (api.jolpi.ca) niet beschikbaar — gegevens worden getoond vanaf de back-upbron (api.openf1.org).",
     sessionError: "Sessiefout",

@@ -247,15 +247,17 @@ describe('Worker /api/schedule/{series}', () => {
     const res = await get();
     expect(res.status).toBe(503);
     expect(res.headers.get('Retry-After')).toBe('60');
+    expect((await res.clone().json()).error.reason).toBe('rate_limited');
     expect(upstream.handler).toHaveBeenCalledTimes(1);
     expect(cacheStore.has(COOLDOWN_KEY)).toBe(true);
 
     // Another isolate (fresh throttle) still honours the shared marker
     throttle.cooldownUntil = 0;
     upstream.handler.mockClear();
-    await getFresh();
+    const cooling = await getFresh();
     expect(upstream.handler).not.toHaveBeenCalled();
     expect(throttle.isCoolingDown()).toBe(true);
+    expect((await cooling.json()).error.reason).toBe('cooldown');
 
     // After the cooldown, filling resumes
     vi.setSystemTime(NOW + 61000);
@@ -306,10 +308,29 @@ describe('Worker /api/schedule/{series}', () => {
     expect(body.races.map(r => r.round)).toEqual(good.races.map(r => r.round));
   });
 
-  it('returns 503 when nothing can be fetched', async () => {
+  it('returns 503 with the reason when nothing can be fetched', async () => {
     vi.stubGlobal('fetch', vi.fn(async () => { throw new Error('offline'); }));
     const res = await get();
     expect(res.status).toBe(503);
+    expect((await res.json()).error.reason).toBe('network');
+    expect(console.error).toHaveBeenCalledWith('TheSportsDB f2 schedule unavailable:', 'network');
+  });
+
+  it('reports blocked upstream responses', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response('<html>challenge</html>', { status: 403 })));
+    expect((await (await get()).json()).error.reason).toBe('http_403');
+  });
+
+  it('reports no_data when upstream answers but has nothing', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({ leagues: [{ strCurrentSeason: '2026' }], events: null })));
+    expect((await (await get()).json()).error.reason).toBe('no_data');
+  });
+
+  it('keeps production logs quiet', async () => {
+    env.ENVIRONMENT = 'production';
+    vi.stubGlobal('fetch', vi.fn(async () => { throw new Error('offline'); }));
+    await get();
+    expect(console.error).not.toHaveBeenCalled();
   });
 
   it('ignores an invalid season name', async () => {

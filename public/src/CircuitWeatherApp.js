@@ -44,6 +44,8 @@ export class CircuitWeatherApp {
         this.seriesApi = new SeriesAPI();
         this.series = 'f1';
         this.scheduleRetryTimer = null;
+        // { series, error } while a schedule failed to load, shown inline (see showScheduleError)
+        this.scheduleFailure = null;
         this.weatherClient = new WeatherClient();
         this.forecastRenderer = new ForecastRenderer();
         this.radar = null;
@@ -94,6 +96,9 @@ export class CircuitWeatherApp {
             mapContainer: document.getElementById('map'),
             dataSourceNotice: document.getElementById('dataSourceNotice'),
             scheduleCredit: document.getElementById('scheduleCredit'),
+            scheduleError: document.getElementById('scheduleError'),
+            scheduleErrorText: document.getElementById('scheduleErrorText'),
+            scheduleRetry: document.getElementById('scheduleRetry'),
         };
     }
 
@@ -161,15 +166,18 @@ export class CircuitWeatherApp {
             const params = this.router.getParams();
             const series = this.isSupportedSeries(params.series) ? params.series : 'f1';
             if (this.ui.seriesSelect) this.ui.seriesSelect.value = series;
-            await this.loadSchedule(series);
+            // A failed schedule must not block the page: the user can still pick
+            // another series or retry (see showScheduleError)
+            const loaded = await this.tryLoadSchedule(series);
             this.populateRoundSelect();
 
             document.addEventListener('i18n:change', this.handleLanguageChange);
 
-            // Check for initial route or auto-select next
-            if (params.round) {
+            // Check for initial route or auto-select next (nothing to select if the
+            // schedule failed: the retry picks the next round once it loads)
+            if (loaded && params.round) {
                 await this.handleRoute(params);
-            } else {
+            } else if (loaded) {
                 this.autoSelectNextRound();
             }
 
@@ -181,13 +189,7 @@ export class CircuitWeatherApp {
 
         } catch (error) {
             console.error('Initialization failed:', error);
-            const scheduleMatch = error.message?.match(/^F1_SCHEDULE_UNAVAILABLE:([^:]+):/);
-            const sourcesTried = scheduleMatch?.[1] ?? '';
-            const seriesFailed = error.message?.startsWith('SERIES_SCHEDULE_UNAVAILABLE:');
-            const msgKey = sourcesTried === 'jolpica,openf1' ? 'errors.scheduleAllUnavailable'
-                : scheduleMatch || seriesFailed ? 'errors.scheduleUnavailable'
-                : 'errors.initFailed';
-            this.renderError(i18n.t(msgKey));
+            this.renderError(i18n.t('errors.initFailed'));
         } finally {
             this.showLoading(false);
         }
@@ -212,7 +214,58 @@ export class CircuitWeatherApp {
             if (!complete) this.scheduleScheduleRetry(series, 1);
         }
         this.series = series;
+        this.hideScheduleError();
         this.updateDataSourceNotice();
+    }
+
+    /**
+     * Loads a series' schedule, showing a non-blocking error if every source fails.
+     * Other series retry automatically (TheSportsDB may just be rate limiting).
+     * @returns {Promise<boolean>} false if the schedule could not be loaded
+     */
+    async tryLoadSchedule(series) {
+        try {
+            await this.loadSchedule(series);
+            return true;
+        } catch (error) {
+            console.error('Schedule load failed:', error);
+            // Still switch, so the dropdown and URL agree and the user can pick again
+            this.races = [];
+            this.series = series;
+            this.updateDataSourceNotice();
+            this.showScheduleError(series, error);
+            if (series !== 'f1') this.scheduleScheduleRetry(series, 1);
+            return false;
+        }
+    }
+
+    /**
+     * Shows why a schedule failed in the sidebar, leaving every control usable.
+     */
+    showScheduleError(series, error) {
+        this.scheduleFailure = { series, error };
+        if (!this.ui.scheduleError) return;
+        let message;
+        if (series === 'f1') {
+            const sourcesTried = error?.message?.match(/^F1_SCHEDULE_UNAVAILABLE:([^:]+):/)?.[1];
+            message = i18n.t(sourcesTried === 'jolpica,openf1' ? 'errors.scheduleAllUnavailable' : 'errors.scheduleUnavailable');
+        } else {
+            message = i18n.t('errors.seriesScheduleUnavailable', { series: i18n.t(`controls.${series}`) });
+        }
+        if (this.ui.scheduleErrorText) this.ui.scheduleErrorText.textContent = message;
+        this.ui.scheduleError.hidden = false;
+    }
+
+    hideScheduleError() {
+        this.scheduleFailure = null;
+        if (this.ui.scheduleError) this.ui.scheduleError.hidden = true;
+    }
+
+    /**
+     * Retry button: reload the current series and pick its next round.
+     */
+    async retrySchedule() {
+        if (await this.selectSeries(this.series) && !this.selectedRace) this.autoSelectNextRound();
     }
 
     scheduleScheduleRetry(series, attempt) {
@@ -227,8 +280,8 @@ export class CircuitWeatherApp {
     }
 
     /**
-     * Re-fetches a partial schedule and refreshes the round list, keeping the
-     * current selection.
+     * Re-fetches a partial or failed schedule and refreshes the round list,
+     * keeping the current selection.
      */
     async refreshPartialSchedule(series, attempt) {
         this.scheduleRetryTimer = null;
@@ -237,15 +290,20 @@ export class CircuitWeatherApp {
             const { races, complete } = await this.seriesApi.getSchedule(series, { refresh: true });
             // The series may have changed while this was loading
             if (this.series !== series) return;
+            const recovered = this.scheduleFailure !== null;
             const parsed = races.map(r => this.seriesApi.parseRace(r));
             // Keep the selected race object: it holds the session the user picked
             const selectedRound = this.selectedRace?.round;
             this.races = parsed.map(r => (r.round === selectedRound ? this.selectedRace : r));
+            this.hideScheduleError();
             this.populateRoundSelect();
             if (selectedRound && this.ui.roundSelect) this.ui.roundSelect.value = selectedRound;
+            // The first successful load after a failure picks the next round as usual
+            if (recovered && !this.selectedRace) this.autoSelectNextRound();
             if (!complete && attempt < SCHEDULE_MAX_RETRIES) this.scheduleScheduleRetry(series, attempt + 1);
         } catch (error) {
             console.warn('Schedule refresh failed:', error);
+            if (this.series === series && attempt < SCHEDULE_MAX_RETRIES) this.scheduleScheduleRetry(series, attempt + 1);
         }
     }
 
@@ -263,16 +321,9 @@ export class CircuitWeatherApp {
         if (this.ui.seriesSelect) this.ui.seriesSelect.value = series;
 
         this.showLoading(true, i18n.t('loading.schedule'));
-        let loaded = true;
+        let loaded;
         try {
-            await this.loadSchedule(series);
-        } catch (error) {
-            console.error('Schedule load failed:', error);
-            // Still switch, so the dropdown and URL agree and the user can pick again
-            this.series = series;
-            this.updateDataSourceNotice();
-            this.renderError(i18n.t('errors.scheduleUnavailable'));
-            loaded = false;
+            loaded = await this.tryLoadSchedule(series);
         } finally {
             this.showLoading(false);
         }
@@ -578,6 +629,10 @@ export class CircuitWeatherApp {
     }
 
     bindEvents() {
+        if (this.ui.scheduleRetry) {
+            this.ui.scheduleRetry.addEventListener('click', () => this.retrySchedule());
+        }
+
         if (this.ui.seriesSelect) {
             this.ui.seriesSelect.addEventListener('change', async (e) => {
                 const series = e.target.value;
@@ -1092,6 +1147,7 @@ export class CircuitWeatherApp {
     }
 
     handleLanguageChange() {
+        if (this.scheduleFailure) this.showScheduleError(this.scheduleFailure.series, this.scheduleFailure.error);
         this.populateRoundSelect();
         if (this.selectedRace) {
             if (this.ui.roundSelect) this.ui.roundSelect.value = this.selectedRace.round;
