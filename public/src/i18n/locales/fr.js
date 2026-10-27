@@ -5,6 +5,7 @@ export const fr = {
     sponsor: "Sponsor",
   },
   common: {
+    scheduleData: "Données du calendrier :",
     countryFlagFallback: "Drapeau du pays",
     countryFlag: "Drapeau : {{country}}",
     github: "Voir le code source sur GitHub",
@@ -26,8 +27,10 @@ export const fr = {
     session: "Chargement des données de session...",
   },
   controls: {
-    onlyF1Supported: "Seule la Formule 1 est actuellement prise en charge",
     f1: "Formule 1",
+    f2: "Formule 2",
+    f3: "Formule 3",
+    fe: "Formule E",
     series: "Série",
     round: "Manche",
     roundLabel: "R{{round}}: {{name}} ({{date}})",
@@ -159,6 +162,8 @@ export const fr = {
       "Le calendrier F1 n'a pas pu être chargé. La source de données (api.jolpi.ca) est actuellement indisponible. Veuillez réessayer plus tard.",
     scheduleAllUnavailable:
       "Le calendrier F1 n'a pas pu être chargé. Les deux sources de données (api.jolpi.ca et api.openf1.org) semblent indisponibles. Veuillez réessayer plus tard.",
+    seriesScheduleUnavailable:
+      "Le calendrier {{series}} n’a pas pu être chargé depuis TheSportsDB. Nouvelle tentative automatique — vous pouvez toujours choisir une autre série.",
     usingFallbackSource:
       "La source principale (api.jolpi.ca) est indisponible — affichage des données de la source de secours (api.openf1.org).",
     sessionError: "Erreur de session",

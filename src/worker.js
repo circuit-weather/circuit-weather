@@ -3,6 +3,7 @@
  * 
  * Handles API proxy requests to:
  * - /api/f1/*
+ * - /api/schedule/{series}
  * - /api/health
  * - /api/radar
  * - /api/tiles/*
@@ -23,6 +24,7 @@ import {
   createErrorResponse
 } from './worker-utils.js';
 import { handleApiRequest } from './handlers/f1.js';
+import { handleScheduleRequest } from './handlers/schedule.js';
 import { handleHealthRequest } from './handlers/health.js';
 import { handleRadarRequest, handleTileRequest, handleAlertsRequest } from './handlers/radar.js';
 import { handleTrackRequest } from './handlers/track.js';
@@ -68,12 +70,14 @@ export default {
       }
 
       // Only /api/* routes reach this worker (configured via run_worker_first)
-      // NOTE: Only the F1 prefix is proxied. The upstream (Jolpica/Ergast) is
-      // F1-only, so there is no /api/f2/ or /api/f3/ to add here — those segments
-      // would resolve to the same F1 dataset upstream. See the detailed write-up
-      // in public/src/CircuitWeatherApp.js handleRoute() before attempting F2/F3.
+      // NOTE: /api/f1/ proxies Jolpica, which is F1-only: there is no /api/f2/ to add
+      // there. Other series come from TheSportsDB via /api/schedule/{series}.
       if (path.startsWith('/api/f1/')) {
         return handleApiRequest(request, env, ctx, url);
+      }
+
+      if (path.startsWith('/api/schedule/')) {
+        return handleScheduleRequest(request, env, ctx, url);
       }
 
       // Handle health request

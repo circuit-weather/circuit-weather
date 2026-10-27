@@ -5,6 +5,7 @@ export const zhCN = {
     sponsor: "赞助商",
   },
   common: {
+    scheduleData: "赛历数据：",
     countryFlagFallback: "国旗",
     countryFlag: "{{country}} 国旗",
     github: "在 GitHub 上查看源代码",
@@ -23,8 +24,10 @@ export const zhCN = {
   },
   loading: { schedule: "正在加载比赛赛历...", session: "正在加载赛段数据..." },
   controls: {
-    onlyF1Supported: "目前仅支持 F1",
     f1: "F1",
+    f2: "F2",
+    f3: "F3",
+    fe: "电动方程式",
     series: "系列赛",
     round: "分站",
     roundLabel: "R{{round}}: {{name}} ({{date}})",
@@ -149,6 +152,8 @@ export const zhCN = {
       "无法加载F1赛程。数据源 (api.jolpi.ca) 目前不可用，请稍后重试。",
     scheduleAllUnavailable:
       "无法加载F1赛程。两个数据源 (api.jolpi.ca 和 api.openf1.org) 目前均不可用，请稍后重试。",
+    seriesScheduleUnavailable:
+      "无法从 TheSportsDB 加载{{series}}赛历，正在自动重试。你仍可选择其他系列赛。",
     usingFallbackSource:
       "主数据源 (api.jolpi.ca) 不可用 — 正在显示备用数据源 (api.openf1.org) 的数据。",
     sessionError: "赛段错误",

@@ -1,5 +1,6 @@
-import { CONFIG, COUNTRY_CODES } from './config.js';
+import { CONFIG, COUNTRY_CODES, SERIES_IDS } from './config.js';
 import { F1API } from './api/F1API.js';
+import { SeriesAPI } from './api/SeriesAPI.js';
 import { WeatherClient } from './api/WeatherClient.js';
 import { TrackLayer } from './map/TrackLayer.js';
 import { WeatherRadar } from './map/WeatherRadar.js';
@@ -20,6 +21,11 @@ import { getSessionStatus, getRoundStatus, formatStatusLabel } from './utils/sta
 import { getRaceEndTime, findFirstActiveRaceIndex, getGloballyNextSession } from './utils/schedule.js';
 import { i18n } from './i18n/index.js';
 
+// A partial schedule (the Worker is still filling it, see SeriesAPI) is re-fetched
+// after the Worker's 60-second cache, a few times at most
+const SCHEDULE_RETRY_MS = 65000;
+const SCHEDULE_MAX_RETRIES = 5;
+
 const sessionTimeFormatter = new Intl.DateTimeFormat(undefined, {
     weekday: 'short',
     hour: '2-digit',
@@ -35,6 +41,11 @@ export class CircuitWeatherApp {
         this.themeManager = null;
         this.sidebarManager = null;
         this.f1Api = new F1API();
+        this.seriesApi = new SeriesAPI();
+        this.series = 'f1';
+        this.scheduleRetryTimer = null;
+        // { series, error } while a schedule failed to load, shown inline (see showScheduleError)
+        this.scheduleFailure = null;
         this.weatherClient = new WeatherClient();
         this.forecastRenderer = new ForecastRenderer();
         this.radar = null;
@@ -61,6 +72,7 @@ export class CircuitWeatherApp {
         // Bolt Optimization: Cache frequently accessed DOM elements
         this.ui = {
             loadingOverlay: document.getElementById('loadingOverlay'),
+            seriesSelect: document.getElementById('seriesSelect'),
             roundSelect: document.getElementById('roundSelect'),
             sessionSelect: document.getElementById('sessionSelect'),
             // Race Info Banner (Sidebar)
@@ -83,6 +95,10 @@ export class CircuitWeatherApp {
             radarControls: document.getElementById('radarControls'),
             mapContainer: document.getElementById('map'),
             dataSourceNotice: document.getElementById('dataSourceNotice'),
+            scheduleCredit: document.getElementById('scheduleCredit'),
+            scheduleError: document.getElementById('scheduleError'),
+            scheduleErrorText: document.getElementById('scheduleErrorText'),
+            scheduleRetry: document.getElementById('scheduleRetry'),
         };
     }
 
@@ -146,20 +162,22 @@ export class CircuitWeatherApp {
 
             this.bindEvents();
 
-            // Load schedule
-            const schedule = await this.f1Api.getSchedule();
-            this.races = schedule.map(r => this.f1Api.parseRace(r));
-
-            this.updateDataSourceNotice();
+            // Load the schedule for the series in the URL (F1 by default)
+            const params = this.router.getParams();
+            const series = this.isSupportedSeries(params.series) ? params.series : 'f1';
+            if (this.ui.seriesSelect) this.ui.seriesSelect.value = series;
+            // A failed schedule must not block the page: the user can still pick
+            // another series or retry (see showScheduleError)
+            const loaded = await this.tryLoadSchedule(series);
             this.populateRoundSelect();
 
             document.addEventListener('i18n:change', this.handleLanguageChange);
 
-            // Check for initial route or auto-select next
-            const params = this.router.getParams();
-            if (params.round) {
+            // Check for initial route or auto-select next (nothing to select if the
+            // schedule failed: the retry picks the next round once it loads)
+            if (loaded && params.round) {
                 await this.handleRoute(params);
-            } else {
+            } else if (loaded) {
                 this.autoSelectNextRound();
             }
 
@@ -171,22 +189,158 @@ export class CircuitWeatherApp {
 
         } catch (error) {
             console.error('Initialization failed:', error);
-            const scheduleMatch = error.message?.match(/^F1_SCHEDULE_UNAVAILABLE:([^:]+):/);
-            const sourcesTried = scheduleMatch?.[1] ?? '';
-            const msgKey = sourcesTried === 'jolpica,openf1' ? 'errors.scheduleAllUnavailable'
-                : scheduleMatch ? 'errors.scheduleUnavailable'
-                : 'errors.initFailed';
-            this.renderError(i18n.t(msgKey));
+            this.renderError(i18n.t('errors.initFailed'));
         } finally {
             this.showLoading(false);
         }
     }
 
+    isSupportedSeries(series) {
+        return SERIES_IDS.includes(series);
+    }
+
+    /**
+     * Loads a series' schedule into this.races.
+     * @throws when every source for the series fails
+     */
+    async loadSchedule(series) {
+        this.clearScheduleRetry();
+        if (series === 'f1') {
+            const schedule = await this.f1Api.getSchedule();
+            this.races = schedule.map(r => this.f1Api.parseRace(r));
+        } else {
+            const { races, complete } = await this.seriesApi.getSchedule(series);
+            this.races = races.map(r => this.seriesApi.parseRace(r));
+            if (!complete) this.scheduleScheduleRetry(series, 1);
+        }
+        this.series = series;
+        this.hideScheduleError();
+        this.updateDataSourceNotice();
+    }
+
+    /**
+     * Loads a series' schedule, showing a non-blocking error if every source fails.
+     * Other series retry automatically (TheSportsDB may just be rate limiting).
+     * @returns {Promise<boolean>} false if the schedule could not be loaded
+     */
+    async tryLoadSchedule(series) {
+        try {
+            await this.loadSchedule(series);
+            return true;
+        } catch (error) {
+            console.error('Schedule load failed:', error);
+            // Still switch, so the dropdown and URL agree and the user can pick again
+            this.races = [];
+            this.series = series;
+            this.updateDataSourceNotice();
+            this.showScheduleError(series, error);
+            if (series !== 'f1') this.scheduleScheduleRetry(series, 1);
+            return false;
+        }
+    }
+
+    /**
+     * Shows why a schedule failed in the sidebar, leaving every control usable.
+     */
+    showScheduleError(series, error) {
+        this.scheduleFailure = { series, error };
+        if (!this.ui.scheduleError) return;
+        let message;
+        if (series === 'f1') {
+            const sourcesTried = error?.message?.match(/^F1_SCHEDULE_UNAVAILABLE:([^:]+):/)?.[1];
+            message = i18n.t(sourcesTried === 'jolpica,openf1' ? 'errors.scheduleAllUnavailable' : 'errors.scheduleUnavailable');
+        } else {
+            message = i18n.t('errors.seriesScheduleUnavailable', { series: i18n.t(`controls.${series}`) });
+        }
+        if (this.ui.scheduleErrorText) this.ui.scheduleErrorText.textContent = message;
+        this.ui.scheduleError.hidden = false;
+    }
+
+    hideScheduleError() {
+        this.scheduleFailure = null;
+        if (this.ui.scheduleError) this.ui.scheduleError.hidden = true;
+    }
+
+    /**
+     * Retry button: reload the current series and pick its next round.
+     */
+    async retrySchedule() {
+        if (await this.selectSeries(this.series) && !this.selectedRace) this.autoSelectNextRound();
+    }
+
+    scheduleScheduleRetry(series, attempt) {
+        this.scheduleRetryTimer = setTimeout(() => this.refreshPartialSchedule(series, attempt), SCHEDULE_RETRY_MS);
+    }
+
+    clearScheduleRetry() {
+        if (this.scheduleRetryTimer) {
+            clearTimeout(this.scheduleRetryTimer);
+            this.scheduleRetryTimer = null;
+        }
+    }
+
+    /**
+     * Re-fetches a partial or failed schedule and refreshes the round list,
+     * keeping the current selection.
+     */
+    async refreshPartialSchedule(series, attempt) {
+        this.scheduleRetryTimer = null;
+        if (this.series !== series) return;
+        try {
+            const { races, complete } = await this.seriesApi.getSchedule(series, { refresh: true });
+            // The series may have changed while this was loading
+            if (this.series !== series) return;
+            const recovered = this.scheduleFailure !== null;
+            const parsed = races.map(r => this.seriesApi.parseRace(r));
+            // Keep the selected race object: it holds the session the user picked
+            const selectedRound = this.selectedRace?.round;
+            this.races = parsed.map(r => (r.round === selectedRound ? this.selectedRace : r));
+            this.hideScheduleError();
+            this.populateRoundSelect();
+            if (selectedRound && this.ui.roundSelect) this.ui.roundSelect.value = selectedRound;
+            // The first successful load after a failure picks the next round as usual
+            if (recovered && !this.selectedRace) this.autoSelectNextRound();
+            if (!complete && attempt < SCHEDULE_MAX_RETRIES) this.scheduleScheduleRetry(series, attempt + 1);
+        } catch (error) {
+            console.warn('Schedule refresh failed:', error);
+            if (this.series === series && attempt < SCHEDULE_MAX_RETRIES) this.scheduleScheduleRetry(series, attempt + 1);
+        }
+    }
+
+    /**
+     * Switches to another series: clears the current round, loads the new
+     * schedule and refills the round list.
+     * @returns {Promise<boolean>} false if the schedule could not be loaded
+     */
+    async selectSeries(series) {
+        if (!this.isSupportedSeries(series)) return false;
+        this.clearRoundSelection();
+        this.races = [];
+        // Don't leave the previous series' rounds selectable while loading
+        this.populateRoundSelect();
+        if (this.ui.seriesSelect) this.ui.seriesSelect.value = series;
+
+        this.showLoading(true, i18n.t('loading.schedule'));
+        let loaded;
+        try {
+            loaded = await this.tryLoadSchedule(series);
+        } finally {
+            this.showLoading(false);
+        }
+        this.populateRoundSelect();
+        return loaded;
+    }
+
     // Show a small sidebar notice when the schedule came from the OpenF1 fallback,
     // so it's obvious when the primary source (Jolpica) is degraded vs. recovered.
+    // Other series come from TheSportsDB, which must be credited.
     updateDataSourceNotice() {
-        if (!this.ui.dataSourceNotice) return;
-        this.ui.dataSourceNotice.hidden = this.f1Api.scheduleSource !== 'openf1';
+        if (this.ui.dataSourceNotice) {
+            this.ui.dataSourceNotice.hidden = this.series !== 'f1' || this.f1Api.scheduleSource !== 'openf1';
+        }
+        if (this.ui.scheduleCredit) {
+            this.ui.scheduleCredit.hidden = this.series === 'f1';
+        }
     }
 
     _createErrorIconSvg(svgNS = "http://www.w3.org/2000/svg") {
@@ -441,37 +595,62 @@ export class CircuitWeatherApp {
         }
     }
 
+    /**
+     * Clears the selected round and session and everything drawn for them.
+     */
+    clearRoundSelection() {
+        // Palette UX: Reset session select when round is cleared
+        if (this.ui.sessionSelect) {
+            this.ui.sessionSelect.disabled = true;
+            this.ui.sessionSelect.setAttribute('aria-disabled', 'true');
+            this.ui.sessionSelect.title = i18n.t('controls.selectRoundFirst');
+
+            const option = document.createElement('option');
+            option.value = '';
+            option.textContent = i18n.t('controls.selectRoundFirst');
+            this.ui.sessionSelect.textContent = '';
+            this.ui.sessionSelect.appendChild(option);
+        }
+        this.selectedSession = null;
+        this.selectedRace = null;
+        if (this.ui.forecastSection) this.ui.forecastSection.style.display = 'none';
+        if (this.ui.raceInfoBanner) this.ui.raceInfoBanner.style.display = 'none';
+        if (this.ui.sessionEmptyState) this.ui.sessionEmptyState.style.display = 'none';
+        this.updateMobileVisibility();
+        this.countdown.show(false);
+        if (this.radar) this.radar.setSessionTime(null);
+        this.trackLayer.clear();
+        this.rangeCircles.clear();
+        if (this.weatherAlerts) this.weatherAlerts.setLocation(null, null);
+
+        // Clear the forecast update since no session is active anymore
+        this.stopSessionForecastInterval();
+        this.updatePageMetadata();
+    }
+
     bindEvents() {
+        if (this.ui.scheduleRetry) {
+            this.ui.scheduleRetry.addEventListener('click', () => this.retrySchedule());
+        }
+
+        if (this.ui.seriesSelect) {
+            this.ui.seriesSelect.addEventListener('change', async (e) => {
+                const series = e.target.value;
+                if (await this.selectSeries(series)) {
+                    this.router.navigate(series, null, null);
+                    this.autoSelectNextRound();
+                } else {
+                    this.router.navigate(series, null, null);
+                }
+            });
+        }
+
         if (this.ui.roundSelect) {
             this.ui.roundSelect.addEventListener('change', (e) => {
                 if (e.target.value) {
                     this.selectRound(e.target.value);
                 } else {
-                    // Palette UX: Reset session select when round is cleared
-                    if (this.ui.sessionSelect) {
-                        this.ui.sessionSelect.disabled = true;
-                        this.ui.sessionSelect.setAttribute('aria-disabled', 'true');
-                        this.ui.sessionSelect.title = i18n.t('controls.selectRoundFirst');
-
-                        const option = document.createElement('option');
-                        option.value = '';
-                        option.textContent = i18n.t('controls.selectRoundFirst');
-                        this.ui.sessionSelect.textContent = '';
-                        this.ui.sessionSelect.appendChild(option);
-                    }
-                    this.selectedSession = null;
-                    this.selectedRace = null;
-                    if (this.ui.forecastSection) this.ui.forecastSection.style.display = 'none';
-                    if (this.ui.raceInfoBanner) this.ui.raceInfoBanner.style.display = 'none';
-                    if (this.ui.sessionEmptyState) this.ui.sessionEmptyState.style.display = 'none';
-                    this.countdown.show(false);
-                    this.trackLayer.clear();
-                    this.rangeCircles.clear();
-                    if (this.weatherAlerts) this.weatherAlerts.setLocation(null, null);
-                    
-                    // Clear the forecast update since no session is active anymore
-                    this.stopSessionForecastInterval();
-                    this.updatePageMetadata();
+                    this.clearRoundSelection();
                 }
             });
         }
@@ -546,7 +725,7 @@ export class CircuitWeatherApp {
     }
 
     _updateBreadcrumbJsonLd() {
-        SeoManager.updateBreadcrumbJsonLd(this.selectedRace, this.selectedSession);
+        SeoManager.updateBreadcrumbJsonLd(this.selectedRace, this.selectedSession, this.series);
     }
 
     _updateEventJsonLd(desc) {
@@ -554,7 +733,7 @@ export class CircuitWeatherApp {
     }
 
     updatePageMetadata() {
-        SeoManager.updatePageMetadata(this.selectedRace, this.selectedSession);
+        SeoManager.updatePageMetadata(this.selectedRace, this.selectedSession, this.series);
     }
 
     centreOnCircuit(lat, lng) {
@@ -593,7 +772,7 @@ export class CircuitWeatherApp {
         // Start polling again, it will only do work if a session is actively selected
         this.startSessionForecastInterval();
 
-        this.router.navigate('f1', round, null);
+        this.router.navigate(this.series, round, null);
     }
 
     _resolveRoundMapCenter(race) {
@@ -787,7 +966,7 @@ export class CircuitWeatherApp {
             // Ensure mobile elements are visible
             this.updateMobileVisibility();
 
-            this.router.navigate('f1', this.selectedRace.round, sessionId);
+            this.router.navigate(this.series, this.selectedRace.round, sessionId);
         } catch (error) {
             console.error('Error selecting session (synchronous):', error);
         } finally {
@@ -875,7 +1054,12 @@ export class CircuitWeatherApp {
     async updateSessionForecast(sessionTime, sessionId) {
         if (!this.selectedRace || !this.selectedRace.location) return;
 
-        const { lat, long } = this.selectedRace.location;
+        let { lat, long } = this.selectedRace.location;
+        // Some sources have no venue coordinates: use the centre from the track outline
+        if (!Number.isFinite(parseFloat(lat)) || !Number.isFinite(parseFloat(long))) {
+            if (!this.currentCircuitCenter) return;
+            [lat, long] = this.currentCircuitCenter;
+        }
         const weather = await this.weatherClient.getForecast(lat, long, sessionTime);
 
         this.renderForecast(weather, sessionTime, sessionId);
@@ -945,30 +1129,11 @@ export class CircuitWeatherApp {
     }
 
     async handleRoute({ series, round, session }) {
-        // Only 'f1' is supported. The series dropdown in the UI is intentionally
-        // disabled (see public/index.html #seriesSelect) for this reason.
-        //
-        // WHY F2/F3 ARE NOT SUPPORTED:
-        // The schedule comes from the Jolpica API (api.jolpi.ca/ergast), a
-        // drop-in replacement for the now-deprecated Ergast API. Ergast/Jolpica
-        // only ever served Formula 1 data — there is no Formula 2 or Formula 3
-        // dataset behind it. The "/f1/" in the upstream path is a fixed part of
-        // the Ergast route, NOT a series selector: requesting "/ergast/f2/..."
-        // or "/ergast/f3/..." does not return F2/F3 data. The path segment is
-        // ignored upstream and you get the F1 schedule back regardless, which is
-        // why a naive "swap f1 for f2 in the URL" approach (attempted in #729)
-        // produces identical rounds and session start times for every series.
-        //
-        // The OpenF1 fallback (see api/openf1.js) is likewise F1-only.
-        //
-        // Adding real F2/F3 support therefore requires sourcing an entirely new
-        // dataset that provides per-round schedules WITH session start times and
-        // circuit coordinates (needed for the weather lookup), and that is
-        // reachable from a Cloudflare Worker / browser (CORS + not blocking
-        // datacenter IPs). No such free, proxy-friendly source has been found at
-        // the time of writing. Until one exists, the dropdown stays disabled and
-        // routing for any non-F1 series is rejected here.
-        if (series !== 'f1') return;
+        // F1 comes from Jolpica, other series from TheSportsDB (see SeriesAPI). Jolpica
+        // (and the OpenF1 fallback) are F1-only: "/ergast/f2/" returns the F1 schedule,
+        // so never route other series through F1API.
+        if (!this.isSupportedSeries(series)) return;
+        if (series !== this.series && !(await this.selectSeries(series))) return;
 
         if (round) {
             if (this.ui.roundSelect) this.ui.roundSelect.value = round;
@@ -982,6 +1147,7 @@ export class CircuitWeatherApp {
     }
 
     handleLanguageChange() {
+        if (this.scheduleFailure) this.showScheduleError(this.scheduleFailure.series, this.scheduleFailure.error);
         this.populateRoundSelect();
         if (this.selectedRace) {
             if (this.ui.roundSelect) this.ui.roundSelect.value = this.selectedRace.round;

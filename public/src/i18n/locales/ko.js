@@ -5,6 +5,7 @@ export const ko = {
     sponsor: "스폰서",
   },
   common: {
+    scheduleData: "일정 데이터:",
     countryFlagFallback: "국기",
     countryFlag: "{{country}} 국기",
     github: "GitHub에서 소스 코드 보기",
@@ -26,8 +27,10 @@ export const ko = {
     switchToDark: "다크 모드로 전환",
   },
   controls: {
-    onlyF1Supported: "현재 포뮬러 1만 지원됩니다",
     f1: "포뮬러 1",
+    f2: "포뮬러 2",
+    f3: "포뮬러 3",
+    fe: "포뮬러 E",
     series: "시리즈",
     round: "라운드",
     roundLabel: "R{{round}}: {{name}} ({{date}})",
@@ -158,6 +161,8 @@ export const ko = {
       "F1 경기 일정을 불러올 수 없습니다. 데이터 소스(api.jolpi.ca)를 현재 사용할 수 없습니다 — 나중에 다시 시도해 주세요.",
     scheduleAllUnavailable:
       "F1 경기 일정을 불러올 수 없습니다. 두 데이터 소스(api.jolpi.ca 및 api.openf1.org) 모두 사용할 수 없는 것 같습니다 — 나중에 다시 시도해 주세요.",
+    seriesScheduleUnavailable:
+      "TheSportsDB에서 {{series}} 일정을 불러오지 못했습니다. 자동으로 다시 시도합니다. 다른 시리즈를 선택할 수도 있습니다.",
     usingFallbackSource:
       "기본 일정 소스(api.jolpi.ca)를 사용할 수 없습니다 — 예비 소스(api.openf1.org)의 데이터를 표시합니다.",
     sessionError: "세션 오류",

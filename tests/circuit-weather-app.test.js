@@ -283,6 +283,20 @@ describe('CircuitWeatherApp Pure Methods', () => {
             expect(result.getTime()).toBe(expected.getTime());
         });
 
+        it('uses the round date/time when there is no race session (F2/F3 Feature Race)', () => {
+            const race = {
+                date: '2026-11-29',
+                time: '13:00:00Z',
+                sessions: [
+                    { id: 'sprint-race', name: 'Sprint Race', date: '2026-11-28', time: '13:00:00Z' },
+                    { id: 'feature-race', name: 'Feature Race', date: '2026-11-29', time: '13:00:00Z' },
+                ],
+            };
+
+            const result = app.getRaceEndTime(race);
+            expect(result.toISOString()).toBe('2026-11-29T17:00:00.000Z');
+        });
+
         it('falls back to race.date when there is no race session', () => {
             const race = {
                 date: '2024-03-10',
@@ -1848,68 +1862,53 @@ describe('CircuitWeatherApp Pure Methods', () => {
             consoleSpy.mockRestore();
         });
 
-        it('renders fallback DOM error state when init schedule fetch fails with generic error', async () => {
+        it('keeps the sidebar usable when the init schedule fetch fails', async () => {
             app.mapManager.init = vi.fn().mockResolvedValue({ hasLayer: false, addControl: vi.fn() });
             const mockSidebar = createMockElement('sidebar-content');
             vi.spyOn(document, 'querySelector').mockImplementation(sel => {
                 if (sel === '.sidebar-content') return mockSidebar;
                 return createMockElement(sel);
             });
-
-            const error = new Error('Network failure');
-            app.f1Api.getSchedule.mockRejectedValue(error);
+            app.f1Api.getSchedule.mockRejectedValue(new Error('Network failure'));
             const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+            const renderErrorSpy = vi.spyOn(app, 'renderError');
 
             await app.init();
 
-            expect(mockSidebar.textContent).toBe('');
-            const appendedErrorState = mockSidebar.appendChild.mock.calls[0][0];
-            expect(appendedErrorState.className).toBe('error-state');
-
-            const p = appendedErrorState.appendChild.mock.calls.find(call => call[0].id === 'p')?.[0];
-            const btn = appendedErrorState.appendChild.mock.calls.find(call => call[0].className === 'retry-btn')?.[0];
-
-            expect(p).toBeDefined();
-            expect(p.textContent).toBe(i18n.t('errors.initFailed'));
-            expect(btn).toBeDefined();
-            expect(btn.className).toBe('retry-btn');
+            // The series picker and settings stay in place; the error is shown inline
+            expect(renderErrorSpy).not.toHaveBeenCalled();
+            expect(mockSidebar.appendChild).not.toHaveBeenCalled();
+            expect(app.ui.scheduleError.hidden).toBe(false);
+            expect(app.ui.scheduleErrorText.textContent).toBe(i18n.t('errors.scheduleUnavailable'));
+            expect(app.autoSelectNextRound).not.toHaveBeenCalled();
+            // The rest of the app still starts
+            expect(app.startWeatherRefreshInterval).toHaveBeenCalled();
             expect(app.showLoading).toHaveBeenCalledWith(false);
 
             consoleSpy.mockRestore();
         });
 
-        it('renders errors.scheduleAllUnavailable when all schedule sources fail with F1_SCHEDULE_UNAVAILABLE:jolpica,openf1:...', async () => {
-            // Arrange
+        it('shows errors.scheduleAllUnavailable inline when all F1 sources fail with F1_SCHEDULE_UNAVAILABLE:jolpica,openf1:...', async () => {
             app.mapManager.init = vi.fn().mockResolvedValue({ hasLayer: false, addControl: vi.fn() });
-            const error = new Error('F1_SCHEDULE_UNAVAILABLE:jolpica,openf1:ALL_SOURCES_FAILED');
-            app.f1Api.getSchedule.mockRejectedValue(error);
+            app.f1Api.getSchedule.mockRejectedValue(new Error('F1_SCHEDULE_UNAVAILABLE:jolpica,openf1:ALL_SOURCES_FAILED'));
             const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-            const renderErrorSpy = vi.spyOn(app, 'renderError').mockImplementation(() => {});
 
-            // Act
             await app.init();
 
-            // Assert
-            expect(renderErrorSpy).toHaveBeenCalledWith(i18n.t('errors.scheduleAllUnavailable'));
-            expect(app.showLoading).toHaveBeenCalledWith(false);
+            expect(app.ui.scheduleErrorText.textContent).toBe(i18n.t('errors.scheduleAllUnavailable'));
+            expect(app.ui.scheduleError.hidden).toBe(false);
 
             consoleSpy.mockRestore();
         });
 
-        it('renders errors.scheduleUnavailable when a single schedule source fails with F1_SCHEDULE_UNAVAILABLE:jolpica:...', async () => {
-            // Arrange
+        it('shows errors.scheduleUnavailable inline when a single F1 source fails with F1_SCHEDULE_UNAVAILABLE:jolpica:...', async () => {
             app.mapManager.init = vi.fn().mockResolvedValue({ hasLayer: false, addControl: vi.fn() });
-            const error = new Error('F1_SCHEDULE_UNAVAILABLE:jolpica:FETCH_FAILED');
-            app.f1Api.getSchedule.mockRejectedValue(error);
+            app.f1Api.getSchedule.mockRejectedValue(new Error('F1_SCHEDULE_UNAVAILABLE:jolpica:FETCH_FAILED'));
             const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-            const renderErrorSpy = vi.spyOn(app, 'renderError').mockImplementation(() => {});
 
-            // Act
             await app.init();
 
-            // Assert
-            expect(renderErrorSpy).toHaveBeenCalledWith(i18n.t('errors.scheduleUnavailable'));
-            expect(app.showLoading).toHaveBeenCalledWith(false);
+            expect(app.ui.scheduleErrorText.textContent).toBe(i18n.t('errors.scheduleUnavailable'));
 
             consoleSpy.mockRestore();
         });
@@ -2225,4 +2224,387 @@ describe('CircuitWeatherApp Pure Methods', () => {
 
             expect(app.updateMobileVisibility).toHaveBeenCalled();
         });
+});
+
+describe('CircuitWeatherApp series selection', () => {
+    let app;
+
+    const f2Race = (round, extra = {}) => ({
+        round: String(round),
+        raceName: `F2 R${round}`,
+        date: '2026-11-29',
+        time: '13:00:00Z',
+        Circuit: { circuitId: null, circuitName: 'Lusail', Location: { lat: '25.49', long: '51.45', country: 'Qatar' } },
+        sessions: [
+            { id: 'sprint-race', name: 'Sprint Race', date: '2026-11-28', time: '13:00:00Z' },
+            { id: 'feature-race', name: 'Feature Race', date: '2026-11-29', time: '13:00:00Z' },
+        ],
+        ...extra,
+    });
+
+    const seriesApi = (schedules) => ({
+        getSchedule: vi.fn(async (series) => {
+            const result = typeof schedules === 'function' ? schedules(series) : schedules;
+            if (result instanceof Error) throw result;
+            return result;
+        }),
+        parseRace: vi.fn(r => ({ round: r.round, name: r.raceName, circuit: r.Circuit, location: r.Circuit?.Location, sessions: r.sessions, date: r.date, time: r.time })),
+    });
+
+    beforeEach(() => {
+        vi.clearAllMocks();
+        vi.useFakeTimers();
+        app = new CircuitWeatherApp();
+        app.rangeCircles = new RangeCircles();
+        app.trackLayer = new TrackLayer();
+        app.radar = new WeatherRadar();
+        app.recentreControl = new RecentreControl();
+        app.mapWeatherWidget = new MapWeatherWidget();
+        app.ui = {
+            seriesSelect: createMockElement('seriesSelect'),
+            roundSelect: createMockElement('roundSelect'),
+            sessionSelect: createMockElement('sessionSelect'),
+            forecastSection: createMockElement('forecastSection'),
+            raceInfoBanner: createMockElement('raceInfoBanner'),
+            sessionEmptyState: createMockElement('sessionEmptyState'),
+            dataSourceNotice: createMockElement('dataSourceNotice'),
+            scheduleCredit: createMockElement('scheduleCredit'),
+            scheduleError: createMockElement('scheduleError'),
+            scheduleErrorText: createMockElement('scheduleErrorText'),
+            scheduleRetry: createMockElement('scheduleRetry'),
+            loadingOverlay: createMockElement('loadingOverlay'),
+            forecastContent: createMockElement('forecastContent'),
+            forecastUnavailable: createMockElement('forecastUnavailable'),
+        };
+        app.renderError = vi.fn();
+    });
+
+    afterEach(() => {
+        app.clearScheduleRetry();
+        if (app.liveWeatherDebounceTimer) clearTimeout(app.liveWeatherDebounceTimer);
+        vi.useRealTimers();
+    });
+
+    describe('loadSchedule', () => {
+        it('loads F1 from F1API', async () => {
+            app.f1Api.getSchedule.mockResolvedValue([{ round: '1' }]);
+            await app.loadSchedule('f1');
+            expect(app.series).toBe('f1');
+            expect(app.races).toEqual([{ round: '1' }]);
+            expect(app.ui.scheduleCredit.hidden).toBe(true);
+        });
+
+        it('loads other series from SeriesAPI and shows the TheSportsDB credit', async () => {
+            app.seriesApi = seriesApi({ races: [f2Race(13)], complete: true });
+            await app.loadSchedule('f2');
+            expect(app.seriesApi.getSchedule).toHaveBeenCalledWith('f2');
+            expect(app.series).toBe('f2');
+            expect(app.races.map(r => r.name)).toEqual(['F2 R13']);
+            expect(app.ui.scheduleCredit.hidden).toBe(false);
+            expect(app.ui.dataSourceNotice.hidden).toBe(true);
+            expect(app.scheduleRetryTimer).toBeNull();
+        });
+
+        it('hides the OpenF1 fallback notice for other series', async () => {
+            app.f1Api.scheduleSource = 'openf1';
+            app.seriesApi = seriesApi({ races: [], complete: true });
+            await app.loadSchedule('f2');
+            expect(app.ui.dataSourceNotice.hidden).toBe(true);
+        });
+    });
+
+    describe('partial schedules', () => {
+        it('refreshes a partial schedule and keeps the selected race', async () => {
+            const partial = { races: [f2Race(13)], complete: false };
+            const full = { races: [f2Race(12), f2Race(13), f2Race(14)], complete: true };
+            app.seriesApi = seriesApi(partial);
+            await app.loadSchedule('f2');
+            expect(app.scheduleRetryTimer).not.toBeNull();
+
+            app.selectedRace = app.races[0];
+            app.ui.roundSelect.value = '';
+            app.seriesApi.getSchedule.mockResolvedValue(full);
+            await vi.advanceTimersByTimeAsync(65000);
+
+            expect(app.seriesApi.getSchedule).toHaveBeenLastCalledWith('f2', { refresh: true });
+            expect(app.races.map(r => r.round)).toEqual(['12', '13', '14']);
+            expect(app.races[1]).toBe(app.selectedRace);
+            expect(app.ui.roundSelect.value).toBe('13');
+            expect(app.scheduleRetryTimer).toBeNull();
+        });
+
+        it('retries a limited number of times while still partial', async () => {
+            app.seriesApi = seriesApi({ races: [f2Race(1)], complete: false });
+            await app.loadSchedule('f2');
+            await vi.advanceTimersByTimeAsync(65000 * 10);
+            // First load + 5 refreshes
+            expect(app.seriesApi.getSchedule).toHaveBeenCalledTimes(6);
+        });
+
+        it('drops a refresh when the series has changed', async () => {
+            app.seriesApi = seriesApi({ races: [f2Race(1)], complete: false });
+            await app.loadSchedule('f2');
+            app.series = 'f3';
+            await app.refreshPartialSchedule('f2', 1);
+            expect(app.seriesApi.getSchedule).toHaveBeenCalledTimes(1);
+
+            // Or changes while the refresh is in flight
+            app.series = 'f2';
+            app.seriesApi.getSchedule.mockImplementation(async () => {
+                app.series = 'fe';
+                return { races: [f2Race(9)], complete: true };
+            });
+            app.races = [];
+            await app.refreshPartialSchedule('f2', 1);
+            expect(app.races).toEqual([]);
+        });
+
+        it('survives a failed refresh', async () => {
+            vi.spyOn(console, 'warn').mockImplementation(() => {});
+            app.series = 'f2';
+            app.seriesApi = seriesApi(new Error('offline'));
+            await expect(app.refreshPartialSchedule('f2', 1)).resolves.toBeUndefined();
+            expect(console.warn).toHaveBeenCalled();
+        });
+
+        it('stops a pending refresh when another schedule loads', async () => {
+            app.seriesApi = seriesApi({ races: [f2Race(1)], complete: false });
+            await app.loadSchedule('f2');
+            app.f1Api.getSchedule.mockResolvedValue([]);
+            await app.loadSchedule('f1');
+            await vi.advanceTimersByTimeAsync(65000);
+            expect(app.seriesApi.getSchedule).toHaveBeenCalledTimes(1);
+        });
+    });
+
+    describe('selectSeries', () => {
+        it('clears the current round and loads the new series', async () => {
+            app.selectedRace = { round: '3', sessions: [] };
+            app.selectedSession = { id: 'race' };
+            app.seriesApi = seriesApi({ races: [f2Race(1)], complete: true });
+
+            expect(await app.selectSeries('f2')).toBe(true);
+            expect(app.selectedRace).toBeNull();
+            expect(app.selectedSession).toBeNull();
+            expect(app.trackLayer.clear).toHaveBeenCalled();
+            expect(app.radar.setSessionTime).toHaveBeenCalledWith(null);
+            expect(app.ui.seriesSelect.value).toBe('f2');
+            expect(app.races).toHaveLength(1);
+        });
+
+        it('ignores unsupported series', async () => {
+            expect(await app.selectSeries('wec')).toBe(false);
+            expect(app.series).toBe('f1');
+        });
+
+        it('shows a non-blocking, series-specific error and still switches when the schedule fails', async () => {
+            vi.spyOn(console, 'error').mockImplementation(() => {});
+            app.seriesApi = seriesApi(new Error('SERIES_SCHEDULE_UNAVAILABLE:f3'));
+            expect(await app.selectSeries('f3')).toBe(false);
+            expect(app.series).toBe('f3');
+            expect(app.races).toEqual([]);
+            // Never the blocking full-sidebar error, and never the F1/Jolpica message
+            expect(app.renderError).not.toHaveBeenCalled();
+            expect(app.ui.scheduleError.hidden).toBe(false);
+            expect(app.ui.scheduleErrorText.textContent).toBe(
+                i18n.t('errors.seriesScheduleUnavailable', { series: i18n.t('controls.f3') }));
+            expect(app.ui.scheduleErrorText.textContent).not.toContain('jolpi');
+            expect(app.ui.scheduleCredit.hidden).toBe(false);
+            // Retries automatically
+            expect(app.scheduleRetryTimer).not.toBeNull();
+        });
+
+        it('recovers automatically once the schedule loads', async () => {
+            vi.spyOn(console, 'error').mockImplementation(() => {});
+            vi.spyOn(console, 'warn').mockImplementation(() => {});
+            app.autoSelectNextRound = vi.fn();
+            app.seriesApi = seriesApi(new Error('down'));
+            await app.selectSeries('f2');
+
+            // Still failing on the first retry: keeps retrying
+            await vi.advanceTimersByTimeAsync(65000);
+            expect(app.ui.scheduleError.hidden).toBe(false);
+            expect(app.scheduleRetryTimer).not.toBeNull();
+
+            app.seriesApi.getSchedule.mockResolvedValue({ races: [f2Race(13)], complete: true });
+            await vi.advanceTimersByTimeAsync(65000);
+            expect(app.ui.scheduleError.hidden).toBe(true);
+            expect(app.races).toHaveLength(1);
+            expect(app.autoSelectNextRound).toHaveBeenCalled();
+        });
+
+        it('gives up retrying a failed schedule after the retry limit', async () => {
+            vi.spyOn(console, 'error').mockImplementation(() => {});
+            vi.spyOn(console, 'warn').mockImplementation(() => {});
+            app.seriesApi = seriesApi(new Error('down'));
+            await app.selectSeries('f2');
+            await vi.advanceTimersByTimeAsync(65000 * 10);
+            // First load + 5 retries
+            expect(app.seriesApi.getSchedule).toHaveBeenCalledTimes(6);
+        });
+
+        it('does not auto-retry F1 (both F1 sources were already tried)', async () => {
+            vi.spyOn(console, 'error').mockImplementation(() => {});
+            app.f1Api.getSchedule.mockRejectedValue(new Error('F1_SCHEDULE_UNAVAILABLE:jolpica,openf1:ALL_SOURCES_FAILED'));
+            expect(await app.selectSeries('f1')).toBe(false);
+            expect(app.ui.scheduleErrorText.textContent).toBe(i18n.t('errors.scheduleAllUnavailable'));
+            expect(app.scheduleRetryTimer).toBeNull();
+        });
+
+        it('hides the error when another series loads', async () => {
+            vi.spyOn(console, 'error').mockImplementation(() => {});
+            app.seriesApi = seriesApi(new Error('down'));
+            await app.selectSeries('f2');
+            app.f1Api.getSchedule.mockResolvedValue([]);
+            await app.selectSeries('f1');
+            expect(app.ui.scheduleError.hidden).toBe(true);
+            expect(app.scheduleFailure).toBeNull();
+        });
+
+        it('retries from the Retry button and picks the next round', async () => {
+            vi.spyOn(console, 'error').mockImplementation(() => {});
+            app.autoSelectNextRound = vi.fn();
+            app.seriesApi = seriesApi(new Error('down'));
+            app.bindEvents();
+            await app.selectSeries('fe');
+
+            app.seriesApi.getSchedule.mockResolvedValue({ races: [f2Race(3)], complete: true });
+            const click = app.ui.scheduleRetry.addEventListener.mock.calls.find(([type]) => type === 'click')[1];
+            await click();
+            expect(app.ui.scheduleError.hidden).toBe(true);
+            expect(app.autoSelectNextRound).toHaveBeenCalled();
+        });
+
+        it('retranslates a visible error when the language changes', async () => {
+            vi.spyOn(console, 'error').mockImplementation(() => {});
+            app.seriesApi = seriesApi(new Error('down'));
+            await app.selectSeries('fe');
+            app.ui.scheduleErrorText.textContent = 'stale';
+            app.handleLanguageChange();
+            expect(app.ui.scheduleErrorText.textContent).toBe(
+                i18n.t('errors.seriesScheduleUnavailable', { series: i18n.t('controls.fe') }));
+        });
+
+        it('tolerates a missing error element', () => {
+            app.ui.scheduleError = null;
+            expect(() => app.showScheduleError('f2', new Error('x'))).not.toThrow();
+            expect(() => app.hideScheduleError()).not.toThrow();
+        });
+    });
+
+    describe('series dropdown', () => {
+        const changeHandler = () => {
+            app.bindEvents();
+            return app.ui.seriesSelect.addEventListener.mock.calls.find(([type]) => type === 'change')[1];
+        };
+
+        it('switches series, updates the URL and picks the next round', async () => {
+            app.seriesApi = seriesApi({ races: [f2Race(1)], complete: true });
+            app.autoSelectNextRound = vi.fn();
+            await changeHandler()({ target: { value: 'fe' } });
+            expect(app.series).toBe('fe');
+            expect(app.router.navigate).toHaveBeenCalledWith('fe', null, null);
+            expect(app.autoSelectNextRound).toHaveBeenCalled();
+        });
+
+        it('still updates the URL when the schedule fails', async () => {
+            vi.spyOn(console, 'error').mockImplementation(() => {});
+            app.seriesApi = seriesApi(new Error('down'));
+            app.autoSelectNextRound = vi.fn();
+            await changeHandler()({ target: { value: 'f2' } });
+            expect(app.router.navigate).toHaveBeenCalledWith('f2', null, null);
+            expect(app.autoSelectNextRound).not.toHaveBeenCalled();
+        });
+    });
+
+    describe('routing', () => {
+        it('switches series from the URL before selecting the round', async () => {
+            app.seriesApi = seriesApi({ races: [f2Race(13)], complete: true });
+            await app.handleRoute({ series: 'f2', round: '13', session: 'feature-race' });
+            expect(app.series).toBe('f2');
+            expect(app.selectedRace?.round).toBe('13');
+            expect(app.router.navigate).toHaveBeenCalledWith('f2', '13', null);
+        });
+
+        it('stops when the routed series cannot load', async () => {
+            vi.spyOn(console, 'error').mockImplementation(() => {});
+            app.seriesApi = seriesApi(new Error('down'));
+            app.selectRound = vi.fn();
+            await app.handleRoute({ series: 'f3', round: '1' });
+            expect(app.selectRound).not.toHaveBeenCalled();
+        });
+
+        it('starts on the series in the URL', async () => {
+            app.initUIElements = vi.fn();
+            app.initMapComponents = vi.fn();
+            app.bindEvents = vi.fn();
+            app.showLoading = vi.fn();
+            app.populateRoundSelect = vi.fn();
+            app.startWeatherRefreshInterval = vi.fn();
+            app.startSessionForecastInterval = vi.fn();
+            app.handleRoute = vi.fn();
+            app.router.getParams = vi.fn(() => ({ series: 'fe', round: '3', session: null }));
+            app.seriesApi = seriesApi({ races: [f2Race(3)], complete: true });
+
+            await app.init();
+            expect(app.ui.seriesSelect.value).toBe('fe');
+            expect(app.seriesApi.getSchedule).toHaveBeenCalledWith('fe');
+            expect(app.f1Api.getSchedule).not.toHaveBeenCalled();
+        });
+
+        it('shows the series error inline when the starting series fails', async () => {
+            vi.spyOn(console, 'error').mockImplementation(() => {});
+            app.initUIElements = vi.fn();
+            app.initMapComponents = vi.fn();
+            app.bindEvents = vi.fn();
+            app.showLoading = vi.fn();
+            app.handleRoute = vi.fn();
+            app.startWeatherRefreshInterval = vi.fn();
+            app.startSessionForecastInterval = vi.fn();
+            app.router.getParams = vi.fn(() => ({ series: 'f2', round: '3' }));
+            app.seriesApi = seriesApi(new Error('SERIES_SCHEDULE_UNAVAILABLE:f2'));
+
+            await app.init();
+            expect(app.renderError).not.toHaveBeenCalled();
+            expect(app.ui.scheduleErrorText.textContent).toBe(
+                i18n.t('errors.seriesScheduleUnavailable', { series: i18n.t('controls.f2') }));
+            expect(app.handleRoute).not.toHaveBeenCalled();
+            expect(app.startWeatherRefreshInterval).toHaveBeenCalled();
+        });
+
+        it('falls back to F1 for an unknown series in the URL', async () => {
+            app.initUIElements = vi.fn();
+            app.initMapComponents = vi.fn();
+            app.bindEvents = vi.fn();
+            app.showLoading = vi.fn();
+            app.populateRoundSelect = vi.fn();
+            app.autoSelectNextRound = vi.fn();
+            app.startWeatherRefreshInterval = vi.fn();
+            app.startSessionForecastInterval = vi.fn();
+            app.router.getParams = vi.fn(() => ({ series: 'wec' }));
+            app.seriesApi = seriesApi({ races: [], complete: true });
+
+            await app.init();
+            expect(app.series).toBe('f1');
+            expect(app.f1Api.getSchedule).toHaveBeenCalled();
+        });
+    });
+
+    describe('updateSessionForecast without venue coordinates', () => {
+        it('uses the track centre', async () => {
+            app.selectedRace = { location: { lat: '', long: '' } };
+            app.currentCircuitCenter = [25.49, 51.45];
+            app.renderForecast = vi.fn();
+            const time = new Date('2026-11-29T13:00:00Z');
+            await app.updateSessionForecast(time, 'feature-race');
+            expect(app.weatherClient.getForecast).toHaveBeenCalledWith(25.49, 51.45, time);
+        });
+
+        it('skips the forecast when there is no centre either', async () => {
+            app.selectedRace = { location: { lat: '', long: '' } };
+            app.currentCircuitCenter = null;
+            await app.updateSessionForecast(new Date(), 'race');
+            expect(app.weatherClient.getForecast).not.toHaveBeenCalled();
+        });
+    });
 });

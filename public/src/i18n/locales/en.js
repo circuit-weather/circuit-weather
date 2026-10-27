@@ -5,6 +5,7 @@ export const en = {
     sponsor: "Sponsor",
   },
   common: {
+    scheduleData: "Schedule data:",
     countryFlagFallback: "Country flag",
     countryFlag: "{{country}} flag",
     github: "View Source Code on GitHub",
@@ -26,8 +27,10 @@ export const en = {
     switchToDark: "Switch to dark mode",
   },
   controls: {
-    onlyF1Supported: "Only Formula 1 is currently supported",
     f1: "Formula 1",
+    f2: "Formula 2",
+    f3: "Formula 3",
+    fe: "Formula E",
     series: "Series",
     round: "Round",
     roundLabel: "R{{round}}: {{name}} ({{date}})",
@@ -157,6 +160,8 @@ export const en = {
       "The F1 race schedule could not be loaded. The data source (api.jolpi.ca) is currently unavailable — please try again later.",
     scheduleAllUnavailable:
       "The F1 race schedule could not be loaded. Both data sources (api.jolpi.ca and api.openf1.org) appear to be unavailable — please try again later.",
+    seriesScheduleUnavailable:
+      "The {{series}} schedule couldn't be loaded from TheSportsDB. Trying again automatically — you can still choose another series.",
     usingFallbackSource:
       "Primary schedule source (api.jolpi.ca) is unavailable — showing data from the backup source (api.openf1.org).",
     sessionError: "Session Error",

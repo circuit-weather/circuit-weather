@@ -91,6 +91,7 @@ Der Browser kann für Karten, Tiles und Widgets direkt mit Drittanbietern kommun
 ### Datenquellen (proxy)
 
 - **Jolpica F1:** (24-Stunden-Edge-Cache; eine zuletzt gültige Kopie wird bis zu 30 Tage als Ausweichlösung aufbewahrt, falls die Quelle nicht verfügbar ist).
+- **TheSportsDB:** Kalender- und Streckendaten für Formel 2, Formel 3 und Formel E (je nach Nähe des Rennwochenendes stündlich bis monatlich aktualisiert; die zuletzt abgerufene Kopie wird bis zu 180 Tage als Ausweichlösung aufbewahrt).
 - **GitHub (bacinger/f1-circuits):** (24-Stunden-Edge-Cache).
 - **LibreWXR:** Radarmetadaten (1-Minuten-Cache), Radarkacheln (2-Stunden-Edge-Cache; Vorhersagekacheln 5 Minuten), Satellitenkacheln (12-Stunden-Edge-Cache) und Wetterwarnungen (5-Minuten-Cache). Kurzlebige Sicherungskopien der Metadaten (30 Minuten) und Warnungen (1 Stunde) werden für den Fall aufbewahrt, dass LibreWXR nicht erreichbar ist.
 - **RainViewer:** Radarmetadaten (1-Minuten-Cache) und Kacheln (2-Stunden-Edge-Cache).
@@ -109,6 +110,7 @@ Lokale Einstellungen im Browser:
 - **radarArrows, radarCells, radarLightning, radarSatellite:** `true` oder `false` (speichert, welche zusätzlichen Radarebenen aktiviert sind)
 - **weatherAlerts:** `true` oder `false` (speichert, ob Wetterwarnungen angezeigt werden)
 - **f1_schedule_cache:** speichert die F1-Kalenderdaten zwischen (7-Tage-Cache)
+- **series_schedule_cache:** speichert die Kalenderdaten für Formel 2, Formel 3 und Formel E zwischen (7-Tage-Cache; 5 Minuten, solange der Kalender noch geladen wird)
 
 Diese Daten verbleiben auf Ihrem Gerät und werden nicht an unsere Server gesendet.
 

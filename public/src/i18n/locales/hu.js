@@ -5,6 +5,7 @@ export const hu = {
     sponsor: "Támogató",
   },
   common: {
+    scheduleData: "Versenynaptár adatai:",
     countryFlagFallback: "Országzászló",
     countryFlag: "{{country}} zászlaja",
     github: "Forráskód megtekintése a GitHubon",
@@ -26,8 +27,10 @@ export const hu = {
     switchToDark: "Váltás sötét módra",
   },
   controls: {
-    onlyF1Supported: "Jelenleg csak a Forma-1 támogatott",
     f1: "Forma-1",
+    f2: "Forma-2",
+    f3: "Forma-3",
+    fe: "Formula E",
     series: "Sorozat",
     round: "Forduló",
     roundLabel: "R{{round}}: {{name}} ({{date}})",
@@ -160,6 +163,8 @@ export const hu = {
       "Az F1-es versenynaptár nem tölthető be. Az adatforrás (api.jolpi.ca) jelenleg nem érhető el – kérjük, próbálja újra később.",
     scheduleAllUnavailable:
       "Az F1-es versenynaptár nem tölthető be. Mindkét adatforrás (api.jolpi.ca és api.openf1.org) jelenleg nem érhető el – kérjük, próbálja újra később.",
+    seriesScheduleUnavailable:
+      "A(z) {{series}} versenynaptárát nem sikerült betölteni a TheSportsDB-ről. Automatikusan újrapróbáljuk – közben másik sorozatot is választhat.",
     usingFallbackSource:
       "Az elsődleges adatforrás (api.jolpi.ca) nem érhető el – az adatok a tartalék forrásból (api.openf1.org) származnak.",
     sessionError: "Esemény hiba",

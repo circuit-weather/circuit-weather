@@ -64,4 +64,19 @@ describe('SeoManager Unit Tests', () => {
         SeoManager.updatePageMetadata(race, null);
         expect(document.title).toBeDefined();
     });
+
+    it('uses the series in breadcrumb URLs', () => {
+        const script = { id: 'dynamic-breadcrumb-ld', textContent: '' };
+        document.getElementById = vi.fn((id) => (id === 'dynamic-breadcrumb-ld' ? script : null));
+        const race = { round: '13', name: 'Qatar' };
+        const session = { id: 'feature-race', name: 'Feature Race' };
+
+        SeoManager.updateBreadcrumbJsonLd(race, session, 'f2');
+        const items = JSON.parse(script.textContent).itemListElement;
+        expect(items[1].item).toBe('https://circuit-weather.racing/f2/13');
+        expect(items[2].item).toBe('https://circuit-weather.racing/f2/13/feature-race');
+
+        SeoManager.updateBreadcrumbJsonLd(race, null);
+        expect(JSON.parse(script.textContent).itemListElement[1].item).toBe('https://circuit-weather.racing/f1/13');
+    });
 });
