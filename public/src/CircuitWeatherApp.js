@@ -294,6 +294,8 @@ export class CircuitWeatherApp {
             const parsed = races.map(r => this.seriesApi.parseRace(r));
             // Keep the selected race object: it holds the session the user picked
             const selectedRound = this.selectedRace?.round;
+            const fresh = parsed.find(r => r.round === selectedRound);
+            if (fresh) this.updateSelectedRaceVenue(fresh);
             this.races = parsed.map(r => (r.round === selectedRound ? this.selectedRace : r));
             this.hideScheduleError();
             this.populateRoundSelect();
@@ -773,6 +775,23 @@ export class CircuitWeatherApp {
         this.startSessionForecastInterval();
 
         this.router.navigate(this.series, round, null);
+    }
+
+    /**
+     * Takes the venue from a refreshed copy of the selected race. A partial schedule
+     * can list a round before its venue coordinates are known, so centre on the
+     * circuit once they arrive.
+     */
+    updateSelectedRaceVenue(fresh) {
+        const race = this.selectedRace;
+        const hasCoords = (loc) => Number.isFinite(parseFloat(loc?.lat)) && Number.isFinite(parseFloat(loc?.long));
+        const hadCoords = hasCoords(race.location);
+        race.location = fresh.location;
+        race.circuit = fresh.circuit;
+        if (!hadCoords && hasCoords(fresh.location)) {
+            this._resolveRoundMapCenter(race);
+            this.updateRaceInfo(race);
+        }
     }
 
     _resolveRoundMapCenter(race) {

@@ -251,10 +251,29 @@ export async function fillState(state, leagueId, env, now) {
   await refreshLeague(state, leagueId, now, spend);
   if (!state.season) return { changed: JSON.stringify(state) !== before, limited, failure };
 
+  const attemptedVenues = new Set();
+  const fetchVenues = (ids) => Promise.all(ids.map(async (id) => {
+    attemptedVenues.add(id);
+    const res = await spend(`lookupvenue.php?id=${id}`);
+    if (!res.ok) return;
+    state.venues[id] = { fetchedAt: now, ...(slimVenue(res.data) ?? EMPTY_VENUE) };
+  }));
+
   // Rounds, a batch at a time, re-planning after each batch so new rounds found by an
-  // end-of-season probe are followed up in the same request.
+  // end-of-season probe are followed up in the same request. Venues the fetched rounds
+  // use but that have never been looked up come first: without their coordinates a
+  // round can't be shown on the map, so a partial schedule has fewer rounds but each
+  // one works.
   const attempted = new Set();
   while (budget > 0 && !limited) {
+    const newVenues = venuesToFetch(state, now)
+      .filter(id => !state.venues[id] && !attemptedVenues.has(id))
+      .slice(0, Math.min(budget, PARALLEL_FETCHES));
+    if (newVenues.length > 0) {
+      await fetchVenues(newVenues);
+      continue;
+    }
+
     const tasks = planFetches(state, now)
       .filter(t => !attempted.has(t.round))
       .slice(0, Math.min(budget, PARALLEL_FETCHES));
@@ -290,15 +309,10 @@ export async function fillState(state, leagueId, env, now) {
     }
   }
 
-  // Venue coordinates with whatever budget is left
-  const venueIds = venuesToFetch(state, now);
+  // Stale venue coordinates with whatever budget is left
+  const venueIds = venuesToFetch(state, now).filter(id => !attemptedVenues.has(id));
   for (let i = 0; i < venueIds.length && budget > 0 && !limited; i += PARALLEL_FETCHES) {
-    const batch = venueIds.slice(i, i + Math.min(budget, PARALLEL_FETCHES));
-    await Promise.all(batch.map(async (id) => {
-      const res = await spend(`lookupvenue.php?id=${id}`);
-      if (!res.ok) return;
-      state.venues[id] = { fetchedAt: now, ...(slimVenue(res.data) ?? EMPTY_VENUE) };
-    }));
+    await fetchVenues(venueIds.slice(i, i + Math.min(budget, PARALLEL_FETCHES)));
   }
 
   return { changed: JSON.stringify(state) !== before, limited, failure };

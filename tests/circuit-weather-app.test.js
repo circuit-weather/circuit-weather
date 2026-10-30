@@ -2333,6 +2333,26 @@ describe('CircuitWeatherApp series selection', () => {
             expect(app.scheduleRetryTimer).toBeNull();
         });
 
+        it('centres on the selected round once its venue coordinates arrive', async () => {
+            const noVenue = { circuitId: null, circuitName: '', Location: { lat: '', long: '', country: 'Australia' } };
+            app.seriesApi = seriesApi({ races: [f2Race(13, { Circuit: noVenue })], complete: false });
+            await app.loadSchedule('f2');
+            app.selectedRace = app.races[0];
+            const centre = vi.spyOn(app, '_resolveRoundMapCenter').mockImplementation(() => {});
+
+            app.seriesApi.getSchedule.mockResolvedValue({ races: [f2Race(13)], complete: true });
+            await vi.advanceTimersByTimeAsync(65000);
+
+            expect(app.races[0]).toBe(app.selectedRace);
+            expect(app.selectedRace.location.lat).toBe('25.49');
+            expect(centre).toHaveBeenCalledWith(app.selectedRace);
+
+            // Already centred: a later refresh doesn't move the map again
+            centre.mockClear();
+            await app.refreshPartialSchedule('f2', 1);
+            expect(centre).not.toHaveBeenCalled();
+        });
+
         it('retries a limited number of times while still partial', async () => {
             app.seriesApi = seriesApi({ races: [f2Race(1)], complete: false });
             await app.loadSchedule('f2');

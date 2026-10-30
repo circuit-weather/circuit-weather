@@ -145,14 +145,16 @@ describe('Worker /api/schedule/{series}', () => {
     const body = await res.json();
 
     expect(upstream.handler).toHaveBeenCalledTimes(FILL_BUDGET);
+    // Rounds either side of the next one, before older rounds
     expect(upstream.calls.slice(0, 7)).toEqual([
       'lookupleague.php', 'eventspastleague.php', 'eventsnextleague.php',
       'eventsround.php:8', 'eventsround.php:9', 'eventsround.php:7', 'eventsround.php:10',
     ]);
-    // Rounds either side of the next one, before older rounds
-    expect(upstream.calls.slice(7)).toEqual(['eventsround.php:6', 'eventsround.php:11', 'eventsround.php:5']);
+    // New venues come before more rounds, so fetched rounds can be shown on the map
+    expect(upstream.calls.slice(7)).toEqual(['lookupvenue.php:107', 'lookupvenue.php:108', 'lookupvenue.php:109']);
     expect(body.complete).toBe(false);
-    expect(body.races.map(r => r.round)).toEqual(['5', '6', '7', '8', '9', '10', '11']);
+    expect(body.races.map(r => r.round)).toEqual(['7', '8', '9', '10']);
+    expect(body.races.filter(r => r.Circuit.Location.lat).map(r => r.round)).toEqual(['7', '8', '9']);
     expect(body.races.find(r => r.round === '8').sessions.map(s => s.id)).toEqual(['practice', 'feature-race']);
     // Partial responses are only cached briefly
     expect(cacheStore.get(RESPONSE_KEY).headers.get('Cache-Control')).toBe('public, max-age=60');
@@ -289,6 +291,20 @@ describe('Worker /api/schedule/{series}', () => {
     const state = await cacheStore.get(STATE_KEY).clone().json();
     expect(state.season).toBe('2026');
     expect(state.nextRound).toBeNull();
+  });
+
+  it('moves on to rounds when a new venue lookup fails', async () => {
+    const upstream = fakeUpstream({ lastRound: 3, next: 2 });
+    const handler = upstream.handler.getMockImplementation();
+    upstream.handler.mockImplementation(async (url) => (url.includes('lookupvenue.php') ? jsonResponse({}, 500) : handler(url)));
+    vi.stubGlobal('fetch', upstream.handler);
+
+    const body = await (await get()).json();
+    expect(upstream.handler).toHaveBeenCalledTimes(FILL_BUDGET);
+    // Each venue is tried once per request, not retried in a loop
+    const venueCalls = upstream.calls.filter(c => c.startsWith('lookupvenue.php'));
+    expect(new Set(venueCalls).size).toBe(venueCalls.length);
+    expect(body.races.map(r => r.round)).toEqual(['1', '2', '3']);
   });
 
   it('stops filling when the per-isolate throttle runs out', async () => {
