@@ -19,12 +19,20 @@ const TIMEOUT_MS = 5000;
 // Supported series → TheSportsDB league. F1 stays on Jolpica (src/handlers/f1.js).
 // f1Layouts: the series races the F1 layout of shared venues, so the F1 track outline
 // applies. Formula E runs shortened or different layouts (e.g. Monaco, Mexico City).
-// WEC uses the full F1 layouts at the venues it shares (Spa, Interlagos, Monza, ...).
+// WEC, IMSA and Supercars use the full F1 layouts at the venues they share.
 export const SERIES = Object.freeze({
   f2: Object.freeze({ leagueId: '4486', f1Layouts: true }),
   f3: Object.freeze({ leagueId: '4487', f1Layouts: true }),
   fe: Object.freeze({ leagueId: '4371', f1Layouts: false }),
   wec: Object.freeze({ leagueId: '4413', f1Layouts: true }),
+  imsa: Object.freeze({ leagueId: '4488', f1Layouts: true }),
+  supercars: Object.freeze({ leagueId: '4489', f1Layouts: true }),
+  // Ovals, and road courses run in their own configurations (e.g. NASCAR at COTA)
+  indycar: Object.freeze({ leagueId: '4373', f1Layouts: false }),
+  nascar: Object.freeze({ leagueId: '4393', f1Layouts: false }),
+  // Bikes often use different variants of shared venues (e.g. Barcelona without the chicane)
+  motogp: Object.freeze({ leagueId: '4407', f1Layouts: false }),
+  wsbk: Object.freeze({ leagueId: '4454', f1Layouts: false }),
 });
 
 // Free tier: 30 requests/minute. Leave headroom for other isolates and data centres
@@ -278,10 +286,14 @@ export function buildRace(round, events, venues, { f1Layouts = true } = {}) {
     return { id, name: label, ...dt };
   });
 
-  // The most common venue across the round: some events have no venue set.
+  // The most common venue across the round (some events have no venue set),
+  // preferring venues with coordinates: some leagues put a placeholder venue
+  // (MotoGP and IndyCar use ID 1) on most events.
   const counts = new Map();
   for (const e of events) if (e.venueId) counts.set(e.venueId, (counts.get(e.venueId) ?? 0) + 1);
-  const venueId = [...counts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] ?? null;
+  const hasCoords = id => (venues[id]?.coords ? 1 : 0);
+  const venueId = [...counts.entries()]
+    .sort((a, b) => hasCoords(b[0]) - hasCoords(a[0]) || b[1] - a[1])[0]?.[0] ?? null;
   const venue = venueId ? venues[venueId] : null;
   const named = events.find(e => e.venue) ?? events[0];
 

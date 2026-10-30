@@ -310,6 +310,19 @@ describe('buildRace', () => {
     expect(race.Circuit.Location.country).toBe('');
   });
 
+  it('prefers a venue with coordinates over a more common placeholder (MotoGP)', () => {
+    const race = buildRace(2, [
+      event('Brazil Free Practice 1', '2026-03-20T15:05:00', { venueId: '1', venue: 'Autodromo Internacional Ayrton Senna' }),
+      event('Brazil Practice', '2026-03-20T19:00:00', { venueId: '1', venue: 'Autodromo Internacional Ayrton Senna' }),
+      event('Brazil GP', '2026-03-22T17:00:00', { venueId: '32222', venue: 'Autdromo Internacional Ayrton Senna' }),
+    ], {
+      '1': { name: '', locality: '', country: '', coords: null },
+      '32222': { name: 'Goiania', locality: 'Goiania', country: 'Brazil', coords: { lat: -16.72, long: -49.19 } },
+    }, SERIES.motogp);
+    expect(race.Circuit.Location.lat).toBe('-16.72');
+    expect(race.Circuit.circuitName).toBe('Goiania');
+  });
+
   it('uses a slug fallback for labels without letters or digits', () => {
     const race = buildRace(1, [
       event('X !!!', '2026-01-01T10:00:00'),

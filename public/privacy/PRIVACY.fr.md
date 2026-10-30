@@ -91,7 +91,7 @@ Votre navigateur peut se connecter directement à certains services tiers.
 ### Sources de données (proxyfiées)
 
 - **Jolpica F1 :** (cache edge de 24 heures ; une dernière copie valide est conservée jusqu’à 30 jours comme solution de repli si la source est indisponible).
-- **TheSportsDB :** Calendrier et données des circuits de Formule 2, Formule 3, Formule E et le Championnat du monde d’endurance (WEC) (actualisés toutes les heures à tous les mois selon la proximité de chaque manche ; la dernière copie obtenue est conservée jusqu’à 180 jours comme solution de repli).
+- **TheSportsDB :** Calendrier et données des circuits de toutes les séries hors Formule 1 (actualisés toutes les heures à tous les mois selon la proximité de chaque manche ; la dernière copie obtenue est conservée jusqu’à 180 jours comme solution de repli).
 - **GitHub (bacinger/f1-circuits) :** (cache edge de 24 heures).
 - **LibreWXR :** Métadonnées radar (cache d'une minute), tuiles radar (cache edge de 2 heures ; tuiles de prévision 5 minutes), tuiles satellite (cache edge de 12 heures) et alertes météo (cache de 5 minutes). Des copies de secours de courte durée des métadonnées (30 minutes) et des alertes (1 heure) sont conservées au cas où LibreWXR serait indisponible.
 - **RainViewer :** Métadonnées radar (cache d'une minute) et tuiles (cache edge de 2 heures).
@@ -110,7 +110,7 @@ Les préférences sont stockées localement dans le navigateur :
 - **radarArrows, radarCells, radarLightning, radarSatellite:** `true` ou `false` (mémorise les couches radar supplémentaires activées)
 - **weatherAlerts:** `true` ou `false` (mémorise si les alertes météo sont affichées)
 - **f1_schedule_cache:** met en cache les données du calendrier de la F1 (cache de 7 jours)
-- **series_schedule_cache:** met en cache les données du calendrier de la Formule 2, de la Formule 3, de la Formule E et du Championnat du monde d’endurance (WEC) (cache de 7 jours ; 5 minutes tant que le calendrier est en cours de chargement)
+- **series_schedule_cache:** met en cache les données du calendrier de toutes les séries hors Formule 1 (cache de 7 jours ; 5 minutes tant que le calendrier est en cours de chargement)
 
 Ces données restent sur votre appareil et ne sont pas envoyées à nos serveurs.
 

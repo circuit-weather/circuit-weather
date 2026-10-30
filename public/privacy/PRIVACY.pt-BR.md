@@ -91,7 +91,7 @@ O navegador pode se conectar diretamente a serviços de terceiros para mapas, ti
 ### Fontes de dados (proxy)
 
 - **Jolpica F1:** (cache de borda de 24 horas; uma última cópia válida é mantida por até 30 dias como alternativa caso a fonte esteja indisponível).
-- **TheSportsDB:** Calendário e dados dos circuitos da Fórmula 2, Fórmula 3, Fórmula E e do Campeonato Mundial de Endurance (WEC) (atualizados de hora em hora a cada mês, conforme a proximidade de cada etapa; a última cópia obtida é mantida por até 180 dias como alternativa).
+- **TheSportsDB:** Calendário e dados dos circuitos de todas as categorias exceto a Fórmula 1 (atualizados de hora em hora a cada mês, conforme a proximidade de cada etapa; a última cópia obtida é mantida por até 180 dias como alternativa).
 - **GitHub (bacinger/f1-circuits):** (cache de borda de 24 horas).
 - **LibreWXR:** Metadados de radar (cache de 1 minuto), tiles de radar (cache de borda de 2 horas; tiles de previsão 5 minutos), tiles de satélite (cache de borda de 12 horas) e alertas meteorológicos (cache de 5 minutos). Cópias de reserva de curta duração dos metadados (30 minutos) e dos alertas (1 hora) são mantidas caso o LibreWXR esteja indisponível.
 - **RainViewer:** Metadados de radar (cache de 1 minuto) e tiles (cache de borda de 2 horas).
@@ -110,7 +110,7 @@ Preferências armazenadas localmente no navegador:
 - **radarArrows, radarCells, radarLightning, radarSatellite:** `true` ou `false` (lembra quais camadas extras do radar estão habilitadas)
 - **weatherAlerts:** `true` ou `false` (lembra se os alertas meteorológicos são exibidos)
 - **f1_schedule_cache:** faz cache dos dados do calendário da F1 (cache de 7 dias)
-- **series_schedule_cache:** faz cache dos dados do calendário da Fórmula 2, Fórmula 3, Fórmula E e do Campeonato Mundial de Endurance (WEC) (cache de 7 dias; 5 minutos enquanto o calendário ainda está carregando)
+- **series_schedule_cache:** faz cache dos dados do calendário de todas as categorias exceto a Fórmula 1 (cache de 7 dias; 5 minutos enquanto o calendário ainda está carregando)
 
 Esses dados permanecem no seu dispositivo e não são enviados aos nossos servidores.
 

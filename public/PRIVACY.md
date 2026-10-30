@@ -92,7 +92,7 @@ To improve performance and reliability, we load standard libraries and assets fr
 The following services provide the raw data that we process and cache via Cloudflare. Your device does not connect to them directly for data API calls.
 
 - **Jolpica F1:** Historical and current F1 schedule data (24-hour edge cache; a last-known-good copy is kept for up to 30 days as a fallback if the source is unavailable).
-- **TheSportsDB:** Formula 2, Formula 3, Formula E and World Endurance Championship (WEC) schedule and circuit data (refreshed between hourly and monthly depending on how close each round is; the last fetched copy is kept for up to 180 days as a fallback).
+- **TheSportsDB:** Schedule and circuit data for every series other than Formula 1 (refreshed between hourly and monthly depending on how close each round is; the last fetched copy is kept for up to 180 days as a fallback).
 - **GitHub (bacinger/f1-circuits):** Stores static track layout files (GeoJSON) (24-hour edge cache).
 - **LibreWXR:** Radar metadata (1-minute cache), radar tiles (2-hour edge cache; forecast tiles 5 minutes), satellite tiles (12-hour edge cache) and weather warnings (5-minute cache). Short-lived backup copies of the metadata (30 minutes) and warnings (1 hour) are kept in case LibreWXR is unavailable.
 - **RainViewer:** Backup weather radar tiles (2-hour edge cache) and metadata (1-minute cache).
@@ -111,7 +111,7 @@ The application stores preference settings locally in your browser to remember y
 - **radarArrows, radarCells, radarLightning, radarSatellite:** `true` or `false` (remembers which extra radar layers are enabled)
 - **weatherAlerts:** `true` or `false` (remembers if weather warnings are shown)
 - **f1_schedule_cache:** caches the F1 schedule data (7-day cache)
-- **series_schedule_cache:** caches the Formula 2, Formula 3, Formula E and World Endurance Championship (WEC) schedule data (7-day cache; 5 minutes while the schedule is still loading)
+- **series_schedule_cache:** caches the schedule data for every series other than Formula 1 (7-day cache; 5 minutes while the schedule is still loading)
 
 This data resides solely on your device and is never transmitted to our servers.
 

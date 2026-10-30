@@ -44,6 +44,21 @@ describe('Config File (public/src/config.js)', () => {
             expect(COUNTRY_CODES['United Kingdom']).toBe('gb');
         });
 
+        it('covers countries on the TheSportsDB series calendars, including spelling variants', () => {
+            expect(COUNTRY_CODES['Czechia']).toBe('cz');
+            expect(COUNTRY_CODES['Czech Republic']).toBe('cz');
+            expect(COUNTRY_CODES['Indonesia']).toBe('id');
+            expect(COUNTRY_CODES['New Zealand']).toBe('nz');
+            expect(COUNTRY_CODES['San Marino']).toBe('sm');
+            expect(COUNTRY_CODES['England']).toBe('gb-eng');
+        });
+
+        it('only uses lowercase flagcdn codes', () => {
+            for (const code of Object.values(COUNTRY_CODES)) {
+                expect(code).toMatch(/^[a-z]{2}(-[a-z]{3})?$/);
+            }
+        });
+
         it('should be completely frozen to prevent runtime tampering', () => {
             expect(Object.isFrozen(COUNTRY_CODES)).toBe(true);
         });

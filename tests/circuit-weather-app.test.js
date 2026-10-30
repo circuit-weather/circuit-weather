@@ -1142,7 +1142,7 @@ describe('CircuitWeatherApp Pure Methods', () => {
         });
 
         it('ignores non-f1 series', async () => {
-            await app.handleRoute({ series: 'indycar', round: '3' });
+            await app.handleRoute({ series: 'btcc', round: '3' });
             expect(app.selectedRace).toBeNull();
         });
     });
@@ -2333,6 +2333,26 @@ describe('CircuitWeatherApp series selection', () => {
             expect(app.scheduleRetryTimer).toBeNull();
         });
 
+        it('centres on the selected round once its venue coordinates arrive', async () => {
+            const noVenue = { circuitId: null, circuitName: '', Location: { lat: '', long: '', country: 'Australia' } };
+            app.seriesApi = seriesApi({ races: [f2Race(13, { Circuit: noVenue })], complete: false });
+            await app.loadSchedule('f2');
+            app.selectedRace = app.races[0];
+            const centre = vi.spyOn(app, '_resolveRoundMapCenter').mockImplementation(() => {});
+
+            app.seriesApi.getSchedule.mockResolvedValue({ races: [f2Race(13)], complete: true });
+            await vi.advanceTimersByTimeAsync(65000);
+
+            expect(app.races[0]).toBe(app.selectedRace);
+            expect(app.selectedRace.location.lat).toBe('25.49');
+            expect(centre).toHaveBeenCalledWith(app.selectedRace);
+
+            // Already centred: a later refresh doesn't move the map again
+            centre.mockClear();
+            await app.refreshPartialSchedule('f2', 1);
+            expect(centre).not.toHaveBeenCalled();
+        });
+
         it('retries a limited number of times while still partial', async () => {
             app.seriesApi = seriesApi({ races: [f2Race(1)], complete: false });
             await app.loadSchedule('f2');
@@ -2393,7 +2413,7 @@ describe('CircuitWeatherApp series selection', () => {
         });
 
         it('ignores unsupported series', async () => {
-            expect(await app.selectSeries('indycar')).toBe(false);
+            expect(await app.selectSeries('btcc')).toBe(false);
             expect(app.series).toBe('f1');
         });
 
@@ -2581,7 +2601,7 @@ describe('CircuitWeatherApp series selection', () => {
             app.autoSelectNextRound = vi.fn();
             app.startWeatherRefreshInterval = vi.fn();
             app.startSessionForecastInterval = vi.fn();
-            app.router.getParams = vi.fn(() => ({ series: 'indycar' }));
+            app.router.getParams = vi.fn(() => ({ series: 'btcc' }));
             app.seriesApi = seriesApi({ races: [], complete: true });
 
             await app.init();
