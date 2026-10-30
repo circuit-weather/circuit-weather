@@ -76,8 +76,8 @@ Every session in a round starts with the same round name, followed by the sessio
 - [ ] **`strLocation`** is the town or city.
 - [ ] **`strCountry`** is one of the country names the app has a flag for (`COUNTRY_CODES` in
       `public/src/config.js`). A name that isn't listed shows no flag; add it to `COUNTRY_CODES`
-      (a code change, not a TheSportsDB fix). Czechia, Indonesia and New Zealand were missing as of
-      October 2026.
+      (a code change, not a TheSportsDB fix). Flags are loaded from
+      `https://flagcdn.com/w80/{code}.png`, so the code must be one flagcdn serves.
 
 ## When fixes show up
 
@@ -106,5 +106,6 @@ minutes of requests and doesn't clear browser caches.
    the venues it shares with F1).
 3. Add the id to `SERIES_IDS` in `public/src/config.js`, an `<option>` in `#seriesSelect` in
    `public/index.html`, and a `controls.<id>` label in every locale in `public/src/i18n/locales/`.
-4. Add any missing country names to `COUNTRY_CODES` and any F1 venue IDs to `VENUE_CIRCUIT_MAP`.
+4. Add any country names its events and venues use that are missing from `COUNTRY_CODES`, and any
+   F1 venue IDs to `VENUE_CIRCUIT_MAP`.
 5. List the series in `README.md` and `AGENTS.md`.

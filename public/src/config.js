@@ -92,6 +92,14 @@ export const COUNTRY_CODES = {
     // Long-form names (e.g. from the OpenF1 fallback)
     'Great Britain': 'gb', 'United Arab Emirates': 'ae',
     'United Kingdom': 'gb', 'United States': 'us',
+    // Other countries on the TheSportsDB series calendars (see docs/thesportsdb-data-checklist.md)
+    'Chile': 'cl', 'Czechia': 'cz', 'Hong Kong': 'hk', 'Indonesia': 'id',
+    'Kazakhstan': 'kz', 'New Zealand': 'nz', 'San Marino': 'sm', 'Slovakia': 'sk',
+    'Switzerland': 'ch', 'Uruguay': 'uy',
+    // Spelling variants TheSportsDB uses for some venues
+    'Czech Republic': 'cz', 'England': 'gb-eng', 'Scotland': 'gb-sct', 'Wales': 'gb-wls',
+    'The Netherlands': 'nl', 'Holland': 'nl', 'Türkiye': 'tr', 'Republic of Korea': 'kr',
+    'US': 'us', 'U.S.A.': 'us',
 };
 // SEC: Prevent runtime tampering with country codes
 Object.freeze(COUNTRY_CODES);
