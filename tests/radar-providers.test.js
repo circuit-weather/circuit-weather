@@ -283,6 +283,28 @@ describe('sanitiseAlerts', () => {
     expect(d.regions).toBe('');
   });
 
+  it('validates URIs strictly allowing only http and https protocols', () => {
+    const result = sanitiseAlerts({
+      features: [
+        feature({ title: 'Valid HTTP', uri: 'http://example.com/alert' }),
+        feature({ title: 'Valid HTTPS', uri: 'https://example.com/alert' }),
+        feature({ title: 'Javascript URI', uri: 'javascript:alert(1)' }),
+        feature({ title: 'Data URI', uri: 'data:text/html,<script>alert(1)</script>' }),
+        feature({ title: 'File URI', uri: 'file:///etc/passwd' }),
+        feature({ title: 'FTP URI', uri: 'ftp://example.com/file' }),
+      ],
+    }, NOW_MS);
+    const uris = result.features.map(f => f.properties.uri);
+    expect(uris).toEqual([
+      'http://example.com/alert',
+      'https://example.com/alert',
+      '',
+      '',
+      '',
+      '',
+    ]);
+  });
+
   it('caps the number of alerts and polygon points', () => {
     const many = Array.from({ length: 60 }, (_, i) => feature({ title: `Alert ${i}` }));
     expect(sanitiseAlerts({ features: many }, NOW_MS).features).toHaveLength(50);

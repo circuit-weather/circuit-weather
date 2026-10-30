@@ -273,11 +273,13 @@ function cleanSeverity(value) {
   return SEVERITIES.has(severity) ? severity : 'unknown';
 }
 
+const ALLOWED_URI_PROTOCOLS = new Set(['https:', 'http:']);
+
 function cleanUri(value) {
   if (typeof value !== 'string' || value.length > 500) return '';
   try {
     const uri = new URL(value);
-    return uri.protocol === 'https:' || uri.protocol === 'http:' ? uri.href : '';
+    return ALLOWED_URI_PROTOCOLS.has(uri.protocol) ? uri.href : '';
   } catch {
     return '';
   }
