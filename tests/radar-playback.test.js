@@ -55,6 +55,70 @@ describe('RadarPlayback', () => {
         expect(showFrame).toHaveBeenCalledWith(1);
     });
 
+    it('keeps playing when showing a frame throws', () => {
+        const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+        let current = 0;
+        const showFrame = vi.fn(() => { throw new Error('Style is not done loading'); });
+        const pb = new RadarPlayback({
+            getFrameCount: () => 5,
+            getCurrentFrame: () => current,
+            setCurrentFrame: (i) => { current = i; },
+            showFrame,
+        });
+
+        pb.play();
+        requestAnimationFrame.mockClear();
+        pb.lastFrameTime = 0;
+        nowVal = 100000;
+        expect(() => pb.loop()).not.toThrow();
+        expect(requestAnimationFrame).toHaveBeenCalledOnce();
+        expect(pb.isPlaying).toBe(true);
+
+        // A run of failures is logged once
+        nowVal = 200000;
+        pb.loop();
+        expect(errorSpy).toHaveBeenCalledOnce();
+        errorSpy.mockRestore();
+    });
+
+    it('waits without advancing while there are no frames', () => {
+        let current = 3;
+        const showFrame = vi.fn();
+        const pb = new RadarPlayback({
+            getFrameCount: () => 0,
+            getCurrentFrame: () => current,
+            setCurrentFrame: (i) => { current = i; },
+            showFrame,
+        });
+
+        pb.play();
+        pb.lastFrameTime = 0;
+        nowVal = 100000;
+        pb.loop();
+
+        expect(current).toBe(3);
+        expect(showFrame).not.toHaveBeenCalled();
+    });
+
+    it('restarts from the first frame after an invalid index', () => {
+        let current = NaN;
+        const showFrame = vi.fn();
+        const pb = new RadarPlayback({
+            getFrameCount: () => 5,
+            getCurrentFrame: () => current,
+            setCurrentFrame: (i) => { current = i; },
+            showFrame,
+        });
+
+        pb.play();
+        pb.lastFrameTime = 0;
+        nowVal = 100000;
+        pb.loop();
+
+        expect(current).toBe(0);
+        expect(showFrame).toHaveBeenCalledWith(0);
+    });
+
     it('flushes pending work via beforePlay when starting', () => {
         const beforePlay = vi.fn();
         const pb = new RadarPlayback({ beforePlay });

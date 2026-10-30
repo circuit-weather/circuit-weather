@@ -22,6 +22,7 @@ export class RadarPlayback {
         this.animationFrameId = null;
         this.lastFrameTime = 0;
         this.speedIndex = CONFIG.defaultSpeedIndex;
+        this.frameErrorLogged = false;
         this.boundLoop = this.loop.bind(this);
 
         this.ui = {
@@ -108,19 +109,42 @@ export class RadarPlayback {
     loop() {
         if (!this.isPlaying) return;
 
+        // Schedule the next tick first: if showing a frame throws (e.g. Mapbox
+        // mid style reload), playback must carry on rather than freeze with the
+        // button still showing "pause".
+        this.animationFrameId = requestAnimationFrame(this.boundLoop);
+
         const now = performance.now();
         const elapsed = now - this.lastFrameTime;
         const speed = this.getCurrentSpeed();
 
         if (elapsed >= speed) {
-            const next = (this.getCurrentFrame() + 1) % this.getFrameCount();
-            this.setCurrentFrame(next);
-            this.showFrame(next);
             // Adjust for drift while preserving the interval grid
             this.lastFrameTime = now - (elapsed % speed);
+            this.advance();
         }
+    }
 
-        this.animationFrameId = requestAnimationFrame(this.boundLoop);
+    advance() {
+        // No frames while a reload swaps them in: wait for the next tick
+        const count = this.getFrameCount();
+        if (count <= 0) return;
+
+        // Recover from an invalid index (e.g. NaN after a reload emptied the frames)
+        const current = this.getCurrentFrame();
+        const next = Number.isInteger(current) && current >= 0 ? (current + 1) % count : 0;
+
+        try {
+            this.setCurrentFrame(next);
+            this.showFrame(next);
+            this.frameErrorLogged = false;
+        } catch (error) {
+            // Log once per run of failures; the loop retries on the next tick
+            if (!this.frameErrorLogged) {
+                console.error('Radar frame failed to show:', error);
+                this.frameErrorLogged = true;
+            }
+        }
     }
 
     pause() {

@@ -286,6 +286,59 @@ describe('WeatherRadar Lifecycle & Playback', () => {
             expect(radar.playback.isPlaying).toBe(false);
         });
 
+        it('lets only the latest of overlapping loads rebuild layers and play', async () => {
+            const { RadarFrames } = await import('../public/src/map/RadarFrames.js');
+            let resolveFirst;
+            vi.spyOn(RadarFrames, 'getFramesFromApi')
+                .mockImplementationOnce(() => new Promise(resolve => { resolveFirst = resolve; }))
+                .mockResolvedValueOnce({ frames: [{ time: 300, path: '/p3' }, { time: 400, path: '/p4' }], pastCount: 2 });
+            vi.spyOn(radar, 'waitForTilesToLoad').mockResolvedValue();
+            vi.spyOn(radar, 'preloadSequence').mockResolvedValue();
+            const createSpy = vi.spyOn(radar, 'createLayers');
+
+            const first = radar.load();
+            await radar.load();
+            resolveFirst({ frames: [{ time: 100, path: '/p1' }], pastCount: 1 });
+            await first;
+
+            expect(createSpy).toHaveBeenCalledOnce();
+            expect(radar.frames.map(f => f.time)).toEqual([300, 400]);
+            expect(radar.playback.isPlaying).toBe(true);
+        });
+
+        it('keeps the loaded frames playing when a reload returns none', async () => {
+            const { RadarFrames } = await import('../public/src/map/RadarFrames.js');
+            const frames = [{ time: 100, path: '/p1' }, { time: 200, path: '/p2' }];
+            vi.spyOn(RadarFrames, 'getFramesFromApi')
+                .mockResolvedValueOnce({ frames, pastCount: 2 })
+                .mockResolvedValueOnce({ frames: [], pastCount: 0 });
+            vi.spyOn(radar, 'waitForTilesToLoad').mockResolvedValue();
+            vi.spyOn(radar, 'preloadSequence').mockResolvedValue();
+
+            await radar.load();
+            radar.playback.pause();
+            await radar.load();
+
+            expect(radar.frames).toEqual(frames);
+            expect(radar.playback.isPlaying).toBe(true);
+        });
+
+        it('does not start polling after being destroyed mid-load', async () => {
+            const { RadarFrames } = await import('../public/src/map/RadarFrames.js');
+            let resolveFetch;
+            vi.spyOn(RadarFrames, 'getFramesFromApi')
+                .mockImplementationOnce(() => new Promise(resolve => { resolveFetch = resolve; }));
+            const pollSpy = vi.spyOn(radar, 'startPolling');
+
+            const pending = radar.load();
+            radar.destroy();
+            resolveFetch({ frames: [{ time: 100, path: '/p1' }], pastCount: 1 });
+            await pending;
+
+            expect(pollSpy).not.toHaveBeenCalled();
+            expect(radar.playback.isPlaying).toBe(false);
+        });
+
         it('always starts polling even if load fails', async () => {
             const { RadarFrames } = await import('../public/src/map/RadarFrames.js');
             vi.spyOn(RadarFrames, 'getFramesFromApi').mockRejectedValue(new Error('Network Error'));
