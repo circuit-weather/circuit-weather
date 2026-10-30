@@ -346,19 +346,15 @@ export class RangeCircles {
             [south, east]
         ];
 
-        visibleRadiusMeters = 0;
+        // Intentionally uses corners.map + Math.max (do not hand-roll a loop to save allocations):
+        // `corners` is a fixed 4-element array and this runs once per pan/zoom redraw (already
+        // rAF-throttled for Mapbox), so the allocation is negligible next to the getBounds()/draw work
+        // that follows. The microbenchmark gain is not measurable in practice and the
+        // duplicated Mapbox/Leaflet loops are harder to read than the declarative form.
         if (isMapbox) {
-            for (let i = 0; i < 4; i++) {
-                const c = corners[i];
-                const distance = this.getDistance(center[0], center[1], c[0], c[1]);
-                if (distance > visibleRadiusMeters) visibleRadiusMeters = distance;
-            }
+            visibleRadiusMeters = Math.max(...corners.map(c => this.getDistance(center[0], center[1], c[0], c[1])));
         } else {
-            for (let i = 0; i < 4; i++) {
-                const c = corners[i];
-                const distance = this.map.distance(center, L.latLng(c[0], c[1]));
-                if (distance > visibleRadiusMeters) visibleRadiusMeters = distance;
-            }
+            visibleRadiusMeters = Math.max(...corners.map(c => this.map.distance(center, L.latLng(c[0], c[1]))));
         }
 
         // Convert to current unit
