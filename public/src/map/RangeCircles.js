@@ -346,10 +346,19 @@ export class RangeCircles {
             [south, east]
         ];
 
+        visibleRadiusMeters = 0;
         if (isMapbox) {
-            visibleRadiusMeters = Math.max(...corners.map(c => this.getDistance(center[0], center[1], c[0], c[1])));
+            for (let i = 0; i < 4; i++) {
+                const c = corners[i];
+                const distance = this.getDistance(center[0], center[1], c[0], c[1]);
+                if (distance > visibleRadiusMeters) visibleRadiusMeters = distance;
+            }
         } else {
-            visibleRadiusMeters = Math.max(...corners.map(c => this.map.distance(center, L.latLng(c[0], c[1]))));
+            for (let i = 0; i < 4; i++) {
+                const c = corners[i];
+                const distance = this.map.distance(center, L.latLng(c[0], c[1]));
+                if (distance > visibleRadiusMeters) visibleRadiusMeters = distance;
+            }
         }
 
         // Convert to current unit
