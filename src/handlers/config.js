@@ -12,6 +12,11 @@ import {
 /**
  * Handle Config Request
  * Securely returns public tokens (like Mapbox) to the frontend without exposing them in source code.
+ *
+ * SEC Note: Client-side mapping libraries (Mapbox GL JS) require the access token in browser runtime.
+ * Mapbox access tokens are inherently public client-side keys and must be restricted via the Mapbox
+ * Dashboard (URL / domain restrictions) to limit usage strictly to authorized domains. Worker-level
+ * protections (XSSI destination checks, strict CORS, and hotlink prevention) provide additional defense-in-depth.
  */
 export function handleConfigRequest(request, env) {
   // SEC: Ensure request is not from a script tag (XSSI protection)
