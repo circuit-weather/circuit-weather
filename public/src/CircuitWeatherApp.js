@@ -439,10 +439,13 @@ export class CircuitWeatherApp {
 
         // Observe existing attribution controls
         const bottomControls = ['.mapboxgl-ctrl-bottom-left', '.mapboxgl-ctrl-bottom-right', '.leaflet-control-attribution'];
-        for (let i = 0; i < bottomControls.length; i++) {
-            const el = document.querySelector(bottomControls[i]);
+        // Intentionally uses forEach (do not convert to an indexed for loop): this runs once at init
+        // over a fixed 3-element array, so the closure/call overhead is unmeasurable (the reported
+        // gain only appears in a synthetic 10M-iteration benchmark) and forEach is the idiomatic form.
+        bottomControls.forEach(selector => {
+            const el = document.querySelector(selector);
             if (el) observer.observe(el);
-        }
+        });
 
         // Watch for dynamically added map controls (common with Mapbox)
         const controlSelector = bottomControls.join(', ');
@@ -526,9 +529,8 @@ export class CircuitWeatherApp {
 
         // BOTTOM OFFSETS: Avoid Mapbox Logo / Attribution
         let attributionHeight = 25; // Safe default for attribution/logo
-        // Deliberately NOT a single combined selector: the 
-        // 
-        //  chain gives explicit priority (Mapbox bottom-left, then bottom-right, then Leaflet).
+        // Deliberately NOT a single combined selector: the `||` chain gives explicit priority
+        // (Mapbox bottom-left, then bottom-right, then Leaflet).
         // A comma-separated selector returns the first match in DOM order, which changes which element is measured. One-off query, no perf benefit.
         const attribution = document.querySelector('.mapboxgl-ctrl-bottom-left') ||
                             document.querySelector('.mapboxgl-ctrl-bottom-right') ||
