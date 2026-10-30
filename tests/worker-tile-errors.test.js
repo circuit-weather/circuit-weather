@@ -264,4 +264,57 @@ describe('Worker Logic - Tile Errors', () => {
     expect(errorSpy).toHaveBeenCalled();
     errorSpy.mockRestore();
   });
+
+  it('handles upstream 502, 503, and 504 status codes without caching', async () => {
+    for (const status of [502, 503, 504]) {
+      mockFetch.mockResolvedValueOnce(new Response('Upstream Error', {
+        status,
+        headers: { 'Content-Type': 'text/plain' }
+      }));
+
+      const req = createRequest('/api/tiles/v2/radar/1/512/2/3/1/2/1_1.png');
+      const res = await worker.fetch(req, global.env, global.ctx);
+
+      expect(res.status).toBe(status);
+      expect(res.headers.get('X-Upstream-Status')).toBe(status.toString());
+      const data = await res.json();
+      expect(data.error.message).toBe('Upstream tile error');
+      expect(data.error.status).toBe(status);
+    }
+
+    expect(mockCache.put).not.toHaveBeenCalled();
+  });
+
+  it('logs unredacted tile path when env.DEBUG is true', async () => {
+    const infoSpy = vi.spyOn(console, 'info').mockImplementation(() => {});
+    mockFetch.mockResolvedValueOnce(new Response('Error', { status: 500 }));
+
+    const req = createRequest('/api/tiles/v2/radar/1/512/2/3/1/2/1_1.png');
+    const debugEnv = { ENVIRONMENT: 'development', DEBUG: 'true' };
+    await worker.fetch(req, debugEnv, global.ctx);
+
+    expect(infoSpy).toHaveBeenCalledWith(
+      'Tile Proxy Bucket: 5xx (Status: 500) Path: /v2/radar/1/512/2/3/1/2/1_1.png'
+    );
+    infoSpy.mockRestore();
+  });
+
+  it('caches 404 response with valid image/png content type', async () => {
+    const pngBody = new Uint8Array([137, 80, 78, 71, 13, 10, 26, 10]);
+    mockFetch.mockResolvedValueOnce(new Response(pngBody, {
+      status: 404,
+      headers: {
+        'Content-Type': 'image/png',
+        'Content-Length': '8'
+      }
+    }));
+
+    const req = createRequest('/api/tiles/v2/radar/1/512/2/3/1/2/1_1.png');
+    const res = await worker.fetch(req, global.env, global.ctx);
+
+    expect(res.status).toBe(404);
+    expect(res.headers.get('X-Upstream-Status')).toBe('404');
+    expect(res.headers.get('Content-Type')).toBe('image/png');
+    expect(mockCache.put).toHaveBeenCalled();
+  });
 });
