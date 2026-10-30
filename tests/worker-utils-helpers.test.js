@@ -159,8 +159,7 @@ describe('Worker Utils Helpers', () => {
             }
         });
 
-        it('falls back to Math.random when crypto is undefined', () => {
-            const mathSpy = vi.spyOn(Math, 'random').mockReturnValue(0.12345);
+        it('throws an error when crypto is undefined', () => {
             const originalCrypto = globalThis.crypto;
             try {
                 Object.defineProperty(globalThis, 'crypto', {
@@ -169,11 +168,10 @@ describe('Worker Utils Helpers', () => {
                     writable: true
                 });
 
-                const val = getSecureRandom();
-                expect(mathSpy).toHaveBeenCalledTimes(1);
-                expect(val).toBe(0.12345);
+                expect(() => getSecureRandom()).toThrow(
+                    'Cryptographically secure random number generation is not supported in this environment.'
+                );
             } finally {
-                mathSpy.mockRestore();
                 Object.defineProperty(globalThis, 'crypto', {
                     value: originalCrypto,
                     configurable: true,
@@ -182,8 +180,7 @@ describe('Worker Utils Helpers', () => {
             }
         });
 
-        it('falls back to Math.random when crypto exists but getRandomValues is not a function', () => {
-            const mathSpy = vi.spyOn(Math, 'random').mockReturnValue(0.6789);
+        it('throws an error when crypto exists but getRandomValues is not a function', () => {
             const originalCrypto = globalThis.crypto;
             try {
                 Object.defineProperty(globalThis, 'crypto', {
@@ -192,11 +189,10 @@ describe('Worker Utils Helpers', () => {
                     writable: true
                 });
 
-                const val = getSecureRandom();
-                expect(mathSpy).toHaveBeenCalledTimes(1);
-                expect(val).toBe(0.6789);
+                expect(() => getSecureRandom()).toThrow(
+                    'Cryptographically secure random number generation is not supported in this environment.'
+                );
             } finally {
-                mathSpy.mockRestore();
                 Object.defineProperty(globalThis, 'crypto', {
                     value: originalCrypto,
                     configurable: true,

@@ -319,7 +319,7 @@ export function createErrorResponse(request, status, message, additionalHeaders 
 
 /**
  * Returns a cryptographically secure random float in [0, 1).
- * Uses crypto.getRandomValues if available, falling back to Math.random().
+ * Uses crypto.getRandomValues. Throws an error if Secure Random API is unavailable.
  */
 export function getSecureRandom() {
   if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
@@ -327,7 +327,7 @@ export function getSecureRandom() {
     crypto.getRandomValues(array);
     return array[0] / 4294967296;
   }
-  return Math.random();
+  throw new Error('Cryptographically secure random number generation is not supported in this environment.');
 }
 
 /**
