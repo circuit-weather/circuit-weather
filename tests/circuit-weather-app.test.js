@@ -2126,6 +2126,28 @@ describe('CircuitWeatherApp Pure Methods', () => {
             global.MutationObserver = origMo;
         });
 
+        it('observes the radar controls so overlays above them move when they resize', () => {
+            const observe = vi.fn();
+            const origRo = global.ResizeObserver;
+            global.ResizeObserver = vi.fn(function() {
+                this.observe = observe;
+                this.disconnect = vi.fn();
+            });
+            const origMo = global.MutationObserver;
+            global.MutationObserver = vi.fn(function() {
+                this.observe = vi.fn();
+                this.disconnect = vi.fn();
+            });
+
+            app.ui.radarControls = createMockElement('radarControls');
+            app.initResizeObserver();
+
+            expect(observe).toHaveBeenCalledWith(app.ui.radarControls);
+
+            global.ResizeObserver = origRo;
+            global.MutationObserver = origMo;
+        });
+
         it('observes dynamically added map controls using MutationObserver', () => {
             let moCb = null;
             const origMo = global.MutationObserver;

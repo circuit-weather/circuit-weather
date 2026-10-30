@@ -438,6 +438,9 @@ export class CircuitWeatherApp {
         if (this.ui.mobileHeader) observer.observe(this.ui.mobileHeader);
         if (this.ui.mobileRaceInfo) observer.observe(this.ui.mobileRaceInfo);
         if (this.ui.mapContainer) observer.observe(this.ui.mapContainer);
+        // The radar bar grows when its playback label gains a session line, and the
+        // zoom buttons and countdown sit above it, so re-measure when it resizes
+        if (this.ui.radarControls) observer.observe(this.ui.radarControls);
 
         // Observe existing attribution controls
         const bottomControls = ['.mapboxgl-ctrl-bottom-left', '.mapboxgl-ctrl-bottom-right', '.leaflet-control-attribution'];
