@@ -136,6 +136,18 @@ describe("Worker F1 API stale fallback", () => {
     expect(res.status).toBe(502);
   });
 
+  it("handles cache.match error in serveStale when upstream returns error status", async () => {
+    mockFetch.mockResolvedValueOnce(jsonResponse("{}", 429));
+    mockCache.match
+      .mockResolvedValueOnce(undefined) // primary cache miss
+      .mockRejectedValueOnce(new Error("cache match thrown error")); // stale lookup in serveStale
+
+    const res = await fetchSchedule();
+
+    expect(res.status).toBe(429);
+    expect(res.headers.get("X-Cache")).toBe("ERROR-CACHED");
+  });
+
   describe("health check", () => {
     const okHead = () => Promise.resolve({ status: 200, ok: true });
 
