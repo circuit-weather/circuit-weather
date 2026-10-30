@@ -88,6 +88,12 @@
 **Learning:** Even when `innerHTML` contains no dynamic data, it is best practice to construct UI widgets using standard DOM manipulation methods (`document.createElement`, `DocumentFragment`, `appendChild`). When refactoring, pay close attention to test assertions. The mocked `appendChild` in custom Vitest environments doesn't serialize HTML strings, so checking `.textContent` of the appended node is required rather than checking the inner HTML representation of the parent node.
 **Prevention:** Construct UI widgets using standard DOM manipulation methods by default. Ensure test suites properly inspect `appendChild.mock.calls` or query child nodes when verifying DOM generation.
 
+## 2026-09-15 - [Mapbox Token Exposure and Dashboard Restriction]
+
+**Vulnerability:** Exposure of Mapbox Access Token via public endpoint `/api/config`.
+**Learning:** Client-side vector mapping libraries (such as Mapbox GL JS) require a public access token to initialize styles and fetch tiles directly from Mapbox. Returning public tokens via `/api/config` protects source code from embedding secrets directly, but does not prevent third parties from querying the API and reusing the token if the token itself is unrestricted.
+**Prevention:** Always combine backend protection measures (such as XSSI `Sec-Fetch-Dest` validation, strict origin CORS restrictions via `setCorsHeaders`, and security headers) with Mapbox dashboard URL domain restrictions to ensure public API keys cannot be used outside authorized client origins.
+
 ## 2026-09-12 - [Preview Domain Regex Port Tolerance]
 **Hardening (no live vulnerability):** The preview-domain allowlist regex already terminated the host with `(?:\/|$)`, so suffix-spoofing origins such as `https://circuit-weather.pages.dev.malicious.com` and prefix-spoofing origins such as `https://evil-circuit-weather.pages.dev` were already rejected. No origin-validation bypass existed. What the pattern did not accept was a legitimate origin carrying an explicit port (`https://preview.circuit-weather.pages.dev:8443`), which the Origin grammar permits.
 **Learning:** An Origin header is `<scheme>://<host>[:<port>]` with no path and no trailing slash, so a host-anchored allowlist needs an optional `(?::\d+)?` group *before* the `(?:\/|$)` terminator. Adding the port group does not widen the host match, because the terminator must still follow. The localhost and 127.0.0.1 patterns were switched to non-capturing groups at the same time purely for consistency; their matching behaviour is unchanged.
