@@ -17,3 +17,11 @@ pattern = "circuit-weather.racing"
 custom_domain = true
 [placement]
 mode = "smart"
+
+# Worker Previews (per-branch/PR environments). Previews do not inherit
+# production vars, so set them here. Secrets (MAPBOX_ACCESS_TOKEN,
+# THESPORTSDB_API_KEY) are set separately with
+# `npx wrangler preview base-config secret put <NAME>`.
+# https://developers.cloudflare.com/workers/previews/configuration/
+[previews.vars]
+ENVIRONMENT = "preview"
