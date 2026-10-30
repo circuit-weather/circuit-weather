@@ -139,6 +139,8 @@ pnpm run dev # or 'npx wrangler dev' / 'wrangler dev' based on environment avail
 
 **Note**: The project is connected to Cloudflare via GitHub integration. Pushing to `main` triggers automatic deployment - no manual `wrangler deploy` needed.
 
+**Previews**: Pushes to any other branch build a [Worker Preview](https://developers.cloudflare.com/workers/previews/) (`npx wrangler preview`) at `<branch>-circuit-weather.<subdomain>.workers.dev`, behind Cloudflare Access. Previews do not inherit production settings: vars go in the `[previews.vars]` block of `wrangler.toml`, and secrets are set separately (Settings → Variables and secrets → Previews Base, or `npx wrangler preview base-config secret put <NAME>`).
+
 ### Cloudflare Configuration (wrangler.toml)
 
 ```toml
@@ -161,6 +163,9 @@ pattern = "circuit-weather.racing"
 custom_domain = true
 [placement]
 mode = "smart"
+
+[previews.vars]
+ENVIRONMENT = "preview"
 ```
 
 ### Environment
