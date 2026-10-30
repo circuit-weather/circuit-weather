@@ -261,6 +261,43 @@ describe('sanitiseAlerts', () => {
     expect(result.features).toEqual([]);
   });
 
+  it('filters alerts precisely based on expiration time relative to nowMs across formats', () => {
+    // NOW_MS is 2_000_000 * 1000 = 2,000,000,000 ms (2,000,000 Unix seconds)
+    const exactNowSeconds = 2000000;
+    const exactNowIso = new Date(NOW_MS).toISOString();
+
+    const result = sanitiseAlerts({
+      features: [
+        // Expired cases (< nowMs)
+        feature({ title: 'Expired Unix Sec String', expires: `${exactNowSeconds - 10}` }),
+        feature({ title: 'Expired Unix Sec Number', expires: exactNowSeconds - 10 }),
+        feature({ title: 'Expired ISO String', expires: new Date(NOW_MS - 10000).toISOString() }),
+
+        // Active cases (>= nowMs)
+        feature({ title: 'Active Exact Time Sec String', expires: `${exactNowSeconds}` }), // new Date(expires).getTime() < NOW_MS is false when equal
+        feature({ title: 'Active Future Unix Sec String', expires: `${exactNowSeconds + 10}` }),
+        feature({ title: 'Active Future Unix Sec Number', expires: exactNowSeconds + 10 }),
+        feature({ title: 'Active Future ISO String', expires: new Date(NOW_MS + 10000).toISOString() }),
+        feature({ title: 'Active Exact Time ISO', expires: exactNowIso }),
+        feature({ title: 'Active Exact Time Sec Number', expires: exactNowSeconds }),
+        feature({ title: 'Active No Expiration' }),
+        feature({ title: 'Active Invalid Expiration String', expires: 'invalid-date' }),
+      ],
+    }, NOW_MS);
+
+    const titles = result.features.map(f => f.properties.title);
+    expect(titles).toEqual([
+      'Active Exact Time Sec String',
+      'Active Future Unix Sec String',
+      'Active Future Unix Sec Number',
+      'Active Future ISO String',
+      'Active Exact Time ISO',
+      'Active Exact Time Sec Number',
+      'Active No Expiration',
+      'Active Invalid Expiration String',
+    ]);
+  });
+
   it('handles odd property values', () => {
     const result = sanitiseAlerts({
       features: [
