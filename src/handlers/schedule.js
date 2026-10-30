@@ -182,14 +182,32 @@ function venuesToFetch(state, now) {
   });
 }
 
+const seasonYear = (season) => Number(season.slice(0, 4));
+
+/**
+ * The latest valid season given: the league's current season plus the seasons of
+ * its finished events. Some leagues (e.g. IMSA) leave strCurrentSeason on last
+ * year all season. Ties keep the earlier argument.
+ */
+export function pickSeason(...seasons) {
+  const valid = seasons.filter(s => typeof s === 'string' && SEASON_REGEX.test(s));
+  if (valid.length === 0) return null;
+  return valid.reduce((a, b) => (seasonYear(b) > seasonYear(a) ? b : a));
+}
+
 /**
  * Refreshes the season name and the next round number when they are stale.
  */
 async function refreshLeague(state, leagueId, now, spend) {
   if (!state.season || now - state.seasonFetchedAt >= SEASON_TTL_MS) {
-    const res = await spend(`lookupleague.php?id=${leagueId}`);
-    const season = res.ok ? res.data?.leagues?.[0]?.strCurrentSeason : null;
-    if (typeof season === 'string' && SEASON_REGEX.test(season)) {
+    const league = await spend(`lookupleague.php?id=${leagueId}`);
+    const past = league.limited ? league : await spend(`eventspastleague.php?id=${leagueId}`);
+    const pastEvents = past.ok && Array.isArray(past.data?.events) ? past.data.events : [];
+    const season = pickSeason(
+      league.ok ? league.data?.leagues?.[0]?.strCurrentSeason : null,
+      ...pastEvents.map(e => e?.strSeason),
+    );
+    if (season) {
       if (season !== state.season) {
         // New season: venues stay valid, rounds do not
         Object.assign(state, { season, rounds: {}, lastRound: null, endFetchedAt: 0, nextRound: null, nextFetchedAt: 0 });
@@ -200,8 +218,10 @@ async function refreshLeague(state, leagueId, now, spend) {
   if (state.season && now - state.nextFetchedAt >= NEXT_ROUND_TTL_MS) {
     const res = await spend(`eventsnextleague.php?id=${leagueId}`);
     if (res.ok) {
-      // Empty once the season has finished
-      const next = slimEvents(res.data?.events)[0];
+      // Empty once the season has finished. Some leagues already list next season's
+      // opener here, which is not a round of this season.
+      const events = Array.isArray(res.data?.events) ? res.data.events : [];
+      const next = slimEvents(events.filter(e => !e?.strSeason || e.strSeason === state.season))[0];
       state.nextRound = next ? next.round : null;
       state.nextFetchedAt = now;
     }

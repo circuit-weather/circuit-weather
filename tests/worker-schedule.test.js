@@ -5,6 +5,7 @@ import {
   throttle,
   emptyState,
   planFetches,
+  pickSeason,
   getRoundTtlMs,
   FILL_BUDGET,
   SEASON_TTL_MS,
@@ -31,7 +32,7 @@ const jsonResponse = (body, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
 
 // A fake F2 season: rounds 1..lastRound, one venue per round, round `next` upcoming
-function fakeUpstream({ lastRound = 3, next = 2, season = '2026', venueMap = '37°50′59″S 144°58′6″E' } = {}) {
+function fakeUpstream({ lastRound = 3, next = 2, season = '2026', pastSeason = season, nextSeason = season, venueMap = '37°50′59″S 144°58′6″E' } = {}) {
   const calls = [];
   const handler = vi.fn(async (url) => {
     const u = new URL(url);
@@ -39,8 +40,11 @@ function fakeUpstream({ lastRound = 3, next = 2, season = '2026', venueMap = '37
     const p = u.searchParams;
     calls.push(`${path}${p.get('r') ? `:${p.get('r')}` : p.get('id') && path === 'lookupvenue.php' ? `:${p.get('id')}` : ''}`);
     if (path === 'lookupleague.php') return jsonResponse({ leagues: [{ strCurrentSeason: season }] });
+    if (path === 'eventspastleague.php') {
+      return jsonResponse({ events: [{ intRound: '1', strEvent: 'R1 Feature Race', strSeason: pastSeason }] });
+    }
     if (path === 'eventsnextleague.php') {
-      return jsonResponse({ events: next ? [{ intRound: String(next), strEvent: `R${next} Practice` }] : null });
+      return jsonResponse({ events: next ? [{ intRound: String(next), strEvent: `R${next} Practice`, strSeason: nextSeason }] : null });
     }
     if (path === 'eventsround.php') {
       const r = Number(p.get('r'));
@@ -121,7 +125,7 @@ describe('Worker /api/schedule/{series}', () => {
   });
 
   it('rejects unknown series and nested paths', async () => {
-    for (const path of ['f1', 'indycar', 'f2/extra', '', '__proto__', 'hasOwnProperty']) {
+    for (const path of ['f1', 'btcc', 'f2/extra', '', '__proto__', 'hasOwnProperty']) {
       const res = await get(path);
       expect(res.status).toBe(404);
     }
@@ -141,14 +145,14 @@ describe('Worker /api/schedule/{series}', () => {
     const body = await res.json();
 
     expect(upstream.handler).toHaveBeenCalledTimes(FILL_BUDGET);
-    expect(upstream.calls.slice(0, 6)).toEqual([
-      'lookupleague.php', 'eventsnextleague.php',
+    expect(upstream.calls.slice(0, 7)).toEqual([
+      'lookupleague.php', 'eventspastleague.php', 'eventsnextleague.php',
       'eventsround.php:8', 'eventsround.php:9', 'eventsround.php:7', 'eventsround.php:10',
     ]);
     // Rounds either side of the next one, before older rounds
-    expect(upstream.calls.slice(6)).toEqual(['eventsround.php:6', 'eventsround.php:11', 'eventsround.php:5', 'eventsround.php:12']);
+    expect(upstream.calls.slice(7)).toEqual(['eventsround.php:6', 'eventsround.php:11', 'eventsround.php:5']);
     expect(body.complete).toBe(false);
-    expect(body.races.map(r => r.round)).toEqual(['5', '6', '7', '8', '9', '10', '11', '12']);
+    expect(body.races.map(r => r.round)).toEqual(['5', '6', '7', '8', '9', '10', '11']);
     expect(body.races.find(r => r.round === '8').sessions.map(s => s.id)).toEqual(['practice', 'feature-race']);
     // Partial responses are only cached briefly
     expect(cacheStore.get(RESPONSE_KEY).headers.get('Cache-Control')).toBe('public, max-age=60');
@@ -273,13 +277,27 @@ describe('Worker /api/schedule/{series}', () => {
     expect((await get()).status).toBe(200);
   });
 
+  it('moves to the latest finished season when strCurrentSeason lags (IMSA)', async () => {
+    vi.stubGlobal('fetch', fakeUpstream({ season: '2025', pastSeason: '2026', next: 0 }).handler);
+    const body = await fillUntilComplete();
+    expect(body.season).toBe('2026');
+  });
+
+  it("ignores next season's opener as the next round", async () => {
+    vi.stubGlobal('fetch', fakeUpstream({ lastRound: 3, next: 1, nextSeason: '2027' }).handler);
+    await get();
+    const state = await cacheStore.get(STATE_KEY).clone().json();
+    expect(state.season).toBe('2026');
+    expect(state.nextRound).toBeNull();
+  });
+
   it('stops filling when the per-isolate throttle runs out', async () => {
-    throttle.limit = 3;
+    throttle.limit = 4;
     const upstream = fakeUpstream({ lastRound: 10, next: 5 });
     vi.stubGlobal('fetch', upstream.handler);
 
     const body = await (await get()).json();
-    expect(upstream.handler).toHaveBeenCalledTimes(3);
+    expect(upstream.handler).toHaveBeenCalledTimes(4);
     expect(body.races.map(r => r.round)).toEqual(['5']);
     // Refused by our own throttle, not upstream: no shared cooldown
     expect(cacheStore.has(COOLDOWN_KEY)).toBe(false);
@@ -406,5 +424,15 @@ describe('planFetches', () => {
     state.rounds[1] = { fetchedAt: NOW - 3 * DAY, events: [] };
     state.rounds[2] = { fetchedAt: NOW - 5 * DAY, events: [] };
     expect(planFetches(state, NOW).map(t => t.round)).toEqual([2, 1]);
+  });
+});
+
+describe('pickSeason', () => {
+  it('picks the latest valid season, keeping the first on a tie', () => {
+    expect(pickSeason('2025', '2026', '2025')).toBe('2026');
+    expect(pickSeason('2026', '2025')).toBe('2026');
+    expect(pickSeason('2025-2026', '2025')).toBe('2025-2026');
+    expect(pickSeason(undefined, 'bogus', '2026')).toBe('2026');
+    expect(pickSeason(null, 'x')).toBeNull();
   });
 });

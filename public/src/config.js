@@ -76,7 +76,7 @@ Object.freeze(CONFIG);
 // Selectable series (the options in index.html #seriesSelect). The id is the first
 // URL segment (/f2/3/feature-race). F1 comes from Jolpica (F1API); the rest from
 // /api/schedule/{id} (SeriesAPI), which must list the same ids in src/thesportsdb.js.
-export const SERIES_IDS = Object.freeze(['f1', 'f2', 'f3', 'fe', 'wec']);
+export const SERIES_IDS = Object.freeze(['f1', 'f2', 'f3', 'fe', 'wec', 'imsa', 'supercars', 'indycar', 'nascar', 'motogp', 'wsbk']);
 
 // Country code mappings for flags (ISO 3166-1 alpha-2)
 export const COUNTRY_CODES = {

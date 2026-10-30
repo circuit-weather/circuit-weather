@@ -91,7 +91,7 @@ A böngészője közvetlenül is csatlakozhat harmadik féltől származó szolg
 ### Adatforrások (Proxizva)
 
 - **Jolpica F1:** F1-es naptár adatok (24 órás edge cache; az utolsó érvényes másolatot legfeljebb 30 napig tartjuk meg tartalékként, ha a forrás nem érhető el).
-- **TheSportsDB:** A Forma-2, a Forma-3, a Formula E és a hosszútávú-autóverseny-világbajnokság (WEC) naptár- és pályaadatai (a forduló közelségétől függően óránként és havonta között frissül; az utoljára lekért másolatot legfeljebb 180 napig tartjuk meg tartalékként).
+- **TheSportsDB:** A Forma-1-en kívüli összes sorozat naptár- és pályaadatai (a forduló közelségétől függően óránként és havonta között frissül; az utoljára lekért másolatot legfeljebb 180 napig tartjuk meg tartalékként).
 - **GitHub (bacinger/f1-circuits):** GeoJSON pályafájlok (24 órás edge cache).
 - **LibreWXR:** Radar metaadatok (1 perces cache), radarcsempék (2 órás edge cache; előrejelzési csempék 5 perc), műholdas csempék (12 órás edge cache) és időjárási figyelmeztetések (5 perces cache). A metaadatokról (30 perc) és a figyelmeztetésekről (1 óra) rövid ideig tartalék másolatot őrzünk arra az esetre, ha a LibreWXR nem érhető el.
 - **RainViewer:** Radar metaadatok (1 perces cache) és csempék (2 órás edge cache).
@@ -104,13 +104,13 @@ A beállításokat a böngészője helyileg tárolja:
 
 - **theme (téma):** `light` (világos) vagy `dark` (sötét)
 - **unit (mértékegység):** `metric` (metrikus) vagy `imperial` (birodalmi)
-- **language (nyelv):** a kiválasztott nyelv (pl. `hu`, `en-US`)
+- **language (nyelv):** a kiválasztott nyelv
 - **windOverlay:** `true` vagy `false` (megjegyzi, hogy a szélanimációs réteg be van-e kapcsolva)
 - **radarColour:** a kiválasztott radar színséma száma
 - **radarArrows, radarCells, radarLightning, radarSatellite:** `true` vagy `false` (megjegyzi, mely további radarrétegek vannak bekapcsolva)
 - **weatherAlerts:** `true` vagy `false` (megjegyzi, hogy megjelennek-e az időjárási figyelmeztetések)
 - **f1_schedule_cache:** gyorsítótárazza az F1 naptáradatokat (7 napos gyorsítótár)
-- **series_schedule_cache:** gyorsítótárazza a Forma-2, a Forma-3, a Formula E és a hosszútávú-autóverseny-világbajnokság (WEC) naptáradatait (7 napos gyorsítótár; 5 perc, amíg a naptár még töltődik)
+- **series_schedule_cache:** gyorsítótárazza a Forma-1-en kívüli összes sorozat naptáradatait (7 napos gyorsítótár; 5 perc, amíg a naptár még töltődik)
 
 Ezek az adatok az Ön eszközén maradnak, és nem kerülnek elküldésre a szervereinkre.
 
