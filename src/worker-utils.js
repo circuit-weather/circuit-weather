@@ -371,7 +371,6 @@ export function cacheAndReturnError({ request, cache, cacheKey, status, message,
     'Cache-Control': `public, max-age=${errorCacheTTL}`,
     'X-Cache': 'ERROR-CACHED',
     'X-Upstream-Status': status.toString(),
-    'Access-Control-Allow-Origin': '*', // Store permissive, override on delivery
     ...API_SECURITY_HEADERS
   });
 

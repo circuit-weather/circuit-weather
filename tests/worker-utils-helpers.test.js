@@ -5,6 +5,7 @@ import {
     calculateHash,
     getSecureRandom,
     getParsedMimeType,
+    cacheAndReturnError,
     API_SECURITY_HEADERS
 } from '../src/worker-utils.js';
 import { PRODUCTION_DOMAIN } from './helpers/constants.js';
@@ -228,6 +229,56 @@ describe('Worker Utils Helpers', () => {
         it('handles null/undefined response object safely', () => {
             expect(getParsedMimeType(null)).toEqual({ contentType: null, mime: '' });
             expect(getParsedMimeType(undefined)).toEqual({ contentType: null, mime: '' });
+        });
+    });
+
+    describe('cacheAndReturnError', () => {
+        it('does not store permissive wildcard Access-Control-Allow-Origin in cache', async () => {
+            let cachedResponse = null;
+            const mockCache = {
+                put: vi.fn(async (key, response) => {
+                    cachedResponse = response;
+                })
+            };
+            const mockCtx = {
+                waitUntil: vi.fn((promise) => promise)
+            };
+            const request = createRequest({ Origin: PRODUCTION_DOMAIN });
+
+            const res = cacheAndReturnError({
+                request,
+                cache: mockCache,
+                cacheKey: 'https://circuit-weather.racing/api/test-error',
+                status: 502,
+                message: 'Bad Gateway',
+                ctx: mockCtx
+            });
+
+            expect(mockCache.put).toHaveBeenCalled();
+            expect(cachedResponse).not.toBeNull();
+            // Stored cached response should NOT have wildcard CORS header
+            expect(cachedResponse.headers.get('Access-Control-Allow-Origin')).toBeNull();
+
+            // Client response should have strict CORS applied for allowed origin
+            expect(res.headers.get('Access-Control-Allow-Origin')).toBe(PRODUCTION_DOMAIN);
+            expect(res.headers.get('Vary')).toBe('Origin');
+        });
+
+        it('omits CORS headers on client response for disallowed origin', async () => {
+            const mockCache = { put: vi.fn() };
+            const mockCtx = { waitUntil: vi.fn() };
+            const request = createRequest({ Origin: 'https://evil.com' });
+
+            const res = cacheAndReturnError({
+                request,
+                cache: mockCache,
+                cacheKey: 'https://circuit-weather.racing/api/test-error',
+                status: 500,
+                message: 'Internal Error',
+                ctx: mockCtx
+            });
+
+            expect(res.headers.get('Access-Control-Allow-Origin')).toBeNull();
         });
     });
 });
