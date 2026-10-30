@@ -95,6 +95,8 @@ export const hu = {
     heading: "Időjárási Figyelmeztetések",
     until: "Eddig:",
     details: "Részletek",
+    showMore: "További {{count}} megjelenítése",
+    showLess: "Kevesebb megjelenítése",
     source: "Forrás",
     severityExtreme: "Rendkívüli",
     severitySevere: "Súlyos",

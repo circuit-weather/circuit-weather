@@ -93,6 +93,8 @@ export const ptBR = {
     heading: "Alertas Meteorológicos",
     until: "Até",
     details: "Detalhes",
+    showMore: "Mostrar mais {{count}}",
+    showLess: "Mostrar menos",
     source: "Fonte",
     severityExtreme: "Extremo",
     severitySevere: "Grave",

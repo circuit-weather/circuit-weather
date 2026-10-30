@@ -94,6 +94,8 @@ export const de = {
     heading: "Wetterwarnungen",
     until: "Bis",
     details: "Details",
+    showMore: "{{count}} weitere anzeigen",
+    showLess: "Weniger anzeigen",
     source: "Quelle",
     severityExtreme: "Extrem",
     severitySevere: "Schwer",

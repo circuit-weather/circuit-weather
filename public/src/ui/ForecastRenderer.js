@@ -256,27 +256,21 @@ export class ForecastRenderer {
         const conditionDiv = document.createElement('div');
         conditionDiv.className = 'weather-timeline-condition';
         conditionDiv.setAttribute('aria-hidden', 'true');
-        conditionDiv.appendChild(document.createTextNode(desc + ' '));
-
-        const windDiv = document.createElement('div');
-        windDiv.className = 'weather-timeline-wind';
-        windDiv.textContent = `${hour.windSpeed} ${units.wind_speed_10m}`;
-        conditionDiv.appendChild(windDiv);
+        conditionDiv.textContent = desc;
         li.appendChild(conditionDiv);
+
+        // Wind stays in the summary above and the row's aria-label; the visible row
+        // keeps to the two numbers that change most hour to hour.
+        const precipDiv = document.createElement('div');
+        precipDiv.className = 'weather-timeline-precip';
+        precipDiv.setAttribute('aria-hidden', 'true');
+        precipDiv.textContent = `${hour.precipProb}%`;
+        li.appendChild(precipDiv);
 
         const tempDiv = document.createElement('div');
         tempDiv.className = 'weather-timeline-temp';
         tempDiv.setAttribute('aria-hidden', 'true');
-
-        const tempValDiv = document.createElement('div');
-        tempValDiv.textContent = `${temp}${units.temperature_2m}`;
-        tempDiv.appendChild(tempValDiv);
-
-        const precipDiv = document.createElement('div');
-        precipDiv.className = 'weather-timeline-precip';
-        precipDiv.textContent = `${hour.precipProb}%`;
-        tempDiv.appendChild(precipDiv);
-
+        tempDiv.textContent = `${temp}${units.temperature_2m}`;
         li.appendChild(tempDiv);
         return li;
     }

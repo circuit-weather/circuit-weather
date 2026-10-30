@@ -93,6 +93,8 @@ export const ko = {
     heading: "기상 특보",
     until: "종료",
     details: "자세히",
+    showMore: "{{count}}개 더 보기",
+    showLess: "간단히 보기",
     source: "출처",
     severityExtreme: "극심",
     severitySevere: "심각",

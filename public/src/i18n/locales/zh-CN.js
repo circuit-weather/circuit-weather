@@ -89,6 +89,8 @@ export const zhCN = {
     heading: "天气预警",
     until: "有效期至",
     details: "详情",
+    showMore: "再显示 {{count}} 条",
+    showLess: "收起",
     source: "来源",
     severityExtreme: "特别严重",
     severitySevere: "严重",

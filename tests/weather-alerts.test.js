@@ -89,9 +89,18 @@ describe('WeatherAlerts', () => {
         await flush();
 
         const section = document.getElementById('alertsSection');
-        const items = document.querySelectorAll('.alert-item');
         expect(section.hidden).toBe(false);
+
+        // Only the most severe two are listed until the rest are asked for
+        expect(document.querySelectorAll('.alert-item')).toHaveLength(2);
+        const more = section.querySelector('.alerts-more');
+        expect(more.textContent).toBe('Show 1 more');
+        expect(more.getAttribute('aria-expanded')).toBe('false');
+        more.click();
+        const items = document.querySelectorAll('.alert-item');
         expect(items).toHaveLength(3);
+        expect(section.querySelector('.alerts-more').textContent).toBe('Show fewer');
+        expect(document.activeElement).toBe(section.querySelector('.alerts-more'));
 
         const storm = items[0];
         expect(storm.querySelector('.alert-title').textContent).toBe('Big storm');
@@ -114,9 +123,34 @@ describe('WeatherAlerts', () => {
         expect(odd.querySelector('.alert-until')).toBeNull();
         expect(odd.querySelector('details')).toBeNull();
 
-        // Re-renders on language change
+        // Re-renders on language change, keeping the expanded list
         document.dispatchEvent(new Event('i18n:change'));
         expect(document.querySelectorAll('.alert-item')).toHaveLength(3);
+        expect(section.querySelectorAll('.alerts-more')).toHaveLength(1);
+
+        section.querySelector('.alerts-more').click();
+        expect(document.querySelectorAll('.alert-item')).toHaveLength(2);
+
+        // A new circuit starts collapsed
+        more.click();
+        alerts.setLocation(40, 2);
+        await flush();
+        expect(document.querySelectorAll('.alert-item')).toHaveLength(2);
+    });
+
+    it('lists a warning repeated across forecast zones once, but draws every zone', async () => {
+        const zone = { title: 'Wind', severity: 'moderate', expires: '2030-01-01T12:00:00.000Z' };
+        fetch.mockResolvedValueOnce(okJson({ features: [alert(zone), alert(zone), alert({ ...zone, regions: 'Coast' })] }));
+        const map = createMapboxMap();
+        const alerts = new WeatherAlerts(map);
+        alerts.setLocation(52, -1);
+        await flush();
+
+        expect(document.querySelectorAll('.alert-item')).toHaveLength(2);
+        expect(document.querySelector('.alerts-more')).toBeNull();
+        const source = map.addSource.mock.calls[0][1];
+        expect(source.data.features).toHaveLength(3);
+        alerts.destroy();
     });
 
     it('draws Mapbox polygons coloured by severity with popups', async () => {
@@ -197,7 +231,7 @@ describe('WeatherAlerts', () => {
         fetch.mockResolvedValueOnce({ ok: false });
         await vi.advanceTimersByTimeAsync(CONFIG.ALERTS_REFRESH_INTERVAL_MS);
         expect(fetch).toHaveBeenCalledTimes(2);
-        expect(document.querySelectorAll('.alert-item')).toHaveLength(3);
+        expect(document.querySelectorAll('.alert-item')).toHaveLength(2);
 
         alerts.destroy();
         await vi.advanceTimersByTimeAsync(CONFIG.ALERTS_REFRESH_INTERVAL_MS * 2);
@@ -213,7 +247,7 @@ describe('WeatherAlerts', () => {
         alerts.setEnabled(false); // no-op
         alerts.setEnabled(true);
         await flush();
-        expect(document.querySelectorAll('.alert-item')).toHaveLength(3);
+        expect(document.querySelectorAll('.alert-item')).toHaveLength(2);
 
         alerts.setEnabled(false);
         expect(document.getElementById('alertsSection').hidden).toBe(true);
@@ -250,7 +284,7 @@ describe('WeatherAlerts', () => {
         const alerts = new WeatherAlerts(createMapboxMap());
         alerts.setLocation(52, -1);
         await vi.advanceTimersByTimeAsync(0);
-        expect(document.querySelectorAll('.alert-item')).toHaveLength(3);
+        expect(document.querySelectorAll('.alert-item')).toHaveLength(2);
 
         // 'Big storm' expires at 2030-01-01T12:00Z
         vi.setSystemTime(new Date('2030-01-01T12:01:00Z'));

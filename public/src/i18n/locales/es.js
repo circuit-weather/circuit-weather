@@ -93,6 +93,8 @@ export const es = {
     heading: "Avisos Meteorológicos",
     until: "Hasta",
     details: "Detalles",
+    showMore: "Mostrar {{count}} más",
+    showLess: "Mostrar menos",
     source: "Fuente",
     severityExtreme: "Extremo",
     severitySevere: "Grave",

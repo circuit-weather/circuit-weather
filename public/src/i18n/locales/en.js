@@ -93,6 +93,8 @@ export const en = {
     heading: "Weather Warnings",
     until: "Until",
     details: "Details",
+    showMore: "Show {{count}} more",
+    showLess: "Show fewer",
     source: "Source",
     severityExtreme: "Extreme",
     severitySevere: "Severe",

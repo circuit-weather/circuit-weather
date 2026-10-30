@@ -94,6 +94,8 @@ export const nl = {
     heading: "Weerswaarschuwingen",
     until: "Tot",
     details: "Details",
+    showMore: "Nog {{count}} tonen",
+    showLess: "Minder tonen",
     source: "Bron",
     severityExtreme: "Extreem",
     severitySevere: "Zwaar",
