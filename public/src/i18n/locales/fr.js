@@ -93,6 +93,8 @@ export const fr = {
     heading: "Alertes Météo",
     until: "Jusqu’à",
     details: "Détails",
+    showMore: "Afficher {{count}} de plus",
+    showLess: "Afficher moins",
     source: "Source",
     severityExtreme: "Extrême",
     severitySevere: "Sévère",

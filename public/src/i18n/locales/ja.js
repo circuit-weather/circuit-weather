@@ -93,6 +93,8 @@ export const ja = {
     heading: "気象警報",
     until: "期限",
     details: "詳細",
+    showMore: "さらに{{count}}件を表示",
+    showLess: "表示を減らす",
     source: "発表元",
     severityExtreme: "極めて危険",
     severitySevere: "危険",

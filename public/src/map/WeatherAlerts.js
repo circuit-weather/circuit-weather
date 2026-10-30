@@ -20,6 +20,9 @@ export const SEVERITY_COLOURS = Object.freeze({
 
 const SEVERITY_ORDER = ['extreme', 'severe', 'moderate', 'minor', 'unknown'];
 
+// The sidebar lists the most severe few; the rest sit behind "Show N more"
+const LISTED_ALERTS = 2;
+
 const SEVERITY_LABEL_KEYS = Object.freeze({
     extreme: 'alerts.severityExtreme',
     severe: 'alerts.severitySevere',
@@ -51,6 +54,7 @@ export class WeatherAlerts {
         this.hasMapboxLayers = false;
         this.refreshTimer = null;
         this.requestId = 0;
+        this.showAllAlerts = false;
 
         this.ui = {
             section: document.getElementById('alertsSection'),
@@ -80,6 +84,7 @@ export class WeatherAlerts {
     setLocation(lat, lon) {
         this.location = Number.isFinite(lat) && Number.isFinite(lon) ? { lat, lon } : null;
         this.alerts = null;
+        this.showAllAlerts = false;
         this.render();
         this.refresh();
     }
@@ -256,11 +261,15 @@ export class WeatherAlerts {
         const { section, list } = this.ui;
         if (!section || !list) return;
 
-        const alerts = this.visibleAlerts;
+        const alerts = WeatherAlerts.uniqueAlerts(this.visibleAlerts);
         list.textContent = '';
+        section.querySelector('.alerts-more')?.remove();
         section.hidden = alerts.length === 0;
 
-        alerts.forEach(feature => {
+        const hiddenCount = alerts.length - LISTED_ALERTS;
+        const listed = hiddenCount > 0 && !this.showAllAlerts ? alerts.slice(0, LISTED_ALERTS) : alerts;
+
+        listed.forEach(feature => {
             const item = document.createElement('li');
             item.className = 'alert-item';
             item.appendChild(this.createAlertSummary(feature, 'h3'));
@@ -278,6 +287,36 @@ export class WeatherAlerts {
             }
 
             list.appendChild(item);
+        });
+
+        if (hiddenCount > 0) {
+            const toggle = document.createElement('button');
+            toggle.type = 'button';
+            toggle.className = 'link-button alerts-more';
+            toggle.setAttribute('aria-expanded', String(this.showAllAlerts));
+            toggle.textContent = this.showAllAlerts
+                ? i18n.t('alerts.showLess')
+                : i18n.t('alerts.showMore', { count: hiddenCount });
+            toggle.addEventListener('click', () => {
+                this.showAllAlerts = !this.showAllAlerts;
+                this.renderList();
+                section.querySelector('.alerts-more')?.focus();
+            });
+            list.after(toggle);
+        }
+    }
+
+    /**
+     * Feeds often issue the same warning once per forecast zone. The map still
+     * draws every zone; the list shows each warning once.
+     */
+    static uniqueAlerts(alerts) {
+        const seen = new Set();
+        return alerts.filter(({ properties: { title, severity, expires, regions } }) => {
+            const key = [title, severity, expires, regions].join('\u0000');
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
         });
     }
 

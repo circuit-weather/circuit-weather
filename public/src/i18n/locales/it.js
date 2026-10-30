@@ -93,6 +93,8 @@ export const it = {
     heading: "Allerte Meteo",
     until: "Fino a",
     details: "Dettagli",
+    showMore: "Mostra altri {{count}}",
+    showLess: "Mostra meno",
     source: "Fonte",
     severityExtreme: "Estremo",
     severitySevere: "Grave",

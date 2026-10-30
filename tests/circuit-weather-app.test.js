@@ -1028,8 +1028,10 @@ describe('CircuitWeatherApp Pure Methods', () => {
             const section = dashboard.childNodes[1];
             const ol = section.childNodes[0];
             const firstHourLi = ol.childNodes[0];
-            const firstHourTempDiv = firstHourLi.childNodes[2];
-            expect(firstHourTempDiv.childNodes[0].textContent).toBe('24°C');
+            // Row cells: time, condition, rain, temperature
+            const firstHourTemp = firstHourLi.childNodes[3];
+            expect(firstHourTemp.className).toBe('weather-timeline-temp');
+            expect(firstHourTemp.textContent).toBe('24°C');
         });
     });
 
