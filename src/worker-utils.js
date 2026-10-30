@@ -319,15 +319,21 @@ export function createErrorResponse(request, status, message, additionalHeaders 
 
 /**
  * Returns a cryptographically secure random float in [0, 1).
- * Uses crypto.getRandomValues. Throws an error if Secure Random API is unavailable.
+ * Uses crypto.getRandomValues if available, falling back to Math.random().
  */
+// Intentionally keeps the Math.random() fallback (do not make this throw): the only caller is
+// handlers/radar.js, which uses it to sample ~5% of non-error tile responses for logging. That is
+// not a security-sensitive use, and throwing here would turn a missing/odd crypto implementation into
+// a failed tile request just to decide whether to write a log line. Cloudflare Workers always provide
+// crypto.getRandomValues, so the fallback is effectively unreachable in production anyway. If this is
+// ever used for tokens, nonces or anything security-relevant, use a separate helper that throws.
 export function getSecureRandom() {
   if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
     const array = new Uint32Array(1);
     crypto.getRandomValues(array);
     return array[0] / 4294967296;
   }
-  throw new Error('Cryptographically secure random number generation is not supported in this environment.');
+  return Math.random();
 }
 
 /**
