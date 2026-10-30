@@ -473,11 +473,19 @@ export class WeatherRadar {
 
     // Force redraw of all active layers (used by the error toast's retry cooldown)
     redrawLayers() {
-        Object.values(this.layers).forEach(layer => {
-            if (layer && this.map.hasLayer(layer)) {
-                layer.redraw();
-            }
-        });
+        if (Array.isArray(this.layers)) {
+            this.layers.forEach(layer => {
+                if (layer && this.map.hasLayer(layer)) {
+                    layer.redraw();
+                }
+            });
+        } else if (this.layers && typeof this.layers === 'object') {
+            Object.values(this.layers).forEach(layer => {
+                if (layer && this.map.hasLayer(layer)) {
+                    layer.redraw();
+                }
+            });
+        }
     }
 
     // Bolt Optimization: Reuse Leaflet layers to reduce DOM churn
