@@ -122,14 +122,6 @@ export class WeatherAlerts {
             const features = Array.isArray(data?.features) ? data.features : [];
             return features
                 .filter(feature => feature?.geometry && feature.properties?.title)
-                .map(feature => {
-                    if (feature.properties) {
-                        feature.properties._expiresMs = feature.properties.expires
-                            ? Date.parse(feature.properties.expires)
-                            : NaN;
-                    }
-                    return feature;
-                })
                 .sort((a, b) => WeatherAlerts.severityRank(a) - WeatherAlerts.severityRank(b));
         } catch (error) {
             console.error('Failed to fetch weather alerts:', error);
@@ -151,13 +143,13 @@ export class WeatherAlerts {
         if (!this.enabled || !this.location || !this.alerts) return [];
         // Alerts can expire between refreshes (or arrive from the worker's stale copy)
         const now = Date.now();
+        // Intentionally parses `expires` on demand rather than caching a parsed value on the feature:
+        // the list is capped at 50 alerts by the worker (sanitiseAlerts) and this getter runs only on
+        // render/refresh/language change, so a Date.parse per alert is negligible. Caching `_expiresMs`
+        // on feature.properties would also mutate third-party feed data and leak the extra property
+        // into the GeoJSON handed to Mapbox/Leaflet, for no measurable benefit.
         return this.alerts.filter(feature => {
-            const props = feature.properties;
-            if (!props) return true;
-            if (props._expiresMs === undefined) {
-                props._expiresMs = props.expires ? Date.parse(props.expires) : NaN;
-            }
-            const expires = props._expiresMs;
+            const expires = Date.parse(feature.properties.expires);
             return Number.isNaN(expires) || expires > now;
         });
     }
