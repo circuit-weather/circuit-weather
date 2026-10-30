@@ -13,14 +13,14 @@ This web app is completely and unashamedly vibe coded primarily using Google ant
 
 ## What it does
 
-The site provides a live weather radar overlay on top of the circuit map. You can see past weather movement and a short rain forecast on the radar, official weather warnings near the circuit, and a weather forecast card provides a short-term forecast to predict if rain is incoming. It automatically loads the schedule for the current F1 season, allowing you to jump between different rounds and sessions (like Qualifying or the Race), and you can switch to Formula 2, Formula 3 or Formula E.
+The site provides a live weather radar overlay on top of the circuit map. You can see past weather movement and a short rain forecast on the radar, official weather warnings near the circuit, and a weather forecast card provides a short-term forecast to predict if rain is incoming. It automatically loads the schedule for the current F1 season, allowing you to jump between different rounds and sessions (like Qualifying or the Race), and you can switch to Formula 2, Formula 3, Formula E or the World Endurance Championship (WEC).
 
 Key features include:
 
 - **Live Radar:** Visualise rain moving across the track with a 2-hour history and a 1-hour rain forecast, zoomable right down to the circuit.
 - **Weather Warnings:** See official severe weather warnings near the circuit on the map and in the sidebar.
 - **Radar Layers:** Optionally add storm motion arrows, storm cells, lightning, satellite clouds and alternative radar colour schemes.
-- **Race Schedule:** Browse all circuits from the current Formula 1, Formula 2, Formula 3 and Formula E seasons with session start times.
+- **Race Schedule:** Browse all circuits from the current Formula 1, Formula 2, Formula 3, Formula E and World Endurance Championship (WEC) seasons with session start times.
 - **Distance Markers:** Toggle range circles to gauge how far the rain is from the track (in km or miles).
 - **Theme Support:** Automatically adapts to your system's dark or light mode, or you can toggle it manually.
 - **Deep Linking:** Navigate directly to a specific race or session via the URL.
@@ -46,7 +46,7 @@ Huge thanks to the free APIs and data sources that make this possible:
 
 - **[Jolpica F1](https://jolpi.ca/)** for the race data.
 - **[OpenF1](https://openf1.org/)** for the fallback race data.
-- **[TheSportsDB](https://www.thesportsdb.com/)** for the Formula 2, Formula 3 and Formula E race data.
+- **[TheSportsDB](https://www.thesportsdb.com/)** for the Formula 2, Formula 3, Formula E and WEC race data.
 - **[LibreWXR](https://librewxr.net/)** for the weather radar, rain nowcast, satellite imagery, lightning, storm cells and weather warnings (data CC BY 4.0).
 - **[RainViewer](https://www.rainviewer.com/)** for the backup weather radar.
 - **[Open-Meteo](https://open-meteo.com/)** for the weather forecasts.

@@ -31,6 +31,7 @@ export const de = {
     f2: "Formel 2",
     f3: "Formel 3",
     fe: "Formel E",
+    wec: "Langstrecken-Weltmeisterschaft",
     series: "Serie",
     round: "Runde",
     roundLabel: "R{{round}}: {{name}} ({{date}})",

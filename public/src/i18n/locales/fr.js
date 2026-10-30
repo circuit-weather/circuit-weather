@@ -31,6 +31,7 @@ export const fr = {
     f2: "Formule 2",
     f3: "Formule 3",
     fe: "Formule E",
+    wec: "Championnat du monde d'endurance",
     series: "Série",
     round: "Manche",
     roundLabel: "R{{round}}: {{name}} ({{date}})",

@@ -9,6 +9,7 @@ import {
   slimEvents,
   slimVenue,
   buildRace,
+  SERIES,
 } from '../src/thesportsdb.js';
 
 const jsonResponse = (body, status = 200) =>
@@ -248,6 +249,21 @@ describe('buildRace', () => {
     expect(race.sessions.map(s => s.id)).toEqual(['qualifying', 'race']);
     // Formula E runs different layouts, so no F1 outline
     expect(race.Circuit.circuitId).toBeNull();
+  });
+
+  it('splits per-class WEC sessions and keeps the F1 outline', () => {
+    const spa = { venueId: '15426', venue: 'Circuit de Spa-Francorchamps', country: 'Belgium' };
+    const race = buildRace(2, [
+      event('6 Hours of Spa Francorchamps', '2026-05-09T12:00:00', spa),
+      event('6 Hours of Spa Francorchamps Free Practice 1', '2026-05-07T09:00:00', spa),
+      event('6 Hours of Spa Francorchamps Qualifying - Hypercar', '2026-05-08T13:20:00', spa),
+      event('6 Hours of Spa Francorchamps Hyperpole - Hypercar', '2026-05-08T13:45:00', spa),
+    ], {}, SERIES.wec);
+    expect(race.raceName).toBe('6 Hours of Spa Francorchamps');
+    expect(race.time).toBe('12:00:00Z');
+    expect(race.sessions.map(s => s.id)).toEqual(['free-practice-1', 'qualifying-hypercar', 'hyperpole-hypercar', 'race']);
+    expect(race.sessions[2].name).toBe('Hyperpole - Hypercar');
+    expect(race.Circuit.circuitId).toBe('spa');
   });
 
   it('treats a single event as the race', () => {

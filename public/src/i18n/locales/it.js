@@ -31,6 +31,7 @@ export const it = {
     f2: "Formula 2",
     f3: "Formula 3",
     fe: "Formula E",
+    wec: "Campionato del mondo endurance",
     series: "Serie",
     round: "Round",
     roundLabel: "R{{round}}: {{name}} ({{date}})",
