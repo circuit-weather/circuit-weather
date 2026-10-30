@@ -19,10 +19,12 @@ const TIMEOUT_MS = 5000;
 // Supported series → TheSportsDB league. F1 stays on Jolpica (src/handlers/f1.js).
 // f1Layouts: the series races the F1 layout of shared venues, so the F1 track outline
 // applies. Formula E runs shortened or different layouts (e.g. Monaco, Mexico City).
+// WEC uses the full F1 layouts at the venues it shares (Spa, Interlagos, Monza, ...).
 export const SERIES = Object.freeze({
   f2: Object.freeze({ leagueId: '4486', f1Layouts: true }),
   f3: Object.freeze({ leagueId: '4487', f1Layouts: true }),
   fe: Object.freeze({ leagueId: '4371', f1Layouts: false }),
+  wec: Object.freeze({ leagueId: '4413', f1Layouts: true }),
 });
 
 // Free tier: 30 requests/minute. Leave headroom for other isolates and data centres
@@ -31,7 +33,8 @@ export const UPSTREAM_LIMIT_PER_MINUTE = 20;
 // How long to stop calling upstream after a 429. TheSportsDB says to wait a minute.
 export const RATE_LIMIT_COOLDOWN_MS = 60000;
 
-// Maps TheSportsDB venue IDs (taken from the 2026 F1 calendar) → Ergast circuitId, so
+// Maps TheSportsDB venue IDs (taken from the 2026 F1 calendar, plus WEC's other F1
+// venues) → Ergast circuitId, so
 // the client can load the track GeoJSON overlay (CIRCUIT_MAP in public/src/config.js).
 // Venues not listed here are centred on the venue's coordinates without an outline.
 export const VENUE_CIRCUIT_MAP = Object.freeze({
@@ -58,6 +61,8 @@ export const VENUE_CIRCUIT_MAP = Object.freeze({
   '27576': 'losail',
   '15433': 'yas_marina',
   '23722': 'jeddah',
+  '15418': 'bahrain',
+  '23648': 'imola',
 });
 
 /**

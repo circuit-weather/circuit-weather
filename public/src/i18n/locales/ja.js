@@ -31,6 +31,7 @@ export const ja = {
     f2: "F2",
     f3: "F3",
     fe: "フォーミュラE",
+    wec: "世界耐久選手権",
     series: "シリーズ",
     round: "ラウンド",
     roundLabel: "R{{round}}: {{name}} ({{date}})",

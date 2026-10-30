@@ -91,7 +91,7 @@ Uw browser kan rechtstreeks verbinding maken met diensten van derden voor kaarte
 ### Gegevensbronnen (via proxy)
 
 - **Jolpica F1:** F1-schemagegevens (24 uur edge-cache; een laatst bekende geldige kopie wordt tot 30 dagen bewaard als terugval als de bron niet beschikbaar is).
-- **TheSportsDB:** Schema- en circuitgegevens voor Formule 2, Formule 3 en Formule E (elk uur tot elke maand ververst, afhankelijk van hoe dichtbij elke ronde is; de laatst opgehaalde kopie wordt tot 180 dagen bewaard als terugval).
+- **TheSportsDB:** Schema- en circuitgegevens voor Formule 2, Formule 3, Formule E en het WK Endurance (WEC) (elk uur tot elke maand ververst, afhankelijk van hoe dichtbij elke ronde is; de laatst opgehaalde kopie wordt tot 180 dagen bewaard als terugval).
 - **GitHub (bacinger/f1-circuits):** GeoJSON-circuitbestanden (24 uur edge-cache).
 - **LibreWXR:** Radarmetadata (1 minuut cache), radartegels (2 uur edge-cache; verwachtingstegels 5 minuten), satelliettegels (12 uur edge-cache) en weerswaarschuwingen (5 minuten cache). Kortlevende reservekopieën van de metadata (30 minuten) en waarschuwingen (1 uur) worden bewaard voor het geval LibreWXR niet beschikbaar is.
 - **RainViewer:** Radarmetadata (1 minuut cache) en tegels (2 uur edge-cache).
@@ -110,7 +110,7 @@ Voorkeursinstellingen worden lokaal in uw browser opgeslagen:
 - **radarArrows, radarCells, radarLightning, radarSatellite:** `true` of `false` (onthoudt welke extra radarlagen zijn ingeschakeld)
 - **weatherAlerts:** `true` of `false` (onthoudt of weerswaarschuwingen worden getoond)
 - **f1_schedule_cache:** cachet de F1-schemagegevens (7 dagen cache)
-- **series_schedule_cache:** cachet de schemagegevens van Formule 2, Formule 3 en Formule E (7 dagen cache; 5 minuten zolang het schema nog wordt geladen)
+- **series_schedule_cache:** cachet de schemagegevens van Formule 2, Formule 3, Formule E en het WK Endurance (WEC) (7 dagen cache; 5 minuten zolang het schema nog wordt geladen)
 
 Deze gegevens blijven op uw apparaat en worden niet naar onze servers verzonden.
 

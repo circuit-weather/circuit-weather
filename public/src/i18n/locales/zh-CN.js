@@ -28,6 +28,7 @@ export const zhCN = {
     f2: "F2",
     f3: "F3",
     fe: "电动方程式",
+    wec: "世界耐力锦标赛",
     series: "系列赛",
     round: "分站",
     roundLabel: "R{{round}}: {{name}} ({{date}})",

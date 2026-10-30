@@ -1142,7 +1142,7 @@ describe('CircuitWeatherApp Pure Methods', () => {
         });
 
         it('ignores non-f1 series', async () => {
-            await app.handleRoute({ series: 'wec', round: '3' });
+            await app.handleRoute({ series: 'indycar', round: '3' });
             expect(app.selectedRace).toBeNull();
         });
     });
@@ -2393,7 +2393,7 @@ describe('CircuitWeatherApp series selection', () => {
         });
 
         it('ignores unsupported series', async () => {
-            expect(await app.selectSeries('wec')).toBe(false);
+            expect(await app.selectSeries('indycar')).toBe(false);
             expect(app.series).toBe('f1');
         });
 
@@ -2581,7 +2581,7 @@ describe('CircuitWeatherApp series selection', () => {
             app.autoSelectNextRound = vi.fn();
             app.startWeatherRefreshInterval = vi.fn();
             app.startSessionForecastInterval = vi.fn();
-            app.router.getParams = vi.fn(() => ({ series: 'wec' }));
+            app.router.getParams = vi.fn(() => ({ series: 'indycar' }));
             app.seriesApi = seriesApi({ races: [], complete: true });
 
             await app.init();

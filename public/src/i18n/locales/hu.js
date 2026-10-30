@@ -31,6 +31,7 @@ export const hu = {
     f2: "Forma-2",
     f3: "Forma-3",
     fe: "Formula E",
+    wec: "Hosszútávú-autóverseny-világbajnokság",
     series: "Sorozat",
     round: "Forduló",
     roundLabel: "R{{round}}: {{name}} ({{date}})",

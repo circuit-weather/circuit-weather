@@ -31,6 +31,7 @@ export const ko = {
     f2: "포뮬러 2",
     f3: "포뮬러 3",
     fe: "포뮬러 E",
+    wec: "세계 내구 선수권",
     series: "시리즈",
     round: "라운드",
     roundLabel: "R{{round}}: {{name}} ({{date}})",

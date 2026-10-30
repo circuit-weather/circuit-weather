@@ -121,7 +121,7 @@ describe('Worker /api/schedule/{series}', () => {
   });
 
   it('rejects unknown series and nested paths', async () => {
-    for (const path of ['f1', 'wec', 'f2/extra', '', '__proto__', 'hasOwnProperty']) {
+    for (const path of ['f1', 'indycar', 'f2/extra', '', '__proto__', 'hasOwnProperty']) {
       const res = await get(path);
       expect(res.status).toBe(404);
     }

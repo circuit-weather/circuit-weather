@@ -31,6 +31,7 @@ export const ptBR = {
     f2: "Fórmula 2",
     f3: "Fórmula 3",
     fe: "Fórmula E",
+    wec: "Campeonato Mundial de Endurance",
     series: "Série",
     round: "Etapa",
     roundLabel: "R{{round}}: {{name}} ({{date}})",
