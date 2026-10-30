@@ -439,10 +439,10 @@ export class CircuitWeatherApp {
 
         // Observe existing attribution controls
         const bottomControls = ['.mapboxgl-ctrl-bottom-left', '.mapboxgl-ctrl-bottom-right', '.leaflet-control-attribution'];
-        bottomControls.forEach(selector => {
-            const el = document.querySelector(selector);
+        for (let i = 0; i < bottomControls.length; i++) {
+            const el = document.querySelector(bottomControls[i]);
             if (el) observer.observe(el);
-        });
+        }
 
         // Watch for dynamically added map controls (common with Mapbox)
         const controlSelector = bottomControls.join(', ');
