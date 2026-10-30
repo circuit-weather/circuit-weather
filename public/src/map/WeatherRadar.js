@@ -33,6 +33,9 @@ export class WeatherRadar {
         this.sessionName = null;
         this.pastFrameCount = 0;
         this.pendingFrames = null;
+        // Bumped by each load(), so a slower, superseded load stops instead of
+        // rebuilding layers or restarting playback over the newer one
+        this.loadGeneration = 0;
 
         // Shared time formatter (O(1) creation, reuse in loops)
         this.timeFormatter = new Intl.DateTimeFormat(i18n.locale, {
@@ -231,12 +234,25 @@ export class WeatherRadar {
 
     async load() {
         this.stopPolling();
+        // Loading a page often selects a session twice (round default + URL),
+        // so loads overlap. Only the latest one may touch layers or playback.
+        const generation = ++this.loadGeneration;
+        const isCurrent = () => generation === this.loadGeneration && !this._isCleaningUp;
+
         try {
-            await this.fetchAndFilter();
-            if (this.frames.length === 0) {
+            const result = await this.fetchMetadata();
+            if (!isCurrent()) return;
+
+            if (result.frames.length === 0) {
+                // A failed refresh keeps the frames already loaded (radar
+                // frames are global, not per circuit) and keeps them playing
+                if (this.frames.length > 0 && !this.playback.isPlaying) this.playback.play();
                 this.showControls(true);
                 return;
             }
+
+            this.frames = result.frames;
+            this.pastFrameCount = result.pastCount;
 
             this.createLayers();
             this.updateSlider();
@@ -244,17 +260,21 @@ export class WeatherRadar {
 
             // Wait for tiles to load before starting animation
             await this.waitForTilesToLoad();
+            if (!isCurrent()) return;
 
             // Start serial preload of remaining frames
             // This prevents "hammering" by loading one frame at a time in the background
-            this.preloadSequence();
+            this.preloadSequence(isCurrent);
 
             this.playback.play();
         } catch (error) {
             console.error('Radar load failed:', error);
+            // Keep any frames from an earlier load playing
+            if (isCurrent() && this.frames.length > 0 && !this.playback.isPlaying) this.playback.play();
         } finally {
-            // Always start polling, even if initial load failed
-            this.startPolling();
+            // Always start polling, even if initial load failed (a newer load
+            // starts its own; a destroyed radar must not poll)
+            if (isCurrent()) this.startPolling();
         }
     }
 
@@ -563,8 +583,9 @@ export class WeatherRadar {
     /**
      * Concurrent Preloader: Loads frames in a bounded pool to prevent API hammering.
      * Speeds up preloading while preventing the "Wall of Requests" (50+ pending) issue.
+     * @param {Function} [isCurrent] - Returns false once the load that started this preload is superseded
      */
-    async preloadSequence() {
+    async preloadSequence(isCurrent = () => true) {
         // Order: Start from current frame + 1, wrap around.
         const sequence = [];
         for (let i = 0; i < this.frames.length; i++) {
@@ -579,7 +600,8 @@ export class WeatherRadar {
         let index = 0;
 
         const workers = new Array(Math.min(poolSize, sequence.length)).fill(0).map(async () => {
-            while (index < sequence.length) {
+            // Stop once a newer load has replaced these frames
+            while (index < sequence.length && isCurrent()) {
                 const currentIndex = sequence[index++];
                 await this.preloadFrame(currentIndex);
             }
@@ -653,7 +675,7 @@ export class WeatherRadar {
      * @param {number} index - Frame index to display (0 to frames.length-1)
      */
     showFrame(index) {
-        if (index < 0 || index >= this.frames.length) return;
+        if (!Number.isInteger(index) || index < 0 || index >= this.frames.length) return;
 
         // Skip if already showing this frame (prevents redundant updates)
         if (this.visibleLayerIndex === index) return;
@@ -682,6 +704,12 @@ export class WeatherRadar {
             this.layers[previousIndex].setOpacity(0);
         }
 
+        // Update state before preloading, so a failed preload can't leave this
+        // frame visible but untracked (two frames on screen at once)
+        this.visibleLayerIndex = index;
+        this.updateTimeDisplay(this.frames[index]?.time);
+        if (this.ui.slider) this.ui.slider.value = index;
+
         // Preload next frame to map at opacity 0 (ensures tiles load ahead of time)
         const nextIndex = (index + 1) % this.frames.length;
         const nextLayer = this.getLayer(nextIndex);
@@ -692,11 +720,6 @@ export class WeatherRadar {
                 nextLayer.setOpacity(0);
             }
         }
-
-        // Update state
-        this.visibleLayerIndex = index;
-        this.updateTimeDisplay(this.frames[index]?.time);
-        if (this.ui.slider) this.ui.slider.value = index;
     }
 
     /**
