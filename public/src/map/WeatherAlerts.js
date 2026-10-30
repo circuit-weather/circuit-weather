@@ -122,6 +122,14 @@ export class WeatherAlerts {
             const features = Array.isArray(data?.features) ? data.features : [];
             return features
                 .filter(feature => feature?.geometry && feature.properties?.title)
+                .map(feature => {
+                    if (feature.properties) {
+                        feature.properties._expiresMs = feature.properties.expires
+                            ? Date.parse(feature.properties.expires)
+                            : NaN;
+                    }
+                    return feature;
+                })
                 .sort((a, b) => WeatherAlerts.severityRank(a) - WeatherAlerts.severityRank(b));
         } catch (error) {
             console.error('Failed to fetch weather alerts:', error);
@@ -144,7 +152,12 @@ export class WeatherAlerts {
         // Alerts can expire between refreshes (or arrive from the worker's stale copy)
         const now = Date.now();
         return this.alerts.filter(feature => {
-            const expires = Date.parse(feature.properties.expires);
+            const props = feature.properties;
+            if (!props) return true;
+            if (props._expiresMs === undefined) {
+                props._expiresMs = props.expires ? Date.parse(props.expires) : NaN;
+            }
+            const expires = props._expiresMs;
             return Number.isNaN(expires) || expires > now;
         });
     }
