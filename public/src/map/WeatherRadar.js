@@ -472,20 +472,16 @@ export class WeatherRadar {
     }
 
     // Force redraw of all active layers (used by the error toast's retry cooldown)
+    // Intentionally a single Object.values(...).forEach with no Array.isArray fast path: this only
+    // runs when the user clicks "retry" on the error toast (rate-limited by a cooldown), over at
+    // most a few dozen radar frames, so the temporary array is irrelevant. A duplicated Array/Object
+    // branch adds code to maintain for no measurable benefit.
     redrawLayers() {
-        if (Array.isArray(this.layers)) {
-            this.layers.forEach(layer => {
-                if (layer && this.map.hasLayer(layer)) {
-                    layer.redraw();
-                }
-            });
-        } else if (this.layers && typeof this.layers === 'object') {
-            Object.values(this.layers).forEach(layer => {
-                if (layer && this.map.hasLayer(layer)) {
-                    layer.redraw();
-                }
-            });
-        }
+        Object.values(this.layers).forEach(layer => {
+            if (layer && this.map.hasLayer(layer)) {
+                layer.redraw();
+            }
+        });
     }
 
     // Bolt Optimization: Reuse Leaflet layers to reduce DOM churn
