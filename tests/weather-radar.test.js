@@ -188,7 +188,7 @@ describe('createMapboxLayer Proxy Methods', () => {
             setPaintProperty: vi.fn(),
             once: vi.fn()
         };
-        // Mock mapbox by explicitly omitting hasLayer per .jules/spec.md
+        // Omit hasLayer: WeatherRadar treats a map without it as Mapbox, not Leaflet
         radar = new WeatherRadar(mockMap);
     });
 

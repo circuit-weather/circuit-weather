@@ -107,14 +107,11 @@ circuit-weather/
 ├── docs/
 │   └── thesportsdb-data-checklist.md # TheSportsDB fields each non-F1 series needs, and how to add a series
 ├── tests/              # Unit tests
-├── .jules/             # Jules AI agent config (MUST be lowercase)
 ├── wrangler.toml       # Cloudflare config
 ├── package.json        # Node.js dependencies
 ├── README.md
 └── LICENSE
 ```
-
-> **Important for Jules**: The `.jules` directory must **always** be lowercase (`.jules`, not `.Jules`). GitHub runs on Linux (case-sensitive), and creating `.Jules` alongside `.jules` causes conflicts on Windows/macOS (case-insensitive). Always use `.jules` with a lowercase `j`.
 
 ### Image Assets
 
@@ -433,9 +430,5 @@ made a failed upload report the wrong reason, and moved a content-type check to
 after the response had been buffered into memory.
 
 In its place, `.github/workflows/no-op-pr.yml` closes a pull request whose diff
-is empty or touches only `.jules/**`, with a comment saying why. A close is not
+is empty, with a comment saying why. A close is not
 a failure — it is the same finding, recorded without costing anyone a review.
-
-A journal entry is not a change either. It records a lesson learned from work;
-it belongs in the pull request carrying that work, or committed straight to the
-default branch. On its own it is filler.

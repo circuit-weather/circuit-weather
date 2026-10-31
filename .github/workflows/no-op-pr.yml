@@ -15,11 +15,7 @@ name: No-op PR
 # asks for a change rather than accepting the outcome. Closing the pull request
 # says the same thing and asks for nothing.
 #
-# Two shapes are closed:
-#   - an empty diff against the base branch
-#   - a diff touching only .jules/** (a journal entry with no work behind it;
-#     journal entries belong in the pull request that carries the change)
-#
+# A pull request with an empty diff against the base branch is closed.
 # Anything else passes. Reopen if a close was wrong — nothing here is permanent.
 
 on:
@@ -69,25 +65,14 @@ jobs:
           echo "Files changed:"
           echo "$FILES" | sed 's/^/  /'
 
-          if [ -z "$(echo "$FILES" | grep -v '^\.jules/' || true)" ]; then
-            echo "Only .jules/** is touched."
-            echo "verdict=journal-only" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
           echo "verdict=ok" >> "$GITHUB_OUTPUT"
 
       - name: Close and explain
         if: steps.classify.outputs.verdict != 'ok'
         uses: actions/github-script@v7
-        env:
-          VERDICT: ${{ steps.classify.outputs.verdict }}
         with:
           script: |
-            const verdict = process.env.VERDICT;
-            const reason = verdict === 'empty'
-              ? 'This branch changes no files against its base, so there is nothing to review.'
-              : 'This branch touches only `.jules/**`. A journal entry records a lesson from a change; on its own it is not one. Add the entry to the pull request that carries the work, or commit it straight to the default branch.';
+            const reason = 'This branch changes no files against its base, so there is nothing to review.';
 
             const body = [
               '### Closed automatically: nothing to review',
