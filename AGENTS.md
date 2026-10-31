@@ -428,7 +428,3 @@ The filler was not always safe. Across one review of the open pull requests in
 these repositories it suppressed worker error reporting in production builds,
 made a failed upload report the wrong reason, and moved a content-type check to
 after the response had been buffered into memory.
-
-In its place, `.github/workflows/no-op-pr.yml` closes a pull request whose diff
-is empty, with a comment saying why. A close is not
-a failure — it is the same finding, recorded without costing anyone a review.
