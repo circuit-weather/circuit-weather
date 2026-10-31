@@ -53,6 +53,9 @@ export const ptBR = {
       "Camada de vento pausada no nível {{zoom}} — aproxime para ver o vento",
   },
   forecast: {
+    verdictDry: "Chuva improvável durante {{session}}",
+    verdictPossible: "Chance de chuva durante {{session}}: {{pct}}% por volta das {{time}}",
+    verdictLikely: "Chuva provável durante {{session}}: {{pct}}% por volta das {{time}}",
     start: "Início",
     heading: "Previsão da sessão",
     hourlyForecast: "Previsão horária",
@@ -88,6 +91,11 @@ export const ptBR = {
     stormCells: "Células de tempestade",
     lightning: "Raios",
     lightningHint: "Os dados de raios cobrem apenas as Américas.",
+  },
+  trackRain: {
+    approaching: "Chuva prevista no circuito em cerca de {{minutes}} min",
+    raining: "Chovendo no circuito",
+    rainingEasing: "Chovendo no circuito, diminuindo em cerca de {{minutes}} min",
   },
   alerts: {
     heading: "Alertas Meteorológicos",

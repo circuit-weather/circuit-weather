@@ -53,6 +53,9 @@ export const nl = {
       "Wind overlay gepauzeerd op zoom {{zoom}} — zoom in om wind te zien",
   },
   forecast: {
+    verdictDry: "Regen onwaarschijnlijk tijdens {{session}}",
+    verdictPossible: "Kans op regen tijdens {{session}}: {{pct}}% rond {{time}}",
+    verdictLikely: "Regen waarschijnlijk tijdens {{session}}: {{pct}}% rond {{time}}",
     start: "Start",
     heading: "Sessie voorspelling",
     hourlyForecast: "Voorspelling per uur",
@@ -89,6 +92,11 @@ export const nl = {
     stormCells: "Onweerscellen",
     lightning: "Bliksem",
     lightningHint: "Bliksemgegevens zijn alleen beschikbaar voor Noord- en Zuid-Amerika.",
+  },
+  trackRain: {
+    approaching: "Regen verwacht op het circuit over ongeveer {{minutes}} min",
+    raining: "Het regent op het circuit",
+    rainingEasing: "Het regent op het circuit, neemt af over ongeveer {{minutes}} min",
   },
   alerts: {
     heading: "Weerswaarschuwingen",

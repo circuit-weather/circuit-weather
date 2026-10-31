@@ -53,6 +53,9 @@ export const de = {
       "Wind-Overlay bei Zoom {{zoom}} pausiert — einzoomen um Wind zu sehen",
   },
   forecast: {
+    verdictDry: "Regen unwahrscheinlich während {{session}}",
+    verdictPossible: "Regenrisiko während {{session}}: {{pct}} % gegen {{time}}",
+    verdictLikely: "Regen wahrscheinlich während {{session}}: {{pct}} % gegen {{time}}",
     start: "Start",
     heading: "Session-Prognose",
     hourlyForecast: "Stundenprognose",
@@ -89,6 +92,11 @@ export const de = {
     stormCells: "Gewitterzellen",
     lightning: "Blitze",
     lightningHint: "Blitzdaten nur für Nord- und Südamerika verfügbar.",
+  },
+  trackRain: {
+    approaching: "Regen an der Strecke in etwa {{minutes}} Min. erwartet",
+    raining: "Regen an der Strecke",
+    rainingEasing: "Regen an der Strecke, lässt in etwa {{minutes}} Min. nach",
   },
   alerts: {
     heading: "Wetterwarnungen",

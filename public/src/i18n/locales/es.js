@@ -53,6 +53,9 @@ export const es = {
       "Capa de viento pausada en nivel {{zoom}} — acerque para ver el viento",
   },
   forecast: {
+    verdictDry: "Lluvia poco probable durante {{session}}",
+    verdictPossible: "Posibilidad de lluvia durante {{session}}: {{pct}} % hacia las {{time}}",
+    verdictLikely: "Lluvia probable durante {{session}}: {{pct}} % hacia las {{time}}",
     start: "Inicio",
     heading: "Pronóstico de sesión",
     hourlyForecast: "Pronóstico por hora",
@@ -88,6 +91,11 @@ export const es = {
     stormCells: "Células tormentosas",
     lightning: "Rayos",
     lightningHint: "Los datos de rayos solo cubren América.",
+  },
+  trackRain: {
+    approaching: "Se espera lluvia en el circuito en unos {{minutes}} min",
+    raining: "Llueve en el circuito",
+    rainingEasing: "Llueve en el circuito; amainará en unos {{minutes}} min",
   },
   alerts: {
     heading: "Avisos Meteorológicos",

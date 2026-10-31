@@ -53,6 +53,9 @@ export const ja = {
       "ズーム{{zoom}}で風表示を停止中 — 拡大すると風が表示されます",
   },
   forecast: {
+    verdictDry: "{{session}}中の雨の可能性は低い",
+    verdictPossible: "{{session}}中に雨の可能性：{{time}}頃 {{pct}}%",
+    verdictLikely: "{{session}}中は雨の見込み：{{time}}頃 {{pct}}%",
     start: "開始",
     heading: "セッション予報",
     hourlyForecast: "時間別予報",
@@ -88,6 +91,11 @@ export const ja = {
     stormCells: "雷雨セル",
     lightning: "落雷",
     lightningHint: "落雷データは南北アメリカのみ対応しています。",
+  },
+  trackRain: {
+    approaching: "約{{minutes}}分後にサーキットで雨の予想",
+    raining: "サーキットで雨が降っています",
+    rainingEasing: "サーキットで雨、約{{minutes}}分後に弱まる見込み",
   },
   alerts: {
     heading: "気象警報",

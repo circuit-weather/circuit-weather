@@ -53,6 +53,9 @@ export const fr = {
       "Calque de vent en pause au zoom {{zoom}} — zoomez pour voir le vent",
   },
   forecast: {
+    verdictDry: "Pluie peu probable pendant {{session}}",
+    verdictPossible: "Risque de pluie pendant {{session}} : {{pct}} % vers {{time}}",
+    verdictLikely: "Pluie probable pendant {{session}} : {{pct}} % vers {{time}}",
     start: "Départ",
     heading: "Prévisions de session",
     hourlyForecast: "Prévisions horaires",
@@ -88,6 +91,11 @@ export const fr = {
     stormCells: "Cellules orageuses",
     lightning: "Foudre",
     lightningHint: "Les données de foudre couvrent uniquement les Amériques.",
+  },
+  trackRain: {
+    approaching: "Pluie attendue sur le circuit dans environ {{minutes}} min",
+    raining: "Il pleut sur le circuit",
+    rainingEasing: "Il pleut sur le circuit, accalmie dans environ {{minutes}} min",
   },
   alerts: {
     heading: "Alertes Météo",

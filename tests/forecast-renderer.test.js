@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ForecastRenderer } from '../public/src/ui/ForecastRenderer.js';
 import { CircuitWeatherApp } from '../public/src/CircuitWeatherApp.js';
+import { i18n } from '../public/src/i18n/index.js';
 
 describe('ForecastRenderer Unit Tests', () => {
     let renderer;
@@ -82,5 +83,28 @@ describe('ForecastRenderer Unit Tests', () => {
         expect(app._createTimelineItemElement(hourly[0], new Date(), units)).toBeDefined();
         expect(app._createTimelineElement(hourly, new Date(), units)).toBeDefined();
         expect(app._createForecastDashboard({ hourly, units }, new Date())).toBeDefined();
+    });
+
+    describe('rain verdict', () => {
+        const start = new Date('2026-11-01T14:00:00Z');
+        const at = (h) => start.getTime() / 1000 + h * 3600;
+        const hour = (h, precipProb) => ({ time: at(h), code: 0, temp: 20, windSpeed: 10, windDir: 0, precipProb });
+        const time = (h) => new Intl.DateTimeFormat(i18n.locale, { hour: 'numeric', minute: '2-digit' }).format(new Date(at(h) * 1000));
+
+        it('sums up the session in one sentence', () => {
+            const race = { id: 'race', name: 'Race' };
+            expect(renderer.getRainVerdict([hour(0, 5), hour(1, 10)], start, race))
+                .toEqual({ level: 'dry', text: 'Rain unlikely during Race' });
+
+            expect(renderer.getRainVerdict([hour(0, 30), hour(1, 70), hour(2, 90)], start, race))
+                .toEqual({ level: 'likely', text: `Rain likely during Race: 70% around ${time(1)}` });
+
+            // Non-race sessions only look at their first hour
+            expect(renderer.getRainVerdict([hour(0, 25), hour(1, 90)], start, { id: 'qualifying', name: 'Qualifying' }))
+                .toEqual({ level: 'possible', text: `Chance of rain during Qualifying: 25% around ${time(0)}` });
+
+            // No forecast hours in the session
+            expect(renderer.getRainVerdict([hour(5, 90)], start, race)).toBeNull();
+        });
     });
 });

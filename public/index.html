@@ -458,6 +458,10 @@
                 <p class="map-countdown-session" id="mapCountdownSession"></p>
             </section>
 
+            <!-- Rain banner (desktop): rain at the track during the session, or the session's
+                 forecast verdict; only shown when rain is possible or likely -->
+            <p class="rain-banner" id="rainBanner" role="status" hidden></p>
+
             <!-- Mobile UI Overlay Stack -->
             <div class="mobile-ui-layout">
                 <!-- Mobile Race Info Overlay (visible only on mobile) -->
@@ -473,6 +477,7 @@
                         <p id="mobileRaceInfoCircuit"></p>
                     </hgroup>
                 </section>
+                <p class="rain-banner" id="mobileRainBanner" role="status" hidden></p>
             </div>
 
             <!-- Loading Overlay -->
