@@ -45,6 +45,7 @@ export const fr = {
     units: "Unités",
     selectRound: "Sélectionner une manche...",
     selectRoundFirst: "Sélectionnez d'abord une manche",
+    autoAdvance: "Avancer automatiquement les séances",
     selectSession: "Sélectionner une session...",
     metricLabel: "Kilomètres",
     imperialLabel: "Miles",

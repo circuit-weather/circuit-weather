@@ -53,7 +53,7 @@ Circuit Weather is a real-time F1 race circuit weather radar application. It dis
 ### Data Handling
 
 - **No first-party cookies** used (third-party widgets may use cookies - see PRIVACY.md)
-- **localStorage only** for theme/unit/language/series (last picked; used when the URL names none)/windOverlay/radar layer (radarColour, radarArrows, radarCells, radarLightning, radarSatellite, weatherAlerts) preferences, f1_schedule_cache and series_schedule_cache
+- **localStorage only** for theme/unit/language/series (last picked; used when the URL names none)/autoAdvance/windOverlay/radar layer (radarColour, radarArrows, radarCells, radarLightning, radarSatellite, weatherAlerts) preferences, f1_schedule_cache and series_schedule_cache
 - **No PII collected** - See PRIVACY.md
 
 ### Language & Spelling
@@ -196,6 +196,8 @@ Speed matters most on mobile at a circuit, so nothing may block the first render
    - Series dropdown: Formula 1 (Jolpica, OpenF1 fallback), Formula 2, Formula 3, Formula E, WEC, IMSA, Supercars, IndyCar, NASCAR Cup, MotoGP and World Superbike (TheSportsDB via `/api/schedule/{series}`)
    - Round dropdown shows all races in current season with dates
    - Session dropdown shows each series' sessions with times (F1: FP1-3, Sprint/Qualifying/Race; others: the session names TheSportsDB lists, e.g. Practice, Sprint Race, Feature Race)
+   - **Session timing** (`public/src/utils/sessionTiming.js`, the only place it is decided): schedules give start times only, so a session counts as live from its start for an assumed length, cut short when the next session in the round starts (MotoGP and WEC run sessions 5-20 minutes apart). Lengths: 1 h 30 min for practice/qualifying/Hyperpole/sprints; 4 h for a round's main race (the session `race`, else the one at the round's date and time, e.g. MotoGP `gp`, F2/F3 Feature Race); 25 h for WEC and IMSA races. A round is over when its last session is. This drives the automatic pick on load (the live session, else the next), the LIVE/Next markers and auto-advance
+   - **Auto-advance** toggle under the session picker (off by default; saved): moves to the next session, and the next round with the map, as each finishes, so the page can be left open as a console (`public/src/ui/AutoAdvance.js`, checked every 30 s and when the tab is seen again). A round or session picked by hand, or opened from a link, is left until the next scheduled change
    - TheSportsDB must be credited as the data source whenever its data is shown (sidebar credit line)
 
 2. **Map Display**

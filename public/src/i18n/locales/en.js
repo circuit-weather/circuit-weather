@@ -45,6 +45,7 @@ export const en = {
     units: "Units",
     selectRound: "Select round...",
     selectRoundFirst: "Select a round first",
+    autoAdvance: "Auto-advance sessions",
     selectSession: "Select session...",
     metricLabel: "Kilometres",
     imperialLabel: "Miles",

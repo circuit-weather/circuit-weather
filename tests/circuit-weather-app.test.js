@@ -2765,6 +2765,114 @@ describe('CircuitWeatherApp series selection', () => {
         });
     });
 
+    describe('auto-advance', () => {
+        // Two F2 rounds a fortnight apart, parsed the way the app holds them
+        const round = (n, day) => app.seriesApi.parseRace(f2Race(n, {
+            date: `2026-11-${day}`,
+            sessions: [
+                { id: 'sprint-race', name: 'Sprint Race', date: `2026-11-${day - 1}`, time: '13:00:00Z' },
+                { id: 'feature-race', name: 'Feature Race', date: `2026-11-${day}`, time: '13:00:00Z' },
+            ],
+        }));
+
+        beforeEach(() => {
+            app.seriesApi = seriesApi({ races: [], complete: true });
+            app.series = 'f2';
+            app.races = [round(1, 15), round(2, 29)];
+        });
+
+        it('targets the pick a fresh page load would make', () => {
+            vi.setSystemTime(new Date('2026-11-14T14:00:00Z'));
+            expect(app.getCurrentTarget()).toEqual({ round: '1', sessionId: 'sprint-race' });
+            // 1 h 30 min after the sprint: the feature race is next
+            vi.setSystemTime(new Date('2026-11-14T14:30:00Z'));
+            expect(app.getCurrentTarget()).toEqual({ round: '1', sessionId: 'feature-race' });
+            // 4 h after the feature race: the next round
+            vi.setSystemTime(new Date('2026-11-15T17:00:00Z'));
+            expect(app.getCurrentTarget()).toEqual({ round: '2', sessionId: 'sprint-race' });
+            vi.setSystemTime(new Date('2027-01-01T00:00:00Z'));
+            expect(app.getCurrentTarget()).toBeNull();
+        });
+
+        it('switches round (moving the map) when the next session is elsewhere', async () => {
+            app.selectedRace = app.races[0];
+            app.populateRoundSelect = vi.fn();
+            app.selectRound = vi.fn(() => { app.selectedRace = app.races[1]; });
+            app.selectSession = vi.fn().mockResolvedValue();
+
+            await app.showTarget({ round: '2', sessionId: 'sprint-race' });
+            expect(app.populateRoundSelect).toHaveBeenCalled();
+            expect(app.ui.roundSelect.value).toBe('2');
+            expect(app.selectRound).toHaveBeenCalledWith('2');
+            expect(app.ui.sessionSelect.value).toBe('sprint-race');
+            expect(app.selectSession).toHaveBeenCalledWith('sprint-race');
+        });
+
+        it('only changes session within the round, refreshing the LIVE markers', async () => {
+            app.selectedRace = app.races[0];
+            app.populateRoundSelect = vi.fn();
+            app.populateSessionSelect = vi.fn();
+            app.selectRound = vi.fn();
+            app.selectSession = vi.fn().mockResolvedValue();
+
+            await app.showTarget({ round: '1', sessionId: 'feature-race' });
+            expect(app.selectRound).not.toHaveBeenCalled();
+            expect(app.populateSessionSelect).toHaveBeenCalledWith(app.races[0].sessions);
+            expect(app.selectSession).toHaveBeenCalledWith('feature-race');
+
+            // A round without session times: nothing to select
+            app.selectSession.mockClear();
+            await app.showTarget({ round: '1', sessionId: null });
+            expect(app.selectSession).not.toHaveBeenCalled();
+        });
+
+        it('tells auto-advance about every hand-made pick', async () => {
+            app.autoAdvance = { noteManualSelection: vi.fn() };
+            app.selectRound = vi.fn();
+            app.selectSession = vi.fn();
+            app.clearRoundSelection = vi.fn();
+            app.selectSeries = vi.fn().mockResolvedValue(false);
+            app.bindEvents();
+            const handler = (el) => el.addEventListener.mock.calls.find(([type]) => type === 'change')[1];
+
+            await handler(app.ui.seriesSelect)({ target: { value: 'f3' } });
+            handler(app.ui.roundSelect)({ target: { value: '2' } });
+            handler(app.ui.roundSelect)({ target: { value: '' } });
+            app.selectedRace = app.races[0];
+            handler(app.ui.sessionSelect)({ target: { value: 'feature-race' } });
+            expect(app.autoAdvance.noteManualSelection).toHaveBeenCalledTimes(4);
+        });
+
+        it('treats back/forward as a pick, and a shared link at start-up too', async () => {
+            app.handleRoute = vi.fn().mockResolvedValue();
+            app.autoAdvance = { noteManualSelection: vi.fn() };
+            const { Router } = await import('../public/src/routing/Router.js');
+            const routeCallback = Router.mock.calls.at(-1)[0];
+            await routeCallback({ series: 'f2', round: '1', session: null });
+            expect(app.handleRoute).toHaveBeenCalledWith({ series: 'f2', round: '1', session: null });
+            expect(app.autoAdvance.noteManualSelection).toHaveBeenCalled();
+
+            // Start-up from a link to a round: auto-advance is created and told
+            app.initUIElements = vi.fn();
+            app.initMapComponents = vi.fn();
+            app.bindEvents = vi.fn();
+            app.showLoading = vi.fn();
+            app.populateRoundSelect = vi.fn();
+            app.startWeatherRefreshInterval = vi.fn();
+            app.startSessionForecastInterval = vi.fn();
+            app.router.getParams = vi.fn(() => ({ series: 'f2', round: '1', session: null }));
+            app.seriesApi = seriesApi({ races: [f2Race(1)], complete: true });
+            const note = vi.spyOn((await import('../public/src/ui/AutoAdvance.js')).AutoAdvance.prototype, 'noteManualSelection');
+            await app.init();
+            expect(app.autoAdvance.getTarget).toBeTypeOf('function');
+            expect(note).toHaveBeenCalled();
+            expect(app.autoAdvance.getSelection()).toBeNull();
+            app.selectedRace = app.races[0];
+            expect(app.autoAdvance.getSelection()).toEqual({ round: '1', sessionId: null });
+            note.mockRestore();
+        });
+    });
+
     describe('saved series', () => {
         let store;
 

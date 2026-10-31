@@ -45,6 +45,7 @@ export const ja = {
     units: "単位",
     selectRound: "ラウンドを選択...",
     selectRoundFirst: "先にラウンドを選択してください",
+    autoAdvance: "セッションを自動で進める",
     selectSession: "セッションを選択...",
     metricLabel: "キロメートル",
     imperialLabel: "マイル",

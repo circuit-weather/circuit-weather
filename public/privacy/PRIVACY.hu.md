@@ -106,6 +106,7 @@ A beállításokat a böngészője helyileg tárolja:
 - **unit (mértékegység):** `metric` (metrikus) vagy `imperial` (birodalmi)
 - **language (nyelv):** a kiválasztott nyelv
 - **series (sorozat):** a legutóbb választott versenysorozat (pl. `motogp`), a következő látogatáskor ez jelenik meg először
+- **autoAdvance:** `true` vagy `false` (megjegyzi, hogy az oldal magától lép-e a következő szakaszra)
 - **windOverlay:** `true` vagy `false` (megjegyzi, hogy a szélanimációs réteg be van-e kapcsolva)
 - **radarColour:** a kiválasztott radar színséma száma
 - **radarArrows, radarCells, radarLightning, radarSatellite:** `true` vagy `false` (megjegyzi, mely további radarrétegek vannak bekapcsolva)

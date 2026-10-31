@@ -106,6 +106,7 @@ Les préférences sont stockées localement dans le navigateur :
 - **unit:** `metric` ou `imperial`
 - **language:** votre langue sélectionnée (ex: `fr`, `en-US`)
 - **series:** le dernier championnat choisi (ex: `motogp`), affiché en premier lors de votre prochaine visite
+- **autoAdvance:** `true` ou `false` (mémorise si la page passe d’elle-même à la séance suivante)
 - **windOverlay:** `true` ou `false` (mémorise si le calque d'animation du vent est activé)
 - **radarColour:** le numéro de la palette de couleurs radar choisie
 - **radarArrows, radarCells, radarLightning, radarSatellite:** `true` ou `false` (mémorise les couches radar supplémentaires activées)

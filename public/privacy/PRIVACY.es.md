@@ -106,6 +106,7 @@ El navegador guarda preferencias locales:
 - **unit:** `metric` o `imperial`
 - **language:** su idioma seleccionado (ej. `es`, `en-US`)
 - **series:** la última categoría que eligió (ej. `motogp`), que se muestra primero en su próxima visita
+- **autoAdvance:** `true` o `false` (recuerda si la página pasa sola a la siguiente sesión)
 - **windOverlay:** `true` o `false` (recuerda si la capa de animación de viento está habilitada)
 - **radarColour:** el número del esquema de colores del radar seleccionado
 - **radarArrows, radarCells, radarLightning, radarSatellite:** `true` o `false` (recuerda qué capas adicionales del radar están habilitadas)

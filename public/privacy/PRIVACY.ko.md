@@ -106,6 +106,7 @@ Circuit Weather는 포뮬러 1 서킷의 실시간 기상 레이더를 표시하
 - **unit:** `metric` 또는 `imperial`
 - **language:** 선택한 언어
 - **series:** 마지막으로 선택한 레이싱 시리즈 (예: `motogp`), 다음 방문 시 먼저 표시됩니다
+- **autoAdvance:** `true` 또는 `false` (페이지가 다음 세션으로 자동 전환되는지 기억합니다)
 - **windOverlay:** `true` 또는 `false`(바람 애니메이션 레이어의 활성화 여부를 기억합니다)
 - **radarColour:** 선택한 레이더 색상 구성 번호
 - **radarArrows, radarCells, radarLightning, radarSatellite:** `true` 또는 `false`(활성화된 추가 레이더 레이어를 기억합니다)

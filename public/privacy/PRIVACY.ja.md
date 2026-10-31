@@ -106,6 +106,7 @@ Circuit Weather は、Formula 1 サーキット向けのリアルタイム天気
 - **unit:** `metric` または `imperial`
 - **language:** 選択した言語 (例: `ja`, `en-US`)
 - **series:** 最後に選択したレースシリーズ (例: `motogp`)。次回訪問時に最初に表示されます
+- **autoAdvance:** `true` または `false`（ページが自動で次のセッションに進むかどうかを記憶します）
 - **windOverlay:** `true` または `false` (風のアニメーションレイヤーが有効かどうかを記憶します)
 - **radarColour:** 選択したレーダー配色の番号
 - **radarArrows, radarCells, radarLightning, radarSatellite:** `true` または `false` (どの追加レーダーレイヤーが有効かを記憶します)

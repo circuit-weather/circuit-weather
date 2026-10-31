@@ -17,9 +17,11 @@ import { ThemeManager } from './ui/ThemeManager.js';
 import { SidebarManager } from './ui/SidebarManager.js';
 import { LayerSettings } from './ui/LayerSettings.js';
 import { SeoManager } from './ui/SeoManager.js';
+import { AutoAdvance } from './ui/AutoAdvance.js';
 import { ForecastRenderer } from './ui/ForecastRenderer.js';
-import { getSessionStatus, getRoundStatus, formatStatusLabel } from './utils/status.js';
-import { getRaceEndTime, findFirstActiveRaceIndex, getGloballyNextSession } from './utils/schedule.js';
+import { formatStatusLabel } from './utils/status.js';
+import { getRaceEndTime } from './utils/schedule.js';
+import { findCurrentSession, findNextSession, roundStatus, sessionStatus } from './utils/sessionTiming.js';
 import { isRainBannerTimely, isNowcastRelevant } from './utils/rain.js';
 import { i18n } from './i18n/index.js';
 import { SafeStorage } from './utils/storage.js';
@@ -74,7 +76,8 @@ export class CircuitWeatherApp {
         this.races = [];
         this.selectedRace = null;
         this.selectedSession = null;
-        this.router = new Router(params => this.handleRoute(params));
+        // Back/forward is a choice too: auto-advance leaves it until the next change
+        this.router = new Router(params => this.handleRoute(params).then(() => this.autoAdvance?.noteManualSelection()));
         this.mobileQuery = window.matchMedia('(max-width: 768px)');
         this.liveWeatherDebounceTimer = null;
 
@@ -207,6 +210,17 @@ export class CircuitWeatherApp {
             } else if (loaded) {
                 this.autoSelectNextRound();
             }
+
+            this.autoAdvance = new AutoAdvance({
+                toggle: document.getElementById('autoAdvanceToggle'),
+                getTarget: () => this.getCurrentTarget(),
+                getSelection: () => (this.selectedRace
+                    ? { round: this.selectedRace.round, sessionId: this.selectedSession?.id ?? null }
+                    : null),
+                apply: (target) => this.showTarget(target),
+            });
+            // A shared link to another session is respected until the next change
+            if (params.round) this.autoAdvance.noteManualSelection();
 
             // Start live weather refresh interval
             this.startWeatherRefreshInterval();
@@ -398,48 +412,51 @@ export class CircuitWeatherApp {
     }
 
     /**
-     * Finds the index of the first race that has not yet ended.
-     */
-    _findFirstActiveRaceIndex(now) {
-        return findFirstActiveRaceIndex(this.races, now);
-    }
-
-    /**
      * Finds the overall next session in the entire season across all rounds.
      */
     getGloballyNextSession(now) {
-        return getGloballyNextSession(this.races, now);
+        return findNextSession(this.races, now, this.series);
     }
 
+    /** What auto-advance should show now (the same pick as a fresh page load). */
+    getCurrentTarget() {
+        const current = findCurrentSession(this.races, new Date(), this.series);
+        return current ? { round: current.race.round, sessionId: current.session?.id ?? null } : null;
+    }
+
+    /**
+     * Auto-advance: moves to another session, switching round (and flying the
+     * map to its circuit) when needed. LIVE/Next markers are rebuilt, as they
+     * go stale on a page left open.
+     */
+    async showTarget({ round, sessionId }) {
+        this.populateRoundSelect();
+        if (this.ui.roundSelect) this.ui.roundSelect.value = round;
+        if (this.selectedRace?.round !== round) {
+            this.selectRound(round);
+        } else {
+            this.populateSessionSelect(this.selectedRace.sessions);
+        }
+        if (sessionId) {
+            if (this.ui.sessionSelect) this.ui.sessionSelect.value = sessionId;
+            await this.selectSession(sessionId);
+        }
+    }
+
+    /**
+     * Selects what is on now: the live session, else the next one, in the first
+     * round that isn't over (see utils/sessionTiming.js).
+     */
     autoSelectNextRound() {
-        const now = new Date();
-        // Optimization: use binary search since races are chronologically ordered
-        const firstActiveIndex = this._findFirstActiveRaceIndex(now);
-        const nextRace = firstActiveIndex < this.races.length ? this.races[firstActiveIndex] : undefined;
+        const current = findCurrentSession(this.races, new Date(), this.series);
+        if (!current) return;
 
-        if (nextRace) {
-            if (this.ui.roundSelect) this.ui.roundSelect.value = nextRace.round;
-            this.selectRound(nextRace.round);
+        if (this.ui.roundSelect) this.ui.roundSelect.value = current.race.round;
+        this.selectRound(current.race.round);
 
-            // Find next upcoming session within this round
-            // Priority: LIVE > FUTURE
-            let targetSession = null;
-            for (let i = 0; i < nextRace.sessions.length; i++) {
-                const session = nextRace.sessions[i];
-                const status = getSessionStatus(session, now);
-                if (status === 'LIVE') {
-                    targetSession = session;
-                    break;
-                }
-                if (!targetSession && status === 'FUTURE') {
-                    targetSession = session;
-                }
-            }
-
-            if (targetSession) {
-                if (this.ui.sessionSelect) this.ui.sessionSelect.value = targetSession.id;
-                this.selectSession(targetSession.id);
-            }
+        if (current.session) {
+            if (this.ui.sessionSelect) this.ui.sessionSelect.value = current.session.id;
+            this.selectSession(current.session.id);
         }
     }
 
@@ -688,6 +705,7 @@ export class CircuitWeatherApp {
                 } else {
                     this.router.navigate(series, null, null);
                 }
+                this.autoAdvance?.noteManualSelection();
             });
         }
 
@@ -698,6 +716,7 @@ export class CircuitWeatherApp {
                 } else {
                     this.clearRoundSelection();
                 }
+                this.autoAdvance?.noteManualSelection();
             });
         }
 
@@ -706,6 +725,7 @@ export class CircuitWeatherApp {
                 if (e.target.value && this.selectedRace) {
                     this.selectSession(e.target.value);
                 }
+                this.autoAdvance?.noteManualSelection();
             });
         }
 
@@ -739,7 +759,7 @@ export class CircuitWeatherApp {
             const date = new Date(race.date);
             const dateStr = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 
-            const status = getRoundStatus(race, now);
+            const status = roundStatus(race, this.series, now);
             let isNext = false;
 
             // Mark the first future round as Next if no round is currently Live?
@@ -1005,7 +1025,7 @@ export class CircuitWeatherApp {
             }
 
             const label = session.name + timeStr;
-            const status = getSessionStatus(session, now, dt);
+            const status = sessionStatus(this.selectedRace || { sessions }, session, this.series, now);
 
             // Only mark as "(Next)" if it is the absolute next session globally
             const isNext = !!(globalNext &&

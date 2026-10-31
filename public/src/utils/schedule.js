@@ -1,5 +1,4 @@
 import { CONFIG } from '../config.js';
-import { getSessionStatus } from './status.js';
 
 /**
  * End of a race weekend's running, used to decide which round is "next".
@@ -44,50 +43,4 @@ export function getRaceEndTime(race) {
         delete race._endTimeMs;
     }
     return end;
-}
-
-/**
- * Finds the index of the first race in an array that has not yet ended.
- * @param {Array<Object>} races - List of race objects.
- * @param {Date} now - The current date/time.
- * @returns {number} - The index of the first active race, or races.length if none.
- */
-export function findFirstActiveRaceIndex(races, now) {
-    let low = 0;
-    let high = races.length - 1;
-    let firstActiveIndex = races.length;
-
-    while (low <= high) {
-        const mid = Math.floor((low + high) / 2);
-        if (getRaceEndTime(races[mid]) > now) {
-            firstActiveIndex = mid;
-            // Keep searching left for potentially earlier active races
-            high = mid - 1;
-        } else {
-            // Race has ended, search right
-            low = mid + 1;
-        }
-    }
-    return firstActiveIndex;
-}
-
-/**
- * Finds the overall next session in the entire season across all rounds.
- * @param {Array<Object>} races - List of race objects.
- * @param {Date} now - The current date/time.
- * @returns {Object|null} - { round, sessionId } or null.
- */
-export function getGloballyNextSession(races, now) {
-    const firstActiveIndex = findFirstActiveRaceIndex(races, now);
-
-    for (let i = firstActiveIndex; i < races.length; i++) {
-        const race = races[i];
-        for (let j = 0; j < race.sessions.length; j++) {
-            const s = race.sessions[j];
-            if (getSessionStatus(s, now) === 'FUTURE') {
-                return { round: race.round, sessionId: s.id };
-            }
-        }
-    }
-    return null;
 }

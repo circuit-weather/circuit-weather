@@ -152,6 +152,8 @@
     <link rel="modulepreload" href="/src/ui/ForecastRenderer.js">
     <link rel="modulepreload" href="/src/utils/status.js">
     <link rel="modulepreload" href="/src/utils/schedule.js">
+    <link rel="modulepreload" href="/src/utils/sessionTiming.js">
+    <link rel="modulepreload" href="/src/ui/AutoAdvance.js">
     <link rel="modulepreload" href="/src/ui/PrivacyModal.js">
     <link rel="modulepreload" href="/src/ui/LanguageManager.js">
     <link rel="modulepreload" href="/src/ui/BuyMeACoffee.js">
@@ -234,6 +236,12 @@
                         <select id="sessionSelect" class="select" disabled aria-disabled="true" title="Select a round first" data-i18n-attr="title:controls.selectRoundFirst">
                             <option value="" data-i18n="controls.selectRoundFirst">Select a round first</option>
                         </select>
+                    </div>
+                    <!-- Moves on to the next session and round as each finishes (src/ui/AutoAdvance.js) -->
+                    <div class="control-group control-group--toggle">
+                        <span id="autoAdvanceLabel" class="control-label" data-i18n="controls.autoAdvance">Auto-advance sessions</span>
+                        <button class="pref-switch" id="autoAdvanceToggle" type="button" role="switch"
+                            aria-checked="false" aria-labelledby="autoAdvanceLabel"></button>
                     </div>
                 </section>
 
