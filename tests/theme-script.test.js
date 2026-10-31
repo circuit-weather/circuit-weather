@@ -47,6 +47,23 @@ describe('theme.js', () => {
             expect(schedulePreload().getAttribute('href')).toBe('/api/schedule/motogp');
         });
 
+        it('uses the saved series when the URL names none, as the app does', () => {
+            localStorage.setItem('series', 'motogp');
+            visit('/');
+            expect(schedulePreload().getAttribute('href')).toBe('/api/schedule/motogp');
+
+            // A series in the URL still wins
+            document.head.innerHTML = '';
+            visit('/f2/1');
+            expect(schedulePreload().getAttribute('href')).toBe('/api/schedule/f2');
+
+            // An unusable saved value is ignored
+            document.head.innerHTML = '';
+            localStorage.setItem('series', '../evil');
+            visit('/');
+            expect(schedulePreload().getAttribute('href')).toBe('/api/f1/current.json');
+        });
+
         it('skips it when the app will use its saved copy', () => {
             localStorage.setItem('f1_schedule_cache', JSON.stringify({ timestamp: Date.now() - DAY, races: [] }));
             visit('/f1/3/race');

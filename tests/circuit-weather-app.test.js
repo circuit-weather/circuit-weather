@@ -2765,6 +2765,78 @@ describe('CircuitWeatherApp series selection', () => {
         });
     });
 
+    describe('saved series', () => {
+        let store;
+
+        beforeEach(() => {
+            store = new Map();
+            globalThis.localStorage = {
+                getItem: (key) => (store.has(key) ? store.get(key) : null),
+                setItem: (key, value) => store.set(key, String(value)),
+            };
+        });
+
+        afterEach(() => {
+            delete globalThis.localStorage;
+        });
+
+        const startWith = async (params) => {
+            app.initUIElements = vi.fn();
+            app.initMapComponents = vi.fn();
+            app.bindEvents = vi.fn();
+            app.showLoading = vi.fn();
+            app.populateRoundSelect = vi.fn();
+            app.startWeatherRefreshInterval = vi.fn();
+            app.startSessionForecastInterval = vi.fn();
+            app.handleRoute = vi.fn();
+            app.autoSelectNextRound = vi.fn();
+            app.router.getParams = vi.fn(() => params);
+            app.seriesApi = seriesApi({ races: [f2Race(3)], complete: true });
+            await app.init();
+        };
+
+        it('remembers the series picked from the dropdown', async () => {
+            app.bindEvents();
+            const change = app.ui.seriesSelect.addEventListener.mock.calls.find(([type]) => type === 'change')[1];
+            app.seriesApi = seriesApi({ races: [f2Race(1)], complete: true });
+            app.autoSelectNextRound = vi.fn();
+
+            await change({ target: { value: 'motogp' } });
+            expect(store.get('series')).toBe('motogp');
+
+            // Not something that isn't a series
+            await change({ target: { value: 'not-a-series' } });
+            expect(store.get('series')).toBe('motogp');
+        });
+
+        it('opens on the saved series when the URL names none, still picking the next round', async () => {
+            store.set('series', 'motogp');
+            await startWith({ series: null, round: null, session: null });
+
+            expect(app.ui.seriesSelect.value).toBe('motogp');
+            expect(app.seriesApi.getSchedule).toHaveBeenCalledWith('motogp');
+            expect(app.f1Api.getSchedule).not.toHaveBeenCalled();
+            expect(app.autoSelectNextRound).toHaveBeenCalled();
+        });
+
+        it('follows a series in the URL without saving it', async () => {
+            store.set('series', 'motogp');
+            await startWith({ series: 'fe', round: null, session: null });
+
+            expect(app.seriesApi.getSchedule).toHaveBeenCalledWith('fe');
+            expect(store.get('series')).toBe('motogp');
+        });
+
+        it('falls back to Formula 1 without a usable saved series', async () => {
+            store.set('series', 'javascript:alert(1)');
+            expect(app.getSavedSeries()).toBe('f1');
+            store.delete('series');
+            expect(app.getSavedSeries()).toBe('f1');
+            store.set('series', 'wsbk');
+            expect(app.getSavedSeries()).toBe('wsbk');
+        });
+    });
+
     describe('routing', () => {
         it('switches series from the URL before selecting the round', async () => {
             app.seriesApi = seriesApi({ races: [f2Race(13)], complete: true });

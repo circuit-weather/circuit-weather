@@ -53,7 +53,7 @@ Circuit Weather is a real-time F1 race circuit weather radar application. It dis
 ### Data Handling
 
 - **No first-party cookies** used (third-party widgets may use cookies - see PRIVACY.md)
-- **localStorage only** for theme/unit/language/windOverlay/radar layer (radarColour, radarArrows, radarCells, radarLightning, radarSatellite, weatherAlerts) preferences, f1_schedule_cache and series_schedule_cache
+- **localStorage only** for theme/unit/language/series (last picked; used when the URL names none)/windOverlay/radar layer (radarColour, radarArrows, radarCells, radarLightning, radarSatellite, weatherAlerts) preferences, f1_schedule_cache and series_schedule_cache
 - **No PII collected** - See PRIVACY.md
 
 ### Language & Spelling

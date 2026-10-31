@@ -105,6 +105,7 @@ Preferências armazenadas localmente no navegador:
 - **theme:** `light` ou `dark`
 - **unit:** `metric` ou `imperial`
 - **language:** seu idioma selecionado (ex. `pt-BR`, `en-US`)
+- **series:** a última categoria escolhida (ex. `motogp`), exibida primeiro na sua próxima visita
 - **windOverlay:** `true` ou `false` (lembra se a camada de animação de vento está habilitada)
 - **radarColour:** o número do esquema de cores do radar escolhido
 - **radarArrows, radarCells, radarLightning, radarSatellite:** `true` ou `false` (lembra quais camadas extras do radar estão habilitadas)

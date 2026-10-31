@@ -23,6 +23,7 @@ export class Router {
 
     getParams() {
         const parts = window.location.pathname.split('/').filter(Boolean);
-        return { series: parts[0] || 'f1', round: parts[1] || null, session: parts[2] || null };
+        // No series in the URL: the app falls back to the visitor's saved series
+        return { series: parts[0] || null, round: parts[1] || null, session: parts[2] || null };
     }
 }

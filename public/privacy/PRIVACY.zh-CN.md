@@ -105,6 +105,7 @@ Circuit Weather 是一个开源网站应用，用于显示 Formula 1 赛道的�
 - **theme:** `light` 或 `dark`
 - **unit:** `metric` 或 `imperial`
 - **language:** 您选择的语言
+- **series:** 您上次选择的赛事系列（例如 `motogp`），下次访问时优先显示
 - **windOverlay:** `true` 或 `false` (记住风场动画图层是否启用)
 - **radarColour:** 所选雷达配色方案的编号
 - **radarArrows, radarCells, radarLightning, radarSatellite:** `true` 或 `false` (记住启用了哪些额外的雷达图层)

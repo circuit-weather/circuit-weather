@@ -105,6 +105,7 @@ Preferenze salvate localmente nel browser:
 - **theme:** `light` o `dark`
 - **unit:** `metric` o `imperial`
 - **language:** la lingua selezionata (es. `it`, `en-US`)
+- **series:** l'ultimo campionato scelto (es. `motogp`), mostrato per primo alla prossima visita
 - **windOverlay:** `true` o `false` (ricorda se il livello di animazione del vento è abilitato)
 - **radarColour:** il numero della combinazione di colori radar scelta
 - **radarArrows, radarCells, radarLightning, radarSatellite:** `true` o `false` (ricorda quali livelli radar aggiuntivi sono abilitati)

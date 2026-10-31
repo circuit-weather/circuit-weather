@@ -35,10 +35,10 @@ describe('Router', () => {
     });
 
     describe('getParams', () => {
-        it('returns default series when path is empty', () => {
+        it('returns no series when the path is empty, so the app can use the saved one', () => {
             mockPathname = '/';
             const params = router.getParams();
-            expect(params).toEqual({ series: 'f1', round: null, session: null });
+            expect(params).toEqual({ series: null, round: null, session: null });
         });
 
         it('parses series only', () => {

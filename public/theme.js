@@ -51,9 +51,10 @@
         var WEEK_MS = 7 * 24 * 60 * 60 * 1000;
         var PARTIAL_MS = 5 * 60 * 1000;
 
-        // Unknown paths fall back to F1, as in CircuitWeatherApp.init
+        // The URL's series, else the visitor's saved one, else F1, as in CircuitWeatherApp.init
         var first = window.location.pathname.split('/')[1];
-        var series = SERIES.indexOf(first) !== -1 ? first : 'f1';
+        var saved = localStorage.getItem('series');
+        var series = SERIES.indexOf(first) !== -1 ? first : (SERIES.indexOf(saved) !== -1 ? saved : 'f1');
 
         var stored;
         if (series === 'f1') {

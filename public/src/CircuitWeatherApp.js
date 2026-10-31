@@ -22,6 +22,7 @@ import { getSessionStatus, getRoundStatus, formatStatusLabel } from './utils/sta
 import { getRaceEndTime, findFirstActiveRaceIndex, getGloballyNextSession } from './utils/schedule.js';
 import { isRainBannerTimely, isNowcastRelevant } from './utils/rain.js';
 import { i18n } from './i18n/index.js';
+import { SafeStorage } from './utils/storage.js';
 
 // A partial schedule (the Worker is still filling it, see SeriesAPI) is re-fetched
 // after the Worker's 60-second cache, a few times at most
@@ -29,6 +30,10 @@ const SCHEDULE_RETRY_MS = 65000;
 const SCHEDULE_MAX_RETRIES = 5;
 
 // Radar nowcast states worth a banner; a dry reading shows nothing
+// The series a visitor last picked, used when the URL doesn't name one.
+// public/theme.js reads it too, to preload that series' schedule.
+const SERIES_STORAGE_KEY = 'series';
+
 const TRACK_RAIN_KEYS = Object.freeze({
     approaching: 'trackRain.approaching',
     raining: 'trackRain.raining',
@@ -182,7 +187,7 @@ export class CircuitWeatherApp {
             // block the page: the user can still pick another series or retry
             // (see showScheduleError); tryLoadSchedule never rejects.
             const params = this.router.getParams();
-            const series = this.isSupportedSeries(params.series) ? params.series : 'f1';
+            const series = this.isSupportedSeries(params.series) ? params.series : this.getSavedSeries();
             if (this.ui.seriesSelect) this.ui.seriesSelect.value = series;
             const scheduleLoad = this.tryLoadSchedule(series);
 
@@ -219,6 +224,12 @@ export class CircuitWeatherApp {
 
     isSupportedSeries(series) {
         return SERIES_IDS.includes(series);
+    }
+
+    /** The series the visitor last picked, or Formula 1. */
+    getSavedSeries() {
+        const saved = SafeStorage.getItem(SERIES_STORAGE_KEY);
+        return this.isSupportedSeries(saved) ? saved : 'f1';
     }
 
     /**
@@ -669,6 +680,8 @@ export class CircuitWeatherApp {
         if (this.ui.seriesSelect) {
             this.ui.seriesSelect.addEventListener('change', async (e) => {
                 const series = e.target.value;
+                // Only a choice made here is remembered, not a series opened from a shared link
+                if (this.isSupportedSeries(series)) SafeStorage.setItem(SERIES_STORAGE_KEY, series);
                 if (await this.selectSeries(series)) {
                     this.router.navigate(series, null, null);
                     this.autoSelectNextRound();
