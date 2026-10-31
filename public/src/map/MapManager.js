@@ -10,6 +10,12 @@ export const MAPBOX_JS = "/api/assets/mapbox-gl.js";
 export const LEAFLET_JS = "/api/assets/leaflet.js";
 export const LEAFLET_JS_INTEGRITY = "sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=";
 
+// How long a visible page waits for the browser to give back a lost WebGL
+// context before reloading, and the least time between such reloads
+export const CONTEXT_RESTORE_WAIT_MS = 3000;
+export const CONTEXT_RELOAD_MIN_INTERVAL_MS = 60000;
+const CONTEXT_RELOAD_KEY = 'mapContextReloadAt';
+
 /**
  * Manages the map instance, rendering Mapbox GL JS if available and falling back to Leaflet.
  */
@@ -21,6 +27,14 @@ export class MapManager {
     this.resizeObserver = null;
     // Idle retry for a fly issued while the style was loading (see setView)
     this.pendingFly = null;
+
+    // WebGL context loss (see watchContextLoss). onContextRestored is set by the
+    // app to rebuild the style and its layers; reloadPage is replaceable in tests.
+    this.contextLost = false;
+    this.contextRestoreTimer = null;
+    this.onContextRestored = null;
+    this.reloadPage = () => window.location.reload();
+    this.handleVisibilityChange = this.handleVisibilityChange.bind(this);
 
     // Bind the language change handler so we can safely add/remove it
     this.handleLanguageChange = this.handleLanguageChange.bind(this);
@@ -76,6 +90,7 @@ export class MapManager {
 
       this.map.on('load', () => {
         this.isMapbox = true;
+        this.watchContextLoss();
         this.setupResizeObserver();
         this.createMapboxZoomControl();
         this.applyMapLanguage(this.getMapboxLanguageCode(i18n.locale));
@@ -185,6 +200,8 @@ export class MapManager {
       this.resizeObserver = null;
     }
     document.removeEventListener('i18n:change', this.handleLanguageChange);
+    document.removeEventListener('visibilitychange', this.handleVisibilityChange);
+    this.clearContextCheck();
 
     if (this.map) {
       this.map.remove();
@@ -192,10 +209,20 @@ export class MapManager {
     }
   }
 
-  setTheme(theme) {
+  /**
+   * @param {string} theme
+   * @param {{rebuild?: boolean}} [options] rebuild reloads the style even when it
+   *   is unchanged (Mapbox otherwise diffs it into a no-op), e.g. after a lost
+   *   WebGL context
+   */
+  setTheme(theme, { rebuild = false } = {}) {
     if (this.isMapbox) {
       const styleUrl = theme === "dark" ? CONFIG.mapboxStyleDark : CONFIG.mapboxStyleLight;
-      this.map.setStyle(styleUrl);
+      if (rebuild) {
+        this.map.setStyle(styleUrl, { diff: false });
+      } else {
+        this.map.setStyle(styleUrl);
+      }
 
       return new Promise((resolve) => {
         // Re-apply the current language after the new style loads.
@@ -252,6 +279,64 @@ export class MapManager {
     } else {
       this.map.setView([lat, lng], zoom);
     }
+  }
+
+  /**
+   * Recovers from a lost WebGL context, which left the map blank (basemap,
+   * radar, circles and track) with every HTML control still showing. Android
+   * drops the contexts of pages left in the background, e.g. a PWA reopened
+   * after a while.
+   *
+   * Mapbox GL JS (v3.0.1) only rebuilds its renderer when the context comes
+   * back, not the tiles, images and glyphs that were in the old one, so the
+   * whole style is rebuilt. If the context doesn't come back while the page is
+   * visible, the page is reloaded: the URL holds the round and session.
+   */
+  watchContextLoss() {
+    this.map.on('webglcontextlost', () => {
+      this.contextLost = true;
+      this.scheduleContextCheck();
+    });
+    this.map.on('webglcontextrestored', () => {
+      this.contextLost = false;
+      this.clearContextCheck();
+      if (this.onContextRestored) this.onContextRestored();
+    });
+    document.addEventListener('visibilitychange', this.handleVisibilityChange);
+  }
+
+  handleVisibilityChange() {
+    if (this.contextLost) this.scheduleContextCheck();
+  }
+
+  /** Gives the browser a few seconds of visibility to restore the context. */
+  scheduleContextCheck() {
+    this.clearContextCheck();
+    if (document.visibilityState !== 'visible') return;
+    this.contextRestoreTimer = setTimeout(() => {
+      this.contextRestoreTimer = null;
+      if (this.contextLost && document.visibilityState === 'visible') this.reloadAfterContextLoss();
+    }, CONTEXT_RESTORE_WAIT_MS);
+  }
+
+  clearContextCheck() {
+    if (this.contextRestoreTimer) {
+      clearTimeout(this.contextRestoreTimer);
+      this.contextRestoreTimer = null;
+    }
+  }
+
+  /** Reloads at most once a minute, so a device that keeps losing WebGL doesn't loop. */
+  reloadAfterContextLoss() {
+    try {
+      const last = Number(sessionStorage.getItem(CONTEXT_RELOAD_KEY));
+      if (Number.isFinite(last) && Date.now() - last < CONTEXT_RELOAD_MIN_INTERVAL_MS) return;
+      sessionStorage.setItem(CONTEXT_RELOAD_KEY, String(Date.now()));
+    } catch {
+      // Without storage there's no loop guard: leave the map as it is
+      return;
+    }
+    this.reloadPage();
   }
 
   /** Drops the idle retry armed by a previous setView, so only the latest circuit is flown to. */

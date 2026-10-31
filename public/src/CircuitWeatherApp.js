@@ -125,6 +125,9 @@ export class CircuitWeatherApp {
     async initMapComponents() {
         const map = await this.mapManager.init();
         this.map = map;
+        // A restored WebGL context needs the style and every layer drawn again
+        this.mapManager.onContextRestored = () => this.handleThemeChange(
+            this.themeManager?.theme || 'light', { rebuild: true });
 
         // Sidebar manager for mobile
         this.sidebarManager = new SidebarManager();
@@ -649,8 +652,8 @@ export class CircuitWeatherApp {
         document.documentElement.style.setProperty('--mobile-controls-offset', `${controlsBottom}px`);
     }
 
-    async handleThemeChange(theme) {
-        await this.mapManager.setTheme(theme);
+    async handleThemeChange(theme, { rebuild = false } = {}) {
+        await this.mapManager.setTheme(theme, { rebuild });
         if (this.rangeCircles) {
             this.rangeCircles.updateTheme();
             if (this.currentCircuitCenter) {
