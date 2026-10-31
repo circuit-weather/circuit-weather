@@ -2640,6 +2640,58 @@ describe('CircuitWeatherApp series selection', () => {
             expect(app.races).toHaveLength(1);
         });
 
+        it('ignores a series that finishes loading after the visitor switched again', async () => {
+            // f2 is slow, f3 fast: f2's late answer must not replace f3's rounds
+            let resolveF2;
+            app.seriesApi = seriesApi(() => ({ races: [f2Race(1)], complete: true }));
+            app.seriesApi.getSchedule.mockImplementationOnce(() => new Promise(r => { resolveF2 = r; }));
+
+            const slow = app.selectSeries('f2');
+            expect(await app.selectSeries('f3')).toBe(true);
+            app.ui.loadingOverlay.classList.toggle.mockClear();
+            resolveF2({ races: [f2Race(7), f2Race(8)], complete: true });
+
+            expect(await slow).toBeNull();
+            expect(app.series).toBe('f3');
+            expect(app.races.map(r => r.round)).toEqual(['1']);
+            // Nor does it touch the loading overlay
+            expect(app.ui.loadingOverlay.classList.toggle).not.toHaveBeenCalled();
+        });
+
+        it('ignores a superseded series that fails to load', async () => {
+            vi.spyOn(console, 'error').mockImplementation(() => {});
+            let rejectF2;
+            app.seriesApi = seriesApi(() => ({ races: [f2Race(1)], complete: true }));
+            app.seriesApi.getSchedule.mockImplementationOnce(() => new Promise((_, reject) => { rejectF2 = reject; }));
+
+            const slow = app.selectSeries('f2');
+            await app.selectSeries('f3');
+            rejectF2(new Error('down'));
+
+            expect(await slow).toBeNull();
+            expect(app.series).toBe('f3');
+            expect(app.races).toHaveLength(1);
+            expect(app.scheduleFailure).toBeNull();
+        });
+
+        it('only the last series picked selects a round and changes the URL', async () => {
+            let resolveF2;
+            app.seriesApi = seriesApi(() => ({ races: [f2Race(1)], complete: true }));
+            app.seriesApi.getSchedule.mockImplementationOnce(() => new Promise(r => { resolveF2 = r; }));
+            app.autoSelectNextRound = vi.fn();
+            app.router = { navigate: vi.fn() };
+            app.bindEvents();
+            const change = app.ui.seriesSelect.addEventListener.mock.calls.find(([type]) => type === 'change')[1];
+
+            const first = change({ target: { value: 'f2' } });
+            await change({ target: { value: 'f3' } });
+            resolveF2({ races: [f2Race(7)], complete: true });
+            await first;
+
+            expect(app.router.navigate.mock.calls).toEqual([['f3', null, null]]);
+            expect(app.autoSelectNextRound).toHaveBeenCalledTimes(1);
+        });
+
         it('ignores unsupported series', async () => {
             expect(await app.selectSeries('btcc')).toBe(false);
             expect(app.series).toBe('f1');

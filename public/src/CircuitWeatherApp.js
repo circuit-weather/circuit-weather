@@ -247,34 +247,58 @@ export class CircuitWeatherApp {
     }
 
     /**
+     * Starts a schedule load. Only the latest one may change the app: switching
+     * series quickly leaves earlier loads in flight, and one finishing late would
+     * otherwise swap its rounds in under the series now picked.
+     * @returns {number} token for isCurrentScheduleLoad
+     */
+    beginScheduleLoad() {
+        this.scheduleLoadToken = (this.scheduleLoadToken ?? 0) + 1;
+        return this.scheduleLoadToken;
+    }
+
+    isCurrentScheduleLoad(token) {
+        return token === this.scheduleLoadToken;
+    }
+
+    /**
      * Loads a series' schedule into this.races.
+     * @returns {Promise<boolean>} false if a later load superseded this one (nothing changed)
      * @throws when every source for the series fails
      */
-    async loadSchedule(series) {
+    async loadSchedule(series, token = this.beginScheduleLoad()) {
         this.clearScheduleRetry();
+        let races;
+        let complete = true;
         if (series === 'f1') {
             const schedule = await this.f1Api.getSchedule();
-            this.races = schedule.map(r => this.f1Api.parseRace(r));
+            if (!this.isCurrentScheduleLoad(token)) return false;
+            races = schedule.map(r => this.f1Api.parseRace(r));
         } else {
-            const { races, complete } = await this.seriesApi.getSchedule(series);
-            this.races = races.map(r => this.seriesApi.parseRace(r));
-            if (!complete) this.scheduleScheduleRetry(series, 1);
+            const result = await this.seriesApi.getSchedule(series);
+            if (!this.isCurrentScheduleLoad(token)) return false;
+            races = result.races.map(r => this.seriesApi.parseRace(r));
+            complete = result.complete;
         }
+        this.races = races;
+        if (!complete) this.scheduleScheduleRetry(series, 1);
         this.series = series;
         this.hideScheduleError();
         this.updateDataSourceNotice();
+        return true;
     }
 
     /**
      * Loads a series' schedule, showing a non-blocking error if every source fails.
      * Other series retry automatically (TheSportsDB may just be rate limiting).
-     * @returns {Promise<boolean>} false if the schedule could not be loaded
+     * @returns {Promise<boolean|null>} false if the schedule could not be loaded,
+     *   null if a later load superseded this one (nothing changed)
      */
-    async tryLoadSchedule(series) {
+    async tryLoadSchedule(series, token = this.beginScheduleLoad()) {
         try {
-            await this.loadSchedule(series);
-            return true;
+            return (await this.loadSchedule(series, token)) ? true : null;
         } catch (error) {
+            if (!this.isCurrentScheduleLoad(token)) return null;
             console.error('Schedule load failed:', error);
             // Still switch, so the dropdown and URL agree and the user can pick again
             this.races = [];
@@ -333,10 +357,11 @@ export class CircuitWeatherApp {
     async refreshPartialSchedule(series, attempt) {
         this.scheduleRetryTimer = null;
         if (this.series !== series) return;
+        const token = this.scheduleLoadToken;
         try {
             const { races, complete } = await this.seriesApi.getSchedule(series, { refresh: true });
-            // The series may have changed while this was loading
-            if (this.series !== series) return;
+            // The series may have changed (or be changing) while this was loading
+            if (this.series !== series || !this.isCurrentScheduleLoad(token)) return;
             const recovered = this.scheduleFailure !== null;
             const parsed = races.map(r => this.seriesApi.parseRace(r));
             // Keep the selected race object: it holds the session the user picked
@@ -352,17 +377,20 @@ export class CircuitWeatherApp {
             if (!complete && attempt < SCHEDULE_MAX_RETRIES) this.scheduleScheduleRetry(series, attempt + 1);
         } catch (error) {
             console.warn('Schedule refresh failed:', error);
-            if (this.series === series && attempt < SCHEDULE_MAX_RETRIES) this.scheduleScheduleRetry(series, attempt + 1);
+            if (this.series === series && this.isCurrentScheduleLoad(token) && attempt < SCHEDULE_MAX_RETRIES) this.scheduleScheduleRetry(series, attempt + 1);
         }
     }
 
     /**
      * Switches to another series: clears the current round, loads the new
      * schedule and refills the round list.
-     * @returns {Promise<boolean>} false if the schedule could not be loaded
+     * @returns {Promise<boolean|null>} false if the schedule could not be loaded,
+     *   null if the visitor switched again before it loaded (leave everything to
+     *   that later switch)
      */
     async selectSeries(series) {
         if (!this.isSupportedSeries(series)) return false;
+        const token = this.beginScheduleLoad();
         this.clearRoundSelection();
         this.races = [];
         // Don't leave the previous series' rounds selectable while loading
@@ -372,10 +400,12 @@ export class CircuitWeatherApp {
         this.showLoading(true, i18n.t('loading.schedule'));
         let loaded;
         try {
-            loaded = await this.tryLoadSchedule(series);
+            loaded = await this.tryLoadSchedule(series, token);
         } finally {
-            this.showLoading(false);
+            // A superseded load leaves the overlay to the load still running
+            if (this.isCurrentScheduleLoad(token)) this.showLoading(false);
         }
+        if (loaded === null) return null;
         this.populateRoundSelect();
         return loaded;
     }
@@ -699,12 +729,11 @@ export class CircuitWeatherApp {
                 const series = e.target.value;
                 // Only a choice made here is remembered, not a series opened from a shared link
                 if (this.isSupportedSeries(series)) SafeStorage.setItem(SERIES_STORAGE_KEY, series);
-                if (await this.selectSeries(series)) {
-                    this.router.navigate(series, null, null);
-                    this.autoSelectNextRound();
-                } else {
-                    this.router.navigate(series, null, null);
-                }
+                const loaded = await this.selectSeries(series);
+                // Picked another series while this one loaded: that pick wins
+                if (loaded === null) return;
+                this.router.navigate(series, null, null);
+                if (loaded) this.autoSelectNextRound();
                 this.autoAdvance?.noteManualSelection();
             });
         }

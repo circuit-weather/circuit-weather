@@ -55,6 +55,11 @@ export const SEASON_TTL_MS = DAY_MS;
 export const SEASON_END_TTL_MS = DAY_MS;
 export const NEXT_ROUND_TTL_MS = 6 * HOUR_MS;
 export const VENUE_TTL_MS = 90 * DAY_MS;
+// How often a finished season checks whether next season's opener is listed yet
+export const ROLLOVER_TTL_MS = DAY_MS;
+// A season counts as finished this long after its last event starts, so a final
+// race (or a 24-hour race) is never swapped out while it runs
+const SEASON_OVER_AFTER_MS = 2 * DAY_MS;
 // Assembled response caching
 const COMPLETE_RESPONSE_TTL = 15 * 60;
 const PARTIAL_RESPONSE_TTL = 60;
@@ -85,6 +90,7 @@ export function emptyState(series) {
     season: null, seasonFetchedAt: 0,
     nextRound: null, nextFetchedAt: 0,
     lastRound: null, endFetchedAt: 0,
+    rolloverFetchedAt: 0,
     rounds: {}, venues: {},
   };
 }
@@ -184,6 +190,30 @@ function venuesToFetch(state, now) {
 
 const seasonYear = (season) => Number(season.slice(0, 4));
 
+/** The season after this one: '2026' → '2027', '2025-2026' → '2026-2027'. */
+export function followingSeason(season) {
+  if (typeof season !== 'string' || !SEASON_REGEX.test(season)) return null;
+  const [start, end] = season.split('-').map(Number);
+  return end ? `${start + 1}-${end + 1}` : String(start + 1);
+}
+
+/**
+ * Whether every round of the season is known and its last event is well past.
+ */
+export function isSeasonOver(state, now) {
+  if (state.lastRound === null || state.lastRound < 1) return false;
+  let last = -Infinity;
+  for (let r = 1; r <= state.lastRound; r++) {
+    const entry = state.rounds[r];
+    if (!entry) return false;
+    for (const e of entry.events) {
+      const t = Date.parse(e.timestamp ? `${e.timestamp}Z` : `${e.date}T00:00:00Z`);
+      if (Number.isFinite(t) && t > last) last = t;
+    }
+  }
+  return Number.isFinite(last) && now >= last + SEASON_OVER_AFTER_MS;
+}
+
 /**
  * The latest valid season given: the league's current season plus the seasons of
  * its finished events. Some leagues (e.g. IMSA) leave strCurrentSeason on last
@@ -203,14 +233,17 @@ async function refreshLeague(state, leagueId, now, spend) {
     const league = await spend(`lookupleague.php?id=${leagueId}`);
     const past = league.limited ? league : await spend(`eventspastleague.php?id=${leagueId}`);
     const pastEvents = past.ok && Array.isArray(past.data?.events) ? past.data.events : [];
+    // The season already held stays unless a later one is listed, so moving on to
+    // next season's opener (see rollOverSeason) isn't undone by strCurrentSeason
     const season = pickSeason(
+      state.season,
       league.ok ? league.data?.leagues?.[0]?.strCurrentSeason : null,
       ...pastEvents.map(e => e?.strSeason),
     );
     if (season) {
       if (season !== state.season) {
         // New season: venues stay valid, rounds do not
-        Object.assign(state, { season, rounds: {}, lastRound: null, endFetchedAt: 0, nextRound: null, nextFetchedAt: 0 });
+        Object.assign(state, { season, rounds: {}, lastRound: null, endFetchedAt: 0, nextRound: null, nextFetchedAt: 0, rolloverFetchedAt: 0 });
       }
       state.seasonFetchedAt = now;
     }
@@ -226,6 +259,30 @@ async function refreshLeague(state, leagueId, now, spend) {
       state.nextFetchedAt = now;
     }
   }
+}
+
+/**
+ * Once the season is over, moves on to next season as soon as TheSportsDB lists
+ * its first round, so that round is the next one rather than nothing. Checked
+ * daily: next season's calendar can appear any time over the break.
+ */
+async function rollOverSeason(state, leagueId, now, spend) {
+  if (!isSeasonOver(state, now) || now - (state.rolloverFetchedAt ?? 0) < ROLLOVER_TTL_MS) return;
+  const next = followingSeason(state.season);
+  if (!next) return;
+  const res = await spend(`eventsround.php?id=${leagueId}&r=1&s=${next}`);
+  if (!res.ok) return;
+  state.rolloverFetchedAt = now;
+  const events = slimEvents(res.data?.events);
+  if (events.length === 0) return;
+  // New season: venues stay valid, rounds do not
+  Object.assign(state, {
+    season: next, seasonFetchedAt: now,
+    rounds: { 1: { fetchedAt: now, events } },
+    lastRound: null, endFetchedAt: 0,
+    nextRound: 1, nextFetchedAt: now,
+    rolloverFetchedAt: 0,
+  });
 }
 
 /**
@@ -249,6 +306,7 @@ export async function fillState(state, leagueId, env, now) {
   };
 
   await refreshLeague(state, leagueId, now, spend);
+  if (!limited) await rollOverSeason(state, leagueId, now, spend);
   if (!state.season) return { changed: JSON.stringify(state) !== before, limited, failure };
 
   const attemptedVenues = new Set();

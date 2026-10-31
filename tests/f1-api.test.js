@@ -472,6 +472,41 @@ describe('F1API', () => {
             await expect(api.fetchFromJolpica()).rejects.toThrow('Failed to fetch');
         });
 
+        describe('after the last race of the season', () => {
+            const season = (year, races) => ({ ok: true, json: () => Promise.resolve({ MRData: { RaceTable: { season: String(year), Races: races } } }) });
+            const finale = { round: '24', raceName: 'Abu Dhabi GP', date: '2026-12-06', time: '13:00:00Z' };
+            const opener = { round: '1', raceName: 'Australian GP', date: '2027-03-07', time: '04:00:00Z' };
+
+            beforeEach(() => {
+                vi.useFakeTimers({ toFake: ['Date'] });
+                vi.setSystemTime(Date.parse('2026-12-10T00:00:00Z'));
+            });
+
+            afterEach(() => vi.useRealTimers());
+
+            it("uses next season's calendar once it is published", async () => {
+                mockFetch.mockResolvedValueOnce(season(2026, [finale])).mockResolvedValueOnce(season(2027, [opener]));
+                expect(await api.fetchFromJolpica()).toEqual([opener]);
+                expect(mockFetch.mock.calls.map(c => c[0])).toEqual(['/api/f1/current.json', '/api/f1/2027.json']);
+            });
+
+            it("keeps the finished season while next season's is not out", async () => {
+                vi.spyOn(console, 'warn').mockImplementation(() => {});
+                mockFetch.mockResolvedValueOnce(season(2026, [finale])).mockResolvedValueOnce(season(2027, []));
+                expect(await api.fetchFromJolpica()).toEqual([finale]);
+
+                mockFetch.mockResolvedValueOnce(season(2026, [finale])).mockResolvedValueOnce({ ok: false, status: 503 });
+                expect(await api.fetchFromJolpica()).toEqual([finale]);
+            });
+
+            it('does not look ahead while the season is still running', async () => {
+                vi.setSystemTime(Date.parse('2026-12-01T00:00:00Z'));
+                mockFetch.mockResolvedValueOnce(season(2026, [finale]));
+                expect(await api.fetchFromJolpica()).toEqual([finale]);
+                expect(mockFetch).toHaveBeenCalledTimes(1);
+            });
+        });
+
         it('returns empty array if MRData or RaceTable or Races are undefined', async () => {
             mockFetch.mockResolvedValueOnce({
                 ok: true,

@@ -12,7 +12,10 @@ The leagues in use are listed in `SERIES` in `src/thesportsdb.js`.
 - [ ] **`strCurrentSeason`** is the current season, e.g. `2026`. The Worker falls back to the season
       of the latest finished event (`eventspastleague.php`), but only once a round has been run.
 - [ ] **Next season is set up early.** Before the opener, next year's events exist with the right
-      `strSeason` and round numbers. Otherwise the series shows no schedule over the off-season.
+      `strSeason` and round numbers. Two days after a season's last event, the Worker checks daily
+      for round 1 of the following season (`2026` → `2027`, `2025-2026` → `2026-2027`) and moves
+      on to it as soon as it is listed, so it becomes the next round. Until then the finished season
+      is shown with no next round.
 
 ## Rounds
 
@@ -90,6 +93,7 @@ The Worker keeps everything it fetches and refreshes it on its own schedule
 | An event's venue ID changed to a venue the Worker hasn't seen | Looked up straight after that round is re-read |
 | Coordinates (`strMap`) of a venue already fetched | Up to 90 days |
 | The league's current season | Daily |
+| Next season's round 1, once the season is over | Daily, until it is listed |
 
 After that, the Worker's response cache holds a complete schedule for 15 minutes, and each visitor's
 browser keeps it for up to 7 days.

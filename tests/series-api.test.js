@@ -27,9 +27,13 @@ describe('SeriesAPI', () => {
         mockFetch = vi.fn();
         vi.stubGlobal('fetch', mockFetch);
         vi.spyOn(console, 'warn').mockImplementation(() => {});
+        // RACE is in November 2026: keep it upcoming
+        vi.useFakeTimers({ toFake: ['Date'] });
+        vi.setSystemTime(Date.parse('2026-10-31T00:00:00Z'));
     });
 
     afterEach(() => {
+        vi.useRealTimers();
         vi.restoreAllMocks();
         vi.unstubAllGlobals();
     });
@@ -62,6 +66,15 @@ describe('SeriesAPI', () => {
         store.series_schedule_cache = JSON.stringify({ f2: { timestamp: Date.now() - 6 * 24 * 3600 * 1000, races: [RACE], complete: true } });
         expect((await api.getSchedule('f2')).races).toEqual([RACE]);
         expect(mockFetch).not.toHaveBeenCalled();
+    });
+
+    it('re-fetches a stored schedule once its season is over', async () => {
+        vi.setSystemTime(Date.parse('2026-12-01T00:00:00Z'));
+        store.series_schedule_cache = JSON.stringify({ f2: { timestamp: Date.now() - 24 * 3600 * 1000, races: [RACE], complete: true } });
+        const opener = { ...RACE, round: '1', date: '2027-03-07' };
+        respond({ complete: true, races: [opener] });
+        expect((await api.getSchedule('f2')).races).toEqual([opener]);
+        expect(mockFetch).toHaveBeenCalledTimes(1);
     });
 
     it('only uses a stored partial schedule for a few minutes', async () => {
