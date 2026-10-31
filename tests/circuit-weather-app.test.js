@@ -41,6 +41,9 @@ const createMockElement = (id) => {
     return el;
 };
 
+// The forecast dashboard opens with the rain verdict when a session is selected
+const childWithClass = (el, className) => el.childNodes.find(child => child.className === className);
+
 const documentMock = {
     title: 'Circuit Weather — Live F1 Race Weather Radar & Forecasts',
     getElementById: vi.fn((id) => createMockElement(id)),
@@ -917,7 +920,7 @@ describe('CircuitWeatherApp Pure Methods', () => {
             app.renderForecast(weather, sessionTime, 'race');
 
             const dashboard = app.ui.forecastContent.childNodes[0];
-            const dl = dashboard.childNodes[0]; // dl
+            const dl = childWithClass(dashboard, 'weather-current');
             const windDiv = dl.childNodes[2]; // wind metric div
             const ddWindDir = windDiv.childNodes[2]; // wind dir sub-element
 
@@ -950,7 +953,8 @@ describe('CircuitWeatherApp Pure Methods', () => {
             };
             app.renderForecast(weather, new Date(1700000000 * 1000), 'race');
 
-            const ddWindDir = app.ui.forecastContent.childNodes[0].childNodes[0].childNodes[2].childNodes[2];
+            const dl = childWithClass(app.ui.forecastContent.childNodes[0], 'weather-current');
+            const ddWindDir = dl.childNodes[2].childNodes[2];
             const svg = ddWindDir.childNodes[1];
             const styleCall = svg.setAttribute.mock.calls.find(([attr]) => attr === 'style');
             expect(styleCall[1]).toBe('transform: rotate(270deg); width: 14px; height: 14px;');
@@ -1016,7 +1020,7 @@ describe('CircuitWeatherApp Pure Methods', () => {
             app.renderForecast(weather, sessionTime, 'race');
 
             const dashboard = app.ui.forecastContent.childNodes[0];
-            const dl = dashboard.childNodes[0];
+            const dl = childWithClass(dashboard, 'weather-current');
             const divTemp = dl.childNodes[0];
             const ddTemp = divTemp.childNodes[1];
 
@@ -1025,7 +1029,7 @@ describe('CircuitWeatherApp Pure Methods', () => {
             expect(ddTemp.textContent).toBe('26°C');
 
             // 24 should still be in the timeline, but not the primary temp
-            const section = dashboard.childNodes[1];
+            const section = childWithClass(dashboard, 'weather-timeline');
             const ol = section.childNodes[0];
             const firstHourLi = ol.childNodes[0];
             // Row cells: time, condition, rain, temperature
@@ -1655,6 +1659,43 @@ describe('CircuitWeatherApp Pure Methods', () => {
             app.weatherAlerts = null;
             expect(() => app.centreOnCircuit(1, 1)).not.toThrow();
         });
+
+        it('reads radar at the circuit and shows it on both race info cards', () => {
+            app.mapManager.setView = vi.fn();
+            app.rangeCircles = { draw: vi.fn() };
+            app.recentreControl = null;
+            app.trackRain = { setLocation: vi.fn() };
+            app.centreOnCircuit(52, -1);
+            expect(app.trackRain.setLocation).toHaveBeenCalledWith(52, -1);
+
+            app.ui.trackRain = createMockElement('trackRain');
+            app.ui.mobileTrackRain = createMockElement('mobileTrackRain');
+            app.renderTrackRain({ state: 'approaching', minutes: 25 });
+            for (const element of [app.ui.trackRain, app.ui.mobileTrackRain]) {
+                expect(element.hidden).toBe(false);
+                expect(element.setAttribute).toHaveBeenCalledWith('data-state', 'approaching');
+                expect(element.textContent).toBe('Rain expected at the track in about 25 min');
+            }
+
+            app.renderTrackRain({ state: 'raining-easing', minutes: 10 });
+            expect(app.ui.trackRain.textContent).toBe('Raining at the track, easing in about 10 min');
+
+            // Re-rendered with the new language
+            app.ui.trackRain.textContent = '';
+            app.handleLanguageChange();
+            expect(app.ui.trackRain.textContent).toBe('Raining at the track, easing in about 10 min');
+
+            app.renderTrackRain(null);
+            expect(app.ui.trackRain.hidden).toBe(true);
+
+            app.ui.mobileTrackRain = null;
+            app.trackRain = null;
+            expect(() => {
+                app.renderTrackRain({ state: 'dry' });
+                app.centreOnCircuit(1, 1);
+            }).not.toThrow();
+            expect(app.ui.trackRain.textContent).toBe('No rain expected at the track in the next hour');
+        });
     });
 
     // ---------------------------------------------------------------
@@ -1713,6 +1754,7 @@ describe('CircuitWeatherApp Pure Methods', () => {
             app.trackLayer.clear = vi.fn();
             app.rangeCircles.clear = vi.fn();
             app.weatherAlerts = { setLocation: vi.fn() };
+            app.trackRain = { setLocation: vi.fn() };
             app.ui.forecastSection = createMockElement('forecastSection');
             app.ui.raceInfoBanner = createMockElement('raceInfoBanner');
             app.ui.sessionEmptyState = createMockElement('sessionEmptyState');
@@ -1734,6 +1776,7 @@ describe('CircuitWeatherApp Pure Methods', () => {
             expect(app.trackLayer.clear).toHaveBeenCalled();
             expect(app.rangeCircles.clear).toHaveBeenCalled();
             expect(app.weatherAlerts.setLocation).toHaveBeenCalledWith(null, null);
+            expect(app.trackRain.setLocation).toHaveBeenCalledWith(null, null);
             expect(app.stopSessionForecastInterval).toHaveBeenCalled();
             expect(app.updatePageMetadata).toHaveBeenCalled();
             expect(app.ui.sessionSelect.disabled).toBe(true);
@@ -1778,6 +1821,19 @@ describe('CircuitWeatherApp Pure Methods', () => {
             extendArg.onRemove({});
             expect(app.mapWeatherWidget.onAdd).toHaveBeenCalled();
             expect(app.mapWeatherWidget.onRemove).toHaveBeenCalled();
+        });
+
+        it('passes radar metadata to the layer settings and the track rain reader', async () => {
+            app.mapManager.init = vi.fn().mockResolvedValue({ hasLayer: false, addControl: vi.fn() });
+            await app.init();
+
+            const { onMetadata } = WeatherRadar.mock.calls.at(-1)[1];
+            app.layerSettings.applyMetadata = vi.fn();
+            app.trackRain.setMetadata = vi.fn();
+            const metadata = { provider: 'librewxr', frames: [], pastCount: 0 };
+            onMetadata(metadata);
+            expect(app.layerSettings.applyMetadata).toHaveBeenCalledWith(metadata);
+            expect(app.trackRain.setMetadata).toHaveBeenCalledWith(metadata);
         });
 
         it('successfully initializes components and fetches schedule', async () => {

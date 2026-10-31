@@ -197,6 +197,8 @@
                         <!-- Scout: Upgraded generic div to semantic p to provide better structural meaning to textual content for crawlers -->
                         <p class="race-info-circuit" id="raceInfoCircuit"></p>
                     </hgroup>
+                    <!-- Radar nowcast at the track (LibreWXR only); not a live region, as the minutes tick down -->
+                    <p class="track-rain" id="trackRain" title="From the experimental radar nowcast" data-i18n-attr="title:trackRain.source" hidden></p>
                 </section>
 
 
@@ -472,6 +474,7 @@
                         <!-- Scout: Upgraded generic span to semantic p to provide better structural meaning to textual content for crawlers -->
                         <p id="mobileRaceInfoCircuit"></p>
                     </hgroup>
+                    <p class="track-rain" id="mobileTrackRain" title="From the experimental radar nowcast" data-i18n-attr="title:trackRain.source" hidden></p>
                 </section>
             </div>
 

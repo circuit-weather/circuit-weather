@@ -7,6 +7,7 @@ import { WeatherRadar } from './map/WeatherRadar.js';
 import { RangeCircles } from './map/RangeCircles.js';
 import { WindOverlay } from './map/WindOverlay.js';
 import { WeatherAlerts } from './map/WeatherAlerts.js';
+import { TrackRain } from './map/TrackRain.js';
 import { MapWeatherWidget } from './map/MapWeatherWidget.js';
 import { RecentreControl } from './map/RecentreControl.js';
 import { CountdownTimer } from './ui/CountdownTimer.js';
@@ -25,6 +26,13 @@ import { i18n } from './i18n/index.js';
 // after the Worker's 60-second cache, a few times at most
 const SCHEDULE_RETRY_MS = 65000;
 const SCHEDULE_MAX_RETRIES = 5;
+
+const TRACK_RAIN_KEYS = Object.freeze({
+    dry: 'trackRain.dry',
+    approaching: 'trackRain.approaching',
+    raining: 'trackRain.raining',
+    'raining-easing': 'trackRain.rainingEasing',
+});
 
 const sessionTimeFormatter = new Intl.DateTimeFormat(undefined, {
     weekday: 'short',
@@ -91,6 +99,9 @@ export class CircuitWeatherApp {
             mobileCountryFlag: document.getElementById('mobileCountryFlag'),
             mobileRaceInfoName: document.getElementById('mobileRaceInfoName'),
             mobileRaceInfoCircuit: document.getElementById('mobileRaceInfoCircuit'),
+            // Radar nowcast at the track (sidebar and mobile race info)
+            trackRain: document.getElementById('trackRain'),
+            mobileTrackRain: document.getElementById('mobileTrackRain'),
             mobileHeader: document.querySelector('.mobile-header'),
             radarControls: document.getElementById('radarControls'),
             mapContainer: document.getElementById('map'),
@@ -120,8 +131,13 @@ export class CircuitWeatherApp {
         this.trackLayer = new TrackLayer(map);
         this.layerSettings = new LayerSettings((key, settings) => this.handleLayerSettingChange(key, settings));
         const layers = this.layerSettings.get();
+        this.trackRainStatus = null;
+        this.trackRain = new TrackRain({ onChange: (status) => this.renderTrackRain(status) });
         this.radar = new WeatherRadar(map, {
-            onMetadata: (metadata) => this.layerSettings.applyMetadata(metadata),
+            onMetadata: (metadata) => {
+                this.layerSettings.applyMetadata(metadata);
+                this.trackRain.setMetadata(metadata);
+            },
         });
         this.radar.setTileOptions(this.layerSettings.getTileOptions());
         this.radar.setSatelliteEnabled(layers.satellite);
@@ -627,6 +643,7 @@ export class CircuitWeatherApp {
         this.trackLayer.clear();
         this.rangeCircles.clear();
         if (this.weatherAlerts) this.weatherAlerts.setLocation(null, null);
+        if (this.trackRain) this.trackRain.setLocation(null, null);
 
         // Clear the forecast update since no session is active anymore
         this.stopSessionForecastInterval();
@@ -750,6 +767,24 @@ export class CircuitWeatherApp {
         }
         if (this.weatherAlerts) {
             this.weatherAlerts.setLocation(lat, lng);
+        }
+        if (this.trackRain) {
+            this.trackRain.setLocation(lat, lng);
+        }
+    }
+
+    /**
+     * Shows the radar nowcast at the track on both race info cards.
+     * @param {{state: string, minutes?: number}|null} status - null hides it
+     */
+    renderTrackRain(status) {
+        this.trackRainStatus = status;
+        for (const element of [this.ui.trackRain, this.ui.mobileTrackRain]) {
+            if (!element) continue;
+            element.hidden = !status;
+            if (!status) continue;
+            element.setAttribute('data-state', status.state);
+            element.textContent = i18n.t(TRACK_RAIN_KEYS[status.state], { minutes: status.minutes });
         }
     }
 
@@ -1110,7 +1145,8 @@ export class CircuitWeatherApp {
         if (content) content.style.display = 'block';
         if (unavailable) unavailable.style.display = 'none';
 
-        const dashboard = this.forecastRenderer.createForecastDashboard(weather, sessionTime, this.weatherClient);
+        const dashboard = this.forecastRenderer.createForecastDashboard(
+            weather, sessionTime, this.weatherClient, this.selectedSession);
 
         if (content) {
             content.textContent = '';
@@ -1193,6 +1229,7 @@ export class CircuitWeatherApp {
         }
 
         // Update other translated UI elements
+        this.renderTrackRain(this.trackRainStatus);
         this.updatePageMetadata();
     }
 

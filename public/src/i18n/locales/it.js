@@ -53,6 +53,9 @@ export const it = {
       "Overlay vento in pausa allo zoom {{zoom}} — avvicina per vedere il vento",
   },
   forecast: {
+    verdictDry: "Pioggia improbabile durante {{session}}",
+    verdictPossible: "Possibile pioggia durante {{session}}: {{pct}}% verso le {{time}}",
+    verdictLikely: "Pioggia probabile durante {{session}}: {{pct}}% verso le {{time}}",
     start: "Inizio",
     heading: "Previsioni sessione",
     hourlyForecast: "Previsioni orarie",
@@ -88,6 +91,13 @@ export const it = {
     stormCells: "Celle temporalesche",
     lightning: "Fulmini",
     lightningHint: "I dati sui fulmini coprono solo le Americhe.",
+  },
+  trackRain: {
+    dry: "Nessuna pioggia prevista in pista nella prossima ora",
+    approaching: "Pioggia prevista in pista tra circa {{minutes}} min",
+    raining: "Piove in pista",
+    rainingEasing: "Piove in pista, in attenuazione tra circa {{minutes}} min",
+    source: "Dal nowcast radar sperimentale",
   },
   alerts: {
     heading: "Allerte Meteo",

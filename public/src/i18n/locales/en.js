@@ -53,6 +53,9 @@ export const en = {
       "Wind overlay paused at zoom {{zoom}} — zoom in to see wind",
   },
   forecast: {
+    verdictDry: "Rain unlikely during {{session}}",
+    verdictPossible: "Chance of rain during {{session}}: {{pct}}% around {{time}}",
+    verdictLikely: "Rain likely during {{session}}: {{pct}}% around {{time}}",
     start: "Start",
     heading: "Session Forecast",
     hourlyForecast: "Hourly forecast",
@@ -88,6 +91,13 @@ export const en = {
     stormCells: "Storm cells",
     lightning: "Lightning",
     lightningHint: "Lightning data covers the Americas only.",
+  },
+  trackRain: {
+    dry: "No rain expected at the track in the next hour",
+    approaching: "Rain expected at the track in about {{minutes}} min",
+    raining: "Raining at the track",
+    rainingEasing: "Raining at the track, easing in about {{minutes}} min",
+    source: "From the experimental radar nowcast",
   },
   alerts: {
     heading: "Weather Warnings",

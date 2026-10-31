@@ -49,6 +49,9 @@ export const zhCN = {
     windZoomDisabled: "缩放{{zoom}}级时风场已暂停 — 放大以查看风向",
   },
   forecast: {
+    verdictDry: "{{session}}期间下雨可能性低",
+    verdictPossible: "{{session}}期间可能下雨：{{time}}前后 {{pct}}%",
+    verdictLikely: "{{session}}期间很可能下雨：{{time}}前后 {{pct}}%",
     start: "开始",
     heading: "赛段天气预报",
     hourlyForecast: "逐小时预报",
@@ -84,6 +87,13 @@ export const zhCN = {
     stormCells: "雷暴单体",
     lightning: "闪电",
     lightningHint: "闪电数据仅覆盖美洲地区。",
+  },
+  trackRain: {
+    dry: "未来一小时赛道预计无雨",
+    approaching: "预计约 {{minutes}} 分钟后赛道下雨",
+    raining: "赛道正在下雨",
+    rainingEasing: "赛道正在下雨，约 {{minutes}} 分钟后减弱",
+    source: "基于实验性雷达临近预报",
   },
   alerts: {
     heading: "天气预警",

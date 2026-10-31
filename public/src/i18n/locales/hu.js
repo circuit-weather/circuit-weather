@@ -53,6 +53,9 @@ export const hu = {
       "Szélréteg {{zoom}} nagyítási szinten szüneteltetve — közelíts a szél megtekintéséhez",
   },
   forecast: {
+    verdictDry: "Eső nem valószínű: {{session}}",
+    verdictPossible: "Eső lehetséges: {{session}}, {{pct}}% {{time}} körül",
+    verdictLikely: "Eső valószínű: {{session}}, {{pct}}% {{time}} körül",
     start: "Rajt",
     heading: "Esemény előrejelzése",
     hourlyForecast: "Óránkénti előrejelzés",
@@ -90,6 +93,13 @@ export const hu = {
     stormCells: "Zivatarcellák",
     lightning: "Villámok",
     lightningHint: "A villámadatok csak az amerikai kontinenst fedik le.",
+  },
+  trackRain: {
+    dry: "A következő órában nem várható eső a pályán",
+    approaching: "Kb. {{minutes}} perc múlva eső várható a pályán",
+    raining: "Esik a pályán",
+    rainingEasing: "Esik a pályán, kb. {{minutes}} perc múlva enyhül",
+    source: "A kísérleti radaros rövid távú előrejelzés alapján",
   },
   alerts: {
     heading: "Időjárási Figyelmeztetések",

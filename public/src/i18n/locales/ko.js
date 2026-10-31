@@ -53,6 +53,9 @@ export const ko = {
       "확대 수준 {{zoom}}에서 바람 오버레이 일시 중지됨 — 확대하여 바람 보기",
   },
   forecast: {
+    verdictDry: "{{session}} 중 비 가능성 낮음",
+    verdictPossible: "{{session}} 중 비 가능성: {{time}}경 {{pct}}%",
+    verdictLikely: "{{session}} 중 비 예상: {{time}}경 {{pct}}%",
     start: "시작",
     heading: "세션 일기 예보",
     hourlyForecast: "시간별 일기 예보",
@@ -88,6 +91,13 @@ export const ko = {
     stormCells: "뇌우 세포",
     lightning: "낙뢰",
     lightningHint: "낙뢰 데이터는 아메리카 대륙만 제공됩니다.",
+  },
+  trackRain: {
+    dry: "앞으로 1시간 동안 서킷에 비 예보 없음",
+    approaching: "약 {{minutes}}분 후 서킷에 비 예상",
+    raining: "서킷에 비가 내리는 중",
+    rainingEasing: "서킷에 비, 약 {{minutes}}분 후 약해짐",
+    source: "실험적 레이더 초단기 예보 기준",
   },
   alerts: {
     heading: "기상 특보",

@@ -203,6 +203,7 @@ ENVIRONMENT = "preview"
    - Playback label relative to now ("20 min ago", "Live", "Forecast +20 min"), plus the selected session when it is within 6 hours ("35 min before Race", "1 h 10 min into Race")
    - Provider zoom limits come from `/api/radar` (`maxZoom`: 12 for LibreWXR, 7 for RainViewer). The client caps animation tiles at `CONFIG.RADAR_MAX_TILE_ZOOM` (8): radar data is ~1 km resolution, and each extra zoom level multiplies tile requests across every animation frame (zoom 9 meant ~150 tiles and ~170 MB of decoded images per view)
    - Optional LibreWXR extras: colour schemes, storm motion arrows, storm cells, lightning (Americas only) and satellite clouds
+   - Rain at the track: `public/src/map/TrackRain.js` reads the latest observed frame and the nowcast within 3 km of the circuit (black-and-white scheme 0 tiles, where red = dBZ + 32; 20 dBZ counts as rain) and shows "Rain expected at the track in about 20 min" on the race info cards. LibreWXR only; hidden on the RainViewer fallback
    - Attribution: LibreWXR data is CC BY 4.0 and must be credited on the map (plus "Radar-DPC" for Italian data)
 
 4. **Session Countdown**
@@ -234,6 +235,7 @@ ENVIRONMENT = "preview"
    - Session-specific weather forecast (temperature, rain probability, wind)
    - Fetched directly from Open-Meteo API
    - Hourly forecast timeline
+   - One-line verdict for the session ("Rain likely during Race: 60% around 15:00") from the peak rain probability while it runs (races 2 hours, other sessions 1)
 
 10. **Wind Overlay**
     - Animated wind flow particles over the map

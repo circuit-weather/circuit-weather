@@ -1,5 +1,12 @@
 import { i18n } from '../i18n/index.js';
 import { getWindDirection } from '../utils/wind.js';
+import { getSessionRainVerdict, sessionHours } from '../utils/rain.js';
+
+const VERDICT_KEYS = Object.freeze({
+    dry: 'forecast.verdictDry',
+    possible: 'forecast.verdictPossible',
+    likely: 'forecast.verdictLikely',
+});
 
 /**
  * ForecastRenderer is responsible for constructing DOM elements for weather forecast displays,
@@ -295,9 +302,33 @@ export class ForecastRenderer {
         return section;
     }
 
-    createForecastDashboard(weather, sessionTime, weatherClient) {
+    /**
+     * One sentence answering "will it rain during the session?".
+     * @param {Array} hourly
+     * @param {Date} sessionTime
+     * @param {{id: string, name: string}} session
+     * @returns {HTMLElement|null}
+     */
+    createRainVerdictElement(hourly, sessionTime, session) {
+        const verdict = getSessionRainVerdict(hourly, sessionTime, sessionHours(session.id));
+        if (!verdict) return null;
+
+        const time = new Intl.DateTimeFormat(i18n.locale, { hour: 'numeric', minute: '2-digit' })
+            .format(new Date(verdict.peakTime * 1000));
+        const p = document.createElement('p');
+        p.className = `forecast-verdict forecast-verdict--${verdict.level}`;
+        p.textContent = i18n.t(VERDICT_KEYS[verdict.level], { session: session.name, pct: verdict.peakPct, time });
+        return p;
+    }
+
+    createForecastDashboard(weather, sessionTime, weatherClient, session = null) {
         const dashboard = document.createElement('article');
         dashboard.className = 'weather-dashboard';
+
+        if (session && weather.hourly) {
+            const verdict = this.createRainVerdictElement(weather.hourly, sessionTime, session);
+            if (verdict) dashboard.appendChild(verdict);
+        }
 
         let sessionWeather = null;
         if (weather.hourly && weather.hourly.length > 0) {
