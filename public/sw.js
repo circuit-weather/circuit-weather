@@ -12,7 +12,8 @@
  */
 
 const CACHE_VERSION = '1.7.0';
-const CACHE_NAME = `circuit-weather-v${CACHE_VERSION}`;
+const CACHE_PREFIX = 'circuit-weather-v';
+const CACHE_NAME = `${CACHE_PREFIX}${CACHE_VERSION}`;
 
 // App shell resources to pre-cache on install
 const APP_SHELL = [
@@ -65,13 +66,15 @@ self.addEventListener('install', (event) => {
     );
 });
 
-// Activate: Clean up old caches
+// Activate: Clean up this app's old caches. Other caches on the origin aren't
+// ours: Mapbox GL JS keeps its map tiles in 'mapbox-tiles', and deleting it
+// while the map is using it can leave the basemap blank until site data is cleared.
 self.addEventListener('activate', (event) => {
     event.waitUntil(
         caches.keys()
             .then((keys) => Promise.all(
                 keys
-                    .filter((key) => key !== CACHE_NAME)
+                    .filter((key) => key.startsWith(CACHE_PREFIX) && key !== CACHE_NAME)
                     .map((key) => caches.delete(key))
             ))
             .then(() => self.clients.claim())

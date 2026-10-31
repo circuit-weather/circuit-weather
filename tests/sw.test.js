@@ -26,13 +26,25 @@ function loadServiceWorker() {
     };
     const fetch = vi.fn();
     new Function('self', 'caches', 'fetch', SW_SOURCE)(self, caches, fetch);
-    return { onFetch: listeners.fetch, cache, caches, fetch };
+    return { onFetch: listeners.fetch, onActivate: listeners.activate, cache, caches, fetch };
 }
 
 function fetchEvent(path, { method = 'GET', mode = 'no-cors' } = {}) {
     const request = { url: `${ORIGIN}${path}`, method, mode };
     return { request, respondWith: vi.fn() };
 }
+
+describe('service worker activation', () => {
+    it("deletes only this app's old caches, not Mapbox's tile cache", async () => {
+        const sw = loadServiceWorker();
+        const current = SW_SOURCE.match(/CACHE_VERSION = '([^']+)'/)[1];
+        sw.caches.keys.mockResolvedValue(['circuit-weather-v1.0.0', `circuit-weather-v${current}`, 'mapbox-tiles']);
+        let done;
+        sw.onActivate({ waitUntil: (p) => { done = p; } });
+        await done;
+        expect(sw.caches.delete.mock.calls).toEqual([['circuit-weather-v1.0.0']]);
+    });
+});
 
 describe('service worker fetch strategy', () => {
     let sw;
