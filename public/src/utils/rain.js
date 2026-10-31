@@ -27,6 +27,23 @@ export function sessionHours(sessionId) {
     return typeof sessionId === 'string' && sessionId.includes('race') ? 2 : 1;
 }
 
+// The rain banner covers a session from this long before it starts until it
+// ends: a race weekend from Friday on, and never a forecast days too early to trust
+export const RAIN_BANNER_LEAD_HOURS = 72;
+
+/**
+ * Whether a session is close enough (or under way) for its rain verdict to be worth a banner.
+ * @param {Date} sessionTime
+ * @param {string} sessionId
+ * @param {number} nowMs
+ */
+export function isRainBannerTimely(sessionTime, sessionId, nowMs) {
+    const start = sessionTime instanceof Date ? sessionTime.getTime() : NaN;
+    if (!Number.isFinite(start)) return false;
+    const end = start + sessionHours(sessionId) * 3600000;
+    return nowMs >= start - RAIN_BANNER_LEAD_HOURS * 3600000 && nowMs < end;
+}
+
 /**
  * Summarises the chance of rain during a session.
  *

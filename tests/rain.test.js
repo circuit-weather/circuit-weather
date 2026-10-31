@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-    getSessionRainVerdict, sessionHours, summariseTrackRain, pixelDbz, worldPixel, samplePlan,
+    getSessionRainVerdict, sessionHours, isRainBannerTimely, RAIN_BANNER_LEAD_HOURS, summariseTrackRain, pixelDbz, worldPixel, samplePlan,
     RAIN_DBZ, SAMPLE_TILE_SIZE,
 } from '../public/src/utils/rain.js';
 
@@ -15,6 +15,25 @@ describe('sessionHours', () => {
         expect(sessionHours('feature-race')).toBe(2);
         expect(sessionHours('qualifying')).toBe(1);
         expect(sessionHours(undefined)).toBe(1);
+    });
+});
+
+describe('isRainBannerTimely', () => {
+    const at = (hoursFromStart) => start.getTime() + hoursFromStart * HOUR * 1000;
+
+    it('covers a session from 3 days out until it ends', () => {
+        expect(RAIN_BANNER_LEAD_HOURS).toBe(72);
+        expect(isRainBannerTimely(start, 'race', at(-72.1))).toBe(false);
+        expect(isRainBannerTimely(start, 'race', at(-72))).toBe(true);
+        expect(isRainBannerTimely(start, 'race', at(1.9))).toBe(true);
+        expect(isRainBannerTimely(start, 'race', at(2))).toBe(false);
+        expect(isRainBannerTimely(start, 'fp1', at(1))).toBe(false);
+    });
+
+    it('rejects sessions months away and bad dates', () => {
+        expect(isRainBannerTimely(start, 'race', at(-24 * 60))).toBe(false);
+        expect(isRainBannerTimely(new Date('nope'), 'race', at(0))).toBe(false);
+        expect(isRainBannerTimely(null, 'race', at(0))).toBe(false);
     });
 });
 

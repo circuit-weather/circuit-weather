@@ -88,35 +88,23 @@ describe('ForecastRenderer Unit Tests', () => {
     describe('rain verdict', () => {
         const start = new Date('2026-11-01T14:00:00Z');
         const at = (h) => start.getTime() / 1000 + h * 3600;
-        const units = { temperature_2m: '°C', wind_speed_10m: 'km/h', wind_direction_10m: '°' };
         const hour = (h, precipProb) => ({ time: at(h), code: 0, temp: 20, windSpeed: 10, windDir: 0, precipProb });
         const time = (h) => new Intl.DateTimeFormat(i18n.locale, { hour: 'numeric', minute: '2-digit' }).format(new Date(at(h) * 1000));
 
         it('sums up the session in one sentence', () => {
             const race = { id: 'race', name: 'Race' };
-            expect(renderer.createRainVerdictElement([hour(0, 5), hour(1, 10)], start, race).textContent)
-                .toBe('Rain unlikely during Race');
+            expect(renderer.getRainVerdict([hour(0, 5), hour(1, 10)], start, race))
+                .toEqual({ level: 'dry', text: 'Rain unlikely during Race' });
 
-            const likely = renderer.createRainVerdictElement([hour(0, 30), hour(1, 70), hour(2, 90)], start, race);
-            expect(likely.className).toBe('forecast-verdict forecast-verdict--likely');
-            expect(likely.textContent).toBe(`Rain likely during Race: 70% around ${time(1)}`);
+            expect(renderer.getRainVerdict([hour(0, 30), hour(1, 70), hour(2, 90)], start, race))
+                .toEqual({ level: 'likely', text: `Rain likely during Race: 70% around ${time(1)}` });
 
             // Non-race sessions only look at their first hour
-            const quali = renderer.createRainVerdictElement([hour(0, 25), hour(1, 90)], start, { id: 'qualifying', name: 'Qualifying' });
-            expect(quali.textContent).toBe(`Chance of rain during Qualifying: 25% around ${time(0)}`);
-        });
+            expect(renderer.getRainVerdict([hour(0, 25), hour(1, 90)], start, { id: 'qualifying', name: 'Qualifying' }))
+                .toEqual({ level: 'possible', text: `Chance of rain during Qualifying: 25% around ${time(0)}` });
 
-        it('leads the dashboard when a session is given, and is skipped otherwise', () => {
-            const hourly = [hour(0, 5)];
-            const dashboard = renderer.createForecastDashboard({ hourly, units }, start, mockClient, { id: 'fp1', name: 'FP1' });
-            expect(dashboard.appendChild.mock.calls[0][0].className).toBe('forecast-verdict forecast-verdict--dry');
-
-            const without = renderer.createForecastDashboard({ hourly, units }, start, mockClient);
-            expect(without.appendChild.mock.calls[0][0].className).not.toMatch(/verdict/);
-
-            // No forecast hours in the session: no verdict
-            const outside = renderer.createForecastDashboard({ hourly: [hour(5, 90)], units }, start, mockClient, { id: 'fp1', name: 'FP1' });
-            expect(outside.appendChild.mock.calls[0][0].className).not.toMatch(/verdict/);
+            // No forecast hours in the session
+            expect(renderer.getRainVerdict([hour(5, 90)], start, race)).toBeNull();
         });
     });
 });

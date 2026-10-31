@@ -20,6 +20,7 @@ import { SeoManager } from './ui/SeoManager.js';
 import { ForecastRenderer } from './ui/ForecastRenderer.js';
 import { getSessionStatus, getRoundStatus, formatStatusLabel } from './utils/status.js';
 import { getRaceEndTime, findFirstActiveRaceIndex, getGloballyNextSession } from './utils/schedule.js';
+import { isRainBannerTimely } from './utils/rain.js';
 import { i18n } from './i18n/index.js';
 
 // A partial schedule (the Worker is still filling it, see SeriesAPI) is re-fetched
@@ -102,6 +103,9 @@ export class CircuitWeatherApp {
             // Radar nowcast at the track (sidebar and mobile race info)
             trackRain: document.getElementById('trackRain'),
             mobileTrackRain: document.getElementById('mobileTrackRain'),
+            // Session rain verdict over the map (desktop) and in the mobile overlay stack
+            rainBanner: document.getElementById('rainBanner'),
+            mobileRainBanner: document.getElementById('mobileRainBanner'),
             mobileHeader: document.querySelector('.mobile-header'),
             radarControls: document.getElementById('radarControls'),
             mapContainer: document.getElementById('map'),
@@ -453,6 +457,7 @@ export class CircuitWeatherApp {
 
         if (this.ui.mobileHeader) observer.observe(this.ui.mobileHeader);
         if (this.ui.mobileRaceInfo) observer.observe(this.ui.mobileRaceInfo);
+        if (this.ui.mobileRainBanner) observer.observe(this.ui.mobileRainBanner);
         if (this.ui.mapContainer) observer.observe(this.ui.mapContainer);
         // The radar bar grows when its playback label gains a session line, and the
         // zoom buttons and countdown sit above it, so re-measure when it resizes
@@ -519,9 +524,12 @@ export class CircuitWeatherApp {
     updateLayoutOffsets() {
         if (!this.mobileQuery.matches) return;
 
-        // TOP OFFSETS: Avoid mobile race banner
+        // TOP OFFSETS: Avoid mobile race banner (and the rain banner stacked below it)
         let topOffset = 56; // Default header height
-        if (this.ui.mobileRaceInfo) {
+        const rainBannerBox = this.ui.mobileRainBanner?.getBoundingClientRect();
+        if (rainBannerBox && rainBannerBox.height > 0) {
+            topOffset = rainBannerBox.bottom;
+        } else if (this.ui.mobileRaceInfo) {
             const bannerBox = this.ui.mobileRaceInfo.getBoundingClientRect();
             // Bolt Optimization: Replace getComputedStyle with bounds check to avoid reflow thrashing
             if (bannerBox.height > 0) {
@@ -644,6 +652,7 @@ export class CircuitWeatherApp {
         this.rangeCircles.clear();
         if (this.weatherAlerts) this.weatherAlerts.setLocation(null, null);
         if (this.trackRain) this.trackRain.setLocation(null, null);
+        this.renderRainBanner(null);
 
         // Clear the forecast update since no session is active anymore
         this.stopSessionForecastInterval();
@@ -770,6 +779,20 @@ export class CircuitWeatherApp {
         }
         if (this.trackRain) {
             this.trackRain.setLocation(lat, lng);
+        }
+    }
+
+    /**
+     * Shows the session rain verdict over the map; there is no banner without rain.
+     * @param {{level: 'possible'|'likely', text: string}|null} verdict - null hides it
+     */
+    renderRainBanner(verdict) {
+        for (const element of [this.ui.rainBanner, this.ui.mobileRainBanner]) {
+            if (!element) continue;
+            element.hidden = !verdict;
+            if (!verdict) continue;
+            element.setAttribute('data-level', verdict.level);
+            element.textContent = verdict.text;
         }
     }
 
@@ -973,6 +996,8 @@ export class CircuitWeatherApp {
         this.showLoading(true, i18n.t('loading.session'));
         // Palette UX: Show skeleton immediately to prevent layout shift
         this.renderForecastSkeleton();
+        // The previous session's rain banner must not linger while this one loads
+        this.renderRainBanner(null);
 
         // Show forecast section container immediately
         if (this.ui.forecastSection) this.ui.forecastSection.style.display = 'block';
@@ -1138,6 +1163,7 @@ export class CircuitWeatherApp {
         const unavailable = this.ui.forecastUnavailable;
 
         if (!weather.available) {
+            this.renderRainBanner(null);
             this._renderUnavailableForecast(weather, content, unavailable, overrideNow);
             return;
         }
@@ -1145,8 +1171,14 @@ export class CircuitWeatherApp {
         if (content) content.style.display = 'block';
         if (unavailable) unavailable.style.display = 'none';
 
-        const dashboard = this.forecastRenderer.createForecastDashboard(
-            weather, sessionTime, this.weatherClient, this.selectedSession);
+        // Re-evaluated on every forecast refresh, so the banner follows the forecast
+        const now = overrideNow ? overrideNow.getTime() : Date.now();
+        const verdict = isRainBannerTimely(sessionTime, this.selectedSession.id, now)
+            ? this.forecastRenderer.getRainVerdict(weather.hourly, sessionTime, this.selectedSession)
+            : null;
+        this.renderRainBanner(verdict && verdict.level !== 'dry' ? verdict : null);
+
+        const dashboard = this.forecastRenderer.createForecastDashboard(weather, sessionTime, this.weatherClient);
 
         if (content) {
             content.textContent = '';

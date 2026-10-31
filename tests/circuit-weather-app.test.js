@@ -743,6 +743,18 @@ describe('CircuitWeatherApp Pure Methods', () => {
             app.ui.loadingOverlay = createMockElement('loadingOverlay');
         });
 
+        it('clears the previous session\'s rain banner before loading the new one', async () => {
+            app.radar.load = vi.fn().mockResolvedValue();
+            app.weatherClient.getForecast = vi.fn().mockResolvedValue({ available: false, reason: 'error' });
+            const order = [];
+            app.renderRainBanner = vi.fn(() => order.push('banner'));
+            app.updateSessionForecast = vi.fn(async () => { order.push('forecast'); });
+
+            await app.selectSession('race');
+            expect(app.renderRainBanner).toHaveBeenCalledWith(null);
+            expect(order.slice(0, 2)).toEqual(['banner', 'forecast']);
+        });
+
         it('catches and logs errors during session selection and displays forecast unavailable state', async () => {
             const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
             app.radar.load = vi.fn().mockRejectedValue(new Error('Radar Error'));
@@ -879,6 +891,69 @@ describe('CircuitWeatherApp Pure Methods', () => {
 
             expect(app.ui.forecastContent.style.display).toBe('none');
             expect(app.ui.forecastUnavailable.style.display).toBe('block');
+        });
+
+        describe('rain banner', () => {
+            const sessionTime = new Date('2026-11-01T14:00:00Z');
+            const hoursFrom = (h) => new Date(sessionTime.getTime() + h * 3600000);
+            const forecast = (...probs) => ({
+                available: true,
+                current: {},
+                hourly: probs.map((precipProb, i) => ({
+                    time: sessionTime.getTime() / 1000 + i * 3600, temp: 20, humidity: 50, precipProb, windSpeed: 10, windDir: 0, code: 0,
+                })),
+                units: { temperature_2m: '°C', wind_speed_10m: 'km/h' },
+            });
+
+            beforeEach(() => {
+                app.ui.rainBanner = createMockElement('rainBanner');
+                app.ui.mobileRainBanner = createMockElement('mobileRainBanner');
+            });
+
+            it('shows the verdict on both copies when rain is expected and the session is close', () => {
+                app.renderForecast(forecast(20, 80), sessionTime, 'race', hoursFrom(-2));
+                for (const banner of [app.ui.rainBanner, app.ui.mobileRainBanner]) {
+                    expect(banner.hidden).toBe(false);
+                    expect(banner.setAttribute).toHaveBeenCalledWith('data-level', 'likely');
+                    expect(banner.textContent).toMatch(/^Rain likely during Race: 80% around /);
+                }
+                // The forecast card no longer carries it
+                expect(app.ui.forecastContent.childNodes[0].childNodes[0].className).toBe('weather-current');
+            });
+
+            it('follows each forecast refresh, and is gone without rain', () => {
+                app.renderForecast(forecast(30, 10), sessionTime, 'race', hoursFrom(-2));
+                expect(app.ui.rainBanner.textContent).toMatch(/^Chance of rain during Race: 30%/);
+
+                app.renderForecast(forecast(5, 10), sessionTime, 'race', hoursFrom(-1.75));
+                expect(app.ui.rainBanner.hidden).toBe(true);
+                expect(app.ui.mobileRainBanner.hidden).toBe(true);
+            });
+
+            it('only covers sessions from 3 days out until they end', () => {
+                app.renderForecast(forecast(90, 90), sessionTime, 'race', hoursFrom(-24 * 5));
+                expect(app.ui.rainBanner.hidden).toBe(true);
+
+                app.renderForecast(forecast(90, 90), sessionTime, 'race', hoursFrom(1));
+                expect(app.ui.rainBanner.hidden).toBe(false);
+
+                app.renderForecast(forecast(90, 90), sessionTime, 'race', hoursFrom(2.5));
+                expect(app.ui.rainBanner.hidden).toBe(true);
+            });
+
+            it('is cleared when the forecast is unavailable, a new session loads or the round is cleared', async () => {
+                app.renderForecast(forecast(90), sessionTime, 'race', hoursFrom(0));
+                app.renderForecast({ available: false, reason: 'error' }, sessionTime, 'race');
+                expect(app.ui.rainBanner.hidden).toBe(true);
+
+                app.renderForecast(forecast(90), sessionTime, 'race', hoursFrom(0));
+                app.renderRainBanner(null);
+                expect(app.ui.rainBanner.hidden).toBe(true);
+
+                app.ui.rainBanner = null;
+                app.ui.mobileRainBanner = null;
+                expect(() => app.renderRainBanner({ level: 'likely', text: 'x' })).not.toThrow();
+            });
         });
 
         it('renders forecast dashboard when data is available', () => {
@@ -1755,6 +1830,8 @@ describe('CircuitWeatherApp Pure Methods', () => {
             app.rangeCircles.clear = vi.fn();
             app.weatherAlerts = { setLocation: vi.fn() };
             app.trackRain = { setLocation: vi.fn() };
+            app.ui.rainBanner = createMockElement('rainBanner');
+            app.ui.rainBanner.hidden = false;
             app.ui.forecastSection = createMockElement('forecastSection');
             app.ui.raceInfoBanner = createMockElement('raceInfoBanner');
             app.ui.sessionEmptyState = createMockElement('sessionEmptyState');
@@ -1777,6 +1854,7 @@ describe('CircuitWeatherApp Pure Methods', () => {
             expect(app.rangeCircles.clear).toHaveBeenCalled();
             expect(app.weatherAlerts.setLocation).toHaveBeenCalledWith(null, null);
             expect(app.trackRain.setLocation).toHaveBeenCalledWith(null, null);
+            expect(app.ui.rainBanner.hidden).toBe(true);
             expect(app.stopSessionForecastInterval).toHaveBeenCalled();
             expect(app.updatePageMetadata).toHaveBeenCalled();
             expect(app.ui.sessionSelect.disabled).toBe(true);

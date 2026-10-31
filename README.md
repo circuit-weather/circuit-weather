@@ -25,7 +25,8 @@ Key features include:
 - **Theme Support:** Automatically adapts to your system's dark or light mode, or you can toggle it manually.
 - **Deep Linking:** Navigate directly to a specific race or session via the URL.
 - **Rain at the Track:** See at a glance whether rain is at the circuit or due there within the hour, read from the radar nowcast.
-- **Weather Forecast:** View detailed, session-specific weather forecasts, summed up in one line: will it rain during the session?
+- **Rain Banner:** When rain is on the cards for an upcoming or live session, a banner over the map says how likely it is and when.
+- **Weather Forecast:** View detailed, session-specific weather forecasts.
 - **Wind Overlay:** Toggle animated wind flow particles over the map.
 - **Multi-language Support:** Use the app in your preferred language.
 - **Responsive Design:** Works great on your phone, tablet, or desktop.

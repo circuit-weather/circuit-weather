@@ -307,28 +307,23 @@ export class ForecastRenderer {
      * @param {Array} hourly
      * @param {Date} sessionTime
      * @param {{id: string, name: string}} session
-     * @returns {HTMLElement|null}
+     * @returns {{level: string, text: string}|null}
      */
-    createRainVerdictElement(hourly, sessionTime, session) {
+    getRainVerdict(hourly, sessionTime, session) {
         const verdict = getSessionRainVerdict(hourly, sessionTime, sessionHours(session.id));
         if (!verdict) return null;
 
         const time = new Intl.DateTimeFormat(i18n.locale, { hour: 'numeric', minute: '2-digit' })
             .format(new Date(verdict.peakTime * 1000));
-        const p = document.createElement('p');
-        p.className = `forecast-verdict forecast-verdict--${verdict.level}`;
-        p.textContent = i18n.t(VERDICT_KEYS[verdict.level], { session: session.name, pct: verdict.peakPct, time });
-        return p;
+        return {
+            level: verdict.level,
+            text: i18n.t(VERDICT_KEYS[verdict.level], { session: session.name, pct: verdict.peakPct, time }),
+        };
     }
 
-    createForecastDashboard(weather, sessionTime, weatherClient, session = null) {
+    createForecastDashboard(weather, sessionTime, weatherClient) {
         const dashboard = document.createElement('article');
         dashboard.className = 'weather-dashboard';
-
-        if (session && weather.hourly) {
-            const verdict = this.createRainVerdictElement(weather.hourly, sessionTime, session);
-            if (verdict) dashboard.appendChild(verdict);
-        }
 
         let sessionWeather = null;
         if (weather.hourly && weather.hourly.length > 0) {

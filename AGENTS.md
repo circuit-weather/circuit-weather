@@ -235,7 +235,7 @@ ENVIRONMENT = "preview"
    - Session-specific weather forecast (temperature, rain probability, wind)
    - Fetched directly from Open-Meteo API
    - Hourly forecast timeline
-   - One-line verdict for the session ("Rain likely during Race: 60% around 15:00") from the peak rain probability while it runs (races 2 hours, other sessions 1)
+   - Rain banner over the map (top centre; under the race card on mobile): a one-line verdict for the session ("Rain likely during Race: 60% around 15:00") from the peak rain probability while it runs (races 2 hours, other sessions 1). Only shown when rain is possible (20%+), only from 3 days before the session until it ends (`RAIN_BANNER_LEAD_HOURS` in `public/src/utils/rain.js`), and recomputed on every forecast refresh
 
 10. **Wind Overlay**
     - Animated wind flow particles over the map
