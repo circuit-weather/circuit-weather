@@ -45,6 +45,7 @@ export const hu = {
     units: "Mértékegységek",
     selectRound: "Forduló kiválasztása...",
     selectRoundFirst: "Először válasszon fordulót",
+    autoAdvance: "Szakaszok automatikus léptetése",
     selectSession: "Esemény kiválasztása...",
     metricLabel: "Kilométer",
     imperialLabel: "Mérföld",

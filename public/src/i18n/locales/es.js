@@ -45,6 +45,7 @@ export const es = {
     units: "Unidades",
     selectRound: "Selecciona ronda...",
     selectRoundFirst: "Selecciona una ronda primero",
+    autoAdvance: "Avanzar sesiones automáticamente",
     selectSession: "Selecciona sesión...",
     metricLabel: "Kilómetros",
     imperialLabel: "Millas",

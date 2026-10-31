@@ -105,6 +105,8 @@ Lokale Einstellungen im Browser:
 - **theme:** `light` oder `dark`
 - **unit:** `metric` oder `imperial`
 - **language:** Ihre ausgewählte Sprache
+- **series:** die zuletzt gewählte Rennserie (z. B. `motogp`), die beim nächsten Besuch zuerst angezeigt wird
+- **autoAdvance:** `true` oder `false` (merkt sich, ob die Seite automatisch zur nächsten Sitzung wechselt)
 - **windOverlay:** `true` oder `false` (speichert, ob die Windanimations-Ebene aktiviert ist)
 - **radarColour:** die Nummer des gewählten Radar-Farbschemas
 - **radarArrows, radarCells, radarLightning, radarSatellite:** `true` oder `false` (speichert, welche zusätzlichen Radarebenen aktiviert sind)

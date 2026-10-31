@@ -42,6 +42,7 @@ export const zhCN = {
     units: "单位",
     selectRound: "选择分站...",
     selectRoundFirst: "请先选择分站",
+    autoAdvance: "自动切换到下一节",
     selectSession: "选择赛段...",
     metricLabel: "公里",
     imperialLabel: "英里",

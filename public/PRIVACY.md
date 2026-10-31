@@ -106,6 +106,8 @@ The application stores preference settings locally in your browser to remember y
 - **theme:** `light` or `dark`
 - **unit:** `metric` or `imperial`
 - **language:** your selected locale (e.g., `en-NZ`, `fr`)
+- **series:** the racing series you last picked (e.g., `motogp`), shown first on your next visit
+- **autoAdvance:** `true` or `false` (remembers if the page moves on to the next session by itself)
 - **windOverlay:** `true` or `false` (remembers if the wind animation layer is enabled)
 - **radarColour:** the selected radar colour scheme number
 - **radarArrows, radarCells, radarLightning, radarSatellite:** `true` or `false` (remembers which extra radar layers are enabled)

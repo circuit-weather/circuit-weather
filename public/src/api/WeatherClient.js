@@ -132,14 +132,7 @@ export class WeatherClient {
                 });
                 const url = `${this.baseUrl}?${params.toString()}`;
 
-                // As above: the 5s AbortSignal.timeout is deliberate and already
-                // applied to every Open-Meteo forecast request.
-                const response = await fetch(url, {
-                    signal: AbortSignal.timeout(5000)
-                });
-                if (!response.ok) throw new Error('Weather API error');
-
-                data = await response.json();
+                data = await this.fetchForecastData(url);
                 this.cache.set(cacheKey, { timestamp: Date.now(), data });
 
                 if (this.cache.size > this.maxCacheSize) {
@@ -165,6 +158,27 @@ export class WeatherClient {
             console.error('Weather fetch failed:', error);
             return { available: false, reason: 'error' };
         }
+    }
+
+    /**
+     * Fetches the forecast, retrying once after a timeout or network failure.
+     * Without the retry, one slow response on a mobile connection left the
+     * session without a forecast (or rain banner) until the next 15-minute
+     * refresh. HTTP errors are not retried: Open-Meteo's 429s and outages
+     * would only get more requests.
+     */
+    async fetchForecastData(url) {
+        let response;
+        try {
+            response = await fetch(url, { signal: AbortSignal.timeout(CONFIG.WEATHER_FETCH_TIMEOUT_MS) });
+        } catch (error) {
+            // fetch() only rejects for a timeout or a network failure
+            console.warn('Weather fetch failed, retrying:', error?.name);
+            await new Promise(resolve => setTimeout(resolve, CONFIG.WEATHER_RETRY_DELAY_MS));
+            response = await fetch(url, { signal: AbortSignal.timeout(CONFIG.WEATHER_RETRY_TIMEOUT_MS) });
+        }
+        if (!response.ok) throw new Error('Weather API error');
+        return response.json();
     }
 
     filterHourly(hourly, sessionTime) {

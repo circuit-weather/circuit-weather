@@ -45,6 +45,7 @@ export const nl = {
     units: "Eenheden",
     selectRound: "Selecteer ronde...",
     selectRoundFirst: "Selecteer eerst een ronde",
+    autoAdvance: "Sessies automatisch doorschakelen",
     selectSession: "Selecteer sessie...",
     metricLabel: "Kilometers",
     imperialLabel: "Mijlen",

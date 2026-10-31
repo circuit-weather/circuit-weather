@@ -742,6 +742,8 @@ body {
     display: flex;
     justify-content: center;
     padding: var(--spacing-sm) var(--spacing-md);
+    /* The button is added after the page loads: hold its 32px so nothing jumps */
+    min-height: calc(32px + 2 * var(--spacing-sm));
 }
 
 .bmc-container .bmc-btn {

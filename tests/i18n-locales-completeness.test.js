@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { TRANSLATIONS } from '../public/src/i18n/index.js';
+import { loadAllTranslations } from '../public/src/i18n/index.js';
 
 // Derive the set of shipped locales directly from the i18n registry so this
 // guard can never silently skip a locale again (it previously omitted `hu`,
-// leaving Hungarian translations unguarded). `en` is the source of truth and
-// is compared against, not validated against itself.
-const { en, ...translatedLocales } = TRANSLATIONS;
+// leaving Hungarian translations unguarded). Non-English locales load on
+// demand, so load them all first. `en` is the source of truth and is compared
+// against, not validated against itself.
+const { en, ...translatedLocales } = await loadAllTranslations();
 
 function collectLeafKeys(object, prefix = '') {
     const entries = [];

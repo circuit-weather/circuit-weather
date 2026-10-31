@@ -45,6 +45,7 @@ export const ko = {
     units: "단위",
     selectRound: "라운드 선택...",
     selectRoundFirst: "먼저 라운드를 선택하세요",
+    autoAdvance: "세션 자동 전환",
     selectSession: "세션 선택...",
     metricLabel: "킬로미터",
     imperialLabel: "마일",

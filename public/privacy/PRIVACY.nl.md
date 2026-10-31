@@ -105,6 +105,8 @@ Voorkeursinstellingen worden lokaal in uw browser opgeslagen:
 - **theme:** `light` of `dark`
 - **unit:** `metric` of `imperial`
 - **language:** uw gekozen taal
+- **series:** de laatst gekozen raceklasse (bijv. `motogp`), die bij uw volgende bezoek als eerste wordt getoond
+- **autoAdvance:** `true` of `false` (onthoudt of de pagina vanzelf naar de volgende sessie gaat)
 - **windOverlay:** `true` of `false` (onthoudt of de windanimatielaag is ingeschakeld)
 - **radarColour:** het nummer van het gekozen radarkleurenschema
 - **radarArrows, radarCells, radarLightning, radarSatellite:** `true` of `false` (onthoudt welke extra radarlagen zijn ingeschakeld)

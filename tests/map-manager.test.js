@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import { CONFIG } from "../public/src/config.js";
 
 // Mock Mapbox
@@ -90,8 +90,11 @@ vi.stubGlobal("window", {
 
 vi.stubGlobal("requestAnimationFrame", vi.fn((cb) => setTimeout(cb, 0)));
 
+vi.mock("../public/src/utils/loadScript.js", () => ({ loadScript: vi.fn().mockResolvedValue() }));
+
 // Import the class under test
-const { MapManager } = await import("../public/src/map/MapManager.js");
+const { MapManager, MAPBOX_JS, LEAFLET_JS, LEAFLET_JS_INTEGRITY } = await import("../public/src/map/MapManager.js");
+const { loadScript } = await import("../public/src/utils/loadScript.js");
 
 describe("MapManager", () => {
   let mapManager;
@@ -752,4 +755,52 @@ describe("MapManager coverage test", () => {
 
         expect(mapboxMapMock.setLayoutProperty).not.toHaveBeenCalled();
     });
+
+  describe("on-demand map libraries", () => {
+    beforeEach(() => {
+      loadScript.mockReset().mockResolvedValue();
+      mapboxglMock.Map.mockClear();
+    });
+
+    afterEach(() => {
+      vi.stubGlobal("mapboxgl", mapboxglMock);
+      vi.stubGlobal("L", leafletMock);
+      mapboxMapMock.on.mockReset();
+    });
+
+    it("downloads Mapbox GL JS only once there is a token", async () => {
+      vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve({ mapboxToken: "t" }) }));
+      vi.stubGlobal("mapboxgl", undefined);
+      loadScript.mockImplementation(async (src) => {
+        if (src === MAPBOX_JS) globalThis.mapboxgl = mapboxglMock;
+      });
+      // Fail the style load so the test needn't build the zoom control DOM
+      mapboxMapMock.on.mockImplementation((event, callback) => {
+        if (event === "error") callback({ error: { message: "offline" } });
+      });
+
+      await mapManager.init();
+      expect(loadScript).toHaveBeenCalledWith(MAPBOX_JS);
+      expect(mapboxglMock.Map).toHaveBeenCalled();
+    });
+
+    it("downloads Leaflet, with its integrity hash, only when falling back", async () => {
+      vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: true, json: () => Promise.resolve({}) }));
+      vi.stubGlobal("L", undefined);
+      loadScript.mockImplementation(async (src) => {
+        if (src === LEAFLET_JS) globalThis.L = leafletMock;
+      });
+
+      const map = await mapManager.init();
+      expect(loadScript).toHaveBeenCalledTimes(1);
+      expect(loadScript).toHaveBeenCalledWith(LEAFLET_JS, { integrity: LEAFLET_JS_INTEGRITY });
+      expect(map).toBe(mapMock);
+    });
+
+    it("downloads nothing when the libraries are already on the page", async () => {
+      vi.stubGlobal("fetch", vi.fn().mockResolvedValue({ ok: false }));
+      await mapManager.init();
+      expect(loadScript).not.toHaveBeenCalled();
+    });
+  });
 });

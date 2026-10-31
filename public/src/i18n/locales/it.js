@@ -45,6 +45,7 @@ export const it = {
     units: "Unita",
     selectRound: "Seleziona round...",
     selectRoundFirst: "Seleziona prima un round",
+    autoAdvance: "Avanza sessioni automaticamente",
     selectSession: "Seleziona sessione...",
     metricLabel: "Chilometri",
     imperialLabel: "Miglia",

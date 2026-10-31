@@ -45,6 +45,7 @@ export const ptBR = {
     units: "Unidades",
     selectRound: "Selecionar etapa...",
     selectRoundFirst: "Selecione primeiro uma etapa",
+    autoAdvance: "Avançar sessões automaticamente",
     selectSession: "Selecionar sessão...",
     metricLabel: "Quilômetros",
     imperialLabel: "Milhas",

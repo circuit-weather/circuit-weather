@@ -17,11 +17,14 @@ import { ThemeManager } from './ui/ThemeManager.js';
 import { SidebarManager } from './ui/SidebarManager.js';
 import { LayerSettings } from './ui/LayerSettings.js';
 import { SeoManager } from './ui/SeoManager.js';
+import { AutoAdvance } from './ui/AutoAdvance.js';
 import { ForecastRenderer } from './ui/ForecastRenderer.js';
-import { getSessionStatus, getRoundStatus, formatStatusLabel } from './utils/status.js';
-import { getRaceEndTime, findFirstActiveRaceIndex, getGloballyNextSession } from './utils/schedule.js';
+import { formatStatusLabel } from './utils/status.js';
+import { getRaceEndTime } from './utils/schedule.js';
+import { findCurrentSession, findNextSession, roundStatus, sessionStatus } from './utils/sessionTiming.js';
 import { isRainBannerTimely, isNowcastRelevant } from './utils/rain.js';
 import { i18n } from './i18n/index.js';
+import { SafeStorage } from './utils/storage.js';
 
 // A partial schedule (the Worker is still filling it, see SeriesAPI) is re-fetched
 // after the Worker's 60-second cache, a few times at most
@@ -29,6 +32,10 @@ const SCHEDULE_RETRY_MS = 65000;
 const SCHEDULE_MAX_RETRIES = 5;
 
 // Radar nowcast states worth a banner; a dry reading shows nothing
+// The series a visitor last picked, used when the URL doesn't name one.
+// public/theme.js reads it too, to preload that series' schedule.
+const SERIES_STORAGE_KEY = 'series';
+
 const TRACK_RAIN_KEYS = Object.freeze({
     approaching: 'trackRain.approaching',
     raining: 'trackRain.raining',
@@ -69,7 +76,8 @@ export class CircuitWeatherApp {
         this.races = [];
         this.selectedRace = null;
         this.selectedSession = null;
-        this.router = new Router(params => this.handleRoute(params));
+        // Back/forward is a choice too: auto-advance leaves it until the next change
+        this.router = new Router(params => this.handleRoute(params).then(() => this.autoAdvance?.noteManualSelection()));
         this.mobileQuery = window.matchMedia('(max-width: 768px)');
         this.liveWeatherDebounceTimer = null;
 
@@ -176,17 +184,21 @@ export class CircuitWeatherApp {
         this.showLoading(true, i18n.t('loading.schedule'));
 
         try {
+            // Load the schedule for the series in the URL (F1 by default) while
+            // the map sets up: it needs nothing from the map, and Mapbox's style
+            // and first tiles take a while on mobile. A failed schedule must not
+            // block the page: the user can still pick another series or retry
+            // (see showScheduleError); tryLoadSchedule never rejects.
+            const params = this.router.getParams();
+            const series = this.isSupportedSeries(params.series) ? params.series : this.getSavedSeries();
+            if (this.ui.seriesSelect) this.ui.seriesSelect.value = series;
+            const scheduleLoad = this.tryLoadSchedule(series);
+
             await this.initMapComponents();
 
             this.bindEvents();
 
-            // Load the schedule for the series in the URL (F1 by default)
-            const params = this.router.getParams();
-            const series = this.isSupportedSeries(params.series) ? params.series : 'f1';
-            if (this.ui.seriesSelect) this.ui.seriesSelect.value = series;
-            // A failed schedule must not block the page: the user can still pick
-            // another series or retry (see showScheduleError)
-            const loaded = await this.tryLoadSchedule(series);
+            const loaded = await scheduleLoad;
             this.populateRoundSelect();
 
             document.addEventListener('i18n:change', this.handleLanguageChange);
@@ -198,6 +210,17 @@ export class CircuitWeatherApp {
             } else if (loaded) {
                 this.autoSelectNextRound();
             }
+
+            this.autoAdvance = new AutoAdvance({
+                toggle: document.getElementById('autoAdvanceToggle'),
+                getTarget: () => this.getCurrentTarget(),
+                getSelection: () => (this.selectedRace
+                    ? { round: this.selectedRace.round, sessionId: this.selectedSession?.id ?? null }
+                    : null),
+                apply: (target) => this.showTarget(target),
+            });
+            // A shared link to another session is respected until the next change
+            if (params.round) this.autoAdvance.noteManualSelection();
 
             // Start live weather refresh interval
             this.startWeatherRefreshInterval();
@@ -215,6 +238,12 @@ export class CircuitWeatherApp {
 
     isSupportedSeries(series) {
         return SERIES_IDS.includes(series);
+    }
+
+    /** The series the visitor last picked, or Formula 1. */
+    getSavedSeries() {
+        const saved = SafeStorage.getItem(SERIES_STORAGE_KEY);
+        return this.isSupportedSeries(saved) ? saved : 'f1';
     }
 
     /**
@@ -383,48 +412,51 @@ export class CircuitWeatherApp {
     }
 
     /**
-     * Finds the index of the first race that has not yet ended.
-     */
-    _findFirstActiveRaceIndex(now) {
-        return findFirstActiveRaceIndex(this.races, now);
-    }
-
-    /**
      * Finds the overall next session in the entire season across all rounds.
      */
     getGloballyNextSession(now) {
-        return getGloballyNextSession(this.races, now);
+        return findNextSession(this.races, now, this.series);
     }
 
+    /** What auto-advance should show now (the same pick as a fresh page load). */
+    getCurrentTarget() {
+        const current = findCurrentSession(this.races, new Date(), this.series);
+        return current ? { round: current.race.round, sessionId: current.session?.id ?? null } : null;
+    }
+
+    /**
+     * Auto-advance: moves to another session, switching round (and flying the
+     * map to its circuit) when needed. LIVE/Next markers are rebuilt, as they
+     * go stale on a page left open.
+     */
+    async showTarget({ round, sessionId }) {
+        this.populateRoundSelect();
+        if (this.ui.roundSelect) this.ui.roundSelect.value = round;
+        if (this.selectedRace?.round !== round) {
+            this.selectRound(round);
+        } else {
+            this.populateSessionSelect(this.selectedRace.sessions);
+        }
+        if (sessionId) {
+            if (this.ui.sessionSelect) this.ui.sessionSelect.value = sessionId;
+            await this.selectSession(sessionId);
+        }
+    }
+
+    /**
+     * Selects what is on now: the live session, else the next one, in the first
+     * round that isn't over (see utils/sessionTiming.js).
+     */
     autoSelectNextRound() {
-        const now = new Date();
-        // Optimization: use binary search since races are chronologically ordered
-        const firstActiveIndex = this._findFirstActiveRaceIndex(now);
-        const nextRace = firstActiveIndex < this.races.length ? this.races[firstActiveIndex] : undefined;
+        const current = findCurrentSession(this.races, new Date(), this.series);
+        if (!current) return;
 
-        if (nextRace) {
-            if (this.ui.roundSelect) this.ui.roundSelect.value = nextRace.round;
-            this.selectRound(nextRace.round);
+        if (this.ui.roundSelect) this.ui.roundSelect.value = current.race.round;
+        this.selectRound(current.race.round);
 
-            // Find next upcoming session within this round
-            // Priority: LIVE > FUTURE
-            let targetSession = null;
-            for (let i = 0; i < nextRace.sessions.length; i++) {
-                const session = nextRace.sessions[i];
-                const status = getSessionStatus(session, now);
-                if (status === 'LIVE') {
-                    targetSession = session;
-                    break;
-                }
-                if (!targetSession && status === 'FUTURE') {
-                    targetSession = session;
-                }
-            }
-
-            if (targetSession) {
-                if (this.ui.sessionSelect) this.ui.sessionSelect.value = targetSession.id;
-                this.selectSession(targetSession.id);
-            }
+        if (current.session) {
+            if (this.ui.sessionSelect) this.ui.sessionSelect.value = current.session.id;
+            this.selectSession(current.session.id);
         }
     }
 
@@ -665,12 +697,15 @@ export class CircuitWeatherApp {
         if (this.ui.seriesSelect) {
             this.ui.seriesSelect.addEventListener('change', async (e) => {
                 const series = e.target.value;
+                // Only a choice made here is remembered, not a series opened from a shared link
+                if (this.isSupportedSeries(series)) SafeStorage.setItem(SERIES_STORAGE_KEY, series);
                 if (await this.selectSeries(series)) {
                     this.router.navigate(series, null, null);
                     this.autoSelectNextRound();
                 } else {
                     this.router.navigate(series, null, null);
                 }
+                this.autoAdvance?.noteManualSelection();
             });
         }
 
@@ -681,6 +716,7 @@ export class CircuitWeatherApp {
                 } else {
                     this.clearRoundSelection();
                 }
+                this.autoAdvance?.noteManualSelection();
             });
         }
 
@@ -689,6 +725,7 @@ export class CircuitWeatherApp {
                 if (e.target.value && this.selectedRace) {
                     this.selectSession(e.target.value);
                 }
+                this.autoAdvance?.noteManualSelection();
             });
         }
 
@@ -722,7 +759,7 @@ export class CircuitWeatherApp {
             const date = new Date(race.date);
             const dateStr = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 
-            const status = getRoundStatus(race, now);
+            const status = roundStatus(race, this.series, now);
             let isNext = false;
 
             // Mark the first future round as Next if no round is currently Live?
@@ -988,7 +1025,7 @@ export class CircuitWeatherApp {
             }
 
             const label = session.name + timeStr;
-            const status = getSessionStatus(session, now, dt);
+            const status = sessionStatus(this.selectedRace || { sessions }, session, this.series, now);
 
             // Only mark as "(Next)" if it is the absolute next session globally
             const isNext = !!(globalNext &&

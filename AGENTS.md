@@ -53,7 +53,7 @@ Circuit Weather is a real-time F1 race circuit weather radar application. It dis
 ### Data Handling
 
 - **No first-party cookies** used (third-party widgets may use cookies - see PRIVACY.md)
-- **localStorage only** for theme/unit/language/windOverlay/radar layer (radarColour, radarArrows, radarCells, radarLightning, radarSatellite, weatherAlerts) preferences, f1_schedule_cache and series_schedule_cache
+- **localStorage only** for theme/unit/language/series (last picked; used when the URL names none)/autoAdvance/windOverlay/radar layer (radarColour, radarArrows, radarCells, radarLightning, radarSatellite, weatherAlerts) preferences, f1_schedule_cache and series_schedule_cache
 - **No PII collected** - See PRIVACY.md
 
 ### Language & Spelling
@@ -81,7 +81,7 @@ circuit-weather/
 │   ├── src/          # Frontend ES modules (no build step)
 │   │   ├── main.js   # Entry point
 │   │   └── ...
-│   ├── theme.js      # Critical for FOUC prevention (load in head)
+│   ├── theme.js      # Runs first in <head>: theme (FOUC prevention), web font, schedule preload
 │   ├── favicon.svg
 │   ├── icon-192.png  # PWA icon (192×192)
 │   ├── icon-512.png  # PWA icon (512×512)
@@ -178,6 +178,14 @@ ENVIRONMENT = "preview"
 - **Note:** An `.env.example` file is intentionally omitted. This project is standalone and does not intend to onboard human developers, so it doesn't require others to know how to configure or run it.
 - No build step required (vanilla JS)
 
+### Load Performance
+
+Speed matters most on mobile at a circuit, so nothing may block the first render:
+
+- **No render-blocking scripts.** Mapbox GL JS is preloaded (`fetchpriority="low"`) and run by `MapManager` once the token arrives; Leaflet is only fetched if Mapbox can't be used. The Buy Me a Coffee widget is loaded by `src/ui/BuyMeACoffee.js` after the page has loaded (its `document.writeln` is pointed at the container). The Inter stylesheet is added by `theme.js` (`display=swap`).
+- **Early data.** `index.html` preloads `/api/config` and `/api/radar`; `theme.js` preloads the URL's schedule unless a fresh saved copy exists. The schedule loads in parallel with the map, not after it.
+- **No module waterfall.** Every module imported at startup is a `<link rel="modulepreload">` in `index.html`; `tests/module-preload.test.js` fails if the list drifts from the imports. Non-English locales are dynamic imports (`LOCALE_LOADERS` in `src/i18n/index.js`), loaded only when chosen.
+
 ---
 
 ## Functionality Requirements
@@ -188,6 +196,8 @@ ENVIRONMENT = "preview"
    - Series dropdown: Formula 1 (Jolpica, OpenF1 fallback), Formula 2, Formula 3, Formula E, WEC, IMSA, Supercars, IndyCar, NASCAR Cup, MotoGP and World Superbike (TheSportsDB via `/api/schedule/{series}`)
    - Round dropdown shows all races in current season with dates
    - Session dropdown shows each series' sessions with times (F1: FP1-3, Sprint/Qualifying/Race; others: the session names TheSportsDB lists, e.g. Practice, Sprint Race, Feature Race)
+   - **Session timing** (`public/src/utils/sessionTiming.js`, the only place it is decided): schedules give start times only, so a session counts as live from its start for an assumed length, cut short when the next session in the round starts (MotoGP and WEC run sessions 5-20 minutes apart). Lengths: 1 h 30 min for practice/qualifying/Hyperpole/sprints; 4 h for a round's main race (the session `race`, else the one at the round's date and time, e.g. MotoGP `gp`, F2/F3 Feature Race); 25 h for WEC and IMSA races. A round is over when its last session is. This drives the automatic pick on load (the live session, else the next), the LIVE/Next markers and auto-advance
+   - **Auto-advance** toggle under the session picker (off by default; saved): moves to the next session, and the next round with the map, as each finishes, so the page can be left open as a console (`public/src/ui/AutoAdvance.js`, checked every 30 s and when the tab is seen again). A round or session picked by hand, or opened from a link, is left until the next scheduled change
    - TheSportsDB must be credited as the data source whenever its data is shown (sidebar credit line)
 
 2. **Map Display**
