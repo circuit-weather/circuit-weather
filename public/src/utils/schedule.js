@@ -11,6 +11,42 @@ export function isScheduleOver(races, now = Date.now()) {
     return Array.isArray(races) && races.length > 0 && races.every(r => getRaceEndTime(r).getTime() <= now);
 }
 
+// How long a saved complete schedule is used before it is fetched again: a week
+// normally, an hour on the day of an event (session times can still move then).
+// public/theme.js repeats these rules in ES5; keep the two in step.
+export const SCHEDULE_CACHE_MS = 7 * 24 * 60 * 60 * 1000;
+export const EVENT_DAY_SCHEDULE_CACHE_MS = 60 * 60 * 1000;
+
+/**
+ * Whether any session of a schedule starts today (the visitor's local date).
+ * Works on raw schedules as saved: Ergast F1 races (FirstPractice, Sprint, ...
+ * as { date, time } objects) and the Worker's races with a `sessions` array.
+ * @param {Array} races
+ * @param {number} [now]
+ */
+export function isEventDay(races, now = Date.now()) {
+    if (!Array.isArray(races)) return false;
+    const today = new Date(now).toDateString();
+    const startsToday = (s) => {
+        if (!s || typeof s.date !== 'string') return false;
+        const start = new Date(s.time ? `${s.date}T${s.time}` : `${s.date}T12:00:00Z`);
+        return start.toDateString() === today;
+    };
+    return races.some(race => race && (
+        startsToday(race) ||
+        Object.values(race).some(v => (Array.isArray(v) ? v.some(startsToday) : startsToday(v)))
+    ));
+}
+
+/**
+ * How long a saved complete schedule stays fresh.
+ * @param {Array} races
+ * @param {number} [now]
+ */
+export function getScheduleCacheMs(races, now = Date.now()) {
+    return isEventDay(races, now) ? EVENT_DAY_SCHEDULE_CACHE_MS : SCHEDULE_CACHE_MS;
+}
+
 /**
  * End of a race weekend's running, used to decide which round is "next".
  *

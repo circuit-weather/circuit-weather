@@ -1,6 +1,6 @@
 import { CONFIG } from '../config.js';
 import { SafeStorage } from '../utils/storage.js';
-import { isScheduleOver } from '../utils/schedule.js';
+import { isScheduleOver, getScheduleCacheMs } from '../utils/schedule.js';
 
 /**
  * Schedules for series other than F1, from the Worker's /api/schedule/{series}
@@ -15,7 +15,6 @@ export class SeriesAPI {
     constructor() {
         this.cache = new Map();
         this.LOCAL_STORAGE_KEY = 'series_schedule_cache';
-        this.CACHE_DURATION_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
         this.PARTIAL_CACHE_DURATION_MS = 5 * 60 * 1000; // 5 minutes
     }
 
@@ -31,7 +30,8 @@ export class SeriesAPI {
         // SEC: Validate the stored shape so poisoned localStorage cannot break the app
         const valid = stored && Number.isFinite(stored.timestamp) && Array.isArray(stored.races);
         if (!refresh && valid) {
-            const maxAge = stored.complete ? this.CACHE_DURATION_MS : this.PARTIAL_CACHE_DURATION_MS;
+            // A week, or an hour on the day of an event
+            const maxAge = stored.complete ? getScheduleCacheMs(stored.races) : this.PARTIAL_CACHE_DURATION_MS;
             // A finished season is re-fetched: the Worker moves on to next season
             // once its first round is listed
             if (Date.now() - stored.timestamp < maxAge && !isScheduleOver(stored.races)) return this.remember(series, stored);

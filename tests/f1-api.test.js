@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { F1API } from '../public/src/api/F1API.js';
 import { SafeStorage } from '../public/src/utils/storage.js';
+import { SCHEDULE_CACHE_MS } from '../public/src/utils/schedule.js';
 
 describe('F1API', () => {
     describe('parseRace', () => {
@@ -259,7 +260,7 @@ describe('F1API', () => {
             const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
             const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
             const expired = {
-                timestamp: Date.now() - api.CACHE_DURATION_MS - 1000,
+                timestamp: Date.now() - SCHEDULE_CACHE_MS - 1000,
                 races: [{ round: '1', raceName: 'Old Grand Prix' }],
                 source: 'openf1',
             };
@@ -281,7 +282,7 @@ describe('F1API', () => {
 
         it('prefers a fresh fetch over an expired localStorage schedule', async () => {
             const expired = {
-                timestamp: Date.now() - api.CACHE_DURATION_MS - 1000,
+                timestamp: Date.now() - SCHEDULE_CACHE_MS - 1000,
                 races: [{ round: '1', raceName: 'Old Grand Prix' }],
             };
             SafeStorage.getItem.mockReturnValueOnce(JSON.stringify(expired));
@@ -376,6 +377,35 @@ describe('F1API', () => {
             expect(result).toEqual(mockRaces);
             expect(mockFetch).toHaveBeenCalledTimes(1);
             expect(SafeStorage.setItem).toHaveBeenCalledWith('f1_schedule_cache', expect.any(String));
+        });
+
+        it('re-fetches a stored schedule after an hour on the day of an event', async () => {
+            vi.useFakeTimers({ toFake: ['Date'] });
+            try {
+                // Qualifying's own start, so it is "today" in any time zone
+                vi.setSystemTime(Date.parse('2026-11-07T11:40:00Z'));
+                const race = {
+                    round: '22', raceName: 'Qatar GP', date: '2026-11-08', time: '16:00:00Z',
+                    Qualifying: { date: '2026-11-07', time: '11:40:00Z' }
+                };
+                SafeStorage.getItem.mockReturnValueOnce(JSON.stringify({ timestamp: Date.now() - 2 * 60 * 60 * 1000, races: [race] }));
+                const fresh = [{ ...race, time: '17:00:00Z' }];
+                mockFetch.mockResolvedValueOnce({
+                    ok: true,
+                    json: () => Promise.resolve({ MRData: { RaceTable: { Races: fresh } } }),
+                });
+
+                expect(await api.getSchedule()).toEqual(fresh);
+                expect(mockFetch).toHaveBeenCalledTimes(1);
+
+                // Within the hour, the saved copy is used
+                const again = new F1API();
+                SafeStorage.getItem.mockReturnValueOnce(JSON.stringify({ timestamp: Date.now() - 30 * 60 * 1000, races: [race] }));
+                expect(await again.getSchedule()).toEqual([race]);
+                expect(mockFetch).toHaveBeenCalledTimes(1);
+            } finally {
+                vi.useRealTimers();
+            }
         });
 
         it('fetches fresh data if localStorage contains invalid JSON', async () => {

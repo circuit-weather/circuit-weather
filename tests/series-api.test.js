@@ -68,6 +68,21 @@ describe('SeriesAPI', () => {
         expect(mockFetch).not.toHaveBeenCalled();
     });
 
+    it('only uses a stored complete schedule for an hour on the day of an event', async () => {
+        // The sprint race's own start, so it is "today" in any time zone
+        vi.setSystemTime(Date.parse('2026-11-28T13:00:00Z'));
+        store.series_schedule_cache = JSON.stringify({ f2: { timestamp: Date.now() - 30 * 60 * 1000, races: [RACE], complete: true } });
+        expect((await api.getSchedule('f2')).races).toEqual([RACE]);
+        expect(mockFetch).not.toHaveBeenCalled();
+
+        api = new SeriesAPI();
+        const moved = { ...RACE, time: '14:00:00Z' };
+        store.series_schedule_cache = JSON.stringify({ f2: { timestamp: Date.now() - 2 * 60 * 60 * 1000, races: [RACE], complete: true } });
+        respond({ complete: true, races: [moved] });
+        expect((await api.getSchedule('f2')).races).toEqual([moved]);
+        expect(mockFetch).toHaveBeenCalledTimes(1);
+    });
+
     it('re-fetches a stored schedule once its season is over', async () => {
         vi.setSystemTime(Date.parse('2026-12-01T00:00:00Z'));
         store.series_schedule_cache = JSON.stringify({ f2: { timestamp: Date.now() - 24 * 3600 * 1000, races: [RACE], complete: true } });
