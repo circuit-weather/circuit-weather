@@ -1,5 +1,6 @@
 import { CONFIG } from '../config.js';
 import { SafeStorage } from '../utils/storage.js';
+import { isScheduleOver } from '../utils/schedule.js';
 
 /**
  * Schedules for series other than F1, from the Worker's /api/schedule/{series}
@@ -31,7 +32,9 @@ export class SeriesAPI {
         const valid = stored && Number.isFinite(stored.timestamp) && Array.isArray(stored.races);
         if (!refresh && valid) {
             const maxAge = stored.complete ? this.CACHE_DURATION_MS : this.PARTIAL_CACHE_DURATION_MS;
-            if (Date.now() - stored.timestamp < maxAge) return this.remember(series, stored);
+            // A finished season is re-fetched: the Worker moves on to next season
+            // once its first round is listed
+            if (Date.now() - stored.timestamp < maxAge && !isScheduleOver(stored.races)) return this.remember(series, stored);
         }
 
         try {

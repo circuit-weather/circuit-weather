@@ -19,6 +19,8 @@ export class MapManager {
     this.isMapbox = false;
     this.tileLayer = null; // Used for Leaflet fallback
     this.resizeObserver = null;
+    // Idle retry for a fly issued while the style was loading (see setView)
+    this.pendingFly = null;
 
     // Bind the language change handler so we can safely add/remove it
     this.handleLanguageChange = this.handleLanguageChange.bind(this);
@@ -222,6 +224,7 @@ export class MapManager {
     if (!this.map) return;
 
     if (this.isMapbox) {
+      this.cancelPendingFly();
       const fly = () => this.map.flyTo({
         center: [lng, lat],
         zoom: zoom - 1, // Adjust zoom level
@@ -229,16 +232,34 @@ export class MapManager {
       });
 
       // Mapbox silently drops camera commands issued while a style is still
-      // loading (e.g. the initial theme apply). If the style isn't ready yet,
-      // defer the move until the map next goes idle.
-      if (this.map.isStyleLoaded()) {
-        fly();
-      } else {
-        this.map.once('idle', fly);
+      // loading (e.g. the initial theme apply), so fly again once the map goes
+      // idle if this one never started. isStyleLoaded() is also false while any
+      // tiles load, which with animated radar can last until the next frame
+      // swap, so never wait for idle before flying: switching circuits quickly
+      // used to queue flies that ran late or not at all.
+      if (!this.map.isStyleLoaded()) {
+        const retry = () => {
+          this.cancelPendingFly();
+          fly();
+        };
+        // Any move (this fly starting, or the user panning) makes a retry unneeded
+        const moved = () => this.cancelPendingFly();
+        this.map.once('idle', retry);
+        this.map.once('movestart', moved);
+        this.pendingFly = { retry, moved };
       }
+      fly();
     } else {
       this.map.setView([lat, lng], zoom);
     }
+  }
+
+  /** Drops the idle retry armed by a previous setView, so only the latest circuit is flown to. */
+  cancelPendingFly() {
+    if (!this.pendingFly || !this.map) return;
+    this.map.off('idle', this.pendingFly.retry);
+    this.map.off('movestart', this.pendingFly.moved);
+    this.pendingFly = null;
   }
 
   handleLanguageChange(e) {

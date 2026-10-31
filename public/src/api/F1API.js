@@ -1,5 +1,6 @@
 import { CONFIG } from '../config.js';
 import { SafeStorage } from '../utils/storage.js';
+import { isScheduleOver } from '../utils/schedule.js';
 import { fetchOpenF1Schedule } from './openf1.js';
 
 export class F1API {
@@ -26,7 +27,8 @@ export class F1API {
                 const now = Date.now();
                 // SEC: Validate that cachedData.races is an Array to prevent application logic bypass/errors from poisoned localStorage
                 if (cachedData.timestamp && Array.isArray(cachedData.races)) {
-                    if (now - cachedData.timestamp < this.CACHE_DURATION_MS) {
+                    // A finished season is re-fetched, to find next season's opener
+                    if (now - cachedData.timestamp < this.CACHE_DURATION_MS && !isScheduleOver(cachedData.races, now)) {
                         return this.useStoredSchedule(cacheKey, cachedData);
                     }
                     expiredCache = cachedData;
@@ -74,13 +76,31 @@ export class F1API {
     // segment, not a series selector ("/ergast/f2/" returns the F1 schedule).
     // Other series come from TheSportsDB through SeriesAPI instead.
     async fetchFromJolpica() {
-        const response = await fetch(`${CONFIG.f1ApiBase}/current.json`, {
+        const data = await this.fetchJolpicaSeason('current');
+        const races = data.MRData?.RaceTable?.Races || [];
+        // Jolpica's "current" season only moves on in January. Once this season's
+        // last race is over, next season's opener is the next round, so use next
+        // season's calendar as soon as it is published.
+        const season = Number(data.MRData?.RaceTable?.season);
+        if (Number.isInteger(season) && isScheduleOver(races)) {
+            try {
+                const next = await this.fetchJolpicaSeason(String(season + 1));
+                const nextRaces = next.MRData?.RaceTable?.Races;
+                if (Array.isArray(nextRaces) && nextRaces.length > 0) return nextRaces;
+            } catch (error) {
+                console.warn('Next F1 season not available yet:', error);
+            }
+        }
+        return races;
+    }
+
+    async fetchJolpicaSeason(season) {
+        const response = await fetch(`${CONFIG.f1ApiBase}/${season}.json`, {
             // SEC: Add timeout to prevent hanging connections if the proxy is unresponsive
             signal: AbortSignal.timeout(6000)
         });
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const data = await response.json();
-        return data.MRData?.RaceTable?.Races || [];
+        return response.json();
     }
 
     cacheSchedule(cacheKey, races, source) {

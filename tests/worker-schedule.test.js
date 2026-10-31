@@ -6,6 +6,7 @@ import {
   emptyState,
   planFetches,
   pickSeason,
+  followingSeason,
   getRoundTtlMs,
   FILL_BUDGET,
   SEASON_TTL_MS,
@@ -32,7 +33,8 @@ const jsonResponse = (body, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
 
 // A fake F2 season: rounds 1..lastRound, one venue per round, round `next` upcoming
-function fakeUpstream({ lastRound = 3, next = 2, season = '2026', pastSeason = season, nextSeason = season, venueMap = '37°50′59″S 144°58′6″E' } = {}) {
+// following: a later season whose round 1 (in March) is already listed
+function fakeUpstream({ lastRound = 3, next = 2, season = '2026', pastSeason = season, nextSeason = season, following = null, venueMap = '37°50′59″S 144°58′6″E' } = {}) {
   const calls = [];
   const handler = vi.fn(async (url) => {
     const u = new URL(url);
@@ -48,7 +50,13 @@ function fakeUpstream({ lastRound = 3, next = 2, season = '2026', pastSeason = s
     }
     if (path === 'eventsround.php') {
       const r = Number(p.get('r'));
-      if (r > lastRound) return jsonResponse({ events: null });
+      if (following && p.get('s') === following) {
+        if (r !== 1) return jsonResponse({ events: null });
+        return jsonResponse({
+          events: [{ intRound: '1', strEvent: 'R1 Feature Race', strTimestamp: '2027-03-07T15:00:00', idVenue: '101', strVenue: 'Venue 1', strCountry: 'Australia' }],
+        });
+      }
+      if (r > lastRound || (p.get('s') && p.get('s') !== season && p.get('s') !== pastSeason)) return jsonResponse({ events: null });
       const day = String(r).padStart(2, '0');
       return jsonResponse({
         events: [
@@ -285,6 +293,53 @@ describe('Worker /api/schedule/{series}', () => {
     expect(body.season).toBe('2026');
   });
 
+  describe('after the season ends', () => {
+    // Round 3, the last, runs on 2026-11-03
+    const AFTER_SEASON = Date.parse('2026-11-20T12:00:00Z');
+
+    it("moves on to next season once its first round is listed", async () => {
+      const upstream = fakeUpstream({ lastRound: 3, next: 0, following: '2027' });
+      vi.stubGlobal('fetch', upstream.handler);
+      await fillUntilComplete();
+
+      vi.setSystemTime(AFTER_SEASON);
+      const body = await (await getFresh()).json();
+      expect(body.season).toBe('2027');
+      expect(body.races.map(r => r.round)).toEqual(['1']);
+      expect(body.races[0].date).toBe('2027-03-07');
+
+      // The daily season check doesn't undo it while strCurrentSeason still says 2026
+      vi.setSystemTime(AFTER_SEASON + 2 * DAY);
+      expect((await (await getFresh()).json()).season).toBe('2027');
+    });
+
+    it('stays on the finished season until next season is listed, checking daily', async () => {
+      const upstream = fakeUpstream({ lastRound: 3, next: 0 });
+      vi.stubGlobal('fetch', upstream.handler);
+      await fillUntilComplete();
+
+      vi.setSystemTime(AFTER_SEASON);
+      upstream.calls.length = 0;
+      const body = await (await getFresh()).json();
+      expect(body).toMatchObject({ season: '2026', complete: true });
+      expect(upstream.calls).toContain('eventsround.php:1');
+
+      upstream.calls.length = 0;
+      await getFresh();
+      expect(upstream.calls).not.toContain('eventsround.php:1');
+    });
+
+    it('waits until the final round is well past', async () => {
+      const upstream = fakeUpstream({ lastRound: 3, next: 0, following: '2027' });
+      vi.stubGlobal('fetch', upstream.handler);
+      await fillUntilComplete();
+
+      // The day after the final: it may still be running (or just finished)
+      vi.setSystemTime(Date.parse('2026-11-04T12:00:00Z'));
+      expect((await (await getFresh()).json()).season).toBe('2026');
+    });
+  });
+
   it("ignores next season's opener as the next round", async () => {
     vi.stubGlobal('fetch', fakeUpstream({ lastRound: 3, next: 1, nextSeason: '2027' }).handler);
     await get();
@@ -440,6 +495,15 @@ describe('planFetches', () => {
     state.rounds[1] = { fetchedAt: NOW - 3 * DAY, events: [] };
     state.rounds[2] = { fetchedAt: NOW - 5 * DAY, events: [] };
     expect(planFetches(state, NOW).map(t => t.round)).toEqual([2, 1]);
+  });
+});
+
+describe('followingSeason', () => {
+  it('handles single-year and split seasons', () => {
+    expect(followingSeason('2026')).toBe('2027');
+    expect(followingSeason('2025-2026')).toBe('2026-2027');
+    expect(followingSeason('bogus')).toBeNull();
+    expect(followingSeason(null)).toBeNull();
   });
 });
 

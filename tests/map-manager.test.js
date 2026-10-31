@@ -5,6 +5,7 @@ import { CONFIG } from "../public/src/config.js";
 const mapboxMapMock = {
   on: vi.fn(),
   once: vi.fn(),
+  off: vi.fn(),
   setStyle: vi.fn(),
   flyTo: vi.fn(),
   isStyleLoaded: vi.fn(() => true),
@@ -604,29 +605,54 @@ describe("MapManager", () => {
       });
     });
 
-    it("defers the Mapbox fly until idle when the style is still loading", async () => {
+    it("flies at once while the style is loading, and again on idle if the fly was dropped", async () => {
       mapManager.isMapbox = true;
       mapManager.map = mapboxMapMock;
       mapboxMapMock.isStyleLoaded.mockReturnValue(false);
 
-      let idleCb;
-      mapboxMapMock.once.mockImplementation((event, cb) => {
-        if (event === 'idle') idleCb = cb;
-      });
+      const handlers = {};
+      mapboxMapMock.once.mockImplementation((event, cb) => { handlers[event] = cb; });
 
       mapManager.setView(10, 20, 13);
 
-      // Not flown yet — deferred to the idle event
-      expect(mapboxMapMock.flyTo).not.toHaveBeenCalled();
+      // Flown straight away: isStyleLoaded() is also false while radar tiles load
+      expect(mapboxMapMock.flyTo).toHaveBeenCalledTimes(1);
+      expect(mapboxMapMock.flyTo).toHaveBeenCalledWith({ center: [20, 10], zoom: 12, essential: true });
       expect(mapboxMapMock.once).toHaveBeenCalledWith('idle', expect.any(Function));
 
-      // Once the map goes idle, the deferred fly runs
-      idleCb();
-      expect(mapboxMapMock.flyTo).toHaveBeenCalledWith({
-        center: [20, 10],
-        zoom: 12,
-        essential: true
-      });
+      // Mapbox dropped it (no movestart): the idle retry flies again
+      handlers.idle();
+      expect(mapboxMapMock.flyTo).toHaveBeenCalledTimes(2);
+      expect(mapManager.pendingFly).toBeNull();
+    });
+
+    it("drops the idle retry once the map starts moving", async () => {
+      mapManager.isMapbox = true;
+      mapManager.map = mapboxMapMock;
+      mapboxMapMock.isStyleLoaded.mockReturnValue(false);
+      mapboxMapMock.once.mockImplementation(() => {});
+
+      mapManager.setView(10, 20, 13);
+      const { retry, moved } = mapManager.pendingFly;
+      moved();
+
+      expect(mapboxMapMock.off).toHaveBeenCalledWith('idle', retry);
+      expect(mapManager.pendingFly).toBeNull();
+    });
+
+    it("only keeps the latest circuit's retry when switching quickly", async () => {
+      mapManager.isMapbox = true;
+      mapManager.map = mapboxMapMock;
+      mapboxMapMock.isStyleLoaded.mockReturnValue(false);
+      mapboxMapMock.once.mockImplementation(() => {});
+
+      mapManager.setView(10, 20, 13);
+      const first = mapManager.pendingFly.retry;
+      mapManager.setView(30, 40, 13);
+
+      expect(mapboxMapMock.off).toHaveBeenCalledWith('idle', first);
+      expect(mapManager.pendingFly.retry).not.toBe(first);
+      expect(mapboxMapMock.flyTo).toHaveBeenLastCalledWith({ center: [40, 30], zoom: 12, essential: true });
     });
 
     it("should handle language change event when isMapbox is true", () => {

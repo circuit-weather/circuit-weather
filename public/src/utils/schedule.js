@@ -1,6 +1,17 @@
 import { CONFIG } from '../config.js';
 
 /**
+ * Whether every round of a schedule has finished, so its season is over and the
+ * next round (if any) is in next season's schedule. Works on raw Ergast-shaped
+ * races as well as parsed ones.
+ * @param {Array} races
+ * @param {number} [now]
+ */
+export function isScheduleOver(races, now = Date.now()) {
+    return Array.isArray(races) && races.length > 0 && races.every(r => getRaceEndTime(r).getTime() <= now);
+}
+
+/**
  * End of a race weekend's running, used to decide which round is "next".
  *
  * The result is memoised on the race object as a timestamp rather than a
