@@ -1585,6 +1585,10 @@ body {
     /* Backdrop */
     .sidebar-backdrop {
         display: block;
+        /* Just under the sidebar (2000) and above every map overlay (conditions,
+           radar controls, Leaflet controls at 1000), so a tap anywhere outside
+           the open sidebar lands on the backdrop and closes it */
+        z-index: 1999;
     }
 
     .sidebar.sidebar--open~.sidebar-backdrop,
