@@ -94,7 +94,7 @@ vi.stubGlobal("requestAnimationFrame", vi.fn((cb) => setTimeout(cb, 0)));
 vi.mock("../public/src/utils/loadScript.js", () => ({ loadScript: vi.fn().mockResolvedValue() }));
 
 // Import the class under test
-const { MapManager, MAPBOX_JS, LEAFLET_JS, LEAFLET_JS_INTEGRITY } = await import("../public/src/map/MapManager.js");
+const { MapManager, MAPBOX_JS, LEAFLET_JS, LEAFLET_JS_INTEGRITY, CONTEXT_RESTORE_WAIT_MS } = await import("../public/src/map/MapManager.js");
 const { loadScript } = await import("../public/src/utils/loadScript.js");
 
 describe("MapManager", () => {
@@ -828,5 +828,97 @@ describe("MapManager coverage test", () => {
       await mapManager.init();
       expect(loadScript).not.toHaveBeenCalled();
     });
+  });
+});
+
+describe("MapManager WebGL context loss", () => {
+  let mapManager;
+  let handlers;
+  let session;
+
+  beforeEach(() => {
+    vi.useFakeTimers();
+    vi.clearAllMocks();
+    handlers = {};
+    mapboxMapMock.on.mockImplementation((event, cb) => { handlers[event] = cb; });
+    session = {};
+    vi.stubGlobal("sessionStorage", {
+      getItem: (k) => session[k] ?? null,
+      setItem: (k, v) => { session[k] = v; },
+    });
+    documentMock.visibilityState = "visible";
+    mapManager = new MapManager();
+    mapManager.isMapbox = true;
+    mapManager.map = mapboxMapMock;
+    mapManager.reloadPage = vi.fn();
+    mapManager.onContextRestored = vi.fn();
+    mapManager.watchContextLoss();
+  });
+
+  afterEach(() => {
+    mapManager.clearContextCheck();
+    delete documentMock.visibilityState;
+    vi.useRealTimers();
+  });
+
+  it("rebuilds the map when the browser gives the context back", () => {
+    handlers.webglcontextlost();
+    handlers.webglcontextrestored();
+    expect(mapManager.onContextRestored).toHaveBeenCalledTimes(1);
+    vi.advanceTimersByTime(CONTEXT_RESTORE_WAIT_MS * 2);
+    expect(mapManager.reloadPage).not.toHaveBeenCalled();
+  });
+
+  it("reloads the page if the context isn't restored while it is visible", () => {
+    handlers.webglcontextlost();
+    vi.advanceTimersByTime(CONTEXT_RESTORE_WAIT_MS);
+    expect(mapManager.reloadPage).toHaveBeenCalledTimes(1);
+  });
+
+  it("waits until a background page is seen again", () => {
+    documentMock.visibilityState = "hidden";
+    handlers.webglcontextlost();
+    vi.advanceTimersByTime(CONTEXT_RESTORE_WAIT_MS * 10);
+    expect(mapManager.reloadPage).not.toHaveBeenCalled();
+
+    // Reopened: Android doesn't always give the context back
+    documentMock.visibilityState = "visible";
+    mapManager.handleVisibilityChange();
+    vi.advanceTimersByTime(CONTEXT_RESTORE_WAIT_MS);
+    expect(mapManager.reloadPage).toHaveBeenCalledTimes(1);
+  });
+
+  it("does nothing on visibility changes while the context is fine", () => {
+    mapManager.handleVisibilityChange();
+    vi.advanceTimersByTime(CONTEXT_RESTORE_WAIT_MS);
+    expect(mapManager.reloadPage).not.toHaveBeenCalled();
+  });
+
+  it("reloads at most once a minute", () => {
+    session.mapContextReloadAt = String(Date.now() - 1000);
+    handlers.webglcontextlost();
+    vi.advanceTimersByTime(CONTEXT_RESTORE_WAIT_MS);
+    expect(mapManager.reloadPage).not.toHaveBeenCalled();
+  });
+
+  it("doesn't reload without session storage (no loop guard)", () => {
+    vi.stubGlobal("sessionStorage", { getItem: () => { throw new Error("blocked"); } });
+    handlers.webglcontextlost();
+    vi.advanceTimersByTime(CONTEXT_RESTORE_WAIT_MS);
+    expect(mapManager.reloadPage).not.toHaveBeenCalled();
+  });
+
+  it("rebuilds an unchanged style instead of diffing it away", async () => {
+    mapboxMapMock.once.mockImplementation((event, cb) => { if (event === "style.load") cb(); });
+    await mapManager.setTheme("dark", { rebuild: true });
+    expect(mapboxMapMock.setStyle).toHaveBeenCalledWith(CONFIG.mapboxStyleDark, { diff: false });
+  });
+
+  it("stops watching on destroy", () => {
+    handlers.webglcontextlost();
+    mapManager.destroy();
+    vi.advanceTimersByTime(CONTEXT_RESTORE_WAIT_MS);
+    expect(mapManager.reloadPage).not.toHaveBeenCalled();
+    expect(documentMock.removeEventListener).toHaveBeenCalledWith("visibilitychange", mapManager.handleVisibilityChange);
   });
 });

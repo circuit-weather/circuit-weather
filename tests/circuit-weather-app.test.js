@@ -1661,7 +1661,7 @@ describe('CircuitWeatherApp Pure Methods', () => {
 
             await app.handleThemeChange('dark');
 
-            expect(app.mapManager.setTheme).toHaveBeenCalledWith('dark');
+            expect(app.mapManager.setTheme).toHaveBeenCalledWith('dark', { rebuild: false });
             expect(app.rangeCircles.updateTheme).toHaveBeenCalled();
             expect(app.rangeCircles.draw).toHaveBeenCalledWith([10, 20]);
             expect(app.trackLayer.updateTheme).toHaveBeenCalled();
@@ -2131,7 +2131,16 @@ describe('CircuitWeatherApp Pure Methods', () => {
             const callback = ThemeManager.mock.calls[0][0];
             const theme = 'dark';
             await callback(theme);
-            expect(app.mapManager.setTheme).toHaveBeenCalledWith(theme);
+            expect(app.mapManager.setTheme).toHaveBeenCalledWith(theme, { rebuild: false });
+        });
+
+        it('rebuilds the map style and layers when a lost WebGL context comes back', async () => {
+            app.mapManager.init = vi.fn().mockResolvedValue({ hasLayer: false, addControl: vi.fn() });
+            await app.init();
+            app.mapManager.setTheme.mockClear();
+
+            await app.mapManager.onContextRestored();
+            expect(app.mapManager.setTheme).toHaveBeenCalledWith(expect.any(String), { rebuild: true });
         });
 
         it('wires up retry button in renderError', () => {
@@ -2181,7 +2190,7 @@ describe('CircuitWeatherApp Pure Methods', () => {
             await callback('light');
 
             // Should update theme but NOT draw circles
-            expect(app.mapManager.setTheme).toHaveBeenCalledWith('light');
+            expect(app.mapManager.setTheme).toHaveBeenCalledWith('light', { rebuild: false });
             expect(app.rangeCircles.updateTheme).toHaveBeenCalled();
             expect(app.rangeCircles.draw).not.toHaveBeenCalled();
         });
@@ -2210,7 +2219,7 @@ describe('CircuitWeatherApp Pure Methods', () => {
             // Invoke callback
             // Should not throw
             await expect(callback('light')).resolves.not.toThrow();
-            expect(app.mapManager.setTheme).toHaveBeenCalledWith('light');
+            expect(app.mapManager.setTheme).toHaveBeenCalledWith('light', { rebuild: false });
         });
     });
 });

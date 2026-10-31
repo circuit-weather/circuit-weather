@@ -54,6 +54,7 @@ Circuit Weather is a real-time F1 race circuit weather radar application. It dis
 
 - **No first-party cookies** used (third-party widgets may use cookies - see PRIVACY.md)
 - **localStorage only** for theme/unit/language/series (last picked; used when the URL names none)/autoAdvance/windOverlay/radar layer (radarColour, radarArrows, radarCells, radarLightning, radarSatellite, weatherAlerts) preferences, f1_schedule_cache and series_schedule_cache
+- **sessionStorage** only for `mapContextReloadAt`: when the map last reloaded itself after losing its WebGL context, so it does so at most once a minute
 - **No PII collected** - See PRIVACY.md
 
 ### Language & Spelling
@@ -200,6 +201,7 @@ Speed matters most on mobile at a circuit, so nothing may block the first render
 
 2. **Map Display**
    - Centred on selected circuit
+   - Recovers from a lost WebGL context (Android drops them for pages left in the background, leaving the map blank with every control still showing): when the browser gives it back, the style and every layer are rebuilt (Mapbox v3.0.1 only rebuilds its renderer); if it doesn't come back within 3 s of the page being visible, the page reloads (`MapManager.watchContextLoss`)
    - Dark/light mode basemaps (Mapbox natively, Carto for Leaflet fallback)
    - Dynamic range circles (outline only) that scale based on map zoom/bounds
    - Distance labels on circles
