@@ -9,12 +9,16 @@ vi.mock('../public/src/config.js', () => ({
         TILE_LOAD_TIMEOUT_MS: 3000,
         MIN_POLL_DELAY_MS: 30000,
         WEATHER_CACHE_MAX_ENTRIES: 50,
+        WEATHER_FETCH_TIMEOUT_MS: 5000,
+        WEATHER_RETRY_DELAY_MS: 1000,
+        WEATHER_RETRY_TIMEOUT_MS: 10000,
         WIND_FIELD_GRID: 3,
         WIND_FIELD_RADIUS_KM: 50
     }
 }));
 
 import { WeatherClient } from '../public/src/api/WeatherClient.js';
+import { CONFIG } from '../public/src/config.js';
 
 describe('WeatherClient', () => {
     let client;
@@ -308,9 +312,13 @@ describe('WeatherClient', () => {
         it('returns error result when fetch fails', async () => {
             const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
             const sessionTime = new Date(Date.now() + 1 * 24 * 60 * 60 * 1000);
-            mockFetch.mockRejectedValueOnce(new Error('Network error'));
+            vi.spyOn(console, 'warn').mockImplementation(() => {});
+            mockFetch.mockRejectedValue(new Error('Network error'));
 
-            const result = await client.getForecast(0, 0, sessionTime);
+            // Both the first attempt and the retry fail
+            const pending = client.getForecast(0, 0, sessionTime);
+            await vi.advanceTimersByTimeAsync(CONFIG.WEATHER_RETRY_DELAY_MS);
+            const result = await pending;
 
             expect(result.available).toBe(false);
             expect(result.reason).toBe('error');
@@ -345,6 +353,59 @@ describe('WeatherClient', () => {
             expect(result.reason).toBe('error');
             expect(errorSpy).toHaveBeenCalledWith('Weather fetch failed:', expect.any(SyntaxError));
             errorSpy.mockRestore();
+        });
+
+        describe('retrying slow requests', () => {
+            const sessionTime = () => new Date(Date.now() + 2 * 60 * 60 * 1000);
+            const timeout = () => Object.assign(new Error('signal timed out'), { name: 'TimeoutError' });
+            const hourly = () => {
+                const start = Math.floor(Date.now() / 3600000) * 3600;
+                const time = Array.from({ length: 6 }, (_, i) => start + i * 3600);
+                return { time, temperature_2m: time.map(() => 20), relative_humidity_2m: time.map(() => 50),
+                    precipitation_probability: time.map(() => 70), wind_speed_10m: time.map(() => 5),
+                    wind_direction_10m: time.map(() => 90), weather_code: time.map(() => 61) };
+            };
+
+            beforeEach(() => {
+                vi.spyOn(console, 'warn').mockImplementation(() => {});
+                vi.spyOn(console, 'error').mockImplementation(() => {});
+                vi.spyOn(AbortSignal, 'timeout');
+            });
+
+            it('retries once after a timeout, with longer to finish', async () => {
+                mockFetch.mockRejectedValueOnce(timeout()).mockResolvedValueOnce(makeMockResponse(hourly()));
+
+                const pending = client.getForecast(1, 1, sessionTime());
+                await vi.advanceTimersByTimeAsync(CONFIG.WEATHER_RETRY_DELAY_MS);
+                const result = await pending;
+
+                expect(result.available).toBe(true);
+                expect(mockFetch).toHaveBeenCalledTimes(2);
+                expect(mockFetch.mock.calls[1][0]).toBe(mockFetch.mock.calls[0][0]);
+                expect(AbortSignal.timeout.mock.calls).toEqual([[CONFIG.WEATHER_FETCH_TIMEOUT_MS], [CONFIG.WEATHER_RETRY_TIMEOUT_MS]]);
+                expect(console.warn).toHaveBeenCalledWith('Weather fetch failed, retrying:', 'TimeoutError');
+            });
+
+            it('retries a network failure, and gives up after the second attempt', async () => {
+                mockFetch.mockRejectedValue(new TypeError('Failed to fetch'));
+
+                const pending = client.getForecast(2, 2, sessionTime());
+                await vi.advanceTimersByTimeAsync(CONFIG.WEATHER_RETRY_DELAY_MS);
+                const result = await pending;
+
+                expect(result).toEqual({ available: false, reason: 'error' });
+                expect(mockFetch).toHaveBeenCalledTimes(2);
+            });
+
+            it('does not retry HTTP errors such as rate limiting', async () => {
+                mockFetch.mockResolvedValue({ ok: false, status: 429 });
+
+                const result = await client.getForecast(3, 3, sessionTime());
+
+                expect(result.reason).toBe('error');
+                expect(mockFetch).toHaveBeenCalledTimes(1);
+                expect(console.warn).not.toHaveBeenCalled();
+            });
         });
 
         it('returns too_far when hourly data is empty after filtering', async () => {

@@ -57,6 +57,12 @@ export const CONFIG = {
     // constant as its cacheTTL, so a scheduled refresh never lands on a still-cached entry
     SESSION_FORECAST_REFRESH_INTERVAL_MS: 900000,
     LIVE_WEATHER_DEBOUNCE_MS: 400, // Collapse rapid circuit changes into one Open-Meteo request
+    // Open-Meteo forecast requests: a slow mobile connection can miss the first
+    // timeout, so one retry follows a timeout or network failure (never an HTTP
+    // error, so a 429 isn't made worse), with longer to finish
+    WEATHER_FETCH_TIMEOUT_MS: 5000,
+    WEATHER_RETRY_DELAY_MS: 1000,
+    WEATHER_RETRY_TIMEOUT_MS: 10000,
     TILE_LOAD_TIMEOUT_MS: 3000, // 3 seconds
     MIN_POLL_DELAY_MS: 30000, // 30 seconds
     WEATHER_CACHE_MAX_ENTRIES: 50,
