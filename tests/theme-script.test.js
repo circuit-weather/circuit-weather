@@ -78,6 +78,34 @@ describe('theme.js', () => {
             expect(schedulePreload()).toBeNull();
         });
 
+        it('only trusts a saved copy for an hour on the day of an event', () => {
+            // A session starting now is "today" in any time zone
+            const start = new Date();
+            const today = [{
+                date: '2026-01-01',
+                sessions: [{ date: start.toISOString().slice(0, 10), time: start.toISOString().slice(11, 19) + 'Z' }],
+            }];
+            localStorage.setItem('series_schedule_cache', JSON.stringify({
+                motogp: { timestamp: Date.now() - 30 * 60000, races: today, complete: true },
+            }));
+            visit('/motogp');
+            expect(schedulePreload()).toBeNull();
+
+            localStorage.setItem('series_schedule_cache', JSON.stringify({
+                motogp: { timestamp: Date.now() - 2 * 60 * 60000, races: today, complete: true },
+            }));
+            visit('/motogp');
+            expect(schedulePreload().getAttribute('href')).toBe('/api/schedule/motogp');
+
+            document.head.innerHTML = '';
+            localStorage.setItem('f1_schedule_cache', JSON.stringify({
+                timestamp: Date.now() - 2 * 60 * 60000,
+                races: [{ date: '2026-01-01', Qualifying: today[0].sessions[0] }],
+            }));
+            visit('/f1');
+            expect(schedulePreload().getAttribute('href')).toBe('/api/f1/current.json');
+        });
+
         it('still preloads when the saved copy is stale, partial and old, or unreadable', () => {
             localStorage.setItem('f1_schedule_cache', JSON.stringify({ timestamp: Date.now() - 8 * DAY, races: [] }));
             visit('/f1');

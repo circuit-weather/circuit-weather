@@ -42,13 +42,14 @@
  * with the page; SeriesAPI/F1API then pick up the same response. Skipped when
  * the app will use its saved copy instead, so returning visitors fetch nothing
  * extra. Keep the series list and cache rules in step with SERIES_IDS
- * (src/config.js) and the CACHE_DURATION_MS values in src/api/F1API.js and
- * src/api/SeriesAPI.js.
+ * (src/config.js) and the cache rules in src/utils/schedule.js
+ * (getScheduleCacheMs) and src/api/SeriesAPI.js.
  */
 (function () {
     try {
         var SERIES = ['f1', 'f2', 'f3', 'fe', 'wec', 'imsa', 'supercars', 'indycar', 'nascar', 'motogp', 'wsbk'];
         var WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+        var EVENT_DAY_MS = 60 * 60 * 1000;
         var PARTIAL_MS = 5 * 60 * 1000;
 
         // The URL's series, else the visitor's saved one, else F1, as in CircuitWeatherApp.init
@@ -63,7 +64,26 @@
             var all = JSON.parse(localStorage.getItem('series_schedule_cache') || 'null');
             stored = all && all[series];
         }
+        // Any session starting today (local date), as isEventDay in src/utils/schedule.js
+        var today = new Date().toDateString();
+        var startsToday = function (s) {
+            if (!s || typeof s.date !== 'string') return false;
+            return new Date(s.time ? s.date + 'T' + s.time : s.date + 'T12:00:00Z').toDateString() === today;
+        };
+        var eventDay = function (races) {
+            for (var i = 0; i < races.length; i++) {
+                var race = races[i];
+                if (!race) continue;
+                if (startsToday(race)) return true;
+                for (var key in race) {
+                    var v = race[key];
+                    if (Array.isArray(v) ? v.some(startsToday) : startsToday(v)) return true;
+                }
+            }
+            return false;
+        };
         var maxAge = series === 'f1' || (stored && stored.complete) ? WEEK_MS : PARTIAL_MS;
+        if (maxAge === WEEK_MS && stored && Array.isArray(stored.races) && eventDay(stored.races)) maxAge = EVENT_DAY_MS;
         if (stored && Array.isArray(stored.races) && Date.now() - stored.timestamp < maxAge) return;
 
         var link = document.createElement('link');

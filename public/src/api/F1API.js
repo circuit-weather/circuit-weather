@@ -1,13 +1,12 @@
 import { CONFIG } from '../config.js';
 import { SafeStorage } from '../utils/storage.js';
-import { isScheduleOver } from '../utils/schedule.js';
+import { isScheduleOver, getScheduleCacheMs } from '../utils/schedule.js';
 import { fetchOpenF1Schedule } from './openf1.js';
 
 export class F1API {
     constructor() {
         this.cache = new Map();
         this.LOCAL_STORAGE_KEY = 'f1_schedule_cache';
-        this.CACHE_DURATION_MS = 7 * 24 * 60 * 60 * 1000; // 7 days
         // Which source supplied the current schedule: 'jolpica' (primary),
         // 'openf1' (fallback), or null before the first successful fetch.
         this.scheduleSource = null;
@@ -27,8 +26,9 @@ export class F1API {
                 const now = Date.now();
                 // SEC: Validate that cachedData.races is an Array to prevent application logic bypass/errors from poisoned localStorage
                 if (cachedData.timestamp && Array.isArray(cachedData.races)) {
-                    // A finished season is re-fetched, to find next season's opener
-                    if (now - cachedData.timestamp < this.CACHE_DURATION_MS && !isScheduleOver(cachedData.races, now)) {
+                    // A week, or an hour on the day of an event. A finished season
+                    // is re-fetched, to find next season's opener
+                    if (now - cachedData.timestamp < getScheduleCacheMs(cachedData.races, now) && !isScheduleOver(cachedData.races, now)) {
                         return this.useStoredSchedule(cacheKey, cachedData);
                     }
                     expiredCache = cachedData;
