@@ -81,7 +81,7 @@ circuit-weather/
 │   ├── src/          # Frontend ES modules (no build step)
 │   │   ├── main.js   # Entry point
 │   │   └── ...
-│   ├── theme.js      # Critical for FOUC prevention (load in head)
+│   ├── theme.js      # Runs first in <head>: theme (FOUC prevention), web font, schedule preload
 │   ├── favicon.svg
 │   ├── icon-192.png  # PWA icon (192×192)
 │   ├── icon-512.png  # PWA icon (512×512)
@@ -177,6 +177,14 @@ ENVIRONMENT = "preview"
   - `DEBUG` (optional): Set to 'true' to enable detailed debug logging (e.g., exposing unredacted tile proxy paths in logs) when not in production.
 - **Note:** An `.env.example` file is intentionally omitted. This project is standalone and does not intend to onboard human developers, so it doesn't require others to know how to configure or run it.
 - No build step required (vanilla JS)
+
+### Load Performance
+
+Speed matters most on mobile at a circuit, so nothing may block the first render:
+
+- **No render-blocking scripts.** Mapbox GL JS is preloaded (`fetchpriority="low"`) and run by `MapManager` once the token arrives; Leaflet is only fetched if Mapbox can't be used. The Buy Me a Coffee widget is loaded by `src/ui/BuyMeACoffee.js` after the page has loaded (its `document.writeln` is pointed at the container). The Inter stylesheet is added by `theme.js` (`display=swap`).
+- **Early data.** `index.html` preloads `/api/config` and `/api/radar`; `theme.js` preloads the URL's schedule unless a fresh saved copy exists. The schedule loads in parallel with the map, not after it.
+- **No module waterfall.** Every module imported at startup is a `<link rel="modulepreload">` in `index.html`; `tests/module-preload.test.js` fails if the list drifts from the imports. Non-English locales are dynamic imports (`LOCALE_LOADERS` in `src/i18n/index.js`), loaded only when chosen.
 
 ---
 

@@ -11,7 +11,7 @@
  * - Network-only for API calls (weather data must be fresh)
  */
 
-const CACHE_VERSION = '1.5.0';
+const CACHE_VERSION = '1.6.0';
 const CACHE_NAME = `circuit-weather-v${CACHE_VERSION}`;
 
 // App shell resources to pre-cache on install
@@ -43,7 +43,9 @@ const APP_SHELL = [
     '/src/ui/PrivacyModal.js',
     '/src/ui/SidebarManager.js',
     '/src/ui/ThemeManager.js',
+    '/src/ui/BuyMeACoffee.js',
     '/src/utils/rain.js',
+    '/src/utils/loadScript.js',
     '/src/utils/storage.js',
     '/src/utils/wind.js',
     '/favicon.svg',

@@ -1,5 +1,14 @@
 import { CONFIG } from "../config.js";
 import { i18n } from "../i18n/index.js";
+import { loadScript } from "../utils/loadScript.js";
+
+// The map libraries load on demand, so neither blocks the first render.
+// index.html preloads Mapbox GL JS, so it is already downloading (in parallel
+// with the config request) by the time the token arrives. Leaflet is only
+// fetched if Mapbox can't be used.
+export const MAPBOX_JS = "/api/assets/mapbox-gl.js";
+export const LEAFLET_JS = "/api/assets/leaflet.js";
+export const LEAFLET_JS_INTEGRITY = "sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=";
 
 /**
  * Manages the map instance, rendering Mapbox GL JS if available and falling back to Leaflet.
@@ -30,6 +39,7 @@ export class MapManager {
         throw new Error('Mapbox token not available');
       }
 
+      if (typeof mapboxgl === "undefined") await loadScript(MAPBOX_JS);
       await this.initMapbox(config.mapboxToken);
     } catch (error) {
       const rawMessage = error.message || String(error);
@@ -37,6 +47,7 @@ export class MapManager {
 
       console.warn('Mapbox initialization failed, falling back to Leaflet:', sanitizedMessage);
 
+      if (typeof L === "undefined") await loadScript(LEAFLET_JS, { integrity: LEAFLET_JS_INTEGRITY });
       this.initLeaflet();
     }
 

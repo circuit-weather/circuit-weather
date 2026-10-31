@@ -1,41 +1,60 @@
 import { getUserLocale } from '../utils/locale.js';
 import { SafeStorage } from '../utils/storage.js';
-import { de } from './locales/de.js';
 import { en } from './locales/en.js';
 import { enGB } from './locales/en-GB.js';
 import { enNZ } from './locales/en-NZ.js';
 import { enUS } from './locales/en-US.js';
-import { es } from './locales/es.js';
-import { fr } from './locales/fr.js';
-import { hu } from './locales/hu.js';
-import { it } from './locales/it.js';
-import { ja } from './locales/ja.js';
-import { ko } from './locales/ko.js';
-import { nl } from './locales/nl.js';
-import { ptBR } from './locales/pt-BR.js';
-import { zhCN } from './locales/zh-CN.js';
 
-// Exported for tests/i18n-locales-completeness.test.js, which checks every
-// locale against `en`. It needs this aggregate rather than the individual
-// locale modules — importing those separately would silently skip a newly
-// added locale, which is exactly what that test exists to catch. Intentionally
-// exported despite having no other importer: do not sweep it.
-export const TRANSLATIONS = {
+// English ships with the page: it is the default and every other locale's
+// fallback (the en-* variants are a few lines each on top of `en`). Other
+// languages are fetched only when chosen, so most visitors never download them.
+export const LOCALE_LOADERS = {
+    de: () => import('./locales/de.js').then(m => m.de),
+    es: () => import('./locales/es.js').then(m => m.es),
+    fr: () => import('./locales/fr.js').then(m => m.fr),
+    hu: () => import('./locales/hu.js').then(m => m.hu),
+    it: () => import('./locales/it.js').then(m => m.it),
+    ja: () => import('./locales/ja.js').then(m => m.ja),
+    ko: () => import('./locales/ko.js').then(m => m.ko),
+    nl: () => import('./locales/nl.js').then(m => m.nl),
+    'pt-BR': () => import('./locales/pt-BR.js').then(m => m.ptBR),
+    'zh-CN': () => import('./locales/zh-CN.js').then(m => m.zhCN),
+};
+
+// Locales loaded so far
+const TRANSLATIONS = {
     en,
     'en-GB': enGB,
     'en-NZ': enNZ,
     'en-US': enUS,
-    es,
-    fr,
-    de,
-    hu,
-    it,
-    ja,
-    ko,
-    nl,
-    'pt-BR': ptBR,
-    'zh-CN': zhCN,
 };
+
+/**
+ * Every shipped locale, keyed by code. Used by
+ * tests/i18n-locales-completeness.test.js, which checks every locale against
+ * `en`; building it from LOCALE_LOADERS means a newly added language can't be
+ * skipped by that guard. Intentionally exported despite having no other
+ * importer: do not sweep it.
+ */
+export async function loadAllTranslations() {
+    await Promise.all(Object.keys(LOCALE_LOADERS).map(loadLocale));
+    return { ...TRANSLATIONS };
+}
+
+/**
+ * Loads a locale's strings if they aren't loaded yet. English is always loaded.
+ * @param {string} locale - A normalised locale code
+ */
+export async function loadLocale(locale) {
+    if (!TRANSLATIONS[locale] && LOCALE_LOADERS[locale]) {
+        TRANSLATIONS[locale] = await LOCALE_LOADERS[locale]();
+    }
+    return TRANSLATIONS[locale];
+}
+
+function isSupported(locale) {
+    return Boolean(TRANSLATIONS[locale] || LOCALE_LOADERS[locale]);
+}
 
 export const LANGUAGE_NAMES = {
     'en-NZ': 'English (NZ)',
@@ -84,9 +103,9 @@ function normalise(locale) {
         return 'en-NZ';
     }
 
-    if (TRANSLATIONS[localeString]) return localeString;
+    if (isSupported(localeString)) return localeString;
 
-    if (TRANSLATIONS[base]) return base;
+    if (isSupported(base)) return base;
     if (LOCALE_ALIASES[base]) return LOCALE_ALIASES[base];
     return 'en-NZ';
 }
@@ -96,21 +115,42 @@ class I18n {
         this.locale = 'en-NZ';
     }
 
-    init(locale = getUserLocale()) {
+    /**
+     * Picks the locale and loads its strings. Strings fall back to English
+     * until they arrive, so await this before the first apply().
+     * @returns {Promise<void>}
+     */
+    async init(locale = getUserLocale()) {
         const stored = SafeStorage.getItem('language');
         this.locale = normalise(stored || locale);
         if (typeof document !== 'undefined' && document.documentElement) {
             document.documentElement.lang = this.locale;
         }
+        await this.load(this.locale);
     }
 
-    setLocale(locale) {
-        this.locale = normalise(locale);
+    /**
+     * Switches language, loading it first so the page changes in one step.
+     * @returns {Promise<void>}
+     */
+    async setLocale(locale) {
+        const next = normalise(locale);
+        await this.load(next);
+        this.locale = next;
         SafeStorage.setItem('language', this.locale);
         if (typeof document !== 'undefined' && document.documentElement) {
             document.documentElement.lang = this.locale;
             this.apply();
             document.dispatchEvent(new CustomEvent('i18n:change', { detail: { locale: this.locale } }));
+        }
+    }
+
+    async load(locale) {
+        try {
+            await loadLocale(locale);
+        } catch (error) {
+            // Offline or blocked: English strings stand in until it loads
+            console.error(`Failed to load the ${locale} translations:`, error);
         }
     }
 

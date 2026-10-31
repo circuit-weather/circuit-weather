@@ -1951,6 +1951,24 @@ describe('CircuitWeatherApp Pure Methods', () => {
             expect(app.mapWeatherWidget.onRemove).toHaveBeenCalled();
         });
 
+        it('requests the schedule while the map is still setting up', async () => {
+            let finishMap;
+            app.mapManager.init = vi.fn(() => new Promise((resolve) => {
+                finishMap = () => resolve({ hasLayer: false, addControl: vi.fn() });
+            }));
+            app.tryLoadSchedule = vi.fn().mockResolvedValue(true);
+
+            const done = app.init();
+            await vi.waitFor(() => expect(app.mapManager.init).toHaveBeenCalled());
+            // The map hasn't finished, yet the schedule is already on its way
+            expect(app.tryLoadSchedule).toHaveBeenCalledWith('f1');
+            expect(app.populateRoundSelect).not.toHaveBeenCalled();
+
+            finishMap();
+            await done;
+            expect(app.populateRoundSelect).toHaveBeenCalled();
+        });
+
         it('passes radar metadata to the layer settings and the track rain reader', async () => {
             app.mapManager.init = vi.fn().mockResolvedValue({ hasLayer: false, addControl: vi.fn() });
             await app.init();
@@ -2010,6 +2028,8 @@ describe('CircuitWeatherApp Pure Methods', () => {
             // Assert
             expect(renderErrorSpy).toHaveBeenCalledWith('Failed to initialize application.');
             expect(app.showLoading).toHaveBeenCalledWith(false);
+            // The schedule was requested alongside the map, so its failure lands too
+            await vi.waitFor(() => expect(consoleSpy).toHaveBeenCalledWith('Schedule load failed:', error));
 
             consoleSpy.mockRestore();
         });

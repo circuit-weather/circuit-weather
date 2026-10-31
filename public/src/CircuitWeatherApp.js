@@ -176,17 +176,21 @@ export class CircuitWeatherApp {
         this.showLoading(true, i18n.t('loading.schedule'));
 
         try {
+            // Load the schedule for the series in the URL (F1 by default) while
+            // the map sets up: it needs nothing from the map, and Mapbox's style
+            // and first tiles take a while on mobile. A failed schedule must not
+            // block the page: the user can still pick another series or retry
+            // (see showScheduleError); tryLoadSchedule never rejects.
+            const params = this.router.getParams();
+            const series = this.isSupportedSeries(params.series) ? params.series : 'f1';
+            if (this.ui.seriesSelect) this.ui.seriesSelect.value = series;
+            const scheduleLoad = this.tryLoadSchedule(series);
+
             await this.initMapComponents();
 
             this.bindEvents();
 
-            // Load the schedule for the series in the URL (F1 by default)
-            const params = this.router.getParams();
-            const series = this.isSupportedSeries(params.series) ? params.series : 'f1';
-            if (this.ui.seriesSelect) this.ui.seriesSelect.value = series;
-            // A failed schedule must not block the page: the user can still pick
-            // another series or retry (see showScheduleError)
-            const loaded = await this.tryLoadSchedule(series);
+            const loaded = await scheduleLoad;
             this.populateRoundSelect();
 
             document.addEventListener('i18n:change', this.handleLanguageChange);

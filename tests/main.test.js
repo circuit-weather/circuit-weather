@@ -24,6 +24,10 @@ vi.mock('../public/src/ui/LanguageManager.js', () => {
     };
 });
 
+vi.mock('../public/src/ui/BuyMeACoffee.js', () => ({
+    loadBuyMeACoffee: vi.fn()
+}));
+
 vi.mock('../public/src/i18n/index.js', () => {
     return {
         i18n: {
@@ -47,6 +51,7 @@ describe('main.js entry point', () => {
         domContentLoadedCallback = null;
 
         documentMock = {
+            getElementById: vi.fn((id) => ({ id })),
             addEventListener: vi.fn((event, callback) => {
                 if (event === 'DOMContentLoaded') {
                     domContentLoadedCallback = callback;
@@ -88,6 +93,10 @@ describe('main.js entry point', () => {
         // Verify i18n was initialized and applied
         expect(i18n.init).toHaveBeenCalled();
         expect(i18n.apply).toHaveBeenCalled();
+
+        // The support button is loaded lazily into its container
+        const { loadBuyMeACoffee } = await import('../public/src/ui/BuyMeACoffee.js');
+        expect(loadBuyMeACoffee).toHaveBeenCalledWith({ id: 'bmcContainer' });
 
         // Verify CircuitWeatherApp was instantiated and initialized
         expect(CircuitWeatherApp).toHaveBeenCalled();

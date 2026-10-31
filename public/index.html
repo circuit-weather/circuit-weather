@@ -85,7 +85,7 @@
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- The Inter stylesheet is added by theme.js so it doesn't hold up the first paint (font-display: swap) -->
 
     <!-- Mapbox GL CSS -->
     <link href="/api/assets/mapbox-gl.css" rel="stylesheet">
@@ -96,6 +96,65 @@
 
     <!-- App CSS -->
     <link rel="stylesheet" href="/styles.css">
+
+    <!-- Start the slow requests straight away, in parallel with the page: the
+         config request that carries the Mapbox token, the radar frame list (the
+         same for every circuit) and Mapbox GL JS (loaded on demand by MapManager
+         once the token arrives, so it no longer blocks rendering). theme.js
+         preloads the schedule the same way. -->
+    <link rel="preload" href="/api/config" as="fetch" crossorigin>
+    <link rel="preload" href="/api/radar" as="fetch" crossorigin>
+    <!-- Low priority so it doesn't hold up the app's own modules on a slow connection -->
+    <link rel="preload" href="/api/assets/mapbox-gl.js" as="script" fetchpriority="low">
+
+    <!-- Every module the app imports at startup, so they download together
+         instead of one import level at a time (tests/module-preload.test.js
+         keeps this list in step with the imports) -->
+    <link rel="modulepreload" href="/src/main.js">
+    <link rel="modulepreload" href="/src/CircuitWeatherApp.js">
+    <link rel="modulepreload" href="/src/config.js">
+    <link rel="modulepreload" href="/src/api/F1API.js">
+    <link rel="modulepreload" href="/src/utils/storage.js">
+    <link rel="modulepreload" href="/src/api/openf1.js">
+    <link rel="modulepreload" href="/src/api/SeriesAPI.js">
+    <link rel="modulepreload" href="/src/api/WeatherClient.js">
+    <link rel="modulepreload" href="/src/i18n/index.js">
+    <link rel="modulepreload" href="/src/utils/locale.js">
+    <link rel="modulepreload" href="/src/i18n/locales/en.js">
+    <link rel="modulepreload" href="/src/i18n/locales/en-GB.js">
+    <link rel="modulepreload" href="/src/i18n/locales/en-NZ.js">
+    <link rel="modulepreload" href="/src/i18n/locales/en-US.js">
+    <link rel="modulepreload" href="/src/utils/wind.js">
+    <link rel="modulepreload" href="/src/map/TrackLayer.js">
+    <link rel="modulepreload" href="/src/map/WeatherRadar.js">
+    <link rel="modulepreload" href="/src/map/RadarErrorToast.js">
+    <link rel="modulepreload" href="/src/map/RadarPlayback.js">
+    <link rel="modulepreload" href="/src/map/RadarFrames.js">
+    <link rel="modulepreload" href="/src/map/RadarPolling.js">
+    <link rel="modulepreload" href="/src/map/RadarReconcile.js">
+    <link rel="modulepreload" href="/src/map/SatelliteLayer.js">
+    <link rel="modulepreload" href="/src/map/RangeCircles.js">
+    <link rel="modulepreload" href="/src/map/WindOverlay.js">
+    <link rel="modulepreload" href="/src/map/WeatherAlerts.js">
+    <link rel="modulepreload" href="/src/map/TrackRain.js">
+    <link rel="modulepreload" href="/src/utils/rain.js">
+    <link rel="modulepreload" href="/src/map/MapWeatherWidget.js">
+    <link rel="modulepreload" href="/src/map/RecentreControl.js">
+    <link rel="modulepreload" href="/src/ui/CountdownTimer.js">
+    <link rel="modulepreload" href="/src/routing/Router.js">
+    <link rel="modulepreload" href="/src/map/MapManager.js">
+    <link rel="modulepreload" href="/src/utils/loadScript.js">
+    <link rel="modulepreload" href="/src/ui/ThemeManager.js">
+    <link rel="modulepreload" href="/src/ui/SidebarManager.js">
+    <link rel="modulepreload" href="/src/ui/BaseToggleable.js">
+    <link rel="modulepreload" href="/src/ui/LayerSettings.js">
+    <link rel="modulepreload" href="/src/ui/SeoManager.js">
+    <link rel="modulepreload" href="/src/ui/ForecastRenderer.js">
+    <link rel="modulepreload" href="/src/utils/status.js">
+    <link rel="modulepreload" href="/src/utils/schedule.js">
+    <link rel="modulepreload" href="/src/ui/PrivacyModal.js">
+    <link rel="modulepreload" href="/src/ui/LanguageManager.js">
+    <link rel="modulepreload" href="/src/ui/BuyMeACoffee.js">
 
 </head>
 
@@ -316,15 +375,8 @@
             </nav>
 
             <!-- Scout: Upgraded generic bmc-container div to semantic aside to clearly designate sponsorship/secondary content to search engines -->
-            <aside class="bmc-container" aria-label="Sponsor" data-i18n-attr="aria-label:nav.sponsor">
-                <script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js"
-                    integrity="sha384-OibPdNn05smfqAFi21q8C4YkzZLEjwXs7kTtiqrJwOv7PtZefVaGPzKgX4rJfvWv" crossorigin="anonymous"
-                    data-name="bmc-button" data-slug="2fst4u" data-color="#FF5F5F" data-emoji="" data-font="Poppins"
-                    data-text="Buy me a coffee" data-outline-color="#000000" data-font-color="#ffffff"
-                    data-coffee-color="#FFDD00"
-                    integrity="sha384-OibPdNn05smfqAFi21q8C4YkzZLEjwXs7kTtiqrJwOv7PtZefVaGPzKgX4rJfvWv"
-                    crossorigin="anonymous"></script>
-            </aside>
+            <!-- The Buy Me a Coffee button is added by src/ui/BuyMeACoffee.js once the page has loaded -->
+            <aside class="bmc-container" id="bmcContainer" aria-label="Sponsor" data-i18n-attr="aria-label:nav.sponsor"></aside>
 
             <!-- Scout: Upgraded generic div to semantic footer for better structure -->
             <!-- Shown only when the schedule is served from the OpenF1 fallback source -->
@@ -548,12 +600,8 @@
         </section>
     </dialog>
 
-    <!-- Mapbox GL JS (Proxied to bypass strict adblockers) -->
-    <script src="/api/assets/mapbox-gl.js"></script>
-
-    <!-- Leaflet JS (Fallback, Proxied for strict CSP) -->
-    <script src="/api/assets/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
-        crossorigin="anonymous"></script>
+    <!-- Map libraries (Mapbox GL JS, and Leaflet as the fallback) are loaded by
+         MapManager, proxied through /api/assets for the strict CSP -->
 
     <!-- App JS -->
     <script type="module" src="/src/main.js"></script>
