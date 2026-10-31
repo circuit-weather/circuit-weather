@@ -1,7 +1,8 @@
 import { pixelDbz, samplePlan, summariseTrackRain, SAMPLE_TILE_SIZE, SAMPLE_ZOOM } from '../utils/rain.js';
 
 /**
- * "Is it raining at the track, and will it?" from LibreWXR's radar nowcast.
+ * "Is it raining at the track, and will it?" from LibreWXR's radar nowcast,
+ * for the rain banner over the map.
  *
  * Reads the latest observed radar frame and the nowcast frames at the circuit
  * (black-and-white tiles, which encode reflectivity) and reports a status.

@@ -197,8 +197,6 @@
                         <!-- Scout: Upgraded generic div to semantic p to provide better structural meaning to textual content for crawlers -->
                         <p class="race-info-circuit" id="raceInfoCircuit"></p>
                     </hgroup>
-                    <!-- Radar nowcast at the track (LibreWXR only); not a live region, as the minutes tick down -->
-                    <p class="track-rain" id="trackRain" title="From the experimental radar nowcast" data-i18n-attr="title:trackRain.source" hidden></p>
                 </section>
 
 
@@ -460,7 +458,8 @@
                 <p class="map-countdown-session" id="mapCountdownSession"></p>
             </section>
 
-            <!-- Session rain verdict (desktop); only shown when rain is possible or likely -->
+            <!-- Rain banner (desktop): rain at the track during the session, or the session's
+                 forecast verdict; only shown when rain is possible or likely -->
             <p class="rain-banner" id="rainBanner" role="status" hidden></p>
 
             <!-- Mobile UI Overlay Stack -->
@@ -477,7 +476,6 @@
                         <!-- Scout: Upgraded generic span to semantic p to provide better structural meaning to textual content for crawlers -->
                         <p id="mobileRaceInfoCircuit"></p>
                     </hgroup>
-                    <p class="track-rain" id="mobileTrackRain" title="From the experimental radar nowcast" data-i18n-attr="title:trackRain.source" hidden></p>
                 </section>
                 <p class="rain-banner" id="mobileRainBanner" role="status" hidden></p>
             </div>

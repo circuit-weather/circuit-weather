@@ -93,11 +93,9 @@ export const ja = {
     lightningHint: "落雷データは南北アメリカのみ対応しています。",
   },
   trackRain: {
-    dry: "今後1時間、サーキットで雨の予想なし",
     approaching: "約{{minutes}}分後にサーキットで雨の予想",
     raining: "サーキットで雨が降っています",
     rainingEasing: "サーキットで雨、約{{minutes}}分後に弱まる見込み",
-    source: "試験運用中のレーダー短時間予測による",
   },
   alerts: {
     heading: "気象警報",

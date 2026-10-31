@@ -89,11 +89,9 @@ export const zhCN = {
     lightningHint: "闪电数据仅覆盖美洲地区。",
   },
   trackRain: {
-    dry: "未来一小时赛道预计无雨",
     approaching: "预计约 {{minutes}} 分钟后赛道下雨",
     raining: "赛道正在下雨",
     rainingEasing: "赛道正在下雨，约 {{minutes}} 分钟后减弱",
-    source: "基于实验性雷达临近预报",
   },
   alerts: {
     heading: "天气预警",

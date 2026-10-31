@@ -93,11 +93,9 @@ export const ko = {
     lightningHint: "낙뢰 데이터는 아메리카 대륙만 제공됩니다.",
   },
   trackRain: {
-    dry: "앞으로 1시간 동안 서킷에 비 예보 없음",
     approaching: "약 {{minutes}}분 후 서킷에 비 예상",
     raining: "서킷에 비가 내리는 중",
     rainingEasing: "서킷에 비, 약 {{minutes}}분 후 약해짐",
-    source: "실험적 레이더 초단기 예보 기준",
   },
   alerts: {
     heading: "기상 특보",

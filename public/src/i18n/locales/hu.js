@@ -95,11 +95,9 @@ export const hu = {
     lightningHint: "A villámadatok csak az amerikai kontinenst fedik le.",
   },
   trackRain: {
-    dry: "A következő órában nem várható eső a pályán",
     approaching: "Kb. {{minutes}} perc múlva eső várható a pályán",
     raining: "Esik a pályán",
     rainingEasing: "Esik a pályán, kb. {{minutes}} perc múlva enyhül",
-    source: "A kísérleti radaros rövid távú előrejelzés alapján",
   },
   alerts: {
     heading: "Időjárási Figyelmeztetések",

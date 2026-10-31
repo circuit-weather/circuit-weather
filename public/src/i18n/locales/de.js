@@ -94,11 +94,9 @@ export const de = {
     lightningHint: "Blitzdaten nur für Nord- und Südamerika verfügbar.",
   },
   trackRain: {
-    dry: "Kein Regen an der Strecke in der nächsten Stunde erwartet",
     approaching: "Regen an der Strecke in etwa {{minutes}} Min. erwartet",
     raining: "Regen an der Strecke",
     rainingEasing: "Regen an der Strecke, lässt in etwa {{minutes}} Min. nach",
-    source: "Aus der experimentellen Radar-Kurzfristvorhersage",
   },
   alerts: {
     heading: "Wetterwarnungen",

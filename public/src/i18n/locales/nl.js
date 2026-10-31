@@ -94,11 +94,9 @@ export const nl = {
     lightningHint: "Bliksemgegevens zijn alleen beschikbaar voor Noord- en Zuid-Amerika.",
   },
   trackRain: {
-    dry: "Geen regen verwacht op het circuit in het komende uur",
     approaching: "Regen verwacht op het circuit over ongeveer {{minutes}} min",
     raining: "Het regent op het circuit",
     rainingEasing: "Het regent op het circuit, neemt af over ongeveer {{minutes}} min",
-    source: "Volgens de experimentele radar-nowcast",
   },
   alerts: {
     heading: "Weerswaarschuwingen",

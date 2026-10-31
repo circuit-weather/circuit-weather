@@ -747,11 +747,11 @@ describe('CircuitWeatherApp Pure Methods', () => {
             app.radar.load = vi.fn().mockResolvedValue();
             app.weatherClient.getForecast = vi.fn().mockResolvedValue({ available: false, reason: 'error' });
             const order = [];
-            app.renderRainBanner = vi.fn(() => order.push('banner'));
+            app.setSessionRainVerdict = vi.fn(() => order.push('banner'));
             app.updateSessionForecast = vi.fn(async () => { order.push('forecast'); });
 
             await app.selectSession('race');
-            expect(app.renderRainBanner).toHaveBeenCalledWith(null);
+            expect(app.setSessionRainVerdict).toHaveBeenCalledWith(null);
             expect(order.slice(0, 2)).toEqual(['banner', 'forecast']);
         });
 
@@ -947,12 +947,12 @@ describe('CircuitWeatherApp Pure Methods', () => {
                 expect(app.ui.rainBanner.hidden).toBe(true);
 
                 app.renderForecast(forecast(90), sessionTime, 'race', hoursFrom(0));
-                app.renderRainBanner(null);
+                app.setSessionRainVerdict(null);
                 expect(app.ui.rainBanner.hidden).toBe(true);
 
                 app.ui.rainBanner = null;
                 app.ui.mobileRainBanner = null;
-                expect(() => app.renderRainBanner({ level: 'likely', text: 'x' })).not.toThrow();
+                expect(() => app.setSessionRainVerdict({ level: 'likely', text: 'x' })).not.toThrow();
             });
         });
 
@@ -1735,7 +1735,7 @@ describe('CircuitWeatherApp Pure Methods', () => {
             expect(() => app.centreOnCircuit(1, 1)).not.toThrow();
         });
 
-        it('reads radar at the circuit and shows it on both race info cards', () => {
+        it('reads radar at the circuit', () => {
             app.mapManager.setView = vi.fn();
             app.rangeCircles = { draw: vi.fn() };
             app.recentreControl = null;
@@ -1743,33 +1743,83 @@ describe('CircuitWeatherApp Pure Methods', () => {
             app.centreOnCircuit(52, -1);
             expect(app.trackRain.setLocation).toHaveBeenCalledWith(52, -1);
 
-            app.ui.trackRain = createMockElement('trackRain');
-            app.ui.mobileTrackRain = createMockElement('mobileTrackRain');
-            app.renderTrackRain({ state: 'approaching', minutes: 25 });
-            for (const element of [app.ui.trackRain, app.ui.mobileTrackRain]) {
-                expect(element.hidden).toBe(false);
-                expect(element.setAttribute).toHaveBeenCalledWith('data-state', 'approaching');
-                expect(element.textContent).toBe('Rain expected at the track in about 25 min');
-            }
-
-            app.renderTrackRain({ state: 'raining-easing', minutes: 10 });
-            expect(app.ui.trackRain.textContent).toBe('Raining at the track, easing in about 10 min');
-
-            // Re-rendered with the new language
-            app.ui.trackRain.textContent = '';
-            app.handleLanguageChange();
-            expect(app.ui.trackRain.textContent).toBe('Raining at the track, easing in about 10 min');
-
-            app.renderTrackRain(null);
-            expect(app.ui.trackRain.hidden).toBe(true);
-
-            app.ui.mobileTrackRain = null;
             app.trackRain = null;
-            expect(() => {
-                app.renderTrackRain({ state: 'dry' });
-                app.centreOnCircuit(1, 1);
-            }).not.toThrow();
-            expect(app.ui.trackRain.textContent).toBe('No rain expected at the track in the next hour');
+            expect(() => app.centreOnCircuit(1, 1)).not.toThrow();
+        });
+
+        describe('one rain banner', () => {
+            const start = Date.parse('2026-11-01T14:00:00Z');
+            const minutes = (m) => start + m * 60000;
+            const banners = () => [app.ui.rainBanner, app.ui.mobileRainBanner];
+            const forecastVerdict = { level: 'possible', text: 'Chance of rain during Race: 30% around 3:00 pm' };
+
+            beforeEach(() => {
+                app.selectedSession = { id: 'race', name: 'Race', date: '2026-11-01', time: '14:00:00Z' };
+                app.ui.rainBanner = createMockElement('rainBanner');
+                app.ui.mobileRainBanner = createMockElement('mobileRainBanner');
+                app.trackRainStatus = null;
+                app.sessionRainVerdict = null;
+            });
+
+            it('shows nothing without rain on the radar or in the forecast', () => {
+                app.trackRainStatus = { state: 'dry' };
+                app.renderRainBanner(minutes(0));
+                for (const banner of banners()) expect(banner.hidden).toBe(true);
+            });
+
+            it('lets rain at the track take the slot while the session is on or within the hour', () => {
+                app.sessionRainVerdict = forecastVerdict;
+                app.trackRainStatus = { state: 'approaching', minutes: 25 };
+                app.renderRainBanner(minutes(-30));
+                for (const banner of banners()) {
+                    expect(banner.hidden).toBe(false);
+                    expect(banner.textContent).toBe('Rain expected at the track in about 25 min');
+                    expect(banner.setAttribute).toHaveBeenCalledWith('data-level', 'likely');
+                }
+
+                app.trackRainStatus = { state: 'raining-easing', minutes: 10 };
+                app.renderRainBanner(minutes(90));
+                expect(app.ui.rainBanner.textContent).toBe('Raining at the track, easing in about 10 min');
+
+                app.trackRainStatus = { state: 'raining' };
+                app.renderRainBanner(minutes(0));
+                expect(app.ui.rainBanner.textContent).toBe('Raining at the track');
+
+                // A dry radar defers to the forecast for the rest of the session
+                app.trackRainStatus = { state: 'dry' };
+                app.renderRainBanner(minutes(0));
+                expect(app.ui.rainBanner.textContent).toBe(forecastVerdict.text);
+            });
+
+            it('keeps to the forecast verdict when the session is further off', () => {
+                app.sessionRainVerdict = forecastVerdict;
+                app.trackRainStatus = { state: 'raining' };
+                app.renderRainBanner(minutes(-61));
+                expect(app.ui.rainBanner.textContent).toBe(forecastVerdict.text);
+
+                // ...or over, or with no session at all
+                app.sessionRainVerdict = null;
+                app.renderRainBanner(minutes(120));
+                expect(app.ui.rainBanner.hidden).toBe(true);
+                app.selectedSession = null;
+                app.renderRainBanner(minutes(0));
+                expect(app.ui.rainBanner.hidden).toBe(true);
+            });
+
+            it('updates with each radar reading and on language change', () => {
+                vi.useFakeTimers();
+                vi.setSystemTime(minutes(10));
+                app.renderTrackRain({ state: 'approaching', minutes: 15 });
+                expect(app.ui.rainBanner.textContent).toBe('Rain expected at the track in about 15 min');
+                app.renderTrackRain(null);
+                expect(app.ui.rainBanner.hidden).toBe(true);
+
+                app.trackRainStatus = { state: 'raining' };
+                app.ui.rainBanner.textContent = '';
+                app.handleLanguageChange();
+                expect(app.ui.rainBanner.textContent).toBe('Raining at the track');
+                vi.useRealTimers();
+            });
         });
     });
 

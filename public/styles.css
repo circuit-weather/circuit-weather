@@ -1773,7 +1773,6 @@ body {
 
 .race-info-banner {
     display: none;
-    flex-wrap: wrap;
     align-items: center;
     gap: var(--spacing-md);
     margin-top: var(--spacing-md);
@@ -1821,49 +1820,6 @@ body {
     overflow: hidden;
     text-overflow: ellipsis;
     margin: 0;
-}
-
-/* Radar nowcast at the track: a full-width last row of the race info cards */
-.track-rain {
-    flex-basis: 100%;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin: 0;
-    padding-top: var(--spacing-sm);
-    border-top: 1px solid var(--color-border);
-    font-size: 0.8rem;
-    color: var(--color-text-secondary);
-}
-
-.track-rain[hidden] {
-    display: none;
-}
-
-.track-rain::before {
-    content: '';
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    flex-shrink: 0;
-    border: 1.5px solid currentColor;
-}
-
-.track-rain:not([data-state="dry"]) {
-    color: var(--color-text);
-}
-
-.track-rain:not([data-state="dry"])::before {
-    border-color: var(--color-forecast-text);
-}
-
-.track-rain[data-state^="raining"]::before {
-    background: var(--color-forecast-text);
-}
-
-.mobile-race-info .track-rain {
-    padding-top: var(--spacing-xs);
-    font-size: 0.75rem;
 }
 
 /* Mobile Race Info Overlay */
@@ -1914,8 +1870,7 @@ body {
     .mobile-race-info {
         display: flex;
         /* overridden by JS toggle */
-        flex-wrap: wrap;
-        align-items: center;
+            align-items: center;
         gap: var(--spacing-sm);
         background: var(--sidebar-bg);
         backdrop-filter: var(--glass-blur);

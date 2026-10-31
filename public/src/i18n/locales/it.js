@@ -93,11 +93,9 @@ export const it = {
     lightningHint: "I dati sui fulmini coprono solo le Americhe.",
   },
   trackRain: {
-    dry: "Nessuna pioggia prevista in pista nella prossima ora",
     approaching: "Pioggia prevista in pista tra circa {{minutes}} min",
     raining: "Piove in pista",
     rainingEasing: "Piove in pista, in attenuazione tra circa {{minutes}} min",
-    source: "Dal nowcast radar sperimentale",
   },
   alerts: {
     heading: "Allerte Meteo",

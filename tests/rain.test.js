@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-    getSessionRainVerdict, sessionHours, isRainBannerTimely, RAIN_BANNER_LEAD_HOURS, summariseTrackRain, pixelDbz, worldPixel, samplePlan,
+    getSessionRainVerdict, sessionHours, isRainBannerTimely, RAIN_BANNER_LEAD_HOURS, isNowcastRelevant, summariseTrackRain, pixelDbz, worldPixel, samplePlan,
     RAIN_DBZ, SAMPLE_TILE_SIZE,
 } from '../public/src/utils/rain.js';
 
@@ -34,6 +34,19 @@ describe('isRainBannerTimely', () => {
         expect(isRainBannerTimely(start, 'race', at(-24 * 60))).toBe(false);
         expect(isRainBannerTimely(new Date('nope'), 'race', at(0))).toBe(false);
         expect(isRainBannerTimely(null, 'race', at(0))).toBe(false);
+    });
+});
+
+describe('isNowcastRelevant', () => {
+    const at = (minutes) => start.getTime() + minutes * 60000;
+
+    it('covers a session from an hour before it starts until it ends', () => {
+        expect(isNowcastRelevant(start, 'race', at(-61))).toBe(false);
+        expect(isNowcastRelevant(start, 'race', at(-60))).toBe(true);
+        expect(isNowcastRelevant(start, 'race', at(119))).toBe(true);
+        expect(isNowcastRelevant(start, 'race', at(120))).toBe(false);
+        expect(isNowcastRelevant(start, 'fp2', at(60))).toBe(false);
+        expect(isNowcastRelevant(new Date('nope'), 'race', at(0))).toBe(false);
     });
 });
 

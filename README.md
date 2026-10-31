@@ -24,8 +24,7 @@ Key features include:
 - **Distance Markers:** Toggle range circles to gauge how far the rain is from the track (in km or miles).
 - **Theme Support:** Automatically adapts to your system's dark or light mode, or you can toggle it manually.
 - **Deep Linking:** Navigate directly to a specific race or session via the URL.
-- **Rain at the Track:** See at a glance whether rain is at the circuit or due there within the hour, read from the radar nowcast.
-- **Rain Banner:** When rain is on the cards for an upcoming or live session, a banner over the map says how likely it is and when.
+- **Rain Banner:** When rain is on the cards for an upcoming or live session, a banner over the map says how likely it is and when. Around the session itself, it reads the radar at the circuit: "Rain expected at the track in about 20 min".
 - **Weather Forecast:** View detailed, session-specific weather forecasts.
 - **Wind Overlay:** Toggle animated wind flow particles over the map.
 - **Multi-language Support:** Use the app in your preferred language.

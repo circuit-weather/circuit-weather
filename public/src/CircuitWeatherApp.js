@@ -20,7 +20,7 @@ import { SeoManager } from './ui/SeoManager.js';
 import { ForecastRenderer } from './ui/ForecastRenderer.js';
 import { getSessionStatus, getRoundStatus, formatStatusLabel } from './utils/status.js';
 import { getRaceEndTime, findFirstActiveRaceIndex, getGloballyNextSession } from './utils/schedule.js';
-import { isRainBannerTimely } from './utils/rain.js';
+import { isRainBannerTimely, isNowcastRelevant } from './utils/rain.js';
 import { i18n } from './i18n/index.js';
 
 // A partial schedule (the Worker is still filling it, see SeriesAPI) is re-fetched
@@ -28,8 +28,8 @@ import { i18n } from './i18n/index.js';
 const SCHEDULE_RETRY_MS = 65000;
 const SCHEDULE_MAX_RETRIES = 5;
 
+// Radar nowcast states worth a banner; a dry reading shows nothing
 const TRACK_RAIN_KEYS = Object.freeze({
-    dry: 'trackRain.dry',
     approaching: 'trackRain.approaching',
     raining: 'trackRain.raining',
     'raining-easing': 'trackRain.rainingEasing',
@@ -100,10 +100,7 @@ export class CircuitWeatherApp {
             mobileCountryFlag: document.getElementById('mobileCountryFlag'),
             mobileRaceInfoName: document.getElementById('mobileRaceInfoName'),
             mobileRaceInfoCircuit: document.getElementById('mobileRaceInfoCircuit'),
-            // Radar nowcast at the track (sidebar and mobile race info)
-            trackRain: document.getElementById('trackRain'),
-            mobileTrackRain: document.getElementById('mobileTrackRain'),
-            // Session rain verdict over the map (desktop) and in the mobile overlay stack
+            // Rain banner over the map (desktop) and in the mobile overlay stack
             rainBanner: document.getElementById('rainBanner'),
             mobileRainBanner: document.getElementById('mobileRainBanner'),
             mobileHeader: document.querySelector('.mobile-header'),
@@ -136,6 +133,7 @@ export class CircuitWeatherApp {
         this.layerSettings = new LayerSettings((key, settings) => this.handleLayerSettingChange(key, settings));
         const layers = this.layerSettings.get();
         this.trackRainStatus = null;
+        this.sessionRainVerdict = null;
         this.trackRain = new TrackRain({ onChange: (status) => this.renderTrackRain(status) });
         this.radar = new WeatherRadar(map, {
             onMetadata: (metadata) => {
@@ -652,7 +650,7 @@ export class CircuitWeatherApp {
         this.rangeCircles.clear();
         if (this.weatherAlerts) this.weatherAlerts.setLocation(null, null);
         if (this.trackRain) this.trackRain.setLocation(null, null);
-        this.renderRainBanner(null);
+        this.setSessionRainVerdict(null);
 
         // Clear the forecast update since no session is active anymore
         this.stopSessionForecastInterval();
@@ -783,31 +781,46 @@ export class CircuitWeatherApp {
     }
 
     /**
-     * Shows the session rain verdict over the map; there is no banner without rain.
-     * @param {{level: 'possible'|'likely', text: string}|null} verdict - null hides it
+     * @param {{level: 'possible'|'likely', text: string}|null} verdict - The selected
+     *   session's forecast verdict, already limited to sessions close enough to trust
+     * @param {number} [now]
      */
-    renderRainBanner(verdict) {
-        for (const element of [this.ui.rainBanner, this.ui.mobileRainBanner]) {
-            if (!element) continue;
-            element.hidden = !verdict;
-            if (!verdict) continue;
-            element.setAttribute('data-level', verdict.level);
-            element.textContent = verdict.text;
-        }
+    setSessionRainVerdict(verdict, now = Date.now()) {
+        this.sessionRainVerdict = verdict;
+        this.renderRainBanner(now);
     }
 
     /**
-     * Shows the radar nowcast at the track on both race info cards.
-     * @param {{state: string, minutes?: number}|null} status - null hides it
+     * @param {{state: string, minutes?: number}|null} status - Radar nowcast at the track
      */
     renderTrackRain(status) {
         this.trackRainStatus = status;
-        for (const element of [this.ui.trackRain, this.ui.mobileTrackRain]) {
+        this.renderRainBanner();
+    }
+
+    /**
+     * The one rain message over the map, or none without rain. While the
+     * session is on or about to start, rain on the radar at the track says
+     * more than the hourly forecast, so it takes the slot; otherwise the
+     * session's forecast verdict does.
+     */
+    renderRainBanner(now = Date.now()) {
+        let message = null;
+        const status = this.trackRainStatus;
+        const session = this.selectedSession;
+        const sessionTime = session ? new Date(`${session.date}T${session.time}`) : null;
+        if (status && TRACK_RAIN_KEYS[status.state] && session && isNowcastRelevant(sessionTime, session.id, now)) {
+            message = { level: 'likely', text: i18n.t(TRACK_RAIN_KEYS[status.state], { minutes: status.minutes }) };
+        } else if (this.sessionRainVerdict) {
+            message = this.sessionRainVerdict;
+        }
+
+        for (const element of [this.ui.rainBanner, this.ui.mobileRainBanner]) {
             if (!element) continue;
-            element.hidden = !status;
-            if (!status) continue;
-            element.setAttribute('data-state', status.state);
-            element.textContent = i18n.t(TRACK_RAIN_KEYS[status.state], { minutes: status.minutes });
+            element.hidden = !message;
+            if (!message) continue;
+            element.setAttribute('data-level', message.level);
+            element.textContent = message.text;
         }
     }
 
@@ -997,7 +1010,7 @@ export class CircuitWeatherApp {
         // Palette UX: Show skeleton immediately to prevent layout shift
         this.renderForecastSkeleton();
         // The previous session's rain banner must not linger while this one loads
-        this.renderRainBanner(null);
+        this.setSessionRainVerdict(null);
 
         // Show forecast section container immediately
         if (this.ui.forecastSection) this.ui.forecastSection.style.display = 'block';
@@ -1163,7 +1176,7 @@ export class CircuitWeatherApp {
         const unavailable = this.ui.forecastUnavailable;
 
         if (!weather.available) {
-            this.renderRainBanner(null);
+            this.setSessionRainVerdict(null);
             this._renderUnavailableForecast(weather, content, unavailable, overrideNow);
             return;
         }
@@ -1176,7 +1189,7 @@ export class CircuitWeatherApp {
         const verdict = isRainBannerTimely(sessionTime, this.selectedSession.id, now)
             ? this.forecastRenderer.getRainVerdict(weather.hourly, sessionTime, this.selectedSession)
             : null;
-        this.renderRainBanner(verdict && verdict.level !== 'dry' ? verdict : null);
+        this.setSessionRainVerdict(verdict && verdict.level !== 'dry' ? verdict : null, now);
 
         const dashboard = this.forecastRenderer.createForecastDashboard(weather, sessionTime, this.weatherClient);
 
@@ -1261,7 +1274,7 @@ export class CircuitWeatherApp {
         }
 
         // Update other translated UI elements
-        this.renderTrackRain(this.trackRainStatus);
+        this.renderRainBanner();
         this.updatePageMetadata();
     }
 

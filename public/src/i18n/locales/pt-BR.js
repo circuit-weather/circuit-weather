@@ -93,11 +93,9 @@ export const ptBR = {
     lightningHint: "Os dados de raios cobrem apenas as Américas.",
   },
   trackRain: {
-    dry: "Sem previsão de chuva no circuito na próxima hora",
     approaching: "Chuva prevista no circuito em cerca de {{minutes}} min",
     raining: "Chovendo no circuito",
     rainingEasing: "Chovendo no circuito, diminuindo em cerca de {{minutes}} min",
-    source: "Pela previsão imediata experimental do radar",
   },
   alerts: {
     heading: "Alertas Meteorológicos",

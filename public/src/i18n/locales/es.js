@@ -93,11 +93,9 @@ export const es = {
     lightningHint: "Los datos de rayos solo cubren América.",
   },
   trackRain: {
-    dry: "No se espera lluvia en el circuito en la próxima hora",
     approaching: "Se espera lluvia en el circuito en unos {{minutes}} min",
     raining: "Llueve en el circuito",
     rainingEasing: "Llueve en el circuito; amainará en unos {{minutes}} min",
-    source: "Según la predicción inmediata experimental del radar",
   },
   alerts: {
     heading: "Avisos Meteorológicos",

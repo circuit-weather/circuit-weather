@@ -44,6 +44,23 @@ export function isRainBannerTimely(sessionTime, sessionId, nowMs) {
     return nowMs >= start - RAIN_BANNER_LEAD_HOURS * 3600000 && nowMs < end;
 }
 
+// The radar nowcast looks an hour ahead, so it only speaks for a session
+// that is under way or starts within that hour
+export const NOWCAST_LEAD_MINUTES = 60;
+
+/**
+ * Whether the radar nowcast at the track bears on a session.
+ * @param {Date} sessionTime
+ * @param {string} sessionId
+ * @param {number} nowMs
+ */
+export function isNowcastRelevant(sessionTime, sessionId, nowMs) {
+    const start = sessionTime instanceof Date ? sessionTime.getTime() : NaN;
+    if (!Number.isFinite(start)) return false;
+    const end = start + sessionHours(sessionId) * 3600000;
+    return nowMs >= start - NOWCAST_LEAD_MINUTES * 60000 && nowMs < end;
+}
+
 /**
  * Summarises the chance of rain during a session.
  *
