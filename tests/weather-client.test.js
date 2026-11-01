@@ -174,29 +174,6 @@ describe('WeatherClient', () => {
         });
     });
 
-    describe('getRelativeTime', () => {
-        // Session at 2023-03-05 14:30:00 UTC
-        const sessionTime = new Date('2023-03-05T14:30:00Z');
-        // Session hour anchor: 14:00:00 UTC = 1678024800
-        const sessionHourTs = Math.floor(new Date('2023-03-05T14:00:00Z').getTime() / 1000);
-
-        it('returns "Session start" for the session start hour', () => {
-            expect(client.getRelativeTime(sessionHourTs, sessionTime)).toBe('Start');
-        });
-
-        it('returns negative label for hours before session', () => {
-            expect(client.getRelativeTime(sessionHourTs - 3600, sessionTime)).toBe('-1h');
-        });
-
-        it('returns positive label for hours after session', () => {
-            expect(client.getRelativeTime(sessionHourTs + 7200, sessionTime)).toBe('+2h');
-        });
-
-        it('returns "+3h" for 3 hours after', () => {
-            expect(client.getRelativeTime(sessionHourTs + 10800, sessionTime)).toBe('+3h');
-        });
-    });
-
     describe('getAccessibleRelativeTime', () => {
         const sessionTime = new Date('2023-03-05T14:00:00Z');
         const sessionTs = sessionTime.getTime() / 1000;

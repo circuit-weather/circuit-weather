@@ -235,8 +235,19 @@ export class ForecastRenderer {
         return dl;
     }
 
-    createTimelineItemElement(hour, sessionTime, units, weatherClient) {
-        const relTime = weatherClient.getRelativeTime(hour.time, sessionTime);
+    /**
+     * A row's label: the clock time its hour starts, or "Now" for the hour in
+     * progress. Relative labels ("+2h") stopped making sense once the rows
+     * moved on past the session's start.
+     */
+    timelineLabel(time, nowMs) {
+        const startMs = time * 1000;
+        if (nowMs >= startMs && nowMs < startMs + 3600000) return i18n.t('forecast.now');
+        return new Intl.DateTimeFormat(i18n.locale, { hour: 'numeric', minute: '2-digit' }).format(new Date(startMs));
+    }
+
+    createTimelineItemElement(hour, sessionTime, units, weatherClient, nowMs = Date.now()) {
+        const label = this.timelineLabel(hour.time, nowMs);
         const desc = weatherClient.getWeatherDescription(hour.code);
         const a11yTime = weatherClient.getAccessibleRelativeTime(hour.time, sessionTime);
         const temp = Math.round(hour.temp);
@@ -259,7 +270,7 @@ export class ForecastRenderer {
         timeEl.setAttribute('datetime', isoDateTime);
         timeEl.className = 'weather-timeline-time';
         timeEl.setAttribute('aria-hidden', 'true');
-        timeEl.textContent = relTime;
+        timeEl.textContent = label;
         li.appendChild(timeEl);
 
         const conditionDiv = document.createElement('div');
@@ -284,7 +295,7 @@ export class ForecastRenderer {
         return li;
     }
 
-    createTimelineElement(hourlyWeather, sessionTime, units, weatherClient) {
+    createTimelineElement(hourlyWeather, sessionTime, units, weatherClient, nowMs = Date.now()) {
         const section = document.createElement('section');
         section.className = 'weather-timeline';
         section.id = 'weatherTimeline';
@@ -296,7 +307,7 @@ export class ForecastRenderer {
         ol.className = 'weather-timeline-list';
 
         for (const hour of hourlyWeather) {
-            const li = this.createTimelineItemElement(hour, sessionTime, units, weatherClient);
+            const li = this.createTimelineItemElement(hour, sessionTime, units, weatherClient, nowMs);
             ol.appendChild(li);
         }
 
@@ -327,7 +338,7 @@ export class ForecastRenderer {
         };
     }
 
-    createForecastDashboard(weather, sessionTime, weatherClient) {
+    createForecastDashboard(weather, sessionTime, weatherClient, nowMs = Date.now()) {
         const dashboard = document.createElement('article');
         dashboard.className = 'weather-dashboard';
 
@@ -345,7 +356,7 @@ export class ForecastRenderer {
         }
 
         if (weather.hourly) {
-            const section = this.createTimelineElement(weather.hourly, sessionTime, weather.units, weatherClient);
+            const section = this.createTimelineElement(weather.hourly, sessionTime, weather.units, weatherClient, nowMs);
             dashboard.appendChild(section);
         }
 

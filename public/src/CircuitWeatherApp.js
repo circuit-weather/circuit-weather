@@ -1274,7 +1274,7 @@ export class CircuitWeatherApp {
             : null;
         this.setSessionRainVerdict(verdict && verdict.level !== 'dry' ? verdict : null, now);
 
-        const dashboard = this.forecastRenderer.createForecastDashboard(weather, sessionTime, this.weatherClient);
+        const dashboard = this.forecastRenderer.createForecastDashboard(weather, sessionTime, this.weatherClient, now);
 
         if (content) {
             content.textContent = '';

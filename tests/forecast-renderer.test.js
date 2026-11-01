@@ -114,4 +114,24 @@ describe('ForecastRenderer Unit Tests', () => {
                 .toEqual({ level: 'possible', text: `Chance of rain during Race: 30% between ${time(1.25)} and ${time(2)}` });
         });
     });
+
+    describe('timeline labels', () => {
+        const nine = Date.parse('2026-11-01T09:00:00Z') / 1000;
+        const clock = (seconds) => new Intl.DateTimeFormat(i18n.locale, { hour: 'numeric', minute: '2-digit' }).format(new Date(seconds * 1000));
+
+        it('labels each hour by its clock time, and the hour in progress "Now"', () => {
+            expect(renderer.timelineLabel(nine, Date.parse('2026-11-01T08:30:00Z'))).toBe(clock(nine));
+            expect(renderer.timelineLabel(nine, Date.parse('2026-11-01T09:00:00Z'))).toBe('Now');
+            expect(renderer.timelineLabel(nine, Date.parse('2026-11-01T09:59:59Z'))).toBe('Now');
+            expect(renderer.timelineLabel(nine, Date.parse('2026-11-01T10:00:00Z'))).toBe(clock(nine));
+        });
+
+        it('passes the time through to every row', () => {
+            const units = { temperature_2m: '°C', wind_speed_10m: 'km/h' };
+            const hourly = [nine, nine + 3600].map(time => ({ time, code: 0, temp: 20, windSpeed: 5, windDir: 0, precipProb: 10 }));
+            const spy = vi.spyOn(renderer, 'timelineLabel');
+            renderer.createForecastDashboard({ hourly, units }, new Date(nine * 1000), mockClient, Date.parse('2026-11-01T09:20:00Z'));
+            expect(spy.mock.results.map(r => r.value)).toEqual(['Now', clock(nine + 3600)]);
+        });
+    });
 });

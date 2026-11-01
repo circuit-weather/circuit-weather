@@ -268,24 +268,6 @@ export class WeatherClient {
         return i18n.t('weatherCodes.unknown');
     }
 
-    getRelativeTime(timestamp, sessionTime) {
-        // Bolt Optimization: Align logic to "Session Hour" for clean labels
-        // 1. Get the session start hour (e.g., 14:30 -> 14:00)
-        const sessionStartHour = new Date(sessionTime);
-        sessionStartHour.setMinutes(0, 0, 0);
-
-        // 2. Calculate hour difference from that anchor
-        // Timestamp is in seconds, convert to ms
-        const diffHours = (timestamp * 1000 - sessionStartHour.getTime()) / (1000 * 60 * 60);
-
-        // 3. Round to nearest integer to handle any slight drifts (though usually exact)
-        const roundedDiff = Math.round(diffHours);
-
-        if (roundedDiff === 0) return i18n.t('forecast.start');
-        if (roundedDiff < 0) return `${roundedDiff}${i18n.t('countdown.hourShort')}`;
-        return `+${roundedDiff}${i18n.t('countdown.hourShort')}`;
-    }
-
     getAccessibleRelativeTime(timestamp, sessionTime) {
         const diffMins = (timestamp * 1000 - sessionTime.getTime()) / CONFIG.ONE_MINUTE_MS;
 
