@@ -202,7 +202,8 @@ export class WeatherClient {
      * @param {number} [nowMs] - Hours over by now are left out
      */
     filterHourly(hourly, sessionTime, endMs = sessionTime.getTime() + 3 * 3600000, nowMs = 0) {
-        const fromMs = Math.max(sessionTime.getTime(), nowMs);
+        // One hour of lead-in before the start, for context, while it's still to come
+        const fromMs = Math.max(sessionTime.getTime() - 3600000, nowMs);
         const startTs = Math.floor(fromMs / 3600000) * 3600;
         // Rows start on the hour: the last one starts before the session ends
         const endTs = Math.ceil(endMs / 1000) - 1;

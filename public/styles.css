@@ -719,6 +719,19 @@ body {
     border-bottom: none;
 }
 
+.weather-timeline-item--before {
+    opacity: 0.6;
+}
+
+/* "Start" under the time of the hour the session starts in */
+.weather-timeline-start {
+    display: block;
+    font-size: 0.65rem;
+    font-weight: 600;
+    /* The red tuned for text in each theme (the brand red is too dark on dark) */
+    color: var(--color-live-text);
+}
+
 .weather-timeline-time {
     color: var(--color-text-secondary);
     font-variant-numeric: tabular-nums;

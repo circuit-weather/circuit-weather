@@ -134,4 +134,33 @@ describe('ForecastRenderer Unit Tests', () => {
             expect(spy.mock.results.map(r => r.value)).toEqual(['Now', clock(nine + 3600)]);
         });
     });
+
+    describe('start marking', () => {
+        const start = new Date('2026-11-06T09:30:00Z');
+        const t = (h) => Date.parse(`2026-11-06T${String(h).padStart(2, '0')}:00:00Z`) / 1000;
+        const units = { temperature_2m: '°C', wind_speed_10m: 'km/h' };
+        const row = (time, precipProb) => ({ time, code: 0, temp: 20, windSpeed: 5, windDir: 0, precipProb });
+
+        it('tags the hour the session starts in and dims the hour before', () => {
+            const before = new Date('2026-11-01T00:00:00Z').getTime();
+            const items = [row(t(8), 10), row(t(9), 20), row(t(10), 30)]
+                .map(hour => renderer.createTimelineItemElement(hour, start, units, mockClient, before));
+
+            expect(items.map(li => li.className)).toEqual([
+                'weather-timeline-item weather-timeline-item--before',
+                'weather-timeline-item',
+                'weather-timeline-item',
+            ]);
+            // Only the start row gets the tag
+            const tagged = items.map(li => li.appendChild.mock.calls[0][0].appendChild.mock.calls.length);
+            expect(tagged).toEqual([0, 1, 0]);
+        });
+
+        it('sums up rain over the session, not the lead-in hour', () => {
+            const dl = renderer.createCurrentWeatherElement(row(t(9), 20), units, [row(t(8), 90), row(t(9), 20), row(t(10), 30)], start);
+            const rain = dl.appendChild.mock.calls[1][0];
+            const value = rain.appendChild.mock.calls[1][0];
+            expect(value.textContent).toBe('30%');
+        });
+    });
 });

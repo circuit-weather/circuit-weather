@@ -61,21 +61,30 @@ describe('WeatherClient', () => {
             };
         };
 
-        it('covers the session\'s hours, from the one it starts in to its end', () => {
-            // Hours 00:00-08:00; a 3 h session from 03:00 covers the hours starting 03:00, 04:00, 05:00
+        it('covers the hour before the start, then the session\'s hours to its end', () => {
+            // Hours 00:00-08:00; a 3 h session from 03:00: the 02:00 lead-in, then 03:00, 04:00, 05:00
             const hourly = makeHourly(0, 9);
-            expect(client.filterHourly(hourly, sessionTime).map(h => h.time)).toEqual([10800, 14400, 18000]);
+            expect(client.filterHourly(hourly, sessionTime).map(h => h.time)).toEqual([7200, 10800, 14400, 18000]);
 
-            // A session from 03:30 still counts the 03:00-04:00 hour
+            // A 1 h session from 03:30 to 04:30: lead-in 02:00, then the 03:00 and 04:00 hours it overlaps
             expect(client.filterHourly(hourly, new Date(12600 * 1000), 12600 * 1000 + 3600000).map(h => h.time))
-                .toEqual([10800, 14400]);
+                .toEqual([7200, 10800, 14400]);
+        });
+
+        it('drops the lead-in hour once it is over', () => {
+            const hourly = makeHourly(0, 9);
+            // At 02:40 the 02:00-03:00 lead-in is still to come in part
+            expect(client.filterHourly(hourly, sessionTime, undefined, (2 * 3600 + 2400) * 1000)[0].time).toBe(7200);
+            // At 03:05 it is over
+            expect(client.filterHourly(hourly, sessionTime, undefined, (3 * 3600 + 300) * 1000)[0].time).toBe(10800);
         });
 
         it('runs as long as the session\'s assumed length, however long', () => {
             // A 25-hour endurance race from 03:00
             const hourly = makeHourly(0, 40);
             const result = client.filterHourly(hourly, sessionTime, (10800 + 25 * 3600) * 1000);
-            expect(result).toHaveLength(25);
+            expect(result).toHaveLength(26); // the lead-in hour, then 25
+            expect(result[0].time).toBe(7200);
             expect(result.at(-1).time).toBe(10800 + 24 * 3600);
         });
 

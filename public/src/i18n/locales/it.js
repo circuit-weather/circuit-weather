@@ -59,6 +59,7 @@ export const it = {
     verdictPossible: "Possibile pioggia durante {{session}}: {{pct}}% tra le {{from}} e le {{to}}",
     verdictLikely: "Pioggia probabile durante {{session}}: {{pct}}% tra le {{from}} e le {{to}}",
     now: "Ora",
+    start: "Partenza",
     heading: "Previsioni sessione",
     hourlyForecast: "Previsioni orarie",
     availableFrom: "Previsioni disponibili da {{date}}",

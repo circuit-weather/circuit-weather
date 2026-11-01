@@ -219,11 +219,14 @@ export class ForecastRenderer {
         return divWind;
     }
 
-    createCurrentWeatherElement(sessionWeather, units, hourlyData) {
+    createCurrentWeatherElement(sessionWeather, units, hourlyData, sessionTime = null) {
         const temp = Math.round(sessionWeather.temp);
         const wind = Math.round(sessionWeather.windSpeed);
         const dir = sessionWeather.windDir;
-        const maxPrecip = Math.max(...hourlyData.map(h => h.precipProb));
+        // The session's own hours: the lead-in hour before the start is context only
+        const startHour = sessionTime ? Math.floor(sessionTime.getTime() / 3600000) * 3600 : -Infinity;
+        const during = hourlyData.filter(h => h.time >= startHour && Number.isFinite(h.precipProb));
+        const maxPrecip = Math.max(...(during.length ? during : hourlyData).map(h => h.precipProb));
 
         const dl = document.createElement('dl');
         dl.className = 'weather-current';
@@ -262,8 +265,15 @@ export class ForecastRenderer {
 
         const isoDateTime = new Date(hour.time * 1000).toISOString();
 
+        // The row the session starts in carries a "Start" tag; the lead-in hour
+        // before it is dimmed (its aria-label already says "before session start")
+        const startMs = sessionTime.getTime();
+        const rowStartMs = hour.time * 1000;
+        const isStart = startMs >= rowStartMs && startMs < rowStartMs + 3600000;
+        const isBefore = rowStartMs + 3600000 <= startMs;
+
         const li = document.createElement('li');
-        li.className = 'weather-timeline-item';
+        li.className = `weather-timeline-item${isBefore ? ' weather-timeline-item--before' : ''}`;
         li.setAttribute('aria-label', ariaLabel);
 
         const timeEl = document.createElement('time');
@@ -271,6 +281,12 @@ export class ForecastRenderer {
         timeEl.className = 'weather-timeline-time';
         timeEl.setAttribute('aria-hidden', 'true');
         timeEl.textContent = label;
+        if (isStart) {
+            const tag = document.createElement('span');
+            tag.className = 'weather-timeline-start';
+            tag.textContent = i18n.t('forecast.start');
+            timeEl.appendChild(tag);
+        }
         li.appendChild(timeEl);
 
         const conditionDiv = document.createElement('div');
@@ -351,7 +367,7 @@ export class ForecastRenderer {
         }
 
         if (sessionWeather) {
-            const dl = this.createCurrentWeatherElement(sessionWeather, weather.units, weather.hourly);
+            const dl = this.createCurrentWeatherElement(sessionWeather, weather.units, weather.hourly, sessionTime);
             dashboard.appendChild(dl);
         }
 

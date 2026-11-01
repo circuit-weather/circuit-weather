@@ -55,6 +55,7 @@ export const zhCN = {
     verdictPossible: "{{session}}期间可能下雨：{{from}}至{{to}} {{pct}}%",
     verdictLikely: "{{session}}期间很可能下雨：{{from}}至{{to}} {{pct}}%",
     now: "现在",
+    start: "开始",
     heading: "赛段天气预报",
     hourlyForecast: "逐小时预报",
     availableFrom: "{{date}} 起可查看预报",
