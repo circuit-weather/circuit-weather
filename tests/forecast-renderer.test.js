@@ -94,22 +94,23 @@ describe('ForecastRenderer Unit Tests', () => {
         it('sums up the session in one sentence', () => {
             const race = { id: 'race', name: 'Race' };
             const before = at(-24) * 1000;
-            expect(renderer.getRainVerdict([hour(0, 5), hour(1, 10)], start, race, before))
+            const raceEnd = at(2) * 1000;
+            expect(renderer.getRainVerdict([hour(0, 5), hour(1, 10)], start, race, raceEnd, before))
                 .toEqual({ level: 'dry', text: 'Rain unlikely during Race' });
 
             // Timed at the middle of the wettest hour
-            expect(renderer.getRainVerdict([hour(0, 30), hour(1, 70), hour(2, 90)], start, race, before))
+            expect(renderer.getRainVerdict([hour(0, 30), hour(1, 70), hour(2, 90)], start, race, raceEnd, before))
                 .toEqual({ level: 'likely', text: `Rain likely during Race: 70% around ${time(1.5)}` });
 
-            // Non-race sessions only look at their first hour
-            expect(renderer.getRainVerdict([hour(0, 25), hour(1, 90)], start, { id: 'qualifying', name: 'Qualifying' }, before))
+            // A one-hour session only looks at its hour
+            expect(renderer.getRainVerdict([hour(0, 25), hour(1, 90)], start, { id: 'qualifying', name: 'Qualifying' }, at(1) * 1000, before))
                 .toEqual({ level: 'possible', text: `Chance of rain during Qualifying: 25% around ${time(0.5)}` });
 
             // No forecast hours in the session
-            expect(renderer.getRainVerdict([hour(5, 90)], start, race, before)).toBeNull();
+            expect(renderer.getRainVerdict([hour(5, 90)], start, race, raceEnd, before)).toBeNull();
 
             // Under way, only the hours still to come count
-            expect(renderer.getRainVerdict([hour(0, 70), hour(1, 30)], start, race, at(1.2) * 1000))
+            expect(renderer.getRainVerdict([hour(0, 70), hour(1, 30)], start, race, raceEnd, at(1.2) * 1000))
                 .toEqual({ level: 'possible', text: `Chance of rain during Race: 30% around ${time(1.5)}` });
         });
     });

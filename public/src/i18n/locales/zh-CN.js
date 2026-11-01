@@ -50,6 +50,7 @@ export const zhCN = {
     windZoomDisabled: "缩放{{zoom}}级时风场已暂停 — 放大以查看风向",
   },
   forecast: {
+    sessionEnded: "本节已结束",
     verdictDry: "{{session}}期间下雨可能性低",
     verdictPossible: "{{session}}期间可能下雨：{{time}}前后 {{pct}}%",
     verdictLikely: "{{session}}期间很可能下雨：{{time}}前后 {{pct}}%",

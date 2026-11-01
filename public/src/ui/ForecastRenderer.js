@@ -1,6 +1,6 @@
 import { i18n } from '../i18n/index.js';
 import { getWindDirection } from '../utils/wind.js';
-import { getSessionRainVerdict, sessionHours } from '../utils/rain.js';
+import { getSessionRainVerdict } from '../utils/rain.js';
 
 const VERDICT_KEYS = Object.freeze({
     dry: 'forecast.verdictDry',
@@ -150,6 +150,8 @@ export class ForecastRenderer {
                     }
                 } else if (weather.reason === 'error') {
                     p.textContent = i18n.t('forecast.unavailable');
+                } else if (weather.reason === 'ended') {
+                    p.textContent = i18n.t('forecast.sessionEnded');
                 } else {
                     p.textContent = i18n.t('forecast.availableCloser');
                 }
@@ -309,8 +311,8 @@ export class ForecastRenderer {
      * @param {{id: string, name: string}} session
      * @returns {{level: string, text: string}|null}
      */
-    getRainVerdict(hourly, sessionTime, session, nowMs = Date.now()) {
-        const verdict = getSessionRainVerdict(hourly, sessionTime, sessionHours(session.id), nowMs);
+    getRainVerdict(hourly, sessionTime, session, endMs, nowMs = Date.now()) {
+        const verdict = getSessionRainVerdict(hourly, sessionTime, endMs, nowMs);
         if (!verdict) return null;
 
         const time = new Intl.DateTimeFormat(i18n.locale, { hour: 'numeric', minute: '2-digit' })

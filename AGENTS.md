@@ -244,8 +244,8 @@ Speed matters most on mobile at a circuit, so nothing may block the first render
 9. **Weather Forecast**
    - Session-specific weather forecast (temperature, rain probability, wind)
    - Fetched directly from Open-Meteo API
-   - Hourly forecast timeline
-   - Rain banner over the map (top centre; under the race card on mobile), the only place rain is summed up, with one message at a time: rain at the track from the radar while the session is on or within the hour, otherwise a one-line verdict for the session ("Rain likely during Race: 60% around 15:00") from the peak rain probability while it runs (races 2 hours, other sessions 1). Only shown when rain is possible (20%+), only from 3 days before the session until it ends (`RAIN_BANNER_LEAD_HOURS` in `public/src/utils/rain.js`), and recomputed on every forecast refresh
+   - Hourly forecast timeline covering the session's hours still to come: from the hour it starts in (once it is under way, the hour in progress) to its end under the session timing above (1 h 30 min, 4 h for a main race, 25 h for WEC/IMSA races, cut short by the next session). Rows drop off as their hour passes, on each 15-minute refresh; a finished session says so. Each row is the hour starting at its time: Open-Meteo stamps `precipitation_probability` with the end of the hour it covers, so `WeatherClient.filterHourly` takes the next stamp's value
+   - Rain banner over the map (top centre; under the race card on mobile), the only place rain is summed up, with one message at a time: rain at the track from the radar while the session is on or within the hour, otherwise a one-line verdict for the session ("Rain likely during Race: 60% around 15:30") from the peak rain probability over the same hours as the timeline (timed mid-hour, never in the past). Only shown when rain is possible (20%+), only from 3 days before the session until it ends (`RAIN_BANNER_LEAD_HOURS` in `public/src/utils/rain.js`), and recomputed on every forecast refresh
 
 10. **Wind Overlay**
     - Animated wind flow particles over the map

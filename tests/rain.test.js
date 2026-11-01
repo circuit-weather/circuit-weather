@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-    getSessionRainVerdict, sessionHours, isRainBannerTimely, RAIN_BANNER_LEAD_HOURS, isNowcastRelevant, summariseTrackRain, pixelDbz, worldPixel, samplePlan,
+    getSessionRainVerdict, isRainBannerTimely, RAIN_BANNER_LEAD_HOURS, isNowcastRelevant, summariseTrackRain, pixelDbz, worldPixel, samplePlan,
     RAIN_DBZ, SAMPLE_TILE_SIZE,
 } from '../public/src/utils/rain.js';
 
@@ -9,31 +9,25 @@ const start = new Date('2026-11-01T14:30:00Z');
 const startHour = Date.parse('2026-11-01T14:00:00Z') / 1000;
 const hours = (probs) => probs.map((precipProb, i) => ({ time: startHour + (i - 1) * HOUR, precipProb }));
 
-describe('sessionHours', () => {
-    it('gives races two hours and everything else one', () => {
-        expect(sessionHours('race')).toBe(2);
-        expect(sessionHours('feature-race')).toBe(2);
-        expect(sessionHours('qualifying')).toBe(1);
-        expect(sessionHours(undefined)).toBe(1);
-    });
-});
+// A session's end, the given number of hours after `start` (utils/sessionTiming.js decides it in the app)
+const end = (h) => start.getTime() + h * HOUR * 1000;
 
 describe('isRainBannerTimely', () => {
     const at = (hoursFromStart) => start.getTime() + hoursFromStart * HOUR * 1000;
 
     it('covers a session from 3 days out until it ends', () => {
         expect(RAIN_BANNER_LEAD_HOURS).toBe(72);
-        expect(isRainBannerTimely(start, 'race', at(-72.1))).toBe(false);
-        expect(isRainBannerTimely(start, 'race', at(-72))).toBe(true);
-        expect(isRainBannerTimely(start, 'race', at(1.9))).toBe(true);
-        expect(isRainBannerTimely(start, 'race', at(2))).toBe(false);
-        expect(isRainBannerTimely(start, 'fp1', at(1))).toBe(false);
+        expect(isRainBannerTimely(start, end(2), at(-72.1))).toBe(false);
+        expect(isRainBannerTimely(start, end(2), at(-72))).toBe(true);
+        expect(isRainBannerTimely(start, end(2), at(1.9))).toBe(true);
+        expect(isRainBannerTimely(start, end(2), at(2))).toBe(false);
+        expect(isRainBannerTimely(start, end(1), at(1))).toBe(false);
     });
 
     it('rejects sessions months away and bad dates', () => {
-        expect(isRainBannerTimely(start, 'race', at(-24 * 60))).toBe(false);
-        expect(isRainBannerTimely(new Date('nope'), 'race', at(0))).toBe(false);
-        expect(isRainBannerTimely(null, 'race', at(0))).toBe(false);
+        expect(isRainBannerTimely(start, end(2), at(-24 * 60))).toBe(false);
+        expect(isRainBannerTimely(new Date('nope'), end(2), at(0))).toBe(false);
+        expect(isRainBannerTimely(null, end(2), at(0))).toBe(false);
     });
 });
 
@@ -41,57 +35,58 @@ describe('isNowcastRelevant', () => {
     const at = (minutes) => start.getTime() + minutes * 60000;
 
     it('covers a session from an hour before it starts until it ends', () => {
-        expect(isNowcastRelevant(start, 'race', at(-61))).toBe(false);
-        expect(isNowcastRelevant(start, 'race', at(-60))).toBe(true);
-        expect(isNowcastRelevant(start, 'race', at(119))).toBe(true);
-        expect(isNowcastRelevant(start, 'race', at(120))).toBe(false);
-        expect(isNowcastRelevant(start, 'fp2', at(60))).toBe(false);
-        expect(isNowcastRelevant(new Date('nope'), 'race', at(0))).toBe(false);
+        expect(isNowcastRelevant(start, end(2), at(-61))).toBe(false);
+        expect(isNowcastRelevant(start, end(2), at(-60))).toBe(true);
+        expect(isNowcastRelevant(start, end(2), at(119))).toBe(true);
+        expect(isNowcastRelevant(start, end(2), at(120))).toBe(false);
+        expect(isNowcastRelevant(start, end(1), at(60))).toBe(false);
+        expect(isNowcastRelevant(new Date('nope'), end(2), at(0))).toBe(false);
     });
 });
 
 describe('getSessionRainVerdict', () => {
     it('covers the hour the session starts in until it ends, timed mid-hour', () => {
         // Hours starting 13:00 (before), 14:00, 15:00, 16:00 (a 2 h race from 14:30 runs to 16:30) and 17:00 (after)
-        const verdict = getSessionRainVerdict(hours([90, 10, 15, 30, 95]), start, 2);
+        const verdict = getSessionRainVerdict(hours([90, 10, 15, 30, 95]), start, end(2));
         expect(verdict).toEqual({ level: 'possible', peakPct: 30, peakTime: startHour + 2 * HOUR + 1800 });
     });
 
     it('leaves out hours already over once the session is under way', () => {
         // Malaysian MotoGP: GP at 07:00 UTC; at 07:38 the 07:00-08:00 hour is still running
         const gp = new Date('2026-11-01T07:00:00Z');
+        const gpEnd = gp.getTime() + 2 * HOUR * 1000;
         const t = (h) => Date.parse(`2026-11-01T0${h}:00:00Z`) / 1000;
         const hourly = [{ time: t(6), precipProb: 41 }, { time: t(7), precipProb: 30 }, { time: t(8), precipProb: 25 }];
         const now = Date.parse('2026-11-01T07:38:00Z');
 
         // Before the start, the hour before it doesn't count either
-        expect(getSessionRainVerdict(hourly, gp, 2, Date.parse('2026-11-01T06:30:00Z')))
+        expect(getSessionRainVerdict(hourly, gp, gpEnd, Date.parse('2026-11-01T06:30:00Z')))
             .toEqual({ level: 'possible', peakPct: 30, peakTime: t(7) + 1800 });
         // Under way: still 07:00-08:00 (said as the next 5 minutes, 07:40) and 08:00-09:00
-        expect(getSessionRainVerdict(hourly, gp, 2, now))
+        expect(getSessionRainVerdict(hourly, gp, gpEnd, now))
             .toEqual({ level: 'possible', peakPct: 30, peakTime: Date.parse('2026-11-01T07:40:00Z') / 1000 });
         // Once 07:00-08:00 is over, only 08:00-09:00 is left
-        expect(getSessionRainVerdict(hourly, gp, 2, Date.parse('2026-11-01T08:05:00Z')))
+        expect(getSessionRainVerdict(hourly, gp, gpEnd, Date.parse('2026-11-01T08:05:00Z')))
             .toEqual({ level: 'possible', peakPct: 25, peakTime: t(8) + 1800 });
         // And after the session, nothing
-        expect(getSessionRainVerdict(hourly, gp, 2, Date.parse('2026-11-01T09:00:00Z'))).toBeNull();
+        expect(getSessionRainVerdict(hourly, gp, gpEnd, Date.parse('2026-11-01T09:00:00Z'))).toBeNull();
     });
 
     it('bands the peak chance into dry, possible and likely', () => {
-        expect(getSessionRainVerdict(hours([0, 19]), start, 1).level).toBe('dry');
-        expect(getSessionRainVerdict(hours([0, 20]), start, 1).level).toBe('possible');
-        expect(getSessionRainVerdict(hours([0, 49.6]), start, 1)).toMatchObject({ level: 'likely', peakPct: 50 });
+        expect(getSessionRainVerdict(hours([0, 19]), start, end(1)).level).toBe('dry');
+        expect(getSessionRainVerdict(hours([0, 20]), start, end(1)).level).toBe('possible');
+        expect(getSessionRainVerdict(hours([0, 49.6]), start, end(1))).toMatchObject({ level: 'likely', peakPct: 50 });
     });
 
     it('keeps the first hour of a tied peak', () => {
-        expect(getSessionRainVerdict(hours([0, 60, 60]), start, 2).peakTime).toBe(startHour + 1800);
+        expect(getSessionRainVerdict(hours([0, 60, 60]), start, end(2)).peakTime).toBe(startHour + 1800);
     });
 
     it('returns null without usable data', () => {
-        expect(getSessionRainVerdict(null, start, 1)).toBeNull();
-        expect(getSessionRainVerdict(hours([5]), start, 1)).toBeNull();
-        expect(getSessionRainVerdict([{ time: startHour, precipProb: null }], start, 1)).toBeNull();
-        expect(getSessionRainVerdict(hours([5, 5]), 'soon', 1)).toBeNull();
+        expect(getSessionRainVerdict(null, start, end(1))).toBeNull();
+        expect(getSessionRainVerdict(hours([5]), start, end(1))).toBeNull();
+        expect(getSessionRainVerdict([{ time: startHour, precipProb: null }], start, end(1))).toBeNull();
+        expect(getSessionRainVerdict(hours([5, 5]), 'soon', end(1))).toBeNull();
     });
 });
 

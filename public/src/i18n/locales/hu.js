@@ -54,6 +54,7 @@ export const hu = {
       "Szélréteg {{zoom}} nagyítási szinten szüneteltetve — közelíts a szél megtekintéséhez",
   },
   forecast: {
+    sessionEnded: "Ez a szakasz véget ért",
     verdictDry: "Eső nem valószínű: {{session}}",
     verdictPossible: "Eső lehetséges: {{session}}, {{pct}}% {{time}} körül",
     verdictLikely: "Eső valószínű: {{session}}, {{pct}}% {{time}} körül",

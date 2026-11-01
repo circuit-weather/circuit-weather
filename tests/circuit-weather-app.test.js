@@ -852,12 +852,16 @@ describe('CircuitWeatherApp Pure Methods', () => {
             const sessionTime = new Date('2024-05-05T14:00:00Z');
             app.selectedRace = {
                 name: 'Test GP',
-                location: { lat: '26.0325', long: '50.5106' }
+                location: { lat: '26.0325', long: '50.5106' },
+                sessions: [{ id: 'race', date: '2024-05-05', time: '14:00:00Z' }],
             };
+            app.series = 'f1';
 
             await app.updateSessionForecast(sessionTime, 'race');
 
-            expect(app.weatherClient.getForecast).toHaveBeenCalledWith('26.0325', '50.5106', sessionTime);
+            // Covers the race's 4 hours (utils/sessionTiming.js)
+            expect(app.weatherClient.getForecast).toHaveBeenCalledWith('26.0325', '50.5106', sessionTime,
+                new Date('2024-05-05T18:00:00Z'));
             expect(app.renderForecast).toHaveBeenCalledWith({ available: true }, sessionTime, 'race');
         });
     });
@@ -908,6 +912,9 @@ describe('CircuitWeatherApp Pure Methods', () => {
             beforeEach(() => {
                 app.ui.rainBanner = createMockElement('rainBanner');
                 app.ui.mobileRainBanner = createMockElement('mobileRainBanner');
+                app.series = 'f1';
+                app.selectedSession = { id: 'race', name: 'Race', date: '2026-11-01', time: '14:00:00Z' };
+                app.selectedRace = { name: 'Bahrain GP', date: '2026-11-01', time: '14:00:00Z', sessions: [app.selectedSession] };
             });
 
             it('shows the verdict on both copies when rain is expected and the session is close', () => {
@@ -1055,6 +1062,11 @@ describe('CircuitWeatherApp Pure Methods', () => {
 
             const p = app.ui.forecastUnavailable.querySelector('p');
             expect(p.textContent).toBe('Forecast available shortly');
+        });
+
+        it('says when the session has finished', () => {
+            app.renderForecast({ available: false, reason: 'ended' }, new Date(), 'race');
+            expect(app.ui.forecastUnavailable.querySelector('p').textContent).toBe('This session has finished');
         });
 
         it('handles other unavailable reasons', () => {
@@ -1754,7 +1766,9 @@ describe('CircuitWeatherApp Pure Methods', () => {
             const forecastVerdict = { level: 'possible', text: 'Chance of rain during Race: 30% around 3:00 pm' };
 
             beforeEach(() => {
+                app.series = 'f1';
                 app.selectedSession = { id: 'race', name: 'Race', date: '2026-11-01', time: '14:00:00Z' };
+                app.selectedRace = { date: '2026-11-01', time: '14:00:00Z', sessions: [app.selectedSession] };
                 app.ui.rainBanner = createMockElement('rainBanner');
                 app.ui.mobileRainBanner = createMockElement('mobileRainBanner');
                 app.trackRainStatus = null;
@@ -1797,9 +1811,11 @@ describe('CircuitWeatherApp Pure Methods', () => {
                 app.renderRainBanner(minutes(-61));
                 expect(app.ui.rainBanner.textContent).toBe(forecastVerdict.text);
 
-                // ...or over, or with no session at all
+                // ...or over (a race runs 4 h, utils/sessionTiming.js), or with no session at all
                 app.sessionRainVerdict = null;
-                app.renderRainBanner(minutes(120));
+                app.renderRainBanner(minutes(239));
+                expect(app.ui.rainBanner.hidden).toBe(false);
+                app.renderRainBanner(minutes(240));
                 expect(app.ui.rainBanner.hidden).toBe(true);
                 app.selectedSession = null;
                 app.renderRainBanner(minutes(0));
@@ -3086,7 +3102,8 @@ describe('CircuitWeatherApp series selection', () => {
             app.renderForecast = vi.fn();
             const time = new Date('2026-11-29T13:00:00Z');
             await app.updateSessionForecast(time, 'feature-race');
-            expect(app.weatherClient.getForecast).toHaveBeenCalledWith(25.49, 51.45, time);
+            // A session not found in the round has no end to bound it by
+            expect(app.weatherClient.getForecast).toHaveBeenCalledWith(25.49, 51.45, time, null);
         });
 
         it('skips the forecast when there is no centre either', async () => {

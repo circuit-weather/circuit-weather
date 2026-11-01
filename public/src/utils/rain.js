@@ -18,15 +18,6 @@ export const TRACK_RADIUS_KM = 3;
 export const SAMPLE_ZOOM = 8;
 export const SAMPLE_TILE_SIZE = 256;
 
-/**
- * Hours of a session the verdict covers. Races run up to two hours; other
- * sessions about one. The forecast window ends 3 hours after the start anyway.
- * @param {string} [sessionId]
- */
-export function sessionHours(sessionId) {
-    return typeof sessionId === 'string' && sessionId.includes('race') ? 2 : 1;
-}
-
 // The rain banner covers a session from this long before it starts until it
 // ends: a race weekend from Friday on, and never a forecast days too early to trust
 export const RAIN_BANNER_LEAD_HOURS = 72;
@@ -34,14 +25,13 @@ export const RAIN_BANNER_LEAD_HOURS = 72;
 /**
  * Whether a session is close enough (or under way) for its rain verdict to be worth a banner.
  * @param {Date} sessionTime
- * @param {string} sessionId
+ * @param {number} endMs - When the session counts as finished (utils/sessionTiming.js)
  * @param {number} nowMs
  */
-export function isRainBannerTimely(sessionTime, sessionId, nowMs) {
+export function isRainBannerTimely(sessionTime, endMs, nowMs) {
     const start = sessionTime instanceof Date ? sessionTime.getTime() : NaN;
     if (!Number.isFinite(start)) return false;
-    const end = start + sessionHours(sessionId) * 3600000;
-    return nowMs >= start - RAIN_BANNER_LEAD_HOURS * 3600000 && nowMs < end;
+    return nowMs >= start - RAIN_BANNER_LEAD_HOURS * 3600000 && nowMs < endMs;
 }
 
 // The radar nowcast looks an hour ahead, so it only speaks for a session
@@ -51,14 +41,13 @@ export const NOWCAST_LEAD_MINUTES = 60;
 /**
  * Whether the radar nowcast at the track bears on a session.
  * @param {Date} sessionTime
- * @param {string} sessionId
+ * @param {number} endMs - When the session counts as finished
  * @param {number} nowMs
  */
-export function isNowcastRelevant(sessionTime, sessionId, nowMs) {
+export function isNowcastRelevant(sessionTime, endMs, nowMs) {
     const start = sessionTime instanceof Date ? sessionTime.getTime() : NaN;
     if (!Number.isFinite(start)) return false;
-    const end = start + sessionHours(sessionId) * 3600000;
-    return nowMs >= start - NOWCAST_LEAD_MINUTES * 60000 && nowMs < end;
+    return nowMs >= start - NOWCAST_LEAD_MINUTES * 60000 && nowMs < endMs;
 }
 
 /**
@@ -67,13 +56,13 @@ export function isNowcastRelevant(sessionTime, sessionId, nowMs) {
  * @param {Array<{time: number, precipProb: number}>} hourly - Unix seconds; precipProb
  *   is the chance of rain in the hour starting at time
  * @param {Date} sessionTime - Session start
- * @param {number} hours - Session length
+ * @param {number} endMs - When the session counts as finished
  * @param {number} [nowMs] - Hours already over by now are left out
  * @returns {{level: 'dry'|'possible'|'likely', peakPct: number, peakTime: number}|null}
  *   peakTime (Unix seconds) is when to say the peak is: the middle of the
  *   wettest hour, or the next 5 minutes if that is already past; null without data
  */
-export function getSessionRainVerdict(hourly, sessionTime, hours, nowMs = 0) {
+export function getSessionRainVerdict(hourly, sessionTime, endMs, nowMs = 0) {
     if (!Array.isArray(hourly) || !(sessionTime instanceof Date)) return null;
 
     // Each value is the chance of rain in the hour starting at h.time (see
@@ -81,7 +70,7 @@ export function getSessionRainVerdict(hourly, sessionTime, hours, nowMs = 0) {
     // from the one it starts in. Once it is under way, hours already over are
     // dropped: the verdict is about what's still to come.
     const start = Math.floor(sessionTime.getTime() / 3600000) * 3600;
-    const end = sessionTime.getTime() / 1000 + hours * 3600;
+    const end = endMs / 1000;
     const during = hourly.filter(h => h.time >= start && h.time < end
         && (h.time + 3600) * 1000 > nowMs && Number.isFinite(h.precipProb));
     if (during.length === 0) return null;

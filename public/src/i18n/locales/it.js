@@ -54,6 +54,7 @@ export const it = {
       "Overlay vento in pausa allo zoom {{zoom}} — avvicina per vedere il vento",
   },
   forecast: {
+    sessionEnded: "Questa sessione è terminata",
     verdictDry: "Pioggia improbabile durante {{session}}",
     verdictPossible: "Possibile pioggia durante {{session}}: {{pct}}% verso le {{time}}",
     verdictLikely: "Pioggia probabile durante {{session}}: {{pct}}% verso le {{time}}",

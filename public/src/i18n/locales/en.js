@@ -54,6 +54,7 @@ export const en = {
       "Wind overlay paused at zoom {{zoom}} — zoom in to see wind",
   },
   forecast: {
+    sessionEnded: "This session has finished",
     verdictDry: "Rain unlikely during {{session}}",
     verdictPossible: "Chance of rain during {{session}}: {{pct}}% around {{time}}",
     verdictLikely: "Rain likely during {{session}}: {{pct}}% around {{time}}",

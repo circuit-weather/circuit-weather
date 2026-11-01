@@ -28,10 +28,7 @@ describe('WeatherClient', () => {
     });
 
     describe('filterHourly', () => {
-        // Session at Unix 10800 (3 hours from epoch)
-        // Window: -1.5h (5400s before) to +3h after
-        // startTs = 10800 - 5400 = 5400
-        // endTs = 10800 + 10800 = 21600
+        // Session at Unix 10800 (03:00 on 1 Jan 1970); without an end, 3 hours long
         const sessionTime = new Date(10800 * 1000);
 
         const makeHourly = (startTs, count) => {
@@ -64,18 +61,31 @@ describe('WeatherClient', () => {
             };
         };
 
-        it('filters data to the session window (-1.5h to +3h)', () => {
-            // Data from hour 0 to hour 8 (9 entries, starting at ts=0)
+        it('covers the session\'s hours, from the one it starts in to its end', () => {
+            // Hours 00:00-08:00; a 3 h session from 03:00 covers the hours starting 03:00, 04:00, 05:00
             const hourly = makeHourly(0, 9);
-            const result = client.filterHourly(hourly, sessionTime);
+            expect(client.filterHourly(hourly, sessionTime).map(h => h.time)).toEqual([10800, 14400, 18000]);
 
-            // Window: 5400 to 21600
-            // Valid times: 7200 (2h), 10800 (3h), 14400 (4h), 18000 (5h), 21600 (6h)
-            // ts=3600 is 3600 < 5400, excluded
-            // ts=25200 is > 21600, excluded
-            expect(result.length).toBe(5);
-            expect(result[0].time).toBe(7200);
-            expect(result[result.length - 1].time).toBe(21600);
+            // A session from 03:30 still counts the 03:00-04:00 hour
+            expect(client.filterHourly(hourly, new Date(12600 * 1000), 12600 * 1000 + 3600000).map(h => h.time))
+                .toEqual([10800, 14400]);
+        });
+
+        it('runs as long as the session\'s assumed length, however long', () => {
+            // A 25-hour endurance race from 03:00
+            const hourly = makeHourly(0, 40);
+            const result = client.filterHourly(hourly, sessionTime, (10800 + 25 * 3600) * 1000);
+            expect(result).toHaveLength(25);
+            expect(result.at(-1).time).toBe(10800 + 24 * 3600);
+        });
+
+        it('drops hours already over once the session is under way', () => {
+            const hourly = makeHourly(0, 9);
+            // At 04:20 the 04:00-05:00 hour is still running; 03:00-04:00 is over
+            const result = client.filterHourly(hourly, sessionTime, undefined, (4 * 3600 + 1200) * 1000);
+            expect(result.map(h => h.time)).toEqual([14400, 18000]);
+            // After the session, nothing
+            expect(client.filterHourly(hourly, sessionTime, undefined, 6 * 3600 * 1000)).toEqual([]);
         });
 
         it('returns empty array when times array is empty', () => {
@@ -236,6 +246,13 @@ describe('WeatherClient', () => {
                 current,
                 current_units: { temperature_2m: '°C', wind_speed_10m: 'km/h' },
             }),
+        });
+
+        it('reports a finished session without fetching', async () => {
+            const start = new Date(Date.now() - 3 * 60 * 60 * 1000);
+            const result = await client.getForecast(0, 0, start, new Date(Date.now() - 1000));
+            expect(result).toEqual({ available: false, reason: 'ended' });
+            expect(mockFetch).not.toHaveBeenCalled();
         });
 
         it('returns too_far when session is more than 16 days away', async () => {

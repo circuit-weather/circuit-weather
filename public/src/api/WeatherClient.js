@@ -84,7 +84,17 @@ export class WeatherClient {
         return field;
     }
 
-    async getForecast(lat, lon, sessionTime) {
+    /**
+     * @param {Date} sessionTime - Session start
+     * @param {Date} [endTime] - When the session counts as finished (utils/sessionTiming.js);
+     *   the hourly forecast covers the hours from now (or the start) up to it
+     */
+    async getForecast(lat, lon, sessionTime, endTime = null) {
+        // A finished session has no forecast left to show
+        if (endTime && endTime.getTime() <= Date.now()) {
+            return { available: false, reason: 'ended' };
+        }
+
         // Check if session is too far in future (> 10 days)
         // Open-Meteo free tier goes up to 14-16 days but accuracy drops
         const now = new Date();
@@ -140,7 +150,7 @@ export class WeatherClient {
                 }
             }
 
-            const hourlyFiltered = this.filterHourly(data.hourly, sessionTime);
+            const hourlyFiltered = this.filterHourly(data.hourly, sessionTime, endTime?.getTime(), Date.now());
 
             if (hourlyFiltered.length === 0) {
                 // If there's no data for this specific time, it's either too far or an API gap
@@ -181,12 +191,21 @@ export class WeatherClient {
         return response.json();
     }
 
-    filterHourly(hourly, sessionTime) {
-        const sessionTs = Math.floor(sessionTime.getTime() / 1000);
-        // Range: -1.5 hours to +3 hours relative to session start
-        // Widened to 1.5h (5400s) to capture the "previous hour" data point for sessions starting at :30
-        const startTs = sessionTs - 5400;
-        const endTs = sessionTs + (3 * 3600);
+    /**
+     * The hours of a session still to come: from the hour the session starts in
+     * (or, once it is under way, the hour in progress) to the session's end.
+     * Each row describes the hour starting at its time.
+     *
+     * @param {Object} hourly - Open-Meteo hourly arrays
+     * @param {Date} sessionTime
+     * @param {number} [endMs] - Session end (default: 3 hours after the start)
+     * @param {number} [nowMs] - Hours over by now are left out
+     */
+    filterHourly(hourly, sessionTime, endMs = sessionTime.getTime() + 3 * 3600000, nowMs = 0) {
+        const fromMs = Math.max(sessionTime.getTime(), nowMs);
+        const startTs = Math.floor(fromMs / 3600000) * 3600;
+        // Rows start on the hour: the last one starts before the session ends
+        const endTs = Math.ceil(endMs / 1000) - 1;
 
         const result = [];
         const times = hourly.time;
