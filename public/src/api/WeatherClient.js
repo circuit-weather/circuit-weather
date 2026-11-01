@@ -220,7 +220,11 @@ export class WeatherClient {
                     time: time,
                     temp: temps[i],
                     humidity: humids ? humids[i] : null,
-                    precipProb: precips[i],
+                    // Each row describes the hour starting at `time`. Open-Meteo stamps
+                    // precipitation_probability with the end of the hour it covers
+                    // ("preceding hour"), so that hour's chance is the next value.
+                    // Temperature, wind and weather code are instantaneous at `time`.
+                    precipProb: precips[i + 1] ?? null,
                     windSpeed: winds[i],
                     windDir: windDirs[i],
                     code: codes[i]

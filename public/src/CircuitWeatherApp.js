@@ -1256,7 +1256,7 @@ export class CircuitWeatherApp {
         // Re-evaluated on every forecast refresh, so the banner follows the forecast
         const now = overrideNow ? overrideNow.getTime() : Date.now();
         const verdict = isRainBannerTimely(sessionTime, this.selectedSession.id, now)
-            ? this.forecastRenderer.getRainVerdict(weather.hourly, sessionTime, this.selectedSession)
+            ? this.forecastRenderer.getRainVerdict(weather.hourly, sessionTime, this.selectedSession, now)
             : null;
         this.setSessionRainVerdict(verdict && verdict.level !== 'dry' ? verdict : null, now);
 

@@ -100,11 +100,24 @@ describe('WeatherClient', () => {
                 time: 10800,
                 temp: 20,
                 humidity: 50,
-                precipProb: 0,
+                // No later value to say how wet this hour is
+                precipProb: null,
                 windSpeed: 5,
                 windDir: 0,
                 code: 0,
             });
+        });
+
+        it('gives each row the chance of rain in the hour that starts at it', () => {
+            // Open-Meteo stamps precipitation_probability with the end of the hour it
+            // covers: the value at 11:00 (10) is the chance between 10:00 and 11:00
+            const hourly = makeHourly(10800, 3); // precips 0, 10, 20 at 03:00, 04:00, 05:00
+            const result = client.filterHourly(hourly, sessionTime);
+            expect(result.map(h => [h.time, h.temp, h.precipProb])).toEqual([
+                [10800, 20, 10],
+                [14400, 21, 20],
+                [18000, 22, null],
+            ]);
         });
 
         it('handles missing humidity gracefully', () => {

@@ -64,19 +64,26 @@ export function isNowcastRelevant(sessionTime, sessionId, nowMs) {
 /**
  * Summarises the chance of rain during a session.
  *
- * @param {Array<{time: number, precipProb: number}>} hourly - Unix seconds
+ * @param {Array<{time: number, precipProb: number}>} hourly - Unix seconds; precipProb
+ *   is the chance of rain in the hour starting at time
  * @param {Date} sessionTime - Session start
  * @param {number} hours - Session length
+ * @param {number} [nowMs] - Hours already over by now are left out
  * @returns {{level: 'dry'|'possible'|'likely', peakPct: number, peakTime: number}|null}
- *   peakTime is the (Unix seconds) hour with the highest chance; null without data
+ *   peakTime (Unix seconds) is when to say the peak is: the middle of the
+ *   wettest hour, or the next 5 minutes if that is already past; null without data
  */
-export function getSessionRainVerdict(hourly, sessionTime, hours) {
+export function getSessionRainVerdict(hourly, sessionTime, hours, nowMs = 0) {
     if (!Array.isArray(hourly) || !(sessionTime instanceof Date)) return null;
 
-    // Hourly values cover the hour they start, so include the hour the session starts in
+    // Each value is the chance of rain in the hour starting at h.time (see
+    // WeatherClient.filterHourly), so take the hours that overlap the session,
+    // from the one it starts in. Once it is under way, hours already over are
+    // dropped: the verdict is about what's still to come.
     const start = Math.floor(sessionTime.getTime() / 3600000) * 3600;
     const end = sessionTime.getTime() / 1000 + hours * 3600;
-    const during = hourly.filter(h => h.time >= start && h.time < end && Number.isFinite(h.precipProb));
+    const during = hourly.filter(h => h.time >= start && h.time < end
+        && (h.time + 3600) * 1000 > nowMs && Number.isFinite(h.precipProb));
     if (during.length === 0) return null;
 
     const peak = during.reduce((max, h) => (h.precipProb > max.precipProb ? h : max));
@@ -86,7 +93,11 @@ export function getSessionRainVerdict(hourly, sessionTime, hours) {
     if (peakPct >= RAIN_LIKELY_PCT) level = 'likely';
     else if (peakPct >= RAIN_POSSIBLE_PCT) level = 'possible';
 
-    return { level, peakPct, peakTime: peak.time };
+    // "Around" the middle of the peak hour, but never a time already past: in
+    // the hour under way, the next 5 minutes
+    const middle = (peak.time + 1800) * 1000;
+    const soonest = Math.ceil(nowMs / 300000) * 300000;
+    return { level, peakPct, peakTime: Math.max(middle, soonest) / 1000 };
 }
 
 /**

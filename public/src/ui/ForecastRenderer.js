@@ -309,8 +309,8 @@ export class ForecastRenderer {
      * @param {{id: string, name: string}} session
      * @returns {{level: string, text: string}|null}
      */
-    getRainVerdict(hourly, sessionTime, session) {
-        const verdict = getSessionRainVerdict(hourly, sessionTime, sessionHours(session.id));
+    getRainVerdict(hourly, sessionTime, session, nowMs = Date.now()) {
+        const verdict = getSessionRainVerdict(hourly, sessionTime, sessionHours(session.id), nowMs);
         if (!verdict) return null;
 
         const time = new Intl.DateTimeFormat(i18n.locale, { hour: 'numeric', minute: '2-digit' })

@@ -51,10 +51,30 @@ describe('isNowcastRelevant', () => {
 });
 
 describe('getSessionRainVerdict', () => {
-    it('covers the hour the session starts in until it ends', () => {
-        // 13:00 (before), 14:00, 15:00, 16:00 (after a 2 h race from 14:30 ends at 16:30, so included)
+    it('covers the hour the session starts in until it ends, timed mid-hour', () => {
+        // Hours starting 13:00 (before), 14:00, 15:00, 16:00 (a 2 h race from 14:30 runs to 16:30) and 17:00 (after)
         const verdict = getSessionRainVerdict(hours([90, 10, 15, 30, 95]), start, 2);
-        expect(verdict).toEqual({ level: 'possible', peakPct: 30, peakTime: startHour + 2 * HOUR });
+        expect(verdict).toEqual({ level: 'possible', peakPct: 30, peakTime: startHour + 2 * HOUR + 1800 });
+    });
+
+    it('leaves out hours already over once the session is under way', () => {
+        // Malaysian MotoGP: GP at 07:00 UTC; at 07:38 the 07:00-08:00 hour is still running
+        const gp = new Date('2026-11-01T07:00:00Z');
+        const t = (h) => Date.parse(`2026-11-01T0${h}:00:00Z`) / 1000;
+        const hourly = [{ time: t(6), precipProb: 41 }, { time: t(7), precipProb: 30 }, { time: t(8), precipProb: 25 }];
+        const now = Date.parse('2026-11-01T07:38:00Z');
+
+        // Before the start, the hour before it doesn't count either
+        expect(getSessionRainVerdict(hourly, gp, 2, Date.parse('2026-11-01T06:30:00Z')))
+            .toEqual({ level: 'possible', peakPct: 30, peakTime: t(7) + 1800 });
+        // Under way: still 07:00-08:00 (said as the next 5 minutes, 07:40) and 08:00-09:00
+        expect(getSessionRainVerdict(hourly, gp, 2, now))
+            .toEqual({ level: 'possible', peakPct: 30, peakTime: Date.parse('2026-11-01T07:40:00Z') / 1000 });
+        // Once 07:00-08:00 is over, only 08:00-09:00 is left
+        expect(getSessionRainVerdict(hourly, gp, 2, Date.parse('2026-11-01T08:05:00Z')))
+            .toEqual({ level: 'possible', peakPct: 25, peakTime: t(8) + 1800 });
+        // And after the session, nothing
+        expect(getSessionRainVerdict(hourly, gp, 2, Date.parse('2026-11-01T09:00:00Z'))).toBeNull();
     });
 
     it('bands the peak chance into dry, possible and likely', () => {
@@ -64,7 +84,7 @@ describe('getSessionRainVerdict', () => {
     });
 
     it('keeps the first hour of a tied peak', () => {
-        expect(getSessionRainVerdict(hours([0, 60, 60]), start, 2).peakTime).toBe(startHour);
+        expect(getSessionRainVerdict(hours([0, 60, 60]), start, 2).peakTime).toBe(startHour + 1800);
     });
 
     it('returns null without usable data', () => {
