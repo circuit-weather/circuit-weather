@@ -18,10 +18,39 @@ export const SESSION_HOLD_MS = 1.5 * HOUR_MS;
 // A round's main race: F1 caps a race at 3 hours including suspensions, plus
 // the podium and post-race
 export const RACE_HOLD_MS = 4 * HOUR_MS;
-// Endurance races run up to 24 hours (Le Mans, Daytona); shorter ones just
-// stay on screen longer, with the next round weeks away
-export const ENDURANCE_RACE_HOLD_MS = 25 * HOUR_MS;
+// Endurance races (WEC, IMSA) run from 1 h 40 min to 24 h. Most round names
+// give the length ("6 Hours of Fuji", "Mobil 1 Twelve Hours of Sebring",
+// "Rolex 24 At DAYTONA"): the race is held that long plus an hour for the
+// podium. Without one, 12 h: longer than every endurance race that doesn't
+// name its length (Petit Le Mans and Qatar's 1812 km run 10 h), so a race
+// is never cut short, while a 2-hour sprint isn't kept up for a day.
 export const ENDURANCE_SERIES = Object.freeze(['wec', 'imsa']);
+export const ENDURANCE_PODIUM_MS = 1 * HOUR_MS;
+export const ENDURANCE_FALLBACK_HOLD_MS = 12 * HOUR_MS;
+
+const NUMBER_WORDS = Object.freeze({
+    one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7, eight: 8, nine: 9,
+    ten: 10, eleven: 11, twelve: 12, sixteen: 16, eighteen: 18, twenty: 20, 'twenty-four': 24,
+});
+
+/**
+ * A race's length in hours from its name, or null when the name doesn't say.
+ * "6 Hours of Fuji" -> 6, "Twelve Hours of Sebring" -> 12, "Rolex 24 At DAYTONA" -> 24.
+ */
+export function raceHoursFromName(name) {
+    if (typeof name !== 'string') return null;
+    const words = Object.keys(NUMBER_WORDS).join('|');
+    const stated = name.match(new RegExp(`\\b(\\d{1,2}|${words})[\\s-]*(?:hours?|hrs?|h)\\b`, 'i'));
+    let hours = null;
+    if (stated) {
+        const amount = stated[1].toLowerCase();
+        hours = NUMBER_WORDS[amount] ?? Number(amount);
+    } else if (/\b24\b/.test(name)) {
+        // "Rolex 24 At Daytona", "24 Heures du Mans"
+        hours = 24;
+    }
+    return hours >= 1 && hours <= 30 ? hours : null;
+}
 
 /** @returns {number} Start time in ms, or NaN without a usable date and time */
 export function sessionStart(session) {
@@ -42,7 +71,9 @@ export function isMainRace(race, session) {
 
 function holdMs(race, session, series) {
     if (!isMainRace(race, session)) return SESSION_HOLD_MS;
-    return ENDURANCE_SERIES.includes(series) ? ENDURANCE_RACE_HOLD_MS : RACE_HOLD_MS;
+    if (!ENDURANCE_SERIES.includes(series)) return RACE_HOLD_MS;
+    const hours = raceHoursFromName(race.name);
+    return hours ? hours * HOUR_MS + ENDURANCE_PODIUM_MS : ENDURANCE_FALLBACK_HOLD_MS;
 }
 
 /**
