@@ -28,10 +28,7 @@ describe('WeatherClient', () => {
     });
 
     describe('filterHourly', () => {
-        // Session at Unix 10800 (3 hours from epoch)
-        // Window: -1.5h (5400s before) to +3h after
-        // startTs = 10800 - 5400 = 5400
-        // endTs = 10800 + 10800 = 21600
+        // Session at Unix 10800 (03:00 on 1 Jan 1970); without an end, 3 hours long
         const sessionTime = new Date(10800 * 1000);
 
         const makeHourly = (startTs, count) => {
@@ -64,18 +61,40 @@ describe('WeatherClient', () => {
             };
         };
 
-        it('filters data to the session window (-1.5h to +3h)', () => {
-            // Data from hour 0 to hour 8 (9 entries, starting at ts=0)
+        it('covers the hour before the start, then the session\'s hours to its end', () => {
+            // Hours 00:00-08:00; a 3 h session from 03:00: the 02:00 lead-in, then 03:00, 04:00, 05:00
             const hourly = makeHourly(0, 9);
-            const result = client.filterHourly(hourly, sessionTime);
+            expect(client.filterHourly(hourly, sessionTime).map(h => h.time)).toEqual([7200, 10800, 14400, 18000]);
 
-            // Window: 5400 to 21600
-            // Valid times: 7200 (2h), 10800 (3h), 14400 (4h), 18000 (5h), 21600 (6h)
-            // ts=3600 is 3600 < 5400, excluded
-            // ts=25200 is > 21600, excluded
-            expect(result.length).toBe(5);
+            // A 1 h session from 03:30 to 04:30: lead-in 02:00, then the 03:00 and 04:00 hours it overlaps
+            expect(client.filterHourly(hourly, new Date(12600 * 1000), 12600 * 1000 + 3600000).map(h => h.time))
+                .toEqual([7200, 10800, 14400]);
+        });
+
+        it('drops the lead-in hour once it is over', () => {
+            const hourly = makeHourly(0, 9);
+            // At 02:40 the 02:00-03:00 lead-in is still to come in part
+            expect(client.filterHourly(hourly, sessionTime, undefined, (2 * 3600 + 2400) * 1000)[0].time).toBe(7200);
+            // At 03:05 it is over
+            expect(client.filterHourly(hourly, sessionTime, undefined, (3 * 3600 + 300) * 1000)[0].time).toBe(10800);
+        });
+
+        it('runs as long as the session\'s assumed length, however long', () => {
+            // A 25-hour endurance race from 03:00
+            const hourly = makeHourly(0, 40);
+            const result = client.filterHourly(hourly, sessionTime, (10800 + 25 * 3600) * 1000);
+            expect(result).toHaveLength(26); // the lead-in hour, then 25
             expect(result[0].time).toBe(7200);
-            expect(result[result.length - 1].time).toBe(21600);
+            expect(result.at(-1).time).toBe(10800 + 24 * 3600);
+        });
+
+        it('drops hours already over once the session is under way', () => {
+            const hourly = makeHourly(0, 9);
+            // At 04:20 the 04:00-05:00 hour is still running; 03:00-04:00 is over
+            const result = client.filterHourly(hourly, sessionTime, undefined, (4 * 3600 + 1200) * 1000);
+            expect(result.map(h => h.time)).toEqual([14400, 18000]);
+            // After the session, nothing
+            expect(client.filterHourly(hourly, sessionTime, undefined, 6 * 3600 * 1000)).toEqual([]);
         });
 
         it('returns empty array when times array is empty', () => {
@@ -100,11 +119,24 @@ describe('WeatherClient', () => {
                 time: 10800,
                 temp: 20,
                 humidity: 50,
-                precipProb: 0,
+                // No later value to say how wet this hour is
+                precipProb: null,
                 windSpeed: 5,
                 windDir: 0,
                 code: 0,
             });
+        });
+
+        it('gives each row the chance of rain in the hour that starts at it', () => {
+            // Open-Meteo stamps precipitation_probability with the end of the hour it
+            // covers: the value at 11:00 (10) is the chance between 10:00 and 11:00
+            const hourly = makeHourly(10800, 3); // precips 0, 10, 20 at 03:00, 04:00, 05:00
+            const result = client.filterHourly(hourly, sessionTime);
+            expect(result.map(h => [h.time, h.temp, h.precipProb])).toEqual([
+                [10800, 20, 10],
+                [14400, 21, 20],
+                [18000, 22, null],
+            ]);
         });
 
         it('handles missing humidity gracefully', () => {
@@ -148,29 +180,6 @@ describe('WeatherClient', () => {
             it(`returns '${expected}' for WMO code ${code}`, () => {
                 expect(client.getWeatherDescription(code)).toBe(expected);
             });
-        });
-    });
-
-    describe('getRelativeTime', () => {
-        // Session at 2023-03-05 14:30:00 UTC
-        const sessionTime = new Date('2023-03-05T14:30:00Z');
-        // Session hour anchor: 14:00:00 UTC = 1678024800
-        const sessionHourTs = Math.floor(new Date('2023-03-05T14:00:00Z').getTime() / 1000);
-
-        it('returns "Session start" for the session start hour', () => {
-            expect(client.getRelativeTime(sessionHourTs, sessionTime)).toBe('Start');
-        });
-
-        it('returns negative label for hours before session', () => {
-            expect(client.getRelativeTime(sessionHourTs - 3600, sessionTime)).toBe('-1h');
-        });
-
-        it('returns positive label for hours after session', () => {
-            expect(client.getRelativeTime(sessionHourTs + 7200, sessionTime)).toBe('+2h');
-        });
-
-        it('returns "+3h" for 3 hours after', () => {
-            expect(client.getRelativeTime(sessionHourTs + 10800, sessionTime)).toBe('+3h');
         });
     });
 
@@ -223,6 +232,13 @@ describe('WeatherClient', () => {
                 current,
                 current_units: { temperature_2m: '°C', wind_speed_10m: 'km/h' },
             }),
+        });
+
+        it('reports a finished session without fetching', async () => {
+            const start = new Date(Date.now() - 3 * 60 * 60 * 1000);
+            const result = await client.getForecast(0, 0, start, new Date(Date.now() - 1000));
+            expect(result).toEqual({ available: false, reason: 'ended' });
+            expect(mockFetch).not.toHaveBeenCalled();
         });
 
         it('returns too_far when session is more than 16 days away', async () => {

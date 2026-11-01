@@ -54,9 +54,11 @@ export const es = {
       "Capa de viento pausada en nivel {{zoom}} — acerque para ver el viento",
   },
   forecast: {
+    sessionEnded: "Esta sesión ha terminado",
     verdictDry: "Lluvia poco probable durante {{session}}",
-    verdictPossible: "Posibilidad de lluvia durante {{session}}: {{pct}} % hacia las {{time}}",
-    verdictLikely: "Lluvia probable durante {{session}}: {{pct}} % hacia las {{time}}",
+    verdictPossible: "Posibilidad de lluvia durante {{session}}: {{pct}} % entre las {{from}} y las {{to}}",
+    verdictLikely: "Lluvia probable durante {{session}}: {{pct}} % entre las {{from}} y las {{to}}",
+    now: "Ahora",
     start: "Inicio",
     heading: "Pronóstico de sesión",
     hourlyForecast: "Pronóstico por hora",

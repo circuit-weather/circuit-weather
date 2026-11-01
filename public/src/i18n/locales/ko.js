@@ -54,9 +54,11 @@ export const ko = {
       "확대 수준 {{zoom}}에서 바람 오버레이 일시 중지됨 — 확대하여 바람 보기",
   },
   forecast: {
+    sessionEnded: "이 세션은 종료되었습니다",
     verdictDry: "{{session}} 중 비 가능성 낮음",
-    verdictPossible: "{{session}} 중 비 가능성: {{time}}경 {{pct}}%",
-    verdictLikely: "{{session}} 중 비 예상: {{time}}경 {{pct}}%",
+    verdictPossible: "{{session}} 중 비 가능성: {{from}}~{{to}} {{pct}}%",
+    verdictLikely: "{{session}} 중 비 예상: {{from}}~{{to}} {{pct}}%",
+    now: "지금",
     start: "시작",
     heading: "세션 일기 예보",
     hourlyForecast: "시간별 일기 예보",

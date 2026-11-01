@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
     sessionStart, isMainRace, sessionEnd, sessionStatus, roundEnd, roundStatus,
     sessionsByStart, findCurrentSession, findNextSession,
-    SESSION_HOLD_MS, RACE_HOLD_MS, ENDURANCE_RACE_HOLD_MS,
+    SESSION_HOLD_MS, RACE_HOLD_MS, ENDURANCE_FALLBACK_HOLD_MS, raceHoursFromName,
 } from '../public/src/utils/sessionTiming.js';
 
 const H = 60 * 60 * 1000;
@@ -29,7 +29,7 @@ const portimao = {
 
 // WEC, 6 Hours of Monza 2026, listed out of start order like TheSportsDB does
 const monza = {
-    round: '8', date: '2026-11-08', time: '10:00:00Z',
+    round: '8', name: '6 Hours of Monza', date: '2026-11-08', time: '10:00:00Z',
     sessions: [
         s('free-practice-1', '2026-11-06T09:30'),
         s('qualifying-hypercar', '2026-11-07T14:00'),
@@ -78,11 +78,19 @@ describe('sessionEnd', () => {
         expect(sessionEnd(sepang, sprint, 'motogp')).toBe(sessionStart(sprint) + SESSION_HOLD_MS);
     });
 
-    it('holds a main race 4 h, and 25 h in WEC and IMSA', () => {
+    it('holds a main race 4 h; WEC and IMSA races their named length plus an hour, else 12 h', () => {
         expect(sessionEnd(sepang, sepang.sessions[6], 'motogp')).toBe(Date.parse('2026-11-01T08:00:00Z') + RACE_HOLD_MS);
-        expect(sessionEnd(monza, monza.sessions[5], 'wec')).toBe(Date.parse('2026-11-08T10:00:00Z') + ENDURANCE_RACE_HOLD_MS);
-        const daytona = { date: '2026-01-24', time: '18:40:00Z', sessions: [s('race', '2026-01-24T18:40')] };
-        expect(sessionEnd(daytona, daytona.sessions[0], 'imsa') - sessionStart(daytona.sessions[0])).toBe(25 * H);
+        // 6 Hours of Monza: 7 h
+        expect(sessionEnd(monza, monza.sessions[5], 'wec')).toBe(Date.parse('2026-11-08T10:00:00Z') + 7 * H);
+
+        const race = (name) => ({ name, date: '2026-01-24', time: '18:40:00Z', sessions: [s('race', '2026-01-24T18:40')] });
+        const held = (name, series = 'imsa') => (sessionEnd(race(name), race(name).sessions[0], series) - Date.parse('2026-01-24T18:40:00Z')) / H;
+        expect(held('Rolex 24 At DAYTONA')).toBe(25);
+        expect(held('Mobil 1 Twelve Hours of Sebring')).toBe(13);
+        expect(held('Acura Grand Prix of Long Beach')).toBe(ENDURANCE_FALLBACK_HOLD_MS / H);
+        expect(held(undefined, 'wec')).toBe(12);
+        // Other series aren't read: a "24" in an F1 round name means nothing
+        expect(held('Rolex 24 At DAYTONA', 'f1')).toBe(4);
     });
 
     it('is NaN without a start time', () => {
@@ -109,7 +117,7 @@ describe('sessionStatus / roundStatus', () => {
     });
 
     it('ends a round with its last session, or the race time when no session has one', () => {
-        expect(roundEnd(monza, 'wec')).toBe(Date.parse('2026-11-08T10:00:00Z') + 25 * H);
+        expect(roundEnd(monza, 'wec')).toBe(Date.parse('2026-11-08T10:00:00Z') + 7 * H); // 6 Hours of Monza + 1 h
         const untimed = { date: '2026-11-29', time: '13:00:00Z', sessions: [{ id: 'race' }] };
         expect(roundEnd(untimed, 'f2')).toBe(Date.parse('2026-11-29T13:00:00Z') + 4 * H);
     });
@@ -135,12 +143,12 @@ describe('findCurrentSession', () => {
         expect(pick('2026-11-01T12:00:00Z')).toBe('20/free-practice-1');
     });
 
-    it('keeps a WEC race up for 25 hours', () => {
+    it('keeps a WEC race up for its named length plus an hour', () => {
         const next = { round: '9', date: '2026-11-28', time: '10:00:00Z', sessions: [s('free-practice-1', '2026-11-26T09:30')] };
         const current = (iso) => findCurrentSession([monza, next], at(iso), 'wec').race.round;
-        expect(current('2026-11-08T16:30:00Z')).toBe('8'); // race over, held
-        expect(current('2026-11-09T10:59:00Z')).toBe('8');
-        expect(current('2026-11-09T11:00:00Z')).toBe('9');
+        expect(current('2026-11-08T15:59:00Z')).toBe('8'); // 6 Hours of Monza, still running
+        expect(current('2026-11-08T16:59:00Z')).toBe('8'); // podium
+        expect(current('2026-11-08T17:00:00Z')).toBe('9');
     });
 
     it('returns the round without a session when it lists no times, and null after the season', () => {
@@ -157,5 +165,35 @@ describe('findNextSession', () => {
         expect(findNextSession([sepang, portimao], at('2026-11-01T09:00:00Z'), 'motogp')).toEqual({ round: '20', sessionId: 'free-practice-1' });
         expect(findNextSession([sepang], at('2026-12-01T00:00:00Z'), 'motogp')).toBeNull();
         expect(findNextSession(null, at('2026-12-01T00:00:00Z'), 'motogp')).toBeNull();
+    });
+});
+
+describe('raceHoursFromName', () => {
+    it('reads the length from real WEC and IMSA round names', () => {
+        expect(raceHoursFromName('6 Hours of Imola')).toBe(6);
+        expect(raceHoursFromName('6 Hours of Spa Francorchamps')).toBe(6);
+        expect(raceHoursFromName('24 Hours of Le Mans')).toBe(24);
+        expect(raceHoursFromName('6 Hours of São Paulo')).toBe(6);
+        expect(raceHoursFromName('Rolex 24 At DAYTONA')).toBe(24);
+        expect(raceHoursFromName('Mobil 1 Twelve Hours of Sebring')).toBe(12);
+        expect(raceHoursFromName("Sahlen's Six Hours of The Glen")).toBe(6);
+        expect(raceHoursFromName('8 Hours of Bahrain')).toBe(8);
+    });
+
+    it('handles other spellings', () => {
+        expect(raceHoursFromName('Twenty-Four Hours of Le Mans')).toBe(24);
+        expect(raceHoursFromName('Spa 24h')).toBe(24);
+        expect(raceHoursFromName('Petit Le Mans 10hrs')).toBe(10);
+        expect(raceHoursFromName('One Hour Sprint')).toBe(1);
+    });
+
+    it('returns null when the name gives no length', () => {
+        expect(raceHoursFromName('Lone Star Le Mans')).toBeNull();
+        expect(raceHoursFromName('Acura Grand Prix of Long Beach')).toBeNull();
+        expect(raceHoursFromName('1000 Miles of Sebring')).toBeNull();
+        expect(raceHoursFromName('Qatar 1812km')).toBeNull();
+        expect(raceHoursFromName('2026 Season Finale')).toBeNull();
+        expect(raceHoursFromName('48 Hours of Nowhere')).toBeNull(); // beyond any real race
+        expect(raceHoursFromName(undefined)).toBeNull();
     });
 });

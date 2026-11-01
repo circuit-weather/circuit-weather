@@ -21,7 +21,7 @@ import { AutoAdvance } from './ui/AutoAdvance.js';
 import { ForecastRenderer } from './ui/ForecastRenderer.js';
 import { formatStatusLabel } from './utils/status.js';
 import { getRaceEndTime } from './utils/schedule.js';
-import { findCurrentSession, findNextSession, roundStatus, sessionStatus } from './utils/sessionTiming.js';
+import { findCurrentSession, findNextSession, roundStatus, sessionEnd, sessionStatus } from './utils/sessionTiming.js';
 import { isRainBannerTimely, isNowcastRelevant } from './utils/rain.js';
 import { i18n } from './i18n/index.js';
 import { SafeStorage } from './utils/storage.js';
@@ -878,7 +878,8 @@ export class CircuitWeatherApp {
         const status = this.trackRainStatus;
         const session = this.selectedSession;
         const sessionTime = session ? new Date(`${session.date}T${session.time}`) : null;
-        if (status && TRACK_RAIN_KEYS[status.state] && session && isNowcastRelevant(sessionTime, session.id, now)) {
+        if (status && TRACK_RAIN_KEYS[status.state] && session
+            && isNowcastRelevant(sessionTime, this.sessionEndMs(session), now)) {
             message = { level: 'likely', text: i18n.t(TRACK_RAIN_KEYS[status.state], { minutes: status.minutes }) };
         } else if (this.sessionRainVerdict) {
             message = this.sessionRainVerdict;
@@ -1224,9 +1225,21 @@ export class CircuitWeatherApp {
             if (!this.currentCircuitCenter) return;
             [lat, long] = this.currentCircuitCenter;
         }
-        const weather = await this.weatherClient.getForecast(lat, long, sessionTime);
+        const session = this.selectedRace.sessions?.find(s => s.id === sessionId);
+        const endMs = session ? this.sessionEndMs(session) : NaN;
+        const weather = await this.weatherClient.getForecast(lat, long, sessionTime,
+            Number.isFinite(endMs) ? new Date(endMs) : null);
 
         this.renderForecast(weather, sessionTime, sessionId);
+    }
+
+    /**
+     * When a session of the selected round counts as finished: the same
+     * assumed lengths that drive the automatic pick and auto-advance, so the
+     * forecast and rain banner cover exactly that span.
+     */
+    sessionEndMs(session) {
+        return this.selectedRace ? sessionEnd(this.selectedRace, session, this.series) : NaN;
     }
 
     renderForecastSkeleton() {
@@ -1255,12 +1268,13 @@ export class CircuitWeatherApp {
 
         // Re-evaluated on every forecast refresh, so the banner follows the forecast
         const now = overrideNow ? overrideNow.getTime() : Date.now();
-        const verdict = isRainBannerTimely(sessionTime, this.selectedSession.id, now)
-            ? this.forecastRenderer.getRainVerdict(weather.hourly, sessionTime, this.selectedSession)
+        const endMs = this.sessionEndMs(this.selectedSession);
+        const verdict = isRainBannerTimely(sessionTime, endMs, now)
+            ? this.forecastRenderer.getRainVerdict(weather.hourly, sessionTime, this.selectedSession, endMs, now)
             : null;
         this.setSessionRainVerdict(verdict && verdict.level !== 'dry' ? verdict : null, now);
 
-        const dashboard = this.forecastRenderer.createForecastDashboard(weather, sessionTime, this.weatherClient);
+        const dashboard = this.forecastRenderer.createForecastDashboard(weather, sessionTime, this.weatherClient, now);
 
         if (content) {
             content.textContent = '';

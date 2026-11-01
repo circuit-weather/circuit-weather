@@ -54,9 +54,11 @@ export const de = {
       "Wind-Overlay bei Zoom {{zoom}} pausiert — einzoomen um Wind zu sehen",
   },
   forecast: {
+    sessionEnded: "Diese Sitzung ist beendet",
     verdictDry: "Regen unwahrscheinlich während {{session}}",
-    verdictPossible: "Regenrisiko während {{session}}: {{pct}} % gegen {{time}}",
-    verdictLikely: "Regen wahrscheinlich während {{session}}: {{pct}} % gegen {{time}}",
+    verdictPossible: "Regenrisiko während {{session}}: {{pct}} % zwischen {{from}} und {{to}}",
+    verdictLikely: "Regen wahrscheinlich während {{session}}: {{pct}} % zwischen {{from}} und {{to}}",
+    now: "Jetzt",
     start: "Start",
     heading: "Session-Prognose",
     hourlyForecast: "Stundenprognose",

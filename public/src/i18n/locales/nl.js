@@ -54,9 +54,11 @@ export const nl = {
       "Wind overlay gepauzeerd op zoom {{zoom}} — zoom in om wind te zien",
   },
   forecast: {
+    sessionEnded: "Deze sessie is afgelopen",
     verdictDry: "Regen onwaarschijnlijk tijdens {{session}}",
-    verdictPossible: "Kans op regen tijdens {{session}}: {{pct}}% rond {{time}}",
-    verdictLikely: "Regen waarschijnlijk tijdens {{session}}: {{pct}}% rond {{time}}",
+    verdictPossible: "Kans op regen tijdens {{session}}: {{pct}}% tussen {{from}} en {{to}}",
+    verdictLikely: "Regen waarschijnlijk tijdens {{session}}: {{pct}}% tussen {{from}} en {{to}}",
+    now: "Nu",
     start: "Start",
     heading: "Sessie voorspelling",
     hourlyForecast: "Voorspelling per uur",

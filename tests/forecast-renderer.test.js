@@ -93,18 +93,74 @@ describe('ForecastRenderer Unit Tests', () => {
 
         it('sums up the session in one sentence', () => {
             const race = { id: 'race', name: 'Race' };
-            expect(renderer.getRainVerdict([hour(0, 5), hour(1, 10)], start, race))
+            const before = at(-24) * 1000;
+            const raceEnd = at(2) * 1000;
+            expect(renderer.getRainVerdict([hour(0, 5), hour(1, 10)], start, race, raceEnd, before))
                 .toEqual({ level: 'dry', text: 'Rain unlikely during Race' });
 
-            expect(renderer.getRainVerdict([hour(0, 30), hour(1, 70), hour(2, 90)], start, race))
-                .toEqual({ level: 'likely', text: `Rain likely during Race: 70% around ${time(1)}` });
+            // Timed at the middle of the wettest hour
+            expect(renderer.getRainVerdict([hour(0, 30), hour(1, 70), hour(2, 90)], start, race, raceEnd, before))
+                .toEqual({ level: 'likely', text: `Rain likely during Race: 70% between ${time(1)} and ${time(2)}` });
 
-            // Non-race sessions only look at their first hour
-            expect(renderer.getRainVerdict([hour(0, 25), hour(1, 90)], start, { id: 'qualifying', name: 'Qualifying' }))
-                .toEqual({ level: 'possible', text: `Chance of rain during Qualifying: 25% around ${time(0)}` });
+            // A one-hour session only looks at its hour
+            expect(renderer.getRainVerdict([hour(0, 25), hour(1, 90)], start, { id: 'qualifying', name: 'Qualifying' }, at(1) * 1000, before))
+                .toEqual({ level: 'possible', text: `Chance of rain during Qualifying: 25% between ${time(0)} and ${time(1)}` });
 
             // No forecast hours in the session
-            expect(renderer.getRainVerdict([hour(5, 90)], start, race)).toBeNull();
+            expect(renderer.getRainVerdict([hour(5, 90)], start, race, raceEnd, before)).toBeNull();
+
+            // Under way, only the hours still to come count, and the hour in progress is given from now
+            expect(renderer.getRainVerdict([hour(0, 70), hour(1, 30)], start, race, raceEnd, at(1.25) * 1000))
+                .toEqual({ level: 'possible', text: `Chance of rain during Race: 30% between ${time(1.25)} and ${time(2)}` });
+        });
+    });
+
+    describe('timeline labels', () => {
+        const nine = Date.parse('2026-11-01T09:00:00Z') / 1000;
+        const clock = (seconds) => new Intl.DateTimeFormat(i18n.locale, { hour: 'numeric', minute: '2-digit' }).format(new Date(seconds * 1000));
+
+        it('labels each hour by its clock time, and the hour in progress "Now"', () => {
+            expect(renderer.timelineLabel(nine, Date.parse('2026-11-01T08:30:00Z'))).toBe(clock(nine));
+            expect(renderer.timelineLabel(nine, Date.parse('2026-11-01T09:00:00Z'))).toBe('Now');
+            expect(renderer.timelineLabel(nine, Date.parse('2026-11-01T09:59:59Z'))).toBe('Now');
+            expect(renderer.timelineLabel(nine, Date.parse('2026-11-01T10:00:00Z'))).toBe(clock(nine));
+        });
+
+        it('passes the time through to every row', () => {
+            const units = { temperature_2m: '°C', wind_speed_10m: 'km/h' };
+            const hourly = [nine, nine + 3600].map(time => ({ time, code: 0, temp: 20, windSpeed: 5, windDir: 0, precipProb: 10 }));
+            const spy = vi.spyOn(renderer, 'timelineLabel');
+            renderer.createForecastDashboard({ hourly, units }, new Date(nine * 1000), mockClient, Date.parse('2026-11-01T09:20:00Z'));
+            expect(spy.mock.results.map(r => r.value)).toEqual(['Now', clock(nine + 3600)]);
+        });
+    });
+
+    describe('start marking', () => {
+        const start = new Date('2026-11-06T09:30:00Z');
+        const t = (h) => Date.parse(`2026-11-06T${String(h).padStart(2, '0')}:00:00Z`) / 1000;
+        const units = { temperature_2m: '°C', wind_speed_10m: 'km/h' };
+        const row = (time, precipProb) => ({ time, code: 0, temp: 20, windSpeed: 5, windDir: 0, precipProb });
+
+        it('tags the hour the session starts in and dims the hour before', () => {
+            const before = new Date('2026-11-01T00:00:00Z').getTime();
+            const items = [row(t(8), 10), row(t(9), 20), row(t(10), 30)]
+                .map(hour => renderer.createTimelineItemElement(hour, start, units, mockClient, before));
+
+            expect(items.map(li => li.className)).toEqual([
+                'weather-timeline-item weather-timeline-item--before',
+                'weather-timeline-item',
+                'weather-timeline-item',
+            ]);
+            // Only the start row gets the tag
+            const tagged = items.map(li => li.appendChild.mock.calls[0][0].appendChild.mock.calls.length);
+            expect(tagged).toEqual([0, 1, 0]);
+        });
+
+        it('sums up rain over the session, not the lead-in hour', () => {
+            const dl = renderer.createCurrentWeatherElement(row(t(9), 20), units, [row(t(8), 90), row(t(9), 20), row(t(10), 30)], start);
+            const rain = dl.appendChild.mock.calls[1][0];
+            const value = rain.appendChild.mock.calls[1][0];
+            expect(value.textContent).toBe('30%');
         });
     });
 });

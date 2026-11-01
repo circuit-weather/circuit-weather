@@ -54,9 +54,11 @@ export const fr = {
       "Calque de vent en pause au zoom {{zoom}} — zoomez pour voir le vent",
   },
   forecast: {
+    sessionEnded: "Cette séance est terminée",
     verdictDry: "Pluie peu probable pendant {{session}}",
-    verdictPossible: "Risque de pluie pendant {{session}} : {{pct}} % vers {{time}}",
-    verdictLikely: "Pluie probable pendant {{session}} : {{pct}} % vers {{time}}",
+    verdictPossible: "Risque de pluie pendant {{session}} : {{pct}} % entre {{from}} et {{to}}",
+    verdictLikely: "Pluie probable pendant {{session}} : {{pct}} % entre {{from}} et {{to}}",
+    now: "Maintenant",
     start: "Départ",
     heading: "Prévisions de session",
     hourlyForecast: "Prévisions horaires",

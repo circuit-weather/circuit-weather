@@ -706,7 +706,8 @@ body {
 
 .weather-timeline-item {
     display: grid;
-    grid-template-columns: 40px 1fr auto 3rem;
+    /* Time ("10:00 pm", "Now"), condition, rain, temperature */
+    grid-template-columns: 4rem 1fr auto 3rem;
     align-items: center;
     gap: var(--spacing-sm);
     font-size: 0.75rem;
@@ -716,6 +717,19 @@ body {
 
 .weather-timeline-item:last-child {
     border-bottom: none;
+}
+
+.weather-timeline-item--before {
+    opacity: 0.6;
+}
+
+/* "Start" under the time of the hour the session starts in */
+.weather-timeline-start {
+    display: block;
+    font-size: 0.65rem;
+    font-weight: 600;
+    /* The red tuned for text in each theme (the brand red is too dark on dark) */
+    color: var(--color-live-text);
 }
 
 .weather-timeline-time {

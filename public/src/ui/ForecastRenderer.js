@@ -1,6 +1,6 @@
 import { i18n } from '../i18n/index.js';
 import { getWindDirection } from '../utils/wind.js';
-import { getSessionRainVerdict, sessionHours } from '../utils/rain.js';
+import { getSessionRainVerdict } from '../utils/rain.js';
 
 const VERDICT_KEYS = Object.freeze({
     dry: 'forecast.verdictDry',
@@ -150,6 +150,8 @@ export class ForecastRenderer {
                     }
                 } else if (weather.reason === 'error') {
                     p.textContent = i18n.t('forecast.unavailable');
+                } else if (weather.reason === 'ended') {
+                    p.textContent = i18n.t('forecast.sessionEnded');
                 } else {
                     p.textContent = i18n.t('forecast.availableCloser');
                 }
@@ -217,11 +219,14 @@ export class ForecastRenderer {
         return divWind;
     }
 
-    createCurrentWeatherElement(sessionWeather, units, hourlyData) {
+    createCurrentWeatherElement(sessionWeather, units, hourlyData, sessionTime = null) {
         const temp = Math.round(sessionWeather.temp);
         const wind = Math.round(sessionWeather.windSpeed);
         const dir = sessionWeather.windDir;
-        const maxPrecip = Math.max(...hourlyData.map(h => h.precipProb));
+        // The session's own hours: the lead-in hour before the start is context only
+        const startHour = sessionTime ? Math.floor(sessionTime.getTime() / 3600000) * 3600 : -Infinity;
+        const during = hourlyData.filter(h => h.time >= startHour && Number.isFinite(h.precipProb));
+        const maxPrecip = Math.max(...(during.length ? during : hourlyData).map(h => h.precipProb));
 
         const dl = document.createElement('dl');
         dl.className = 'weather-current';
@@ -233,8 +238,19 @@ export class ForecastRenderer {
         return dl;
     }
 
-    createTimelineItemElement(hour, sessionTime, units, weatherClient) {
-        const relTime = weatherClient.getRelativeTime(hour.time, sessionTime);
+    /**
+     * A row's label: the clock time its hour starts, or "Now" for the hour in
+     * progress. Relative labels ("+2h") stopped making sense once the rows
+     * moved on past the session's start.
+     */
+    timelineLabel(time, nowMs) {
+        const startMs = time * 1000;
+        if (nowMs >= startMs && nowMs < startMs + 3600000) return i18n.t('forecast.now');
+        return new Intl.DateTimeFormat(i18n.locale, { hour: 'numeric', minute: '2-digit' }).format(new Date(startMs));
+    }
+
+    createTimelineItemElement(hour, sessionTime, units, weatherClient, nowMs = Date.now()) {
+        const label = this.timelineLabel(hour.time, nowMs);
         const desc = weatherClient.getWeatherDescription(hour.code);
         const a11yTime = weatherClient.getAccessibleRelativeTime(hour.time, sessionTime);
         const temp = Math.round(hour.temp);
@@ -249,15 +265,28 @@ export class ForecastRenderer {
 
         const isoDateTime = new Date(hour.time * 1000).toISOString();
 
+        // The row the session starts in carries a "Start" tag; the lead-in hour
+        // before it is dimmed (its aria-label already says "before session start")
+        const startMs = sessionTime.getTime();
+        const rowStartMs = hour.time * 1000;
+        const isStart = startMs >= rowStartMs && startMs < rowStartMs + 3600000;
+        const isBefore = rowStartMs + 3600000 <= startMs;
+
         const li = document.createElement('li');
-        li.className = 'weather-timeline-item';
+        li.className = `weather-timeline-item${isBefore ? ' weather-timeline-item--before' : ''}`;
         li.setAttribute('aria-label', ariaLabel);
 
         const timeEl = document.createElement('time');
         timeEl.setAttribute('datetime', isoDateTime);
         timeEl.className = 'weather-timeline-time';
         timeEl.setAttribute('aria-hidden', 'true');
-        timeEl.textContent = relTime;
+        timeEl.textContent = label;
+        if (isStart) {
+            const tag = document.createElement('span');
+            tag.className = 'weather-timeline-start';
+            tag.textContent = i18n.t('forecast.start');
+            timeEl.appendChild(tag);
+        }
         li.appendChild(timeEl);
 
         const conditionDiv = document.createElement('div');
@@ -282,7 +311,7 @@ export class ForecastRenderer {
         return li;
     }
 
-    createTimelineElement(hourlyWeather, sessionTime, units, weatherClient) {
+    createTimelineElement(hourlyWeather, sessionTime, units, weatherClient, nowMs = Date.now()) {
         const section = document.createElement('section');
         section.className = 'weather-timeline';
         section.id = 'weatherTimeline';
@@ -294,7 +323,7 @@ export class ForecastRenderer {
         ol.className = 'weather-timeline-list';
 
         for (const hour of hourlyWeather) {
-            const li = this.createTimelineItemElement(hour, sessionTime, units, weatherClient);
+            const li = this.createTimelineItemElement(hour, sessionTime, units, weatherClient, nowMs);
             ol.appendChild(li);
         }
 
@@ -309,19 +338,23 @@ export class ForecastRenderer {
      * @param {{id: string, name: string}} session
      * @returns {{level: string, text: string}|null}
      */
-    getRainVerdict(hourly, sessionTime, session) {
-        const verdict = getSessionRainVerdict(hourly, sessionTime, sessionHours(session.id));
+    getRainVerdict(hourly, sessionTime, session, endMs, nowMs = Date.now()) {
+        const verdict = getSessionRainVerdict(hourly, sessionTime, endMs, nowMs);
         if (!verdict) return null;
 
-        const time = new Intl.DateTimeFormat(i18n.locale, { hour: 'numeric', minute: '2-digit' })
-            .format(new Date(verdict.peakTime * 1000));
+        const format = new Intl.DateTimeFormat(i18n.locale, { hour: 'numeric', minute: '2-digit' });
         return {
             level: verdict.level,
-            text: i18n.t(VERDICT_KEYS[verdict.level], { session: session.name, pct: verdict.peakPct, time }),
+            text: i18n.t(VERDICT_KEYS[verdict.level], {
+                session: session.name,
+                pct: verdict.peakPct,
+                from: format.format(new Date(verdict.peakFrom * 1000)),
+                to: format.format(new Date(verdict.peakTo * 1000)),
+            }),
         };
     }
 
-    createForecastDashboard(weather, sessionTime, weatherClient) {
+    createForecastDashboard(weather, sessionTime, weatherClient, nowMs = Date.now()) {
         const dashboard = document.createElement('article');
         dashboard.className = 'weather-dashboard';
 
@@ -334,12 +367,12 @@ export class ForecastRenderer {
         }
 
         if (sessionWeather) {
-            const dl = this.createCurrentWeatherElement(sessionWeather, weather.units, weather.hourly);
+            const dl = this.createCurrentWeatherElement(sessionWeather, weather.units, weather.hourly, sessionTime);
             dashboard.appendChild(dl);
         }
 
         if (weather.hourly) {
-            const section = this.createTimelineElement(weather.hourly, sessionTime, weather.units, weatherClient);
+            const section = this.createTimelineElement(weather.hourly, sessionTime, weather.units, weatherClient, nowMs);
             dashboard.appendChild(section);
         }
 
