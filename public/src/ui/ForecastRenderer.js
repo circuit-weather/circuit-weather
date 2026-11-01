@@ -315,11 +315,15 @@ export class ForecastRenderer {
         const verdict = getSessionRainVerdict(hourly, sessionTime, endMs, nowMs);
         if (!verdict) return null;
 
-        const time = new Intl.DateTimeFormat(i18n.locale, { hour: 'numeric', minute: '2-digit' })
-            .format(new Date(verdict.peakTime * 1000));
+        const format = new Intl.DateTimeFormat(i18n.locale, { hour: 'numeric', minute: '2-digit' });
         return {
             level: verdict.level,
-            text: i18n.t(VERDICT_KEYS[verdict.level], { session: session.name, pct: verdict.peakPct, time }),
+            text: i18n.t(VERDICT_KEYS[verdict.level], {
+                session: session.name,
+                pct: verdict.peakPct,
+                from: format.format(new Date(verdict.peakFrom * 1000)),
+                to: format.format(new Date(verdict.peakTo * 1000)),
+            }),
         };
     }
 

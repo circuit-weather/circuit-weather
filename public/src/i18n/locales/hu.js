@@ -56,8 +56,8 @@ export const hu = {
   forecast: {
     sessionEnded: "Ez a szakasz véget ért",
     verdictDry: "Eső nem valószínű: {{session}}",
-    verdictPossible: "Eső lehetséges: {{session}}, {{pct}}% {{time}} körül",
-    verdictLikely: "Eső valószínű: {{session}}, {{pct}}% {{time}} körül",
+    verdictPossible: "Eső lehetséges: {{session}}, {{pct}}% {{from}} és {{to}} között",
+    verdictLikely: "Eső valószínű: {{session}}, {{pct}}% {{from}} és {{to}} között",
     start: "Rajt",
     heading: "Esemény előrejelzése",
     hourlyForecast: "Óránkénti előrejelzés",

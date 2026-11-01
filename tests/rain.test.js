@@ -45,10 +45,10 @@ describe('isNowcastRelevant', () => {
 });
 
 describe('getSessionRainVerdict', () => {
-    it('covers the hour the session starts in until it ends, timed mid-hour', () => {
+    it('covers the hour the session starts in until it ends, naming the wettest hour', () => {
         // Hours starting 13:00 (before), 14:00, 15:00, 16:00 (a 2 h race from 14:30 runs to 16:30) and 17:00 (after)
         const verdict = getSessionRainVerdict(hours([90, 10, 15, 30, 95]), start, end(2));
-        expect(verdict).toEqual({ level: 'possible', peakPct: 30, peakTime: startHour + 2 * HOUR + 1800 });
+        expect(verdict).toEqual({ level: 'possible', peakPct: 30, peakFrom: startHour + 2 * HOUR, peakTo: startHour + 3 * HOUR });
     });
 
     it('leaves out hours already over once the session is under way', () => {
@@ -61,13 +61,13 @@ describe('getSessionRainVerdict', () => {
 
         // Before the start, the hour before it doesn't count either
         expect(getSessionRainVerdict(hourly, gp, gpEnd, Date.parse('2026-11-01T06:30:00Z')))
-            .toEqual({ level: 'possible', peakPct: 30, peakTime: t(7) + 1800 });
-        // Under way: still 07:00-08:00 (said as the next 5 minutes, 07:40) and 08:00-09:00
+            .toEqual({ level: 'possible', peakPct: 30, peakFrom: t(7), peakTo: t(8) });
+        // Under way: still 07:00-08:00 (given from now, rounded down: 07:35-08:00) and 08:00-09:00
         expect(getSessionRainVerdict(hourly, gp, gpEnd, now))
-            .toEqual({ level: 'possible', peakPct: 30, peakTime: Date.parse('2026-11-01T07:40:00Z') / 1000 });
+            .toEqual({ level: 'possible', peakPct: 30, peakFrom: Date.parse('2026-11-01T07:35:00Z') / 1000, peakTo: t(8) });
         // Once 07:00-08:00 is over, only 08:00-09:00 is left
         expect(getSessionRainVerdict(hourly, gp, gpEnd, Date.parse('2026-11-01T08:05:00Z')))
-            .toEqual({ level: 'possible', peakPct: 25, peakTime: t(8) + 1800 });
+            .toEqual({ level: 'possible', peakPct: 25, peakFrom: Date.parse('2026-11-01T08:05:00Z') / 1000, peakTo: t(9) });
         // And after the session, nothing
         expect(getSessionRainVerdict(hourly, gp, gpEnd, Date.parse('2026-11-01T09:00:00Z'))).toBeNull();
     });
@@ -79,7 +79,7 @@ describe('getSessionRainVerdict', () => {
     });
 
     it('keeps the first hour of a tied peak', () => {
-        expect(getSessionRainVerdict(hours([0, 60, 60]), start, end(2)).peakTime).toBe(startHour + 1800);
+        expect(getSessionRainVerdict(hours([0, 60, 60]), start, end(2)).peakFrom).toBe(startHour);
     });
 
     it('returns null without usable data', () => {

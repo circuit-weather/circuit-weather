@@ -56,8 +56,8 @@ export const ja = {
   forecast: {
     sessionEnded: "このセッションは終了しました",
     verdictDry: "{{session}}中の雨の可能性は低い",
-    verdictPossible: "{{session}}中に雨の可能性：{{time}}頃 {{pct}}%",
-    verdictLikely: "{{session}}中は雨の見込み：{{time}}頃 {{pct}}%",
+    verdictPossible: "{{session}}中に雨の可能性：{{from}}〜{{to}} {{pct}}%",
+    verdictLikely: "{{session}}中は雨の見込み：{{from}}〜{{to}} {{pct}}%",
     start: "開始",
     heading: "セッション予報",
     hourlyForecast: "時間別予報",

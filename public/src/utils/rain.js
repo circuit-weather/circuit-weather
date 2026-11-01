@@ -58,9 +58,9 @@ export function isNowcastRelevant(sessionTime, endMs, nowMs) {
  * @param {Date} sessionTime - Session start
  * @param {number} endMs - When the session counts as finished
  * @param {number} [nowMs] - Hours already over by now are left out
- * @returns {{level: 'dry'|'possible'|'likely', peakPct: number, peakTime: number}|null}
- *   peakTime (Unix seconds) is when to say the peak is: the middle of the
- *   wettest hour, or the next 5 minutes if that is already past; null without data
+ * @returns {{level: 'dry'|'possible'|'likely', peakPct: number, peakFrom: number, peakTo: number}|null}
+ *   peakFrom-peakTo (Unix seconds) is the wettest hour, the finest the forecast
+ *   goes; if it is under way, from now (rounded down to 5 minutes). null without data
  */
 export function getSessionRainVerdict(hourly, sessionTime, endMs, nowMs = 0) {
     if (!Array.isArray(hourly) || !(sessionTime instanceof Date)) return null;
@@ -82,11 +82,10 @@ export function getSessionRainVerdict(hourly, sessionTime, endMs, nowMs = 0) {
     if (peakPct >= RAIN_LIKELY_PCT) level = 'likely';
     else if (peakPct >= RAIN_POSSIBLE_PCT) level = 'possible';
 
-    // "Around" the middle of the peak hour, but never a time already past: in
-    // the hour under way, the next 5 minutes
-    const middle = (peak.time + 1800) * 1000;
-    const soonest = Math.ceil(nowMs / 300000) * 300000;
-    return { level, peakPct, peakTime: Math.max(middle, soonest) / 1000 };
+    // The forecast gives the chance for a whole hour, so say which hour; one
+    // under way is given from now, so the banner never names a time past
+    const now = Math.floor(nowMs / 300000) * 300;
+    return { level, peakPct, peakFrom: Math.max(peak.time, now), peakTo: peak.time + 3600 };
 }
 
 /**

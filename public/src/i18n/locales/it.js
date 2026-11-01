@@ -56,8 +56,8 @@ export const it = {
   forecast: {
     sessionEnded: "Questa sessione è terminata",
     verdictDry: "Pioggia improbabile durante {{session}}",
-    verdictPossible: "Possibile pioggia durante {{session}}: {{pct}}% verso le {{time}}",
-    verdictLikely: "Pioggia probabile durante {{session}}: {{pct}}% verso le {{time}}",
+    verdictPossible: "Possibile pioggia durante {{session}}: {{pct}}% tra le {{from}} e le {{to}}",
+    verdictLikely: "Pioggia probabile durante {{session}}: {{pct}}% tra le {{from}} e le {{to}}",
     start: "Inizio",
     heading: "Previsioni sessione",
     hourlyForecast: "Previsioni orarie",

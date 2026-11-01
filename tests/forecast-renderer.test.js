@@ -100,18 +100,18 @@ describe('ForecastRenderer Unit Tests', () => {
 
             // Timed at the middle of the wettest hour
             expect(renderer.getRainVerdict([hour(0, 30), hour(1, 70), hour(2, 90)], start, race, raceEnd, before))
-                .toEqual({ level: 'likely', text: `Rain likely during Race: 70% around ${time(1.5)}` });
+                .toEqual({ level: 'likely', text: `Rain likely during Race: 70% between ${time(1)} and ${time(2)}` });
 
             // A one-hour session only looks at its hour
             expect(renderer.getRainVerdict([hour(0, 25), hour(1, 90)], start, { id: 'qualifying', name: 'Qualifying' }, at(1) * 1000, before))
-                .toEqual({ level: 'possible', text: `Chance of rain during Qualifying: 25% around ${time(0.5)}` });
+                .toEqual({ level: 'possible', text: `Chance of rain during Qualifying: 25% between ${time(0)} and ${time(1)}` });
 
             // No forecast hours in the session
             expect(renderer.getRainVerdict([hour(5, 90)], start, race, raceEnd, before)).toBeNull();
 
-            // Under way, only the hours still to come count
-            expect(renderer.getRainVerdict([hour(0, 70), hour(1, 30)], start, race, raceEnd, at(1.2) * 1000))
-                .toEqual({ level: 'possible', text: `Chance of rain during Race: 30% around ${time(1.5)}` });
+            // Under way, only the hours still to come count, and the hour in progress is given from now
+            expect(renderer.getRainVerdict([hour(0, 70), hour(1, 30)], start, race, raceEnd, at(1.25) * 1000))
+                .toEqual({ level: 'possible', text: `Chance of rain during Race: 30% between ${time(1.25)} and ${time(2)}` });
         });
     });
 });

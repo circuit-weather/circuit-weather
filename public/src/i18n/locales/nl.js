@@ -56,8 +56,8 @@ export const nl = {
   forecast: {
     sessionEnded: "Deze sessie is afgelopen",
     verdictDry: "Regen onwaarschijnlijk tijdens {{session}}",
-    verdictPossible: "Kans op regen tijdens {{session}}: {{pct}}% rond {{time}}",
-    verdictLikely: "Regen waarschijnlijk tijdens {{session}}: {{pct}}% rond {{time}}",
+    verdictPossible: "Kans op regen tijdens {{session}}: {{pct}}% tussen {{from}} en {{to}}",
+    verdictLikely: "Regen waarschijnlijk tijdens {{session}}: {{pct}}% tussen {{from}} en {{to}}",
     start: "Start",
     heading: "Sessie voorspelling",
     hourlyForecast: "Voorspelling per uur",

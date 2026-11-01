@@ -922,7 +922,7 @@ describe('CircuitWeatherApp Pure Methods', () => {
                 for (const banner of [app.ui.rainBanner, app.ui.mobileRainBanner]) {
                     expect(banner.hidden).toBe(false);
                     expect(banner.setAttribute).toHaveBeenCalledWith('data-level', 'likely');
-                    expect(banner.textContent).toMatch(/^Rain likely during Race: 80% around /);
+                    expect(banner.textContent).toMatch(/^Rain likely during Race: 80% between .+ and .+$/);
                 }
                 // The forecast card no longer carries it
                 expect(app.ui.forecastContent.childNodes[0].childNodes[0].className).toBe('weather-current');
@@ -1763,7 +1763,7 @@ describe('CircuitWeatherApp Pure Methods', () => {
             const start = Date.parse('2026-11-01T14:00:00Z');
             const minutes = (m) => start + m * 60000;
             const banners = () => [app.ui.rainBanner, app.ui.mobileRainBanner];
-            const forecastVerdict = { level: 'possible', text: 'Chance of rain during Race: 30% around 3:00 pm' };
+            const forecastVerdict = { level: 'possible', text: 'Chance of rain during Race: 30% between 3:00 pm and 4:00 pm' };
 
             beforeEach(() => {
                 app.series = 'f1';

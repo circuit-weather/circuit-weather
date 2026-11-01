@@ -52,8 +52,8 @@ export const zhCN = {
   forecast: {
     sessionEnded: "本节已结束",
     verdictDry: "{{session}}期间下雨可能性低",
-    verdictPossible: "{{session}}期间可能下雨：{{time}}前后 {{pct}}%",
-    verdictLikely: "{{session}}期间很可能下雨：{{time}}前后 {{pct}}%",
+    verdictPossible: "{{session}}期间可能下雨：{{from}}至{{to}} {{pct}}%",
+    verdictLikely: "{{session}}期间很可能下雨：{{from}}至{{to}} {{pct}}%",
     start: "开始",
     heading: "赛段天气预报",
     hourlyForecast: "逐小时预报",
