@@ -835,6 +835,7 @@ describe("MapManager WebGL context loss", () => {
   let mapManager;
   let handlers;
   let session;
+  let gl;
 
   beforeEach(() => {
     vi.useFakeTimers();
@@ -847,6 +848,20 @@ describe("MapManager WebGL context loss", () => {
       setItem: (k, v) => { session[k] = v; },
     });
     documentMock.visibilityState = "visible";
+    gl = {
+      lost: false,
+      alpha: 255,
+      FRAMEBUFFER_BINDING: 1,
+      drawingBufferWidth: 100,
+      drawingBufferHeight: 200,
+      isContextLost: vi.fn(() => gl.lost),
+      getParameter: vi.fn(() => null),
+      readPixels: vi.fn((x, y, w, h, format, type, pixel) => { pixel[3] = gl.alpha; }),
+    };
+    mapboxMapMock.getCanvas = vi.fn(() => ({ getContext: vi.fn(() => gl) }));
+    mapboxMapMock.style = { _loaded: true };
+    mapboxMapMock.triggerRepaint = vi.fn(() => handlers.render?.());
+    mapboxMapMock.off.mockImplementation((event, cb) => { if (handlers[event] === cb) delete handlers[event]; });
     mapManager = new MapManager();
     mapManager.isMapbox = true;
     mapManager.map = mapboxMapMock;
@@ -858,7 +873,80 @@ describe("MapManager WebGL context loss", () => {
   afterEach(() => {
     mapManager.clearContextCheck();
     delete documentMock.visibilityState;
+    delete mapboxMapMock.getCanvas;
+    delete mapboxMapMock.style;
+    delete mapboxMapMock.triggerRepaint;
+    mapboxMapMock.off.mockReset();
     vi.useRealTimers();
+  });
+
+  describe("when the page is seen again without a context-loss event (Firefox for Android)", () => {
+    const reopen = () => {
+      mapManager.handleVisibilityChange();
+      vi.advanceTimersByTime(CONTEXT_RESTORE_WAIT_MS);
+    };
+
+    it("leaves a map that still draws alone", () => {
+      reopen();
+      expect(gl.readPixels).toHaveBeenCalledWith(50, 100, 1, 1, gl.RGBA, gl.UNSIGNED_BYTE, expect.any(Uint8Array));
+      expect(mapManager.onContextRestored).not.toHaveBeenCalled();
+      expect(mapManager.reloadPage).not.toHaveBeenCalled();
+      expect(handlers.render).toBeUndefined();
+    });
+
+    it("reloads when the context was lost silently", () => {
+      gl.lost = true;
+      reopen();
+      expect(mapManager.reloadPage).toHaveBeenCalledTimes(1);
+    });
+
+    it("rebuilds a blank map, then reloads if it stays blank", () => {
+      gl.alpha = 0;
+      reopen();
+      expect(mapManager.onContextRestored).toHaveBeenCalledTimes(1);
+      expect(mapManager.reloadPage).not.toHaveBeenCalled();
+
+      vi.advanceTimersByTime(CONTEXT_RESTORE_WAIT_MS);
+      expect(mapManager.onContextRestored).toHaveBeenCalledTimes(1);
+      expect(mapManager.reloadPage).toHaveBeenCalledTimes(1);
+    });
+
+    it("stops once the rebuilt map draws", () => {
+      gl.alpha = 0;
+      reopen();
+      gl.alpha = 255;
+      vi.advanceTimersByTime(CONTEXT_RESTORE_WAIT_MS * 2);
+      expect(mapManager.onContextRestored).toHaveBeenCalledTimes(1);
+      expect(mapManager.reloadPage).not.toHaveBeenCalled();
+    });
+
+    it("waits for the style before judging a frame", () => {
+      gl.alpha = 0;
+      mapboxMapMock.style._loaded = false;
+      reopen();
+      expect(gl.readPixels).not.toHaveBeenCalled();
+      mapboxMapMock.style._loaded = true;
+      handlers.render();
+      expect(mapManager.onContextRestored).toHaveBeenCalledTimes(1);
+    });
+
+    it("can't judge a frame drawn to another framebuffer", () => {
+      gl.alpha = 0;
+      gl.getParameter.mockReturnValue({});
+      reopen();
+      expect(gl.readPixels).not.toHaveBeenCalled();
+      expect(mapManager.onContextRestored).not.toHaveBeenCalled();
+    });
+
+    it("skips the check if the page is hidden again first", () => {
+      gl.lost = true;
+      mapManager.handleVisibilityChange();
+      documentMock.visibilityState = "hidden";
+      mapManager.handleVisibilityChange();
+      vi.advanceTimersByTime(CONTEXT_RESTORE_WAIT_MS);
+      expect(gl.isContextLost).not.toHaveBeenCalled();
+      expect(mapManager.reloadPage).not.toHaveBeenCalled();
+    });
   });
 
   it("rebuilds the map when the browser gives the context back", () => {
