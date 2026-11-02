@@ -32,6 +32,8 @@ export class MapManager {
     // app to rebuild the style and its layers; reloadPage is replaceable in tests.
     this.contextLost = false;
     this.contextRestoreTimer = null;
+    this.renderCheckTimer = null;
+    this.renderProbe = null;
     this.onContextRestored = null;
     this.reloadPage = () => window.location.reload();
     this.handleVisibilityChange = this.handleVisibilityChange.bind(this);
@@ -291,10 +293,16 @@ export class MapManager {
    * back, not the tiles, images and glyphs that were in the old one, so the
    * whole style is rebuilt. If the context doesn't come back while the page is
    * visible, the page is reloaded: the URL holds the round and session.
+   *
+   * Firefox for Android can also lose the context without telling the page
+   * (no webglcontextlost event), or hand back one that draws nothing, so each
+   * time the page is seen again the map checks that it still draws (see
+   * checkRender).
    */
   watchContextLoss() {
     this.map.on('webglcontextlost', () => {
       this.contextLost = true;
+      this.clearRenderCheck();
       this.scheduleContextCheck();
     });
     this.map.on('webglcontextrestored', () => {
@@ -306,7 +314,13 @@ export class MapManager {
   }
 
   handleVisibilityChange() {
-    if (this.contextLost) this.scheduleContextCheck();
+    if (this.contextLost) {
+      this.scheduleContextCheck();
+    } else if (document.visibilityState === 'visible') {
+      this.scheduleRenderCheck();
+    } else {
+      this.clearRenderCheck();
+    }
   }
 
   /** Gives the browser a few seconds of visibility to restore the context. */
@@ -323,6 +337,96 @@ export class MapManager {
     if (this.contextRestoreTimer) {
       clearTimeout(this.contextRestoreTimer);
       this.contextRestoreTimer = null;
+    }
+    this.clearRenderCheck();
+  }
+
+  /**
+   * Checks the map still draws once the page has been visible for a few
+   * seconds (after a context loss the browser announced, the restore handlers
+   * deal with it instead).
+   * @param {boolean} [rebuilt] the style was already rebuilt once for a blank map
+   */
+  scheduleRenderCheck(rebuilt = false) {
+    this.clearRenderCheck();
+    this.renderCheckTimer = setTimeout(() => {
+      this.renderCheckTimer = null;
+      this.checkRender(rebuilt);
+    }, CONTEXT_RESTORE_WAIT_MS);
+  }
+
+  clearRenderCheck() {
+    if (this.renderCheckTimer) {
+      clearTimeout(this.renderCheckTimer);
+      this.renderCheckTimer = null;
+    }
+    if (this.renderProbe && this.map) this.map.off('render', this.renderProbe);
+    this.renderProbe = null;
+  }
+
+  /**
+   * Catches a context lost without an event (isContextLost() is true) and one
+   * that draws nothing: both map styles paint an opaque background, so a frame
+   * whose centre pixel is fully transparent drew nothing. A blank map gets its
+   * style rebuilt once; if it is still blank, the page reloads.
+   */
+  checkRender(rebuilt = false) {
+    if (!this.map || this.contextLost || document.visibilityState !== 'visible') return;
+
+    const gl = this.getGL();
+    if (!gl) return;
+    if (gl.isContextLost()) {
+      console.warn('Map WebGL context lost without an event; reloading');
+      this.contextLost = true;
+      this.reloadAfterContextLoss();
+      return;
+    }
+
+    this.renderProbe = () => {
+      // The background layer is drawn as soon as the style itself has loaded
+      if (!this.map.style?._loaded) return;
+      this.map.off('render', this.renderProbe);
+      this.renderProbe = null;
+      if (this.contextLost || !this.isFrameBlank(gl)) return;
+
+      if (!rebuilt && this.onContextRestored) {
+        console.warn('Map drew a blank frame; rebuilding the style');
+        this.onContextRestored();
+        this.scheduleRenderCheck(true);
+      } else {
+        console.warn('Map still blank after rebuilding; reloading');
+        this.reloadAfterContextLoss();
+      }
+    };
+    this.map.on('render', this.renderProbe);
+    this.map.triggerRepaint();
+  }
+
+  /** The map's WebGL context (getContext hands back the one Mapbox created). */
+  getGL() {
+    try {
+      const canvas = this.map.getCanvas();
+      return canvas.getContext('webgl2') || canvas.getContext('webgl');
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Reads the centre pixel of the frame just drawn (call from a 'render'
+   * handler, before the browser composites and clears the drawing buffer).
+   * Only the default framebuffer can tell, so anything else counts as drawn.
+   */
+  isFrameBlank(gl) {
+    try {
+      if (gl.getParameter(gl.FRAMEBUFFER_BINDING) !== null) return false;
+      const pixel = new Uint8Array(4);
+      gl.readPixels(
+        Math.floor(gl.drawingBufferWidth / 2), Math.floor(gl.drawingBufferHeight / 2),
+        1, 1, gl.RGBA, gl.UNSIGNED_BYTE, pixel);
+      return pixel[3] === 0;
+    } catch {
+      return false;
     }
   }
 

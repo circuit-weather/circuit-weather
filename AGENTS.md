@@ -201,7 +201,7 @@ Speed matters most on mobile at a circuit, so nothing may block the first render
 
 2. **Map Display**
    - Centred on selected circuit
-   - Recovers from a lost WebGL context (Android drops them for pages left in the background, leaving the map blank with every control still showing): when the browser gives it back, the style and every layer are rebuilt (Mapbox v3.0.1 only rebuilds its renderer); if it doesn't come back within 3 s of the page being visible, the page reloads (`MapManager.watchContextLoss`)
+   - Recovers from a lost WebGL context (Android drops them for pages left in the background, leaving the map blank with every control still showing): when the browser gives it back, the style and every layer are rebuilt (Mapbox v3.0.1 only rebuilds its renderer); if it doesn't come back within 3 s of the page being visible, the page reloads (`MapManager.watchContextLoss`). Firefox for Android can lose it without an event, or draw nothing, so 3 s after the page is seen again the map checks it still draws (`MapManager.checkRender`: `isContextLost()`, then the centre pixel of the next frame, which both styles paint opaque); a blank map has its style rebuilt once, then the page reloads
    - Dark/light mode basemaps (Mapbox natively, Carto for Leaflet fallback)
    - Dynamic range circles (outline only) that scale based on map zoom/bounds
    - Distance labels on circles
