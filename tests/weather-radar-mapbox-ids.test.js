@@ -51,6 +51,8 @@ function createMapboxMap() {
 
 const frame = (time) => ({ time, path: `/v2/radar/${time}`, url: `https://api.librewxr.net/v2/radar/${time}/{z}.png` });
 const frames = (...times) => times.map(frame);
+// A nowcast frame: same time and path as the observed one it becomes, its own URL (RadarFrames.buildTileUrl)
+const forecast = (time) => ({ ...frame(time), url: `${frame(time).url}?nowcast=1`, isForecast: true });
 
 describe('WeatherRadar on Mapbox: each frame keeps its own layer', () => {
     let map;
@@ -110,6 +112,52 @@ describe('WeatherRadar on Mapbox: each frame keeps its own layer', () => {
         radar.frames.forEach((f, i) => {
             radar.showFrame(i);
             expect(map.sources.get(shown()[0].source).tiles).toEqual([f.url]);
+        });
+    });
+
+    describe('forecast (nowcast) frames', () => {
+        const tilesShownFor = (i) => {
+            radar.showFrame(i);
+            return map.sources.get(shown()[0].source).tiles;
+        };
+
+        // A fresh radar whose last two frames are the nowcast, as on page load
+        beforeEach(() => {
+            map = createMapboxMap();
+            radar = new WeatherRadar(map);
+            radar.ui.slider = createMockElement('radarSlider');
+            radar.ui.time = createMockElement('radarTime');
+            radar.frames = [...frames(100, 200), forecast(300), forecast(400)];
+            radar.layers = [];
+            radar.currentFrame = 0;
+            showAll();
+        });
+
+        it('switch to the observed tiles once their time has passed', () => {
+            radar.applyFrameUpdate([...frames(200, 300), forecast(400), forecast(500)]);
+            showAll();
+
+            const at300 = radar.frames.findIndex(f => f.time === 300);
+            expect(tilesShownFor(at300)).toEqual([frame(300).url]);
+            expect(map.layers.size).toBe(4);
+        });
+
+        it('load the new forecast on each update instead of keeping the old one', () => {
+            const before = radar.layers[3];
+            radar.applyFrameUpdate([...frames(100, 200), forecast(300), forecast(400)]);
+            showAll();
+
+            // A new layer for the same URL, so the tiles are fetched again
+            expect(radar.layers[3]).not.toBe(before);
+            expect(map.getLayer(before.id)).toBeUndefined();
+            expect(tilesShownFor(3)).toEqual([forecast(400).url]);
+            expect(map.layers.size).toBe(4);
+        });
+
+        it('keep observed frames that have not changed', () => {
+            const observed = radar.layers[1];
+            radar.applyFrameUpdate([...frames(100, 200), forecast(300), forecast(400)]);
+            expect(radar.layers[1]).toBe(observed);
         });
     });
 });

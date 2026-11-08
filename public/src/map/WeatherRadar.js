@@ -371,6 +371,8 @@ export class WeatherRadar {
             sourceId: sourceId,
             frameTime: frame.time,
             framePath: frame.path,
+            frameUrl: frame.url,
+            isForecast: frame.isForecast === true,
             isLoaded: false,
             events: {},
 
@@ -492,6 +494,8 @@ export class WeatherRadar {
         // Store frame metadata on the layer for easy reconciliation
         layer.frameTime = frame.time;
         layer.framePath = frame.path;
+        layer.frameUrl = frame.url;
+        layer.isForecast = frame.isForecast === true;
 
         return layer;
     }
