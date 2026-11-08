@@ -27,6 +27,10 @@ export class WeatherRadar {
         this.satellite = new SatelliteLayer(map);
         this.frames = [];
         this.layers = [];
+        // Mapbox source/layer ids come from this, never from a frame's index:
+        // when the radar moves on a frame, kept layers keep their ids, so an
+        // index-based id for the new frame could name a layer already in use
+        this.nextLayerId = 0;
         this.visibleLayerIndex = -1;
         this.currentFrame = 0;
         this.sessionTime = null;
@@ -348,7 +352,7 @@ export class WeatherRadar {
         if (!this.layers[index]) {
             const isMapbox = !this.map.hasLayer;
             if (isMapbox) {
-                this.layers[index] = this.createMapboxLayer(this.frames[index], index);
+                this.layers[index] = this.createMapboxLayer(this.frames[index]);
             } else {
                 this.layers[index] = this.createLayer(this.frames[index], index);
             }
@@ -356,9 +360,10 @@ export class WeatherRadar {
         return this.layers[index];
     }
 
-    createMapboxLayer(frame, index) {
-        const sourceId = `radar-source-${index}`;
-        const layerId = `radar-layer-${index}`;
+    createMapboxLayer(frame) {
+        const id = this.nextLayerId++;
+        const sourceId = `radar-source-${id}`;
+        const layerId = `radar-layer-${id}`;
 
         // Return a proxy object that mimics Leaflet's API for the rest of the class
         const layerProxy = {

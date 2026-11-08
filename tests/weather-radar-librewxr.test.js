@@ -184,7 +184,10 @@ describe('WeatherRadar with LibreWXR', () => {
         radar.updateTheme();
 
         expect(radar.frames.map(f => f.url)).toEqual(urls);
-        expect(map._layers.has('radar-layer-2')).toBe(true);
+        // The visible frame is back on the new style, with its own tiles
+        const visible = radar.layers[2];
+        expect(map._layers.has(visible.id)).toBe(true);
+        expect(map._sources.get(visible.sourceId).tiles).toEqual([urls[2]]);
     });
 
     it('marks "now" on the slider and colours the forecast part of the track', async () => {
@@ -213,8 +216,10 @@ describe('WeatherRadar with LibreWXR', () => {
         radar.createLayers();
         radar.showFrame(2);
 
+        // Beneath the lowest radar frame in the style
+        const lowestRadar = [...map._layers.keys()].find(id => id.startsWith('radar-layer-'));
         radar.setSatelliteEnabled(true);
-        expect(map.addLayer).toHaveBeenLastCalledWith(expect.objectContaining({ id: 'satellite-layer' }), 'radar-layer-2');
+        expect(map.addLayer).toHaveBeenLastCalledWith(expect.objectContaining({ id: 'satellite-layer' }), lowestRadar);
 
         radar.setSatelliteEnabled(false);
         expect(map._layers.has('satellite-layer')).toBe(false);
