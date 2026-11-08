@@ -1,6 +1,7 @@
 import { CONFIG } from "../config.js";
 import { i18n } from "../i18n/index.js";
 import { loadScript } from "../utils/loadScript.js";
+import { noteApiResponse } from "../utils/apiStatus.js";
 
 // The map libraries load on demand, so neither blocks the first render.
 // index.html preloads Mapbox GL JS, so it is already downloading (in parallel
@@ -49,6 +50,7 @@ export class MapManager {
       const response = await fetch('/api/config', {
           signal: AbortSignal.timeout(5000)
       });
+      noteApiResponse(response);
       if (!response.ok) throw new Error('Failed to fetch config');
       const config = await response.json();
 

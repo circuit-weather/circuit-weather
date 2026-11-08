@@ -183,6 +183,10 @@ export const nl = {
       "De F1-racekalender kon niet worden geladen. Beide gegevensbronnen (api.jolpi.ca en api.openf1.org) lijken niet beschikbaar. Probeer het later opnieuw.",
     seriesScheduleUnavailable:
       "Het {{series}}-schema kon niet worden geladen van TheSportsDB. We proberen het automatisch opnieuw — je kunt nog steeds een andere klasse kiezen.",
+    dailyLimitReached:
+      "Circuit Weather heeft zijn dagelijkse serverlimiet bereikt, dus raceschema's, radar en weerswaarschuwingen kunnen niet laden. Om {{time}} werkt het weer.",
+    serverUnavailable:
+      "De server van Circuit Weather reageert niet, dus raceschema's, radar en weerswaarschuwingen kunnen niet laden. Probeer het straks opnieuw.",
     usingFallbackSource:
       "Primaire gegevensbron (api.jolpi.ca) niet beschikbaar — gegevens worden getoond vanaf de back-upbron (api.openf1.org).",
     sessionError: "Sessiefout",

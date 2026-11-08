@@ -225,6 +225,7 @@ const { RecentreControl } = await import('../public/src/map/RecentreControl.js')
 const { MapWeatherWidget } = await import('../public/src/map/MapWeatherWidget.js');
 const { ThemeManager } = await import('../public/src/ui/ThemeManager.js');
 const { i18n } = await import('../public/src/i18n/index.js');
+const { noteApiResponse, resetApiStatus } = await import('../public/src/utils/apiStatus.js');
 
 describe('CircuitWeatherApp Pure Methods', () => {
     let app;
@@ -573,6 +574,86 @@ describe('CircuitWeatherApp Pure Methods', () => {
         it('does nothing when the notice element is absent', () => {
             app.ui.dataSourceNotice = null;
             expect(() => app.updateDataSourceNotice()).not.toThrow();
+        });
+    });
+
+    // The Worker switched off by Cloudflare (utils/apiStatus.js): say so, not that a source failed
+    describe('Worker outage', () => {
+        const cloudflarePage = (body) => new Response(body, { status: 429, headers: { 'content-type': 'text/html' } });
+        const now = Date.parse('2026-11-08T14:13:00Z');
+
+        beforeEach(async () => {
+            resetApiStatus();
+            app.series = 'f1';
+            app.selectedSession = null;
+            app.f1Api.scheduleSource = 'openf1';
+            app.ui.dataSourceNotice = createMockElement('dataSourceNotice');
+            app.ui.scheduleError = createMockElement('scheduleError');
+            app.ui.scheduleErrorText = createMockElement('scheduleErrorText');
+            app.ui.rainBanner = createMockElement('rainBanner');
+            app.ui.mobileRainBanner = createMockElement('mobileRainBanner');
+            app.sessionRainVerdict = { level: 'possible', text: 'Chance of rain' };
+            app.trackRainStatus = null;
+        });
+
+        afterEach(() => resetApiStatus());
+
+        it('has no message while the Worker works', () => {
+            expect(app.apiOutageMessage(now)).toBeNull();
+        });
+
+        it('explains the daily limit and when it resets, in place of the schedule messages', async () => {
+            await noteApiResponse(cloudflarePage('<span>Error 1027</span>'));
+            app.showScheduleError('f1', new Error('F1_SCHEDULE_UNAVAILABLE:jolpica:HTTP 429'));
+            app.handleApiStatus();
+
+            const time = new Intl.DateTimeFormat(i18n.locale, { hour: '2-digit', minute: '2-digit' })
+                .format(new Date('2026-11-09T00:00:00Z'));
+            const message = i18n.t('errors.dailyLimitReached', { time });
+            expect(app.apiOutageMessage(now)).toBe(message);
+            expect(message).toContain(time);
+            expect(app.ui.scheduleErrorText.textContent).toBe(app.apiOutageMessage());
+            // Jolpica isn't at fault, so the backup-source notice stays hidden
+            expect(app.ui.dataSourceNotice.hidden).toBe(true);
+
+            app.renderRainBanner(now);
+            for (const banner of [app.ui.rainBanner, app.ui.mobileRainBanner]) {
+                expect(banner.hidden).toBe(false);
+                expect(banner.textContent).toBe(message);
+                expect(banner.setAttribute).toHaveBeenCalledWith('data-level', 'outage');
+            }
+        });
+
+        it('says the server is not responding for other Cloudflare errors', async () => {
+            await noteApiResponse(cloudflarePage('<span>Error 1101</span>'));
+            expect(app.apiOutageMessage(now)).toBe(i18n.t('errors.serverUnavailable'));
+        });
+
+        it('goes back to the usual messages once the Worker answers', async () => {
+            await noteApiResponse(cloudflarePage('<span>Error 1027</span>'));
+            app.showScheduleError('f1', new Error('F1_SCHEDULE_UNAVAILABLE:jolpica:HTTP 429'));
+            await noteApiResponse(new Response('{}', {
+                status: 200,
+                headers: { 'content-type': 'application/json', date: new Date(Date.now() + 1000).toUTCString() },
+            }));
+            app.handleApiStatus();
+
+            expect(app.ui.scheduleErrorText.textContent).toBe(i18n.t('errors.scheduleUnavailable'));
+            expect(app.ui.dataSourceNotice.hidden).toBe(false);
+            app.renderRainBanner(now);
+            expect(app.ui.rainBanner.textContent).toBe('Chance of rain');
+        });
+
+        it('shows the outage when start-up fails', async () => {
+            await noteApiResponse(cloudflarePage('<span>Error 1027</span>'));
+            vi.spyOn(console, 'error').mockImplementation(() => {});
+            app.initUIElements = vi.fn();
+            app.showLoading = vi.fn();
+            app.tryLoadSchedule = vi.fn().mockResolvedValue(false);
+            app.initMapComponents = vi.fn().mockRejectedValue(new Error('no map'));
+            app.renderError = vi.fn();
+            await app.init();
+            expect(app.renderError).toHaveBeenCalledWith(app.apiOutageMessage());
         });
     });
 

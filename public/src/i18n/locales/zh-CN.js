@@ -174,6 +174,10 @@ export const zhCN = {
       "无法加载F1赛程。两个数据源 (api.jolpi.ca 和 api.openf1.org) 目前均不可用，请稍后重试。",
     seriesScheduleUnavailable:
       "无法从 TheSportsDB 加载{{series}}赛历，正在自动重试。你仍可选择其他系列赛。",
+    dailyLimitReached:
+      "Circuit Weather 已用完服务器的每日额度，赛程、雷达和天气预警暂时无法加载，将于 {{time}} 恢复。",
+    serverUnavailable:
+      "Circuit Weather 服务器无响应，赛程、雷达和天气预警暂时无法加载。请稍后重试。",
     usingFallbackSource:
       "主数据源 (api.jolpi.ca) 不可用 — 正在显示备用数据源 (api.openf1.org) 的数据。",
     sessionError: "赛段错误",

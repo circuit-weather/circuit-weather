@@ -1,4 +1,5 @@
 import { CIRCUIT_MAP, CONFIG } from '../config.js';
+import { noteApiResponse } from '../utils/apiStatus.js';
 
 export class TrackLayer {
     constructor(map) {
@@ -124,6 +125,7 @@ export class TrackLayer {
         const response = await fetch(url, {
             signal: AbortSignal.timeout(5000)
         });
+        noteApiResponse(response);
 
         if (!response.ok) {
             throw new Error(`Track fetch failed: ${response.status}`);

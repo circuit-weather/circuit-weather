@@ -182,6 +182,10 @@ export const en = {
       "The F1 race schedule could not be loaded. Both data sources (api.jolpi.ca and api.openf1.org) appear to be unavailable — please try again later.",
     seriesScheduleUnavailable:
       "The {{series}} schedule couldn't be loaded from TheSportsDB. Trying again automatically — you can still choose another series.",
+    dailyLimitReached:
+      "Circuit Weather has used up its daily server allowance, so race schedules, radar and weather warnings can't load. They'll be back at {{time}}.",
+    serverUnavailable:
+      "Circuit Weather's server isn't responding, so race schedules, radar and weather warnings can't load. Please try again shortly.",
     usingFallbackSource:
       "Primary schedule source (api.jolpi.ca) is unavailable — showing data from the backup source (api.openf1.org).",
     sessionError: "Session Error",

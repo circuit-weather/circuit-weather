@@ -1,4 +1,5 @@
 import { CONFIG } from '../config.js';
+import { noteApiResponse } from '../utils/apiStatus.js';
 
 const PROVIDERS = new Set(['librewxr', 'rainviewer']);
 // The Worker prefixes RainViewer frame paths with this (see src/radar-providers.js)
@@ -34,6 +35,7 @@ export class RadarFrames {
             const response = await fetch(CONFIG.rainViewerApi, {
                 signal: AbortSignal.timeout(5000)
             });
+            noteApiResponse(response);
             if (!response.ok) {
                 console.error(`Radar API error: ${response.status}`);
                 return RadarFrames.emptyResult();
