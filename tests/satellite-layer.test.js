@@ -3,7 +3,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { SatelliteLayer } from '../public/src/map/SatelliteLayer.js';
 import { CONFIG } from '../public/src/config.js';
 
-const FRAME = { time: 100, url: '/api/tiles/v2/satellite/100/512/{z}/{x}/{y}/0/0_0.png' };
+const FRAME = { time: 100, url: 'https://api.librewxr.net/v2/satellite/100/512/{z}/{x}/{y}/0/0_0.png' };
 
 function createMapboxMap(styleLayers = []) {
     const layers = new Set();

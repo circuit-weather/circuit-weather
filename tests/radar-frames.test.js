@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { RadarFrames } from '../public/src/map/RadarFrames.js';
+import { RadarFrames, tileBase } from '../public/src/map/RadarFrames.js';
 import { CONFIG } from '../public/src/config.js';
 
 // Mock global fetch
@@ -39,11 +39,11 @@ describe('RadarFrames.getFramesFromApi', () => {
         expect(result.provider).toBe('librewxr');
         expect(result.maxZoom).toBe(12);
         expect(result.frames).toEqual([
-            { time: 100, path: '/v2/radar/100', isForecast: false, url: '/api/tiles/v2/radar/100/512/{z}/{x}/{y}/4/1_1.png' },
-            { time: 200, path: '/v2/radar/200', isForecast: false, url: '/api/tiles/v2/radar/200/512/{z}/{x}/{y}/4/1_1.png' },
-            { time: 300, path: '/v2/radar/300', isForecast: true, url: '/api/tiles/v2/radar/300/512/{z}/{x}/{y}/4/1_1.png?nowcast=1' },
+            { time: 100, path: '/v2/radar/100', isForecast: false, url: 'https://api.librewxr.net/v2/radar/100/512/{z}/{x}/{y}/4/1_1.png' },
+            { time: 200, path: '/v2/radar/200', isForecast: false, url: 'https://api.librewxr.net/v2/radar/200/512/{z}/{x}/{y}/4/1_1.png' },
+            { time: 300, path: '/v2/radar/300', isForecast: true, url: 'https://api.librewxr.net/v2/radar/300/512/{z}/{x}/{y}/4/1_1.png?nowcast=1' },
         ]);
-        expect(result.satellite).toEqual({ time: 90, url: '/api/tiles/v2/satellite/90/512/{z}/{x}/{y}/0/0_0.png' });
+        expect(result.satellite).toEqual({ time: 90, url: 'https://api.librewxr.net/v2/satellite/90/512/{z}/{x}/{y}/0/0_0.png' });
         expect(result.colorSchemes).toEqual([{ id: 2, name: 'Universal Blue' }]);
     });
 
@@ -58,7 +58,7 @@ describe('RadarFrames.getFramesFromApi', () => {
 
         expect(result.provider).toBe('rainviewer');
         expect(result.maxZoom).toBe(7);
-        expect(result.frames[0].url).toBe('/api/tiles/rainviewer/v2/radar/abc/512/{z}/{x}/{y}/2/1_1.png');
+        expect(result.frames[0].url).toBe('https://tilecache.rainviewer.com/v2/radar/abc/512/{z}/{x}/{y}/2/1_1.png');
         expect(result.satellite).toBeNull();
         expect(result.colorSchemes).toEqual([]);
     });
@@ -103,20 +103,32 @@ describe('RadarFrames.buildTileUrl', () => {
 
     it('adds storm overlays in dark ink on light maps', () => {
         const url = RadarFrames.buildTileUrl(frame, 'librewxr', { colour: 6, arrows: true, cells: true, lightning: true });
-        expect(url).toBe('/api/tiles/v2/radar/100/512/{z}/{x}/{y}/6/1_1.png?arrows=dark&cells=dark&lightning=dots');
+        expect(url).toBe('https://api.librewxr.net/v2/radar/100/512/{z}/{x}/{y}/6/1_1.png?arrows=dark&cells=dark&lightning=dots');
     });
 
     it('adds storm overlays in light ink on dark maps', () => {
         const url = RadarFrames.buildTileUrl(frame, 'librewxr', { arrows: true, cells: true, darkMap: true });
-        expect(url).toBe(`/api/tiles/v2/radar/100/512/{z}/{x}/{y}/${CONFIG.RADAR_DEFAULT_COLOUR}/1_1.png?arrows=light&cells=light`);
+        expect(url).toBe(`https://api.librewxr.net/v2/radar/100/512/{z}/{x}/{y}/${CONFIG.RADAR_DEFAULT_COLOUR}/1_1.png?arrows=light&cells=light`);
     });
 
     it('marks forecast frames and uses the default colour when none is given', () => {
         const url = RadarFrames.buildTileUrl({ path: '/v2/radar/900', isForecast: true }, 'librewxr');
-        expect(url).toBe(`/api/tiles/v2/radar/900/512/{z}/{x}/{y}/${CONFIG.RADAR_DEFAULT_COLOUR}/1_1.png?nowcast=1`);
+        expect(url).toBe(`https://api.librewxr.net/v2/radar/900/512/{z}/{x}/{y}/${CONFIG.RADAR_DEFAULT_COLOUR}/1_1.png?nowcast=1`);
     });
 
     it('ignores LibreWXR options when the provider is unknown', () => {
-        expect(RadarFrames.buildTileUrl(frame, null, { arrows: true })).toBe('/api/tiles/v2/radar/100/512/{z}/{x}/{y}/2/1_1.png');
+        expect(RadarFrames.buildTileUrl(frame, null, { arrows: true })).toBe('https://api.librewxr.net/v2/radar/100/512/{z}/{x}/{y}/2/1_1.png');
+    });
+});
+
+describe('tileBase', () => {
+    // Tiles load straight from the providers so they don't count as Worker requests
+    it('serves LibreWXR frames from LibreWXR', () => {
+        expect(tileBase('/v2/radar/100')).toBe('https://api.librewxr.net/v2/radar/100');
+        expect(tileBase('/v2/satellite/90')).toBe('https://api.librewxr.net/v2/satellite/90');
+    });
+
+    it('serves prefixed RainViewer frames from the RainViewer tile cache', () => {
+        expect(tileBase('/rainviewer/v2/radar/abc')).toBe('https://tilecache.rainviewer.com/v2/radar/abc');
     });
 });

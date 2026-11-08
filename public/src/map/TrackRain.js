@@ -1,4 +1,5 @@
 import { pixelDbz, samplePlan, summariseTrackRain, SAMPLE_TILE_SIZE, SAMPLE_ZOOM } from '../utils/rain.js';
+import { tileBase } from './RadarFrames.js';
 
 /**
  * "Is it raining at the track, and will it?" from LibreWXR's radar nowcast,
@@ -109,7 +110,7 @@ export class TrackRain {
         const query = frame.isForecast ? '?nowcast=1' : '';
         let strongest = -Infinity;
         for (const tile of plan) {
-            const url = `/api/tiles${frame.path}/${SAMPLE_TILE_SIZE}/${SAMPLE_ZOOM}/${tile.x}/${tile.y}/0/0_0.png${query}`;
+            const url = `${tileBase(frame.path)}/${SAMPLE_TILE_SIZE}/${SAMPLE_ZOOM}/${tile.x}/${tile.y}/0/0_0.png${query}`;
             const { width, data } = await this.loadPixels(url);
             for (const [px, py] of tile.pixels) {
                 const i = (py * width + px) * 4;
@@ -125,8 +126,8 @@ export class TrackRain {
     }
 
     /**
-     * Fetches a tile and returns its RGBA pixels. Tiles come from our own
-     * worker, so reading them back from a canvas is allowed.
+     * Fetches a tile and returns its RGBA pixels. Tiles are fetched with
+     * CORS (LibreWXR sends Access-Control-Allow-Origin: *), so the pixels can be read.
      */
     static async loadPixels(url) {
         const response = await fetch(url, { signal: AbortSignal.timeout(8000) });

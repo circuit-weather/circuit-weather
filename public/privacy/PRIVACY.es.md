@@ -1,6 +1,6 @@
 # Política de privacidad
 
-**Última actualización:** Octubre 2026
+**Última actualización:** Noviembre 2026
 
 **Aviso:** Esta traducción se ha generado automáticamente. En caso de discrepancia, prevalece la versión en inglés.
 
@@ -24,7 +24,7 @@ La aplicación depende de servicios de terceros e infraestructura que pueden pro
 
 El sitio está alojado en **Cloudflare Workers**.
 
-- **Proxy de privacidad:** Las peticiones de calendario F1, trazados, recursos Leaflet, recursos Mapbox GL JS y tiles de radar y avisos meteorológicos (LibreWXR, con RainViewer como respaldo) pasan por nuestro Worker.
+- **Proxy de privacidad:** Las peticiones de calendario F1, trazados, recursos Leaflet, recursos Mapbox GL JS, metadatos de radar y avisos meteorológicos (LibreWXR, con RainViewer como respaldo) pasan por nuestro Worker. Los tiles de radar y satélite se cargan directamente desde LibreWXR o RainViewer (ver abajo).
 - **Caché avanzada:** Las respuestas API se cachean en el borde para reducir tráfico y carga en servicios externos.
 - **Datos procesados:** Cloudflare procesa IP y metadatos de petición para entregar y proteger el sitio.
 - **Política:** [cloudflare.com/privacypolicy](https://www.cloudflare.com/privacypolicy/)
@@ -52,13 +52,13 @@ Tu navegador puede conectarse directamente a servicios de terceros para mapas, t
 **LibreWXR**
 
 - **Propósito:** Fuente principal del radar de precipitación, el pronóstico de lluvia a 1 hora, las nubes por satélite, los rayos, las células tormentosas y los avisos meteorológicos oficiales.
-- **Datos enviados:** Ninguno directamente. Las peticiones pasan por nuestro Worker, que solo envía a LibreWXR las coordenadas redondeadas del circuito seleccionado (para los avisos).
+- **Datos enviados:** IP y la zona del mapa que estás viendo: tu navegador carga los tiles de radar y satélite directamente desde LibreWXR. Los metadatos de radar y los avisos pasan por nuestro Worker, que solo envía a LibreWXR las coordenadas redondeadas del circuito seleccionado.
 - **Política:** [librewxr.net](https://librewxr.net/)
 
 **RainViewer**
 
 - **Propósito:** Capas de radar de respaldo, solo cuando LibreWXR no está disponible.
-- **Datos enviados:** Ninguno directamente. Los datos de radar se sirven por proxy.
+- **Datos enviados:** IP y la zona del mapa que estás viendo, solo mientras se usa RainViewer: tu navegador carga sus tiles de radar directamente. Los metadatos de radar pasan por nuestro Worker.
 - **Política:** [rainviewer.com/privacy](https://www.rainviewer.com/privacy.html)
 
 ### Mapas y recursos
@@ -93,8 +93,8 @@ Tu navegador puede conectarse directamente a servicios de terceros para mapas, t
 - **Jolpica F1:** Calendario F1 (caché de borde de 24 horas; se conserva una última copia válida hasta 30 días como respaldo si la fuente no está disponible).
 - **TheSportsDB:** Calendario y datos de circuitos de todas las series excepto la Fórmula 1 (se actualiza entre cada hora y cada mes según la cercanía de cada ronda; la última copia obtenida se conserva hasta 180 días como respaldo).
 - **GitHub (bacinger/f1-circuits):** Archivos GeoJSON de circuitos (caché de borde de 24 horas).
-- **LibreWXR:** Metadatos de radar (caché de 1 minuto), tiles de radar (caché de borde de 2 horas; tiles de pronóstico 5 minutos), tiles de satélite (caché de borde de 12 horas) y avisos meteorológicos (caché de 5 minutos). Se guardan copias de respaldo de corta duración de los metadatos (30 minutos) y los avisos (1 hora) por si LibreWXR no está disponible.
-- **RainViewer:** Metadatos de radar (caché de 1 minuto) y tiles (caché de borde de 2 horas).
+- **LibreWXR:** Metadatos de radar (caché de 1 minuto) y avisos meteorológicos (caché de 5 minutos). Se guardan copias de respaldo de corta duración de los metadatos (30 minutos) y los avisos (1 hora) por si LibreWXR no está disponible.
+- **RainViewer:** Metadatos de radar (caché de 1 minuto).
 - **Leaflet (vía Unpkg):** Recursos de librería de mapas (con proxy por seguridad, caché inmutable de 1 año).
 - **Mapbox (vía Mapbox CDN):** Recursos de librería de mapas (con proxy por seguridad, caché inmutable de 1 año).
 

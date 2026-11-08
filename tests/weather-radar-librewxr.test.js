@@ -79,7 +79,7 @@ describe('WeatherRadar with LibreWXR', () => {
         // Capped below the provider's limit of 12 to keep tile counts down
         expect(radar.maxZoom).toBe(CONFIG.RADAR_MAX_TILE_ZOOM);
         expect(radar.pastFrameCount).toBe(2);
-        expect(radar.satellite.frame.url).toBe('/api/tiles/v2/satellite/90/512/{z}/{x}/{y}/0/0_0.png');
+        expect(radar.satellite.frame.url).toBe('https://api.librewxr.net/v2/satellite/90/512/{z}/{x}/{y}/0/0_0.png');
         expect(onMetadata).toHaveBeenCalledWith(expect.objectContaining({ provider: 'librewxr' }));
         expect(radar.attribution).toBe(CONFIG.RADAR_ATTRIBUTION.librewxr);
     });
@@ -113,7 +113,7 @@ describe('WeatherRadar with LibreWXR', () => {
         // Starts on the latest observed frame, not the end of the nowcast
         expect(radar.currentFrame).toBe(1);
         expect(L.tileLayer).toHaveBeenCalledWith(
-            '/api/tiles/v2/radar/200/512/{z}/{x}/{y}/2/1_1.png',
+            'https://api.librewxr.net/v2/radar/200/512/{z}/{x}/{y}/2/1_1.png',
             expect.objectContaining({ maxNativeZoom: CONFIG.RADAR_MAX_TILE_ZOOM + 1, attribution: CONFIG.RADAR_ATTRIBUTION.librewxr })
         );
     });
@@ -142,8 +142,8 @@ describe('WeatherRadar with LibreWXR', () => {
 
         expect(radar.currentFrame).toBe(1);
         expect(radar.visibleLayerIndex).toBe(1);
-        expect(radar.frames[1].url).toBe('/api/tiles/v2/radar/200/512/{z}/{x}/{y}/6/1_1.png?arrows=dark&lightning=dots');
-        expect(radar.pendingFrames[0].url).toBe('/api/tiles/v2/radar/400/512/{z}/{x}/{y}/6/1_1.png?arrows=dark&lightning=dots');
+        expect(radar.frames[1].url).toBe('https://api.librewxr.net/v2/radar/200/512/{z}/{x}/{y}/6/1_1.png?arrows=dark&lightning=dots');
+        expect(radar.pendingFrames[0].url).toBe('https://api.librewxr.net/v2/radar/400/512/{z}/{x}/{y}/6/1_1.png?arrows=dark&lightning=dots');
 
         // Unchanged options do not rebuild
         const frames = radar.frames;

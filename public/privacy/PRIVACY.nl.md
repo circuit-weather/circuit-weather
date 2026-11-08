@@ -1,6 +1,6 @@
 # Privacybeleid
 
-**Laatst bijgewerkt:** oktober 2026
+**Laatst bijgewerkt:** november 2026
 
 **Let op:** Deze vertaling is automatisch gegenereerd. Bij verschillen is de Engelse versie doorslaggevend.
 
@@ -24,7 +24,7 @@ De applicatie maakt echter gebruik van diensten en infrastructuur van derden, di
 
 Deze website wordt gehost op **Cloudflare Workers** (met Static Assets), die zowel de website leveren als de API aandrijven.
 
-- **Privacyproxy:** Verzoeken om F1-schema's, circuitlayouts, Leaflet-assets, Mapbox GL JS-assets en alle radartegels en weerswaarschuwingen (LibreWXR, met RainViewer als reserve) lopen via onze Cloudflare Worker.
+- **Privacyproxy:** Verzoeken om F1-schema's, circuitlayouts, Leaflet-assets, Mapbox GL JS-assets, radarmetadata en weerswaarschuwingen (LibreWXR, met RainViewer als reserve) lopen via onze Cloudflare Worker. Radar- en satelliettegels worden rechtstreeks bij LibreWXR of RainViewer geladen (zie hieronder).
 - **Geavanceerde caching:** API-antwoorden worden aan de edge gecachet om bandbreedtegebruik en belasting van bronservers te beperken.
 - **Verwerkte gegevens:** Cloudflare verwerkt het IP-adres en metadata van verzoeken om de site te leveren en te beveiligen.
 - **Privacybeleid:** [cloudflare.com/privacypolicy](https://www.cloudflare.com/privacypolicy/)
@@ -52,13 +52,13 @@ Uw browser kan rechtstreeks verbinding maken met diensten van derden voor kaarte
 **LibreWXR**
 
 - **Doel:** Primaire bron voor neerslagradar, de regenverwachting voor 1 uur, satellietwolken, bliksem, onweerscellen en officiële weerswaarschuwingen.
-- **Verzonden gegevens:** Niets rechtstreeks. Verzoeken lopen via onze Worker, die LibreWXR alleen de afgeronde coördinaten van het gekozen circuit stuurt (voor weerswaarschuwingen).
+- **Verzonden gegevens:** IP-adres en het kaartgebied dat u bekijkt: uw browser laadt radar- en satelliettegels rechtstreeks bij LibreWXR. Radarmetadata en weerswaarschuwingen lopen via onze Worker, die LibreWXR alleen de afgeronde coördinaten van het gekozen circuit stuurt.
 - **Privacybeleid:** [librewxr.net](https://librewxr.net/)
 
 **RainViewer**
 
 - **Doel:** Reserve-radarlagen, alleen gebruikt als LibreWXR niet beschikbaar is.
-- **Verzonden gegevens:** Niets rechtstreeks. Radargegevens lopen via onze Worker.
+- **Verzonden gegevens:** IP-adres en het kaartgebied dat u bekijkt, alleen zolang RainViewer wordt gebruikt: uw browser laadt de radartegels rechtstreeks. Radarmetadata lopen via onze Worker.
 - **Privacybeleid:** [rainviewer.com/privacy](https://www.rainviewer.com/privacy.html)
 
 ### Kaarten en assets
@@ -93,8 +93,8 @@ Uw browser kan rechtstreeks verbinding maken met diensten van derden voor kaarte
 - **Jolpica F1:** F1-schemagegevens (24 uur edge-cache; een laatst bekende geldige kopie wordt tot 30 dagen bewaard als terugval als de bron niet beschikbaar is).
 - **TheSportsDB:** Schema- en circuitgegevens voor alle klassen behalve de Formule 1 (elk uur tot elke maand ververst, afhankelijk van hoe dichtbij elke ronde is; de laatst opgehaalde kopie wordt tot 180 dagen bewaard als terugval).
 - **GitHub (bacinger/f1-circuits):** GeoJSON-circuitbestanden (24 uur edge-cache).
-- **LibreWXR:** Radarmetadata (1 minuut cache), radartegels (2 uur edge-cache; verwachtingstegels 5 minuten), satelliettegels (12 uur edge-cache) en weerswaarschuwingen (5 minuten cache). Kortlevende reservekopieën van de metadata (30 minuten) en waarschuwingen (1 uur) worden bewaard voor het geval LibreWXR niet beschikbaar is.
-- **RainViewer:** Radarmetadata (1 minuut cache) en tegels (2 uur edge-cache).
+- **LibreWXR:** Radarmetadata (1 minuut cache) en weerswaarschuwingen (5 minuten cache). Kortlevende reservekopieën van de metadata (30 minuten) en waarschuwingen (1 uur) worden bewaard voor het geval LibreWXR niet beschikbaar is.
+- **RainViewer:** Radarmetadata (1 minuut cache).
 - **Leaflet (via Unpkg):** Assets van de kaartinteractiebibliotheek (via proxy om veiligheidsredenen, 1 jaar immutable cache).
 - **Mapbox (via Mapbox CDN):** Assets van de kaartinteractiebibliotheek (via proxy om veiligheidsredenen, 1 jaar immutable cache).
 

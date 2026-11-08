@@ -1,6 +1,6 @@
 # Adatvédelmi Irányelvek
 
-**Utolsó frissítés:** 2026. Október
+**Utolsó frissítés:** 2026. November
 
 **Megjegyzés:** Ez a fordítás gépi úton készült. Eltérés esetén az angol nyelvű változat az irányadó.
 
@@ -24,7 +24,7 @@ Az alkalmazás azonban harmadik féltől származó szolgáltatásokra és infra
 
 Ez a weboldal a **Cloudflare Workers** szolgáltatáson (Static Assets használatával) fut, amely a weboldalt szolgálja ki és az API-t is működteti.
 
-- **Adatvédelmi proxy:** Az F1-es naptár, a pályarajzok, a Leaflet eszközök, a Mapbox GL JS eszközök és a radarcsempék és időjárási figyelmeztetések (LibreWXR, tartalékként RainViewer) kéréseit a Cloudflare Workerünk proxizza.
+- **Adatvédelmi proxy:** Az F1-es naptár, a pályarajzok, a Leaflet eszközök, a Mapbox GL JS eszközök, a radar metaadatok és az időjárási figyelmeztetések (LibreWXR, tartalékként RainViewer) kéréseit a Cloudflare Workerünk proxizza. A radar- és műholdas csempék közvetlenül a LibreWXR-ről vagy a RainViewerről töltődnek be (lásd lent).
 - **Fejlett gyorsítótárazás:** Az API-válaszokat a peremen (edge) gyorsítótárazzuk a sávszélesség-használat és a feltöltési terhelés minimalizálása érdekében.
 - **Feldolgozott adatok:** A Cloudflare feldolgozza az IP-címeket és a kérések metaadatait a weboldal kézbesítése és védelme érdekében.
 - **Adatvédelmi irányelvek:** [cloudflare.com/privacypolicy](https://www.cloudflare.com/privacypolicy/)
@@ -52,13 +52,13 @@ A böngészője közvetlenül is csatlakozhat harmadik féltől származó szolg
 **LibreWXR**
 
 - **Cél:** A csapadékradar, az 1 órás esőelőrejelzés, a műholdas felhőkép, a villámok, a zivatarcellák és a hivatalos időjárási figyelmeztetések elsődleges forrása.
-- **Küldött adatok:** Közvetlenül semmi. A kéréseket a Workerünk proxizza, amely csak a kiválasztott pálya kerekített koordinátáit küldi el a LibreWXR-nek (a figyelmeztetésekhez).
+- **Küldött adatok:** IP-cím és a megtekintett térképterület: az Ön böngészője a radar- és műholdas csempéket közvetlenül a LibreWXR-ről tölti be. A radar metaadatokat és a figyelmeztetéseket a Workerünk proxizza, amely csak a kiválasztott pálya kerekített koordinátáit küldi el a LibreWXR-nek.
 - **Adatvédelmi irányelvek:** [librewxr.net](https://librewxr.net/)
 
 **RainViewer**
 
 - **Cél:** Tartalék radar rétegek, csak ha a LibreWXR nem érhető el.
-- **Küldött adatok:** Közvetlenül semmi. A radaradatokat a Workerünk proxizza.
+- **Küldött adatok:** IP-cím és a megtekintett térképterület, csak amíg a RainViewer van használatban: az Ön böngészője közvetlenül tölti be a radarcsempéit. A radar metaadatokat a Workerünk proxizza.
 - **Adatvédelmi irányelvek:** [rainviewer.com/privacy](https://www.rainviewer.com/privacy.html)
 
 ### Térképek és Eszközök
@@ -93,8 +93,8 @@ A böngészője közvetlenül is csatlakozhat harmadik féltől származó szolg
 - **Jolpica F1:** F1-es naptár adatok (24 órás edge cache; az utolsó érvényes másolatot legfeljebb 30 napig tartjuk meg tartalékként, ha a forrás nem érhető el).
 - **TheSportsDB:** A Forma-1-en kívüli összes sorozat naptár- és pályaadatai (a forduló közelségétől függően óránként és havonta között frissül; az utoljára lekért másolatot legfeljebb 180 napig tartjuk meg tartalékként).
 - **GitHub (bacinger/f1-circuits):** GeoJSON pályafájlok (24 órás edge cache).
-- **LibreWXR:** Radar metaadatok (1 perces cache), radarcsempék (2 órás edge cache; előrejelzési csempék 5 perc), műholdas csempék (12 órás edge cache) és időjárási figyelmeztetések (5 perces cache). A metaadatokról (30 perc) és a figyelmeztetésekről (1 óra) rövid ideig tartalék másolatot őrzünk arra az esetre, ha a LibreWXR nem érhető el.
-- **RainViewer:** Radar metaadatok (1 perces cache) és csempék (2 órás edge cache).
+- **LibreWXR:** Radar metaadatok (1 perces cache) és időjárási figyelmeztetések (5 perces cache). A metaadatokról (30 perc) és a figyelmeztetésekről (1 óra) rövid ideig tartalék másolatot őrzünk arra az esetre, ha a LibreWXR nem érhető el.
+- **RainViewer:** Radar metaadatok (1 perces cache).
 - **Leaflet (a Unpkg-en keresztül):** Térkép interakciós könyvtár eszközei (biztonsági okokból proxizva, 1 éves módosíthatatlan cache).
 - **Mapbox (a Mapbox CDN-en keresztül):** Térkép interakciós könyvtár eszközei (biztonsági okokból proxizva, 1 éves módosíthatatlan cache).
 

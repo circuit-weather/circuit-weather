@@ -52,9 +52,9 @@ describe('TrackRain', () => {
         expect(onChange).toHaveBeenLastCalledWith({ state: 'approaching', minutes: 20 });
         const urls = loadPixels.mock.calls.map(([url]) => url);
         expect(urls).toEqual([
-            '/api/tiles/v2/radar/b/256/8/231/157/0/0_0.png',
-            '/api/tiles/v2/radar/c/256/8/231/157/0/0_0.png?nowcast=1',
-            '/api/tiles/v2/radar/d/256/8/231/157/0/0_0.png?nowcast=1',
+            'https://api.librewxr.net/v2/radar/b/256/8/231/157/0/0_0.png',
+            'https://api.librewxr.net/v2/radar/c/256/8/231/157/0/0_0.png?nowcast=1',
+            'https://api.librewxr.net/v2/radar/d/256/8/231/157/0/0_0.png?nowcast=1',
         ]);
     });
 
