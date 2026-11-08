@@ -1,5 +1,6 @@
 import { CONFIG } from '../config.js';
 import { i18n } from '../i18n/index.js';
+import { noteApiResponse } from '../utils/apiStatus.js';
 
 const SOURCE_ID = 'weather-alerts-source';
 const FILL_LAYER_ID = 'weather-alerts-fill';
@@ -122,6 +123,7 @@ export class WeatherAlerts {
             const response = await fetch(`${CONFIG.alertsApi}?${params}`, {
                 signal: AbortSignal.timeout(8000)
             });
+            noteApiResponse(response);
             if (!response.ok) return null;
             const data = await response.json();
             const features = Array.isArray(data?.features) ? data.features : [];

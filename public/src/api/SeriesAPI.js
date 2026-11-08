@@ -1,6 +1,7 @@
 import { CONFIG } from '../config.js';
 import { SafeStorage } from '../utils/storage.js';
 import { isScheduleOver, getScheduleCacheMs } from '../utils/schedule.js';
+import { noteApiResponse } from '../utils/apiStatus.js';
 
 /**
  * Schedules for series other than F1, from the Worker's /api/schedule/{series}
@@ -54,6 +55,7 @@ export class SeriesAPI {
             // SEC: Add timeout to prevent hanging connections if the proxy is unresponsive
             signal: AbortSignal.timeout(10000)
         });
+        noteApiResponse(response);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         const data = await response.json();
         if (!Array.isArray(data?.races)) throw new Error('Invalid schedule');

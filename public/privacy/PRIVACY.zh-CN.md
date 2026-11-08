@@ -1,6 +1,6 @@
 # 隐私政策
 
-**最后更新:** 2026年10月
+**最后更新:** 2026年11月
 
 **注意:** 本译文由机器翻译生成。如有歧义，以英文版本为准。
 
@@ -24,7 +24,7 @@ Circuit Weather 是一个开源网站应用，用于显示 Formula 1 赛道的�
 
 网站部署在 **Cloudflare Workers**。
 
-- **隐私代理:** F1 赛历、赛道布局、Leaflet 资源、Mapbox GL JS 资源和 雷达瓦片和天气预警 (LibreWXR，RainViewer 作为备用)通过 Worker 代理。
+- **隐私代理:** F1 赛历、赛道布局、Leaflet 资源、Mapbox GL JS 资源、雷达元数据和天气预警 (LibreWXR，RainViewer 作为备用) 通过 Worker 代理。雷达和卫星地图瓦片直接从 LibreWXR 或 RainViewer 加载 (见下文)。
 - **边缘缓存:** API 响应在边缘节点缓存，以降低带宽和上游负载。
 - **处理数据:** Cloudflare 会处理 IP 与请求元数据以完成分发和安全防护。
 - **隐私政策:** [cloudflare.com/privacypolicy](https://www.cloudflare.com/privacypolicy/)
@@ -52,13 +52,13 @@ Circuit Weather 是一个开源网站应用，用于显示 Formula 1 赛道的�
 **LibreWXR**
 
 - **用途:** 降水雷达、1 小时降雨预报、卫星云图、闪电、雷暴单体和官方天气预警的主要来源。
-- **发送数据:** 不直接发送。请求通过我们的 Worker 代理，仅向 LibreWXR 发送所选赛道的近似坐标 (用于天气预警)。
+- **发送数据:** IP 地址和您正在查看的地图区域：浏览器直接从 LibreWXR 加载雷达和卫星瓦片。雷达元数据和天气预警通过我们的 Worker 代理，仅向 LibreWXR 发送所选赛道的近似坐标。
 - **隐私政策:** [librewxr.net](https://librewxr.net/)
 
 **RainViewer**
 
 - **用途:** 备用雷达图层，仅在 LibreWXR 不可用时使用。
-- **发送数据:** 不直接发送（通过 Worker 代理）。
+- **发送数据:** 仅在使用 RainViewer 时，发送 IP 地址和您正在查看的地图区域：浏览器直接加载其雷达瓦片。雷达元数据通过 Worker 代理。
 - **隐私政策:** [rainviewer.com/privacy](https://www.rainviewer.com/privacy.html)
 
 ### 地图与资源
@@ -93,8 +93,8 @@ Circuit Weather 是一个开源网站应用，用于显示 Formula 1 赛道的�
 - **Jolpica F1:** (24 小时边缘缓存；如数据源不可用，最近一次有效的副本将作为备用保留最多 30 天).
 - **TheSportsDB:** 除 F1 外所有赛事的赛程与赛道数据 (根据各分站的远近，每小时到每月刷新一次；最近一次获取的副本将作为备用保留最多 180 天).
 - **GitHub (bacinger/f1-circuits):** (24 小时边缘缓存).
-- **LibreWXR:** 雷达元数据 (1 分钟缓存)、雷达瓦片 (2 小时边缘缓存；预报瓦片 5 分钟)、卫星瓦片 (12 小时边缘缓存) 和天气预警 (5 分钟缓存). 为防 LibreWXR 不可用，会短期保留元数据 (30 分钟) 和预警 (1 小时) 的备份副本。
-- **RainViewer:** 雷达元数据 (1 分钟缓存) 和瓦片 (2 小时边缘缓存).
+- **LibreWXR:** 雷达元数据 (1 分钟缓存) 和天气预警 (5 分钟缓存). 为防 LibreWXR 不可用，会短期保留元数据 (30 分钟) 和预警 (1 小时) 的备份副本。
+- **RainViewer:** 雷达元数据 (1 分钟缓存).
 - **Leaflet (通过 Unpkg):** 地图交互库资产 (为了安全而进行代理, 1 年不可变缓存)。
 - **Mapbox (通过 Mapbox CDN):** 地图交互库资产 (为了安全而进行代理, 1 年不可变缓存)。
 

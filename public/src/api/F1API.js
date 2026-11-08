@@ -2,6 +2,7 @@ import { CONFIG } from '../config.js';
 import { SafeStorage } from '../utils/storage.js';
 import { isScheduleOver, getScheduleCacheMs } from '../utils/schedule.js';
 import { fetchOpenF1Schedule } from './openf1.js';
+import { noteApiResponse } from '../utils/apiStatus.js';
 
 export class F1API {
     constructor() {
@@ -99,6 +100,7 @@ export class F1API {
             // SEC: Add timeout to prevent hanging connections if the proxy is unresponsive
             signal: AbortSignal.timeout(6000)
         });
+        noteApiResponse(response);
         if (!response.ok) throw new Error(`HTTP ${response.status}`);
         return response.json();
     }

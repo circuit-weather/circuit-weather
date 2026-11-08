@@ -8,6 +8,11 @@ export const CONFIG = {
     scheduleApiBase: '/api/schedule',
     // Radar metadata (LibreWXR, with RainViewer as a fallback - see src/radar-providers.js)
     rainViewerApi: '/api/radar',
+    // Radar and satellite tiles load straight from the providers (both send
+    // Access-Control-Allow-Origin: *). Proxying them made every tile a Worker
+    // request, which used up the Workers free plan's daily limit.
+    LIBREWXR_TILE_HOST: 'https://api.librewxr.net',
+    RAINVIEWER_TILE_HOST: 'https://tilecache.rainviewer.com',
     alertsApi: '/api/alerts',
     trackApi: '/api/track',
     weatherApi: 'https://api.open-meteo.com/v1/forecast',

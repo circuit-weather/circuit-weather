@@ -183,6 +183,10 @@ export const ja = {
       "F1レーススケジュールを読み込めませんでした。両方のデータソース (api.jolpi.ca および api.openf1.org) が現在利用できないようです。後でもう一度お試しください。",
     seriesScheduleUnavailable:
       "TheSportsDBから{{series}}のスケジュールを読み込めませんでした。自動的に再試行します。別のシリーズを選ぶこともできます。",
+    dailyLimitReached:
+      "Circuit Weather はサーバーの1日の上限に達したため、レース日程・レーダー・気象警報を読み込めません。{{time}} に復旧します。",
+    serverUnavailable:
+      "Circuit Weather のサーバーが応答しないため、レース日程・レーダー・気象警報を読み込めません。しばらくしてからもう一度お試しください。",
     usingFallbackSource:
       "プライマリのデータソース (api.jolpi.ca) が利用できないため、バックアップソース (api.openf1.org) のデータを表示しています。",
     sessionError: "セッションエラー",

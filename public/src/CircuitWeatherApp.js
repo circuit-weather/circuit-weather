@@ -25,6 +25,7 @@ import { findCurrentSession, findNextSession, roundStatus, sessionEnd, sessionSt
 import { isRainBannerTimely, isNowcastRelevant } from './utils/rain.js';
 import { i18n } from './i18n/index.js';
 import { SafeStorage } from './utils/storage.js';
+import { API_STATUS_EVENT, getApiOutage, nextLimitReset } from './utils/apiStatus.js';
 
 // A partial schedule (the Worker is still filling it, see SeriesAPI) is re-fetched
 // after the Worker's 60-second cache, a few times at most
@@ -83,6 +84,7 @@ export class CircuitWeatherApp {
 
         this.ui = {};
         this.handleLanguageChange = this.handleLanguageChange.bind(this);
+        this.handleApiStatus = this.handleApiStatus.bind(this);
     }
 
     initUIElements() {
@@ -183,6 +185,8 @@ export class CircuitWeatherApp {
 
     async init() {
         this.initUIElements();
+        // Listen before anything is fetched, so an outage seen on the first request shows
+        document.addEventListener(API_STATUS_EVENT, this.handleApiStatus);
 
         this.showLoading(true, i18n.t('loading.schedule'));
 
@@ -233,7 +237,7 @@ export class CircuitWeatherApp {
 
         } catch (error) {
             console.error('Initialization failed:', error);
-            this.renderError(i18n.t('errors.initFailed'));
+            this.renderError(this.apiOutageMessage() || i18n.t('errors.initFailed'));
         } finally {
             this.showLoading(false);
         }
@@ -319,11 +323,12 @@ export class CircuitWeatherApp {
     showScheduleError(series, error) {
         this.scheduleFailure = { series, error };
         if (!this.ui.scheduleError) return;
-        let message;
-        if (series === 'f1') {
+        // With the Worker off, no source failed on its own: say what did
+        let message = this.apiOutageMessage();
+        if (!message && series === 'f1') {
             const sourcesTried = error?.message?.match(/^F1_SCHEDULE_UNAVAILABLE:([^:]+):/)?.[1];
             message = i18n.t(sourcesTried === 'jolpica,openf1' ? 'errors.scheduleAllUnavailable' : 'errors.scheduleUnavailable');
-        } else {
+        } else if (!message) {
             message = i18n.t('errors.seriesScheduleUnavailable', { series: i18n.t(`controls.${series}`) });
         }
         if (this.ui.scheduleErrorText) this.ui.scheduleErrorText.textContent = message;
@@ -418,7 +423,9 @@ export class CircuitWeatherApp {
     // Other series come from TheSportsDB, which must be credited.
     updateDataSourceNotice() {
         if (this.ui.dataSourceNotice) {
-            this.ui.dataSourceNotice.hidden = this.series !== 'f1' || this.f1Api.scheduleSource !== 'openf1';
+            // During a Worker outage Jolpica isn't the problem, so don't blame it
+            this.ui.dataSourceNotice.hidden = this.series !== 'f1' || this.f1Api.scheduleSource !== 'openf1'
+                || Boolean(getApiOutage());
         }
         if (this.ui.scheduleCredit) {
             this.ui.scheduleCredit.hidden = this.series === 'f1';
@@ -875,10 +882,14 @@ export class CircuitWeatherApp {
      */
     renderRainBanner(now = Date.now()) {
         let message = null;
+        const outage = this.apiOutageMessage(now);
         const status = this.trackRainStatus;
         const session = this.selectedSession;
         const sessionTime = session ? new Date(`${session.date}T${session.time}`) : null;
-        if (status && TRACK_RAIN_KEYS[status.state] && session
+        if (outage) {
+            // Nothing from the Worker loads, so this matters more than any rain
+            message = { level: 'outage', text: outage };
+        } else if (status && TRACK_RAIN_KEYS[status.state] && session
             && isNowcastRelevant(sessionTime, this.sessionEndMs(session), now)) {
             message = { level: 'likely', text: i18n.t(TRACK_RAIN_KEYS[status.state], { minutes: status.minutes }) };
         } else if (this.sessionRainVerdict) {
@@ -892,6 +903,28 @@ export class CircuitWeatherApp {
             element.setAttribute('data-level', message.level);
             element.textContent = message.text;
         }
+    }
+
+    /**
+     * What to tell the user while the Worker is off (see utils/apiStatus.js),
+     * or null while it works.
+     */
+    apiOutageMessage(now = Date.now()) {
+        const outage = getApiOutage();
+        if (outage === 'limit') {
+            const time = new Intl.DateTimeFormat(i18n.locale, { hour: '2-digit', minute: '2-digit' })
+                .format(nextLimitReset(now));
+            return i18n.t('errors.dailyLimitReached', { time });
+        }
+        if (outage === 'down') return i18n.t('errors.serverUnavailable');
+        return null;
+    }
+
+    /** The Worker went off or came back: update every message that depends on it. */
+    handleApiStatus() {
+        this.updateDataSourceNotice();
+        if (this.scheduleFailure) this.showScheduleError(this.scheduleFailure.series, this.scheduleFailure.error);
+        this.renderRainBanner();
     }
 
     selectRound(round) {

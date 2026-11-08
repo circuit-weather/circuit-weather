@@ -1,6 +1,6 @@
 # Política de privacidade
 
-**Última atualização:** Outubro 2026
+**Última atualização:** Novembro 2026
 
 **Aviso:** Esta tradução foi gerada automaticamente. Em caso de divergência, prevalece a versão em inglês.
 
@@ -24,7 +24,7 @@ A aplicação depende de serviços de terceiros que podem processar dados web pa
 
 O site está hospedado em **Cloudflare Workers**.
 
-- **Proxy de privacidade:** Calendário F1, traçados, assets Leaflet, assets Mapbox GL JS e tiles de radar e alertas meteorológicos (LibreWXR, com RainViewer como reserva) passam pelo nosso Worker.
+- **Proxy de privacidade:** Calendário F1, traçados, assets Leaflet, assets Mapbox GL JS, metadados de radar e alertas meteorológicos (LibreWXR, com RainViewer como reserva) passam pelo nosso Worker. Os tiles de radar e satélite são carregados diretamente do LibreWXR ou do RainViewer (veja abaixo).
 - **Cache edge:** Respostas da API são armazenadas em cache para melhor desempenho.
 - **Dados processados:** A Cloudflare processa IP e metadados de solicitação para entrega e segurança.
 - **Política:** [cloudflare.com/privacypolicy](https://www.cloudflare.com/privacypolicy/)
@@ -52,13 +52,13 @@ O navegador pode se conectar diretamente a serviços de terceiros para mapas, ti
 **LibreWXR**
 
 - **Objetivo:** Fonte principal do radar de precipitação, da previsão de chuva de 1 hora, das nuvens por satélite, dos raios, das células de tempestade e dos alertas meteorológicos oficiais.
-- **Dados enviados:** Nenhum diretamente. As requisições passam pelo nosso Worker, que envia ao LibreWXR apenas as coordenadas arredondadas do circuito selecionado (para os alertas).
+- **Dados enviados:** IP e a área do mapa que você está vendo: seu navegador carrega os tiles de radar e satélite diretamente do LibreWXR. Os metadados de radar e os alertas passam pelo nosso Worker, que envia ao LibreWXR apenas as coordenadas arredondadas do circuito selecionado.
 - **Política:** [librewxr.net](https://librewxr.net/)
 
 **RainViewer**
 
 - **Objetivo:** Camadas de radar de reserva, usadas apenas quando o LibreWXR está indisponível.
-- **Dados enviados:** Nenhum diretamente; os dados passam por proxy.
+- **Dados enviados:** IP e a área do mapa que você está vendo, apenas enquanto o RainViewer estiver em uso: seu navegador carrega os tiles de radar diretamente. Os metadados de radar passam pelo nosso Worker.
 - **Política:** [rainviewer.com/privacy](https://www.rainviewer.com/privacy.html)
 
 ### Mapas e recursos
@@ -93,8 +93,8 @@ O navegador pode se conectar diretamente a serviços de terceiros para mapas, ti
 - **Jolpica F1:** (cache de borda de 24 horas; uma última cópia válida é mantida por até 30 dias como alternativa caso a fonte esteja indisponível).
 - **TheSportsDB:** Calendário e dados dos circuitos de todas as categorias exceto a Fórmula 1 (atualizados de hora em hora a cada mês, conforme a proximidade de cada etapa; a última cópia obtida é mantida por até 180 dias como alternativa).
 - **GitHub (bacinger/f1-circuits):** (cache de borda de 24 horas).
-- **LibreWXR:** Metadados de radar (cache de 1 minuto), tiles de radar (cache de borda de 2 horas; tiles de previsão 5 minutos), tiles de satélite (cache de borda de 12 horas) e alertas meteorológicos (cache de 5 minutos). Cópias de reserva de curta duração dos metadados (30 minutos) e dos alertas (1 hora) são mantidas caso o LibreWXR esteja indisponível.
-- **RainViewer:** Metadados de radar (cache de 1 minuto) e tiles (cache de borda de 2 horas).
+- **LibreWXR:** Metadados de radar (cache de 1 minuto) e alertas meteorológicos (cache de 5 minutos). Cópias de reserva de curta duração dos metadados (30 minutos) e dos alertas (1 hora) são mantidas caso o LibreWXR esteja indisponível.
+- **RainViewer:** Metadados de radar (cache de 1 minuto).
 - **Leaflet (via Unpkg):** Recursos de biblioteca de mapas (com proxy por segurança, cache imutável de 1 ano).
 - **Mapbox (via Mapbox CDN):** Recursos de biblioteca de mapas (com proxy por segurança, cache imutável de 1 ano).
 

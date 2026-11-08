@@ -184,6 +184,10 @@ export const ptBR = {
       "Não foi possível carregar o calendário de F1. Ambas as fontes de dados (api.jolpi.ca e api.openf1.org) parecem indisponíveis. Por favor, tente novamente mais tarde.",
     seriesScheduleUnavailable:
       "Não foi possível carregar o calendário da {{series}} do TheSportsDB. Tentaremos novamente automaticamente — você ainda pode escolher outra categoria.",
+    dailyLimitReached:
+      "O Circuit Weather atingiu o limite diário do servidor, então calendários, radar e alertas meteorológicos não podem ser carregados. Eles voltam às {{time}}.",
+    serverUnavailable:
+      "O servidor do Circuit Weather não está respondendo, então calendários, radar e alertas meteorológicos não podem ser carregados. Tente novamente em instantes.",
     usingFallbackSource:
       "A fonte primária (api.jolpi.ca) está indisponível — exibindo dados da fonte de backup (api.openf1.org).",
     sessionError: "Erro de sessão",

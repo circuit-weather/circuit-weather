@@ -1,6 +1,23 @@
 import { CONFIG } from '../config.js';
+import { noteApiResponse } from '../utils/apiStatus.js';
 
 const PROVIDERS = new Set(['librewxr', 'rainviewer']);
+// The Worker prefixes RainViewer frame paths with this (see src/radar-providers.js)
+const RAINVIEWER_PATH_PREFIX = '/rainviewer/';
+
+/**
+ * Where a frame's tiles are served from. Frame paths come from /api/radar, which
+ * only passes paths matching the providers' formats, so they are safe to append.
+ *
+ * @param {string} path - e.g. /v2/radar/123 or /rainviewer/v2/radar/abc
+ * @returns {string} The frame's tile URL prefix on the provider's host
+ */
+export function tileBase(path) {
+    if (path.startsWith(RAINVIEWER_PATH_PREFIX)) {
+        return `${CONFIG.RAINVIEWER_TILE_HOST}${path.slice(RAINVIEWER_PATH_PREFIX.length - 1)}`;
+    }
+    return `${CONFIG.LIBREWXR_TILE_HOST}${path}`;
+}
 
 export class RadarFrames {
     /**
@@ -18,6 +35,7 @@ export class RadarFrames {
             const response = await fetch(CONFIG.rainViewerApi, {
                 signal: AbortSignal.timeout(5000)
             });
+            noteApiResponse(response);
             if (!response.ok) {
                 console.error(`Radar API error: ${response.status}`);
                 return RadarFrames.emptyResult();
@@ -51,7 +69,7 @@ export class RadarFrames {
                 maxZoom: Number.isInteger(data.maxZoom) ? data.maxZoom : CONFIG.RADAR_FALLBACK_MAX_ZOOM,
                 satellite: latestSatellite ? {
                     time: latestSatellite.time,
-                    url: `/api/tiles${latestSatellite.path}/512/{z}/{x}/{y}/0/0_0.png`
+                    url: `${tileBase(latestSatellite.path)}/512/{z}/{x}/{y}/0/0_0.png`
                 } : null,
                 colorSchemes: Array.isArray(data.colorSchemes) ? data.colorSchemes : [],
             };
@@ -73,7 +91,7 @@ export class RadarFrames {
     }
 
     /**
-     * Builds the proxied tile URL template for a radar frame.
+     * Builds the tile URL template for a radar frame.
      *
      * @param {{ path: string, isForecast?: boolean }} frame
      * @param {string|null} provider - 'librewxr' enables the options below
@@ -87,7 +105,7 @@ export class RadarFrames {
      */
     static buildTileUrl(frame, provider, options = {}) {
         if (provider !== 'librewxr') {
-            return `/api/tiles${frame.path}/512/{z}/{x}/{y}/2/1_1.png`;
+            return `${tileBase(frame.path)}/512/{z}/{x}/{y}/2/1_1.png`;
         }
 
         const colour = Number.isInteger(options.colour) ? options.colour : CONFIG.RADAR_DEFAULT_COLOUR;
@@ -101,6 +119,6 @@ export class RadarFrames {
         if (frame.isForecast) params.push('nowcast=1');
 
         const query = params.length ? `?${params.join('&')}` : '';
-        return `/api/tiles${frame.path}/512/{z}/{x}/{y}/${colour}/1_1.png${query}`;
+        return `${tileBase(frame.path)}/512/{z}/{x}/{y}/${colour}/1_1.png${query}`;
     }
 }
