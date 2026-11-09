@@ -903,8 +903,8 @@ export class WeatherRadar {
     }
 
     /**
-     * Responds to theme changes. For Mapbox, a style change wipes all layers,
-     * so we need to re-add the active and preloaded layers to the map.
+     * Responds to theme changes. For Mapbox, a style change can wipe the radar
+     * layers, so the visible one is re-added.
      */
     updateTheme() {
         this.satellite.updateTheme();
@@ -920,22 +920,22 @@ export class WeatherRadar {
         const isMapbox = !this.map.hasLayer;
         if (!isMapbox) return;
 
-        // Reset the proxy layers so they re-create themselves on the new style
+        // Depending on how Mapbox applied the new style, each radar layer was either
+        // wiped with the old style or carried over to the new one
         this.layers.forEach((layer, index) => {
-            if (layer) {
-                // If it was already on the map, we need to re-add it
-                const wasOnMap = !!this.map.getLayer(layer.id);
-                const wasVisible = this.visibleLayerIndex === index;
+            if (!layer) return;
+            // Carried over: keep using it. Re-creating it would add a second copy
+            // (layer ids are unique per layer), drawing two frames at once
+            if (this.map.getLayer(layer.id)) return;
 
-                // Important: We must clear the cached proxy layer because Mapbox sources/layers
-                // are style-specific. Re-using the same ID on a new style without fresh addSource/addLayer fails.
-                this.layers[index] = null;
-
-                if (wasOnMap || wasVisible) {
-                    const newLayer = this.getLayer(index);
-                    newLayer.addTo(this.map);
-                    newLayer.setOpacity(wasVisible ? CONFIG.radarOpacity : 0);
-                }
+            // Wiped: drop the proxy (Mapbox sources/layers belong to a style). The
+            // visible frame comes straight back; the rest are re-added as playback
+            // and preloading reach them
+            this.layers[index] = null;
+            if (this.visibleLayerIndex === index) {
+                const newLayer = this.getLayer(index);
+                newLayer.addTo(this.map);
+                newLayer.setOpacity(CONFIG.radarOpacity);
             }
         });
     }
