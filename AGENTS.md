@@ -37,7 +37,7 @@ Circuit Weather is a real-time F1 race circuit weather radar application. It dis
 | --------------- | ---------------------------------------------------------------- | -------------------- |
 | Jolpica F1 API  | Race schedule data (24-hour cache, 30-day last-known-good copy)  | Proxied (Cached)     |
 | OpenF1          | Fallback race schedule data                                      | Direct (Client-side) |
-| TheSportsDB     | Non-F1 series schedules (F2, F3, Formula E, WEC, IMSA, Supercars, IndyCar, NASCAR, MotoGP, WorldSBK) and venue coordinates (season state refreshed hourly to monthly per round, 180-day last-known-good copy; 30 requests/minute free tier, throttled in the Worker) | Proxied (Cached)     |
+| TheSportsDB     | Non-F1 series schedules (F2, F3, Formula E, WEC, IMSA, Supercars, IndyCar, NASCAR, MotoGP, WorldSBK) and venue coordinates (season state refreshed hourly to monthly per round, 180-day last-known-good copy in the cache and in Workers KV; 30 requests/minute free tier, throttled in the Worker) | Proxied (Cached)     |
 | LibreWXR        | Primary radar metadata (1-minute cache, 30-minute last-known-good copy) and weather warnings (5-minute cache, 1-hour last-known-good copy) | Proxied (Cached)     |
 | LibreWXR tiles  | Radar, nowcast, storm overlay and satellite tiles (`api.librewxr.net`, CORS `*`) | Direct (Client-side) |
 | RainViewer      | Backup radar metadata (1-minute cache), used when LibreWXR fails | Proxied (Cached)     |
@@ -164,8 +164,16 @@ custom_domain = true
 [placement]
 mode = "smart"
 
+[[kv_namespaces]]
+binding = "SCHEDULE_KV"   # circuit-weather-schedule
+id = "71eb1cc283414eab9da26a5769b2804e"
+
 [previews.vars]
 ENVIRONMENT = "preview"
+
+[[previews.kv_namespaces]]
+binding = "SCHEDULE_KV"   # circuit-weather-schedule-preview
+id = "4ea47e6db6454056b9cd687e1bc5e6a2"
 ```
 
 ### Environment
@@ -265,7 +273,7 @@ Speed matters most on mobile at a circuit, so nothing may block the first render
 | Endpoint        | Purpose                                                                                                      |
 | --------------- | ------------------------------------------------------------------------------------------------------------ |
 | `/api/f1/*`     | Proxies to Jolpica F1 API with 24-hour edge caching; serves a 30-day last-known-good copy if Jolpica fails   |
-| `/api/schedule/{series}` | Non-F1 season (`f2`, `f3`, `fe`, `wec`, `imsa`, `supercars`, `indycar`, `nascar`, `motogp`, `wsbk`; see `SERIES` in `src/thesportsdb.js`) built round by round from TheSportsDB, with at most 10 upstream calls per request, a 20/minute per-isolate throttle and a 60-second pause after a 429. Returns Ergast-shaped races with a `sessions` array and `complete: false` (cached 1 minute) while still filling; complete schedules are cached 15 minutes. Two days after a season's last event it moves on to next season as soon as TheSportsDB lists that season's round 1 |
+| `/api/schedule/{series}` | Non-F1 season (`f2`, `f3`, `fe`, `wec`, `imsa`, `supercars`, `indycar`, `nascar`, `motogp`, `wsbk`; see `SERIES` in `src/thesportsdb.js`) built round by round from TheSportsDB, with at most 10 upstream calls per request, a 20/minute per-isolate throttle and a 60-second pause after a 429. Returns Ergast-shaped races with a `sessions` array and `complete: false` (cached 1 minute) while still filling; complete schedules are cached 15 minutes. Two days after a season's last event it moves on to next season as soon as TheSportsDB lists that season's round 1. The season state is also kept in Workers KV (`SCHEDULE_KV`, written at most every 30 minutes per series), and each request uses the newer of the KV and cache copies: TheSportsDB often answers the Worker's shared Cloudflare addresses with 429 even at low traffic, and a data centre's cache can be evicted, so without KV a schedule could go blank |
 | `/api/radar`    | LibreWXR radar metadata (RainViewer fallback), normalised with `provider` and `maxZoom`, 1-minute caching; serves a 30-minute last-known-good copy if both fail |
 | `/api/tiles/*`  | Legacy tile proxy, kept only for pages still running an older client. The client loads tiles straight from the providers (`tileBase` in `public/src/map/RadarFrames.js`): every `/api/*` request is a billed Worker request, even from cache, and proxied tiles (hundreds per visit) used up the Workers free plan's 100,000 requests/day. Do not route tiles back through the Worker |
 | `/api/alerts`   | Proxies LibreWXR weather alerts for `?lat=&lon=` (±2° box) with 5-minute caching and a 1-hour last-known-good copy (expired alerts dropped); output is sanitised GeoJSON |

@@ -12,6 +12,7 @@ import {
   SEASON_TTL_MS,
   SEASON_END_TTL_MS,
   VENUE_TTL_MS,
+  KV_SAVE_INTERVAL_MS,
 } from '../src/handlers/schedule.js';
 
 // --- Cache API mock ---
@@ -278,6 +279,97 @@ describe('Worker /api/schedule/{series}', () => {
     const after = await getFresh();
     expect(after.status).toBe(200);
     expect(upstream.handler).toHaveBeenCalled();
+  });
+
+  // SCHEDULE_KV: one copy shared by every data centre (TheSportsDB often refuses
+  // the Worker, and each data centre's cache copy can be evicted)
+  describe('with the shared KV copy', () => {
+    const KV_KEY = 'state/f2';
+    let kv;
+
+    beforeEach(() => {
+      const store = new Map();
+      kv = {
+        store,
+        get: vi.fn(async (key, type) => {
+          const value = store.get(key);
+          return value === undefined ? null : type === 'json' ? JSON.parse(value) : value;
+        }),
+        put: vi.fn(async (key, value) => { store.set(key, value); }),
+      };
+      env.SCHEDULE_KV = kv;
+    });
+
+    // Another data centre: no cached state, response or cooldown of its own
+    const otherDataCentre = () => {
+      cacheStore.clear();
+      throttle.cooldownUntil = 0;
+    };
+
+    it('saves what was fetched, so another data centre can serve it while TheSportsDB refuses', async () => {
+      vi.stubGlobal('fetch', fakeUpstream().handler);
+      const good = await fillUntilComplete();
+      expect(kv.put).toHaveBeenCalled();
+      expect(JSON.parse(kv.store.get(KV_KEY)).series).toBe('f2');
+
+      otherDataCentre();
+      const refusing = vi.fn(async () => jsonResponse({}, 429));
+      vi.stubGlobal('fetch', refusing);
+      vi.setSystemTime(NOW + 2 * DAY);
+      const res = await get();
+      expect(res.status).toBe(200);
+      expect((await res.json()).races).toEqual(good.races);
+    });
+
+    it('writes to KV at most every half hour per series', async () => {
+      // A long season, so every request still finds rounds to add
+      vi.stubGlobal('fetch', fakeUpstream({ lastRound: 30 }).handler);
+      await getFresh();
+      await getFresh();
+      await getFresh();
+      expect(kv.put).toHaveBeenCalledTimes(1);
+
+      vi.setSystemTime(NOW + KV_SAVE_INTERVAL_MS);
+      await getFresh();
+      expect(kv.put).toHaveBeenCalledTimes(2);
+    });
+
+    it('uses the newer copy: KV when this data centre is behind, the cache when it is ahead', async () => {
+      vi.stubGlobal('fetch', fakeUpstream().handler);
+      await fillUntilComplete();
+      const local = cacheStore.get(STATE_KEY).clone();
+
+      // KV holds a newer state (another data centre found a fourth round)
+      const newer = JSON.parse(await local.clone().text());
+      newer.rounds[4] = { fetchedAt: NOW, events: newer.rounds[3].events.map(e => ({ ...e, round: 4 })) };
+      newer.savedAt = NOW + HOUR;
+      kv.store.set(KV_KEY, JSON.stringify(newer));
+      vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({}, 429)));
+      throttle.cooldownUntil = 0;
+      const fromKv = await (await getFresh()).json();
+      expect(fromKv.races.map(r => r.round)).toContain('4');
+
+      // And an older KV copy loses to this data centre's cache
+      const older = { ...newer, rounds: {}, savedAt: 1 };
+      kv.store.set(KV_KEY, JSON.stringify(older));
+      cacheStore.set(STATE_KEY, local);
+      throttle.cooldownUntil = 0;
+      const fromCache = await (await getFresh()).json();
+      expect(fromCache.races.length).toBeGreaterThan(0);
+    });
+
+    it('carries on with the cache when KV fails', async () => {
+      kv.get.mockRejectedValue(new Error('KV down'));
+      kv.put.mockRejectedValue(new Error('KV write limit'));
+      vi.stubGlobal('fetch', fakeUpstream().handler);
+      expect((await get()).status).toBe(200);
+    });
+
+    it('ignores a KV entry for another series or version', async () => {
+      kv.store.set(KV_KEY, JSON.stringify({ ...emptyState('f3'), savedAt: NOW }));
+      vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({}, 429)));
+      expect((await get()).status).toBe(503);
+    });
   });
 
   it('ignores an expired cooldown marker', async () => {
