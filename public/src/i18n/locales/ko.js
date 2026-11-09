@@ -187,6 +187,8 @@ export const ko = {
       "Circuit Weather가 일일 서버 한도를 모두 사용하여 레이스 일정, 레이더, 기상 특보를 불러올 수 없습니다. {{time}}에 다시 이용할 수 있습니다.",
     serverUnavailable:
       "Circuit Weather 서버가 응답하지 않아 레이스 일정, 레이더, 기상 특보를 불러올 수 없습니다. 잠시 후 다시 시도해 주세요.",
+    circuitLocationMissing:
+      "이 서킷의 위치가 아직 불러와지지 않아 지도에 표시할 수 없고 예보도 없습니다. 불러오는 즉시 여기에 표시됩니다.",
     usingFallbackSource:
       "기본 일정 소스(api.jolpi.ca)를 사용할 수 없습니다 — 예비 소스(api.openf1.org)의 데이터를 표시합니다.",
     sessionError: "세션 오류",

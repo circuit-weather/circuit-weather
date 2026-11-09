@@ -178,6 +178,8 @@ export const zhCN = {
       "Circuit Weather 已用完服务器的每日额度，赛程、雷达和天气预警暂时无法加载，将于 {{time}} 恢复。",
     serverUnavailable:
       "Circuit Weather 服务器无响应，赛程、雷达和天气预警暂时无法加载。请稍后重试。",
+    circuitLocationMissing:
+      "该赛道的位置尚未加载，地图无法显示，也没有天气预报。加载完成后会立即显示在这里。",
     usingFallbackSource:
       "主数据源 (api.jolpi.ca) 不可用 — 正在显示备用数据源 (api.openf1.org) 的数据。",
     sessionError: "赛段错误",

@@ -2687,6 +2687,58 @@ describe('CircuitWeatherApp series selection', () => {
             expect(centre).not.toHaveBeenCalled();
         });
 
+        // A round listed before its venue was looked up: nowhere to centre the map
+        it('says when the round has no location yet, until it arrives', async () => {
+            const noVenue = { circuitId: null, circuitName: '', Location: { lat: '', long: '', country: 'Portugal' } };
+            app.seriesApi = seriesApi({ races: [f2Race(13, { Circuit: noVenue })], complete: false });
+            await app.loadSchedule('f2');
+            app.ui.rainBanner = createMockElement('rainBanner');
+            app.ui.mobileRainBanner = createMockElement('mobileRainBanner');
+            app.centreOnCircuit = vi.fn();
+            app.scheduleLiveWeatherUpdate = vi.fn();
+            app.updateWindField = vi.fn();
+            app.sessionRainVerdict = null;
+            app.trackRainStatus = null;
+
+            app.selectedRace = app.races[0];
+            app._resolveRoundMapCenter(app.selectedRace);
+            expect(app.circuitLocationMissing).toBe(true);
+            expect(app.centreOnCircuit).not.toHaveBeenCalled();
+            for (const banner of [app.ui.rainBanner, app.ui.mobileRainBanner]) {
+                expect(banner.hidden).toBe(false);
+                expect(banner.textContent).toBe(i18n.t('errors.circuitLocationMissing'));
+                expect(banner.setAttribute).toHaveBeenCalledWith('data-level', 'outage');
+            }
+
+            // The venue arrives with a later refresh: centre there and drop the message
+            app.seriesApi.getSchedule.mockResolvedValue({ races: [f2Race(13)], complete: true });
+            await vi.advanceTimersByTimeAsync(65000);
+            expect(app.centreOnCircuit).toHaveBeenCalledWith(25.49, expect.any(Number));
+            expect(app.circuitLocationMissing).toBe(false);
+            expect(app.ui.rainBanner.hidden).toBe(true);
+        });
+
+        it('shows no location message for a round with a track outline or coordinates', async () => {
+            app.centreOnCircuit = vi.fn();
+            app.scheduleLiveWeatherUpdate = vi.fn();
+            app.updateWindField = vi.fn();
+            app.renderRainBanner = vi.fn();
+
+            // Coordinates from the schedule
+            app.selectedRace = { location: { lat: '25.49', long: '51.45' }, circuit: { circuitId: null } };
+            app._resolveRoundMapCenter(app.selectedRace);
+            expect(app.circuitLocationMissing).toBe(false);
+
+            // Only a track outline (the OpenF1 fallback has no coordinates)
+            app.trackLayer.loadTrack = vi.fn().mockResolvedValue([26.05, 50.52]);
+            app.selectedRace = { location: { lat: '', long: '' }, circuit: { circuitId: 'bahrain' } };
+            app._resolveRoundMapCenter(app.selectedRace);
+            await vi.advanceTimersByTimeAsync(0);
+            expect(app.centreOnCircuit).toHaveBeenLastCalledWith(26.05, 50.52);
+            expect(app.circuitLocationMissing).toBe(false);
+            expect(app.renderRainBanner).not.toHaveBeenCalled();
+        });
+
         it('retries a limited number of times while still partial', async () => {
             app.seriesApi = seriesApi({ races: [f2Race(1)], complete: false });
             await app.loadSchedule('f2');

@@ -186,6 +186,8 @@ export const en = {
       "Circuit Weather has used up its daily server allowance, so race schedules, radar and weather warnings can't load. They'll be back at {{time}}.",
     serverUnavailable:
       "Circuit Weather's server isn't responding, so race schedules, radar and weather warnings can't load. Please try again shortly.",
+    circuitLocationMissing:
+      "This circuit's location hasn't loaded yet, so the map can't show it and there's no forecast. It'll appear here as soon as it does.",
     usingFallbackSource:
       "Primary schedule source (api.jolpi.ca) is unavailable — showing data from the backup source (api.openf1.org).",
     sessionError: "Session Error",

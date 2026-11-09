@@ -187,6 +187,8 @@ export const ja = {
       "Circuit Weather はサーバーの1日の上限に達したため、レース日程・レーダー・気象警報を読み込めません。{{time}} に復旧します。",
     serverUnavailable:
       "Circuit Weather のサーバーが応答しないため、レース日程・レーダー・気象警報を読み込めません。しばらくしてからもう一度お試しください。",
+    circuitLocationMissing:
+      "このサーキットの位置情報はまだ読み込まれていないため、地図に表示できず予報もありません。読み込まれ次第ここに表示されます。",
     usingFallbackSource:
       "プライマリのデータソース (api.jolpi.ca) が利用できないため、バックアップソース (api.openf1.org) のデータを表示しています。",
     sessionError: "セッションエラー",

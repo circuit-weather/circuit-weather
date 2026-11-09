@@ -187,6 +187,8 @@ export const it = {
       "Circuit Weather ha esaurito la quota giornaliera del server, quindi calendari, radar e allerte meteo non possono essere caricati. Torneranno alle {{time}}.",
     serverUnavailable:
       "Il server di Circuit Weather non risponde, quindi calendari, radar e allerte meteo non possono essere caricati. Riprova tra poco.",
+    circuitLocationMissing:
+      "La posizione di questo circuito non è ancora stata caricata, quindi la mappa non può mostrarlo e non ci sono previsioni. Apparirà qui appena disponibile.",
     usingFallbackSource:
       "La fonte primaria (api.jolpi.ca) non è disponibile: dati mostrati dalla fonte di backup (api.openf1.org).",
     sessionError: "Errore sessione",

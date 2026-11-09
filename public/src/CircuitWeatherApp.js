@@ -74,6 +74,9 @@ export class CircuitWeatherApp {
         this.countdown = new CountdownTimer();
         this.recentreControl = null;
         this.currentCircuitCenter = null;
+        // The selected round has no venue coordinates and no track outline to centre on
+        // (a partial non-F1 schedule can list a round before its venue is looked up)
+        this.circuitLocationMissing = false;
         this.races = [];
         this.selectedRace = null;
         this.selectedSession = null;
@@ -889,6 +892,9 @@ export class CircuitWeatherApp {
         if (outage) {
             // Nothing from the Worker loads, so this matters more than any rain
             message = { level: 'outage', text: outage };
+        } else if (this.circuitLocationMissing && this.selectedRace) {
+            // No location, so no radar at the track or forecast either
+            message = { level: 'outage', text: i18n.t('errors.circuitLocationMissing') };
         } else if (status && TRACK_RAIN_KEYS[status.state] && session
             && isNowcastRelevant(sessionTime, this.sessionEndMs(session), now)) {
             message = { level: 'likely', text: i18n.t(TRACK_RAIN_KEYS[status.state], { minutes: status.minutes }) };
@@ -979,10 +985,13 @@ export class CircuitWeatherApp {
         const schedLat = race.location ? parseFloat(race.location.lat) : NaN;
         const schedLng = race.location ? parseFloat(race.location.long) : NaN;
         const hasSchedCoords = Number.isFinite(schedLat) && Number.isFinite(schedLng);
+        this.setCircuitLocationMissing(false);
 
         const applyCenter = (trackCenter) => {
             // A newer round may have been selected while the track was loading.
             if (this.selectedRace !== race) return;
+            // Nowhere to go: say so rather than leave the map on the last circuit
+            this.setCircuitLocationMissing(!trackCenter && !hasSchedCoords);
             if (trackCenter) {
                 this.centreOnCircuit(trackCenter[0], trackCenter[1]);
             } else if (hasSchedCoords) {
@@ -998,6 +1007,12 @@ export class CircuitWeatherApp {
         } else {
             applyCenter(null);
         }
+    }
+
+    setCircuitLocationMissing(missing) {
+        if (this.circuitLocationMissing === missing) return;
+        this.circuitLocationMissing = missing;
+        this.renderRainBanner();
     }
 
     _resetRoundUIState() {
