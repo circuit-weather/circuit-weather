@@ -16,6 +16,12 @@
  *   hourly, so normal traffic costs a handful of upstream calls a day.
  * - A 429 stops all calls for RATE_LIMIT_COOLDOWN_MS, shared across isolates in the
  *   data centre through a cache marker.
+ * - The season state is also kept in Workers KV (the SCHEDULE_KV binding), shared by
+ *   every data centre. TheSportsDB often rate limits the Worker's shared outgoing
+ *   addresses and the Cache API copy is per data centre and can be evicted, so
+ *   without it a 429 could leave a data centre with nothing to serve. Each request
+ *   uses the newer of the two copies; KV is written at most every
+ *   KV_SAVE_INTERVAL_MS per series (the free plan allows 1,000 writes a day).
  */
 
 import {
@@ -40,6 +46,9 @@ const STATE_VERSION = 1;
 const INTERNAL_ORIGIN = 'https://thesportsdb.internal';
 const STATE_CACHE_TTL = 180 * 24 * 60 * 60; // Kept long so it doubles as last known good
 const COOLDOWN_KEY = `${INTERNAL_ORIGIN}/cooldown`;
+// Ten series, each written to KV at most every 30 minutes: under 500 writes a day
+export const KV_SAVE_INTERVAL_MS = 30 * 60 * 1000;
+const kvKey = (series) => `state/${series}`;
 
 // Upstream calls per request: a cold cache fills over a few requests, and one data
 // centre stays well under the 30/minute limit and the Worker subrequest limit
@@ -99,23 +108,52 @@ function stateKey(series) {
   return new Request(`${INTERNAL_ORIGIN}/state/${series}`);
 }
 
-async function loadState(cache, series) {
+const isValidState = (state, series) =>
+  state?.version === STATE_VERSION && state.series === series && Boolean(state.rounds && state.venues);
+
+async function readCachedState(cache, series) {
   try {
     const cached = await cache.match(stateKey(series));
-    if (cached) {
-      const state = await cached.json();
-      if (state?.version === STATE_VERSION && state.series === series && state.rounds && state.venues) return state;
-    }
+    const state = cached ? await cached.json() : null;
+    return isValidState(state, series) ? state : null;
   } catch {
-    // Corrupt entry: rebuild
+    return null; // Corrupt entry: ignored
   }
-  return emptyState(series);
 }
 
-function saveState(cache, state, ctx) {
-  ctx.waitUntil(cache.put(stateKey(state.series), new Response(JSON.stringify(state), {
+async function readStoredState(env, series) {
+  if (!env?.SCHEDULE_KV) return null;
+  try {
+    const state = await env.SCHEDULE_KV.get(kvKey(series), 'json');
+    return isValidState(state, series) ? state : null;
+  } catch {
+    return null; // KV unavailable or corrupt: the cache copy (or a rebuild) will do
+  }
+}
+
+/**
+ * The newer of this data centre's cached state and the shared copy in KV, which
+ * holds what other data centres fetched (or survives this one's cache eviction).
+ */
+async function loadState(cache, series, env) {
+  const copies = (await Promise.all([readCachedState(cache, series), readStoredState(env, series)])).filter(Boolean);
+  if (copies.length === 0) return emptyState(series);
+  return copies.reduce((a, b) => ((b.savedAt ?? 0) > (a.savedAt ?? 0) ? b : a));
+}
+
+function saveState(cache, state, ctx, env, now) {
+  state.savedAt = now;
+  const kvDue = Boolean(env?.SCHEDULE_KV) && now - (state.kvSavedAt ?? 0) >= KV_SAVE_INTERVAL_MS;
+  if (kvDue) state.kvSavedAt = now;
+  const body = JSON.stringify(state);
+  ctx.waitUntil(cache.put(stateKey(state.series), new Response(body, {
     headers: { 'Content-Type': 'application/json', 'Cache-Control': `public, max-age=${STATE_CACHE_TTL}` },
   })));
+  if (kvDue) {
+    // A failed write (e.g. the daily write limit) only means this copy stays local
+    // Expires like the cache copy: the privacy policy keeps the last copy up to 180 days
+    ctx.waitUntil(env.SCHEDULE_KV.put(kvKey(state.series), body, { expirationTtl: STATE_CACHE_TTL }).catch(() => {}));
+  }
 }
 
 async function isCoolingDown(cache) {
@@ -410,14 +448,14 @@ export async function handleScheduleRequest(request, env, ctx, url) {
   if (cached) return createCacheHitResponse(cached, request);
 
   const now = Date.now();
-  const state = await loadState(cache, series);
+  const state = await loadState(cache, series, env);
 
   // Why upstream gave nothing, returned with a 503 to make failures diagnosable
   let failure = 'cooldown';
   if (!(await isCoolingDown(cache))) {
     const result = await fillState(state, SERIES[series].leagueId, env, now);
     failure = result.failure;
-    if (result.changed) saveState(cache, state, ctx);
+    if (result.changed) saveState(cache, state, ctx, env, now);
     if (result.limited && throttle.isCoolingDown()) recordCooldown(cache, ctx);
   }
 

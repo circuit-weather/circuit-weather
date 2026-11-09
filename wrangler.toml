@@ -18,6 +18,13 @@ custom_domain = true
 [placement]
 mode = "smart"
 
+# Durable copy of each non-F1 series' season state (src/handlers/schedule.js), shared
+# by every data centre: TheSportsDB often rate limits the Worker's shared outgoing
+# addresses, and the Cache API copy is per data centre and can be evicted
+[[kv_namespaces]]
+binding = "SCHEDULE_KV"
+id = "71eb1cc283414eab9da26a5769b2804e"
+
 # Worker Previews (per-branch/PR environments). Previews do not inherit
 # production vars, so set them here. Secrets (MAPBOX_ACCESS_TOKEN,
 # THESPORTSDB_API_KEY) are set separately with
@@ -25,3 +32,8 @@ mode = "smart"
 # https://developers.cloudflare.com/workers/previews/configuration/
 [previews.vars]
 ENVIRONMENT = "preview"
+
+# Previews get their own namespace, so testing never changes production's copy
+[[previews.kv_namespaces]]
+binding = "SCHEDULE_KV"
+id = "4ea47e6db6454056b9cd687e1bc5e6a2"
