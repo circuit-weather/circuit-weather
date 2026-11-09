@@ -639,7 +639,7 @@ describe('WeatherRadar Lifecycle & Playback', () => {
     });
 
     describe('Additional Coverage', () => {
-        it('updateTheme re-adds layers if they were on the map or visible', () => {
+        it('updateTheme keeps layers the new style carried over and re-adds the visible one if wiped', () => {
             // Simulate Mapbox environment by not having hasLayer method
             radar.map.hasLayer = undefined;
             radar.map.getLayer = vi.fn((id) => id === 'layer-on-map' ? {} : null);
@@ -647,33 +647,25 @@ describe('WeatherRadar Lifecycle & Playback', () => {
             const mockLayerOnMap = { id: 'layer-on-map', addTo: vi.fn(), setOpacity: vi.fn() };
             const mockLayerNotOnMap = { id: 'layer-not-on-map', addTo: vi.fn(), setOpacity: vi.fn() };
             const mockLayerVisible = { id: 'layer-visible', addTo: vi.fn(), setOpacity: vi.fn() };
+            const recreated = { id: 'recreated', addTo: vi.fn(), setOpacity: vi.fn() };
 
-            // Set up 3 layers: index 0 is on map, index 1 is not, index 2 is visible
+            // Index 0 survived the style change, 1 was wiped, 2 (visible) was wiped
             radar.layers = [ mockLayerOnMap, mockLayerNotOnMap, mockLayerVisible ];
             radar.visibleLayerIndex = 2;
-
-            vi.spyOn(radar, 'getLayer').mockImplementation((index) => {
-                if (index === 0) return mockLayerOnMap;
-                if (index === 1) return mockLayerNotOnMap;
-                if (index === 2) return mockLayerVisible;
-            });
+            vi.spyOn(radar, 'getLayer').mockImplementation(() => recreated);
 
             radar.updateTheme();
 
-            // Check that radar.layers were reset to null
-            expect(radar.layers).toEqual([null, null, null]);
-
-            // Check layer 0 (was on map)
-            expect(mockLayerOnMap.addTo).toHaveBeenCalledWith(radar.map);
-            expect(mockLayerOnMap.setOpacity).toHaveBeenCalledWith(0);
-
-            // Check layer 1 (not on map, not visible)
+            // Kept as is: re-creating it would put a second copy on the map
+            expect(radar.layers[0]).toBe(mockLayerOnMap);
+            expect(mockLayerOnMap.addTo).not.toHaveBeenCalled();
+            // Wiped and hidden: dropped, re-added later by playback/preloading
+            expect(radar.layers[1]).toBeNull();
             expect(mockLayerNotOnMap.addTo).not.toHaveBeenCalled();
-
-            // Check layer 2 (visible)
-            expect(mockLayerVisible.addTo).toHaveBeenCalledWith(radar.map);
-            // In tests we mock CONFIG but there's no import here. We'll verify setOpacity was called.
-            expect(mockLayerVisible.setOpacity).toHaveBeenCalled();
+            // Wiped and visible: re-created straight away
+            expect(radar.getLayer).toHaveBeenCalledWith(2);
+            expect(recreated.addTo).toHaveBeenCalledWith(radar.map);
+            expect(recreated.setOpacity).toHaveBeenCalled();
         });
 
         it('updateTheme returns early if using Leaflet (hasLayer exists)', () => {

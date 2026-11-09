@@ -160,4 +160,32 @@ describe('WeatherRadar on Mapbox: each frame keeps its own layer', () => {
             expect(radar.layers[1]).toBe(observed);
         });
     });
+
+    // A theme change (or a rebuild after a lost WebGL context) reloads the Mapbox
+    // style. Depending on how Mapbox applies it, the radar's runtime layers are either
+    // wiped or carried over to the new style; either way one frame must stay on screen
+    describe('after the map style is reloaded', () => {
+        const atFrame = (i) => { radar.currentFrame = i; radar.showFrame(i); };
+
+        it('keeps the layers the new style carried over, adding none', () => {
+            atFrame(2);
+            const before = map.layers.size;
+            radar.updateTheme();
+            expect(map.layers.size).toBe(before);
+            expect(shown()).toHaveLength(1);
+            radar.showFrame(3);
+            expect(shown()).toHaveLength(1);
+        });
+
+        it('re-adds the visible frame when the style wiped them', () => {
+            atFrame(2);
+            map.layers.clear();
+            map.sources.clear();
+            radar.updateTheme();
+            expect(shown()).toHaveLength(1);
+            expect(map.sources.get(shown()[0].source).tiles).toEqual([radar.frames[2].url]);
+            radar.showFrame(3);
+            expect(shown()).toHaveLength(1);
+        });
+    });
 });
