@@ -421,6 +421,42 @@ describe('Worker /api/schedule/{series}', () => {
       expect(upstream.calls).not.toContain('eventsround.php:1');
     });
 
+    // Under rate limiting a finished season can take a long time to fetch in full;
+    // the league listing next season's opener as its next event says it is over
+    describe('with only part of the finished season fetched', () => {
+      const partialState = (eventDate) => ({
+        ...emptyState('f2'),
+        season: '2026', seasonFetchedAt: AFTER_SEASON,
+        rounds: { 1: { fetchedAt: AFTER_SEASON, events: [{ round: 1, name: 'R1 Feature Race', date: eventDate, timestamp: `${eventDate}T15:00:00`, venueId: '101' }] } },
+        venues: { 101: { fetchedAt: AFTER_SEASON, name: 'Venue 1', locality: '', country: '', coords: null } },
+      });
+      const withState = (state) => cacheStore.set(STATE_KEY, jsonResponse(state));
+
+      it("moves on once the league's next event is next season's", async () => {
+        vi.setSystemTime(AFTER_SEASON);
+        withState(partialState('2026-03-01'));
+        vi.stubGlobal('fetch', fakeUpstream({ lastRound: 3, next: 1, nextSeason: '2027', following: '2027' }).handler);
+        const body = await (await get()).json();
+        expect(body.season).toBe('2027');
+        expect(body.races.map(r => r.round)).toEqual(['1']);
+        expect(body.races[0].date).toBe('2027-03-07');
+      });
+
+      it('stays while a fetched round is still to come', async () => {
+        vi.setSystemTime(AFTER_SEASON);
+        withState(partialState('2026-12-01'));
+        vi.stubGlobal('fetch', fakeUpstream({ lastRound: 3, next: 1, nextSeason: '2027', following: '2027' }).handler);
+        expect((await (await get()).json()).season).toBe('2026');
+      });
+
+      it("stays while the league's next event is still this season's", async () => {
+        vi.setSystemTime(AFTER_SEASON);
+        withState(partialState('2026-03-01'));
+        vi.stubGlobal('fetch', fakeUpstream({ lastRound: 3, next: 2, following: '2027' }).handler);
+        expect((await (await get()).json()).season).toBe('2026');
+      });
+    });
+
     it('waits until the final round is well past', async () => {
       const upstream = fakeUpstream({ lastRound: 3, next: 0, following: '2027' });
       vi.stubGlobal('fetch', upstream.handler);
