@@ -208,6 +208,42 @@ describe('openf1', () => {
             expect(races[1].round).toBe('2');
         });
 
+        // OpenF1 keeps cancelled rounds (2026: Bahrain and Saudi Arabia in April)
+        // with is_cancelled: true; Jolpica drops them, so counting them would put
+        // every later round two numbers ahead of Jolpica's
+        it('skips cancelled rounds, so round numbers match Jolpica', async () => {
+            const meeting = (key, name, start, extra = {}) => ({
+                meeting_key: key, circuit_key: 0, meeting_name: name, date_start: start, ...extra,
+            });
+            const race = (key, date, extra = {}) => ({
+                meeting_key: key, session_type: 'Race', date_start: `${date}T15:00:00Z`, ...extra,
+            });
+            const races = await scheduleFrom(
+                [
+                    meeting(3, 'Japanese Grand Prix', '2026-03-27T02:30:00Z'),
+                    meeting(4, 'Bahrain Grand Prix', '2026-04-10T11:30:00Z', { is_cancelled: true }),
+                    meeting(5, 'Saudi Arabian Grand Prix', '2026-04-17T13:30:00Z', { is_cancelled: false }),
+                    meeting(6, 'Miami Grand Prix', '2026-05-01T16:30:00Z', { is_cancelled: false }),
+                ],
+                [
+                    race(3, '2026-03-29'),
+                    race(4, '2026-04-12', { is_cancelled: true }),
+                    // Cancelled at session level only
+                    race(5, '2026-04-19', { is_cancelled: true }),
+                    { meeting_key: 6, session_type: 'Sprint', date_start: '2026-05-02T16:00:00Z', is_cancelled: true },
+                    race(6, '2026-05-03', { is_cancelled: false }),
+                ],
+            );
+
+            expect(races.map(r => `${r.round} ${r.raceName}`)).toEqual([
+                '1 Japanese Grand Prix',
+                '2 Miami Grand Prix',
+            ]);
+            // A cancelled session is left out of a race that goes ahead
+            expect(races[1].Sprint).toBeUndefined();
+            expect(races[1].date).toBe('2026-05-03');
+        });
+
         it('maps circuit_key to the Ergast circuitId', async () => {
             const races = await scheduleFrom(meetings, sessions);
             expect(races[0].Circuit.circuitId).toBe('bahrain');
