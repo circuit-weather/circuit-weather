@@ -187,6 +187,8 @@ export const es = {
       "Circuit Weather ha agotado su cuota diaria de servidor, así que no se pueden cargar los calendarios, el radar ni los avisos meteorológicos. Volverán a las {{time}}.",
     serverUnavailable:
       "El servidor de Circuit Weather no responde, así que no se pueden cargar los calendarios, el radar ni los avisos meteorológicos. Inténtalo de nuevo en unos minutos.",
+    circuitLocationMissing:
+      "La ubicación de este circuito aún no se ha cargado, así que el mapa no puede mostrarlo y no hay pronóstico. Aparecerá aquí en cuanto se cargue.",
     usingFallbackSource:
       "La fuente principal (api.jolpi.ca) no está disponible: mostrando datos de la fuente de respaldo (api.openf1.org).",
     sessionError: "Error de sesión",

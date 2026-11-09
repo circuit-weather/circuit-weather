@@ -189,6 +189,8 @@ export const hu = {
       "A Circuit Weather elérte a napi szerverkeretét, ezért a versenynaptárak, a radar és az időjárási figyelmeztetések nem tölthetők be. {{time}}-kor újra elérhetők lesznek.",
     serverUnavailable:
       "A Circuit Weather szervere nem válaszol, ezért a versenynaptárak, a radar és az időjárási figyelmeztetések nem tölthetők be. Kérjük, próbálja újra hamarosan.",
+    circuitLocationMissing:
+      "A pálya helyszíne még nem töltődött be, ezért a térkép nem tudja megjeleníteni, és nincs előrejelzés. Amint betöltődik, itt megjelenik.",
     usingFallbackSource:
       "Az elsődleges adatforrás (api.jolpi.ca) nem érhető el – az adatok a tartalék forrásból (api.openf1.org) származnak.",
     sessionError: "Esemény hiba",

@@ -187,6 +187,8 @@ export const nl = {
       "Circuit Weather heeft zijn dagelijkse serverlimiet bereikt, dus raceschema's, radar en weerswaarschuwingen kunnen niet laden. Om {{time}} werkt het weer.",
     serverUnavailable:
       "De server van Circuit Weather reageert niet, dus raceschema's, radar en weerswaarschuwingen kunnen niet laden. Probeer het straks opnieuw.",
+    circuitLocationMissing:
+      "De locatie van dit circuit is nog niet geladen, dus de kaart kan het niet tonen en er is geen verwachting. Zodra die er is, verschijnt het hier.",
     usingFallbackSource:
       "Primaire gegevensbron (api.jolpi.ca) niet beschikbaar — gegevens worden getoond vanaf de back-upbron (api.openf1.org).",
     sessionError: "Sessiefout",

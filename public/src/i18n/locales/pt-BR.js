@@ -188,6 +188,8 @@ export const ptBR = {
       "O Circuit Weather atingiu o limite diário do servidor, então calendários, radar e alertas meteorológicos não podem ser carregados. Eles voltam às {{time}}.",
     serverUnavailable:
       "O servidor do Circuit Weather não está respondendo, então calendários, radar e alertas meteorológicos não podem ser carregados. Tente novamente em instantes.",
+    circuitLocationMissing:
+      "A localização deste circuito ainda não foi carregada, então o mapa não pode mostrá-lo e não há previsão. Ela aparecerá aqui assim que for carregada.",
     usingFallbackSource:
       "A fonte primária (api.jolpi.ca) está indisponível — exibindo dados da fonte de backup (api.openf1.org).",
     sessionError: "Erro de sessão",

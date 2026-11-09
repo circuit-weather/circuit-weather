@@ -189,6 +189,8 @@ export const de = {
       "Circuit Weather hat sein tägliches Serverkontingent aufgebraucht, daher können Rennkalender, Radar und Wetterwarnungen nicht geladen werden. Ab {{time}} Uhr funktioniert es wieder.",
     serverUnavailable:
       "Der Server von Circuit Weather antwortet nicht, daher können Rennkalender, Radar und Wetterwarnungen nicht geladen werden. Bitte versuchen Sie es in Kürze erneut.",
+    circuitLocationMissing:
+      "Der Standort dieser Strecke wurde noch nicht geladen, daher kann die Karte sie nicht anzeigen und es gibt keine Vorhersage. Er erscheint hier, sobald er verfügbar ist.",
     usingFallbackSource:
       "Primäre Datenquelle (api.jolpi.ca) nicht verfügbar – Daten werden von der Backup-Quelle (api.openf1.org) angezeigt.",
     sessionError: "Session-Fehler",
