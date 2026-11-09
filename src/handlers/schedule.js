@@ -303,7 +303,10 @@ async function refreshLeague(state, leagueId, now, spend) {
       state.seasonFetchedAt = now;
     }
   }
-  if (state.season && now - state.nextFetchedAt >= NEXT_ROUND_TTL_MS) {
+  // A state saved before followingListed existed checks straight away rather than
+  // waiting out the TTL, so a finished season can move on at once
+  const nextDue = now - state.nextFetchedAt >= NEXT_ROUND_TTL_MS || state.followingListed === undefined;
+  if (state.season && nextDue) {
     const res = await spend(`eventsnextleague.php?id=${leagueId}`);
     if (res.ok) {
       // Empty once the season has finished. Some leagues already list next season's

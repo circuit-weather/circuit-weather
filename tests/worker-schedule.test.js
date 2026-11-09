@@ -442,6 +442,22 @@ describe('Worker /api/schedule/{series}', () => {
         expect(body.races[0].date).toBe('2027-03-07');
       });
 
+      it('checks a state saved before this check existed straight away', async () => {
+        vi.setSystemTime(AFTER_SEASON);
+        // Next event fetched a minute ago, but no followingListed field yet
+        const old = { ...partialState('2026-03-01'), nextFetchedAt: AFTER_SEASON - 60000 };
+        delete old.followingListed;
+        withState(old);
+        vi.stubGlobal('fetch', fakeUpstream({ lastRound: 3, next: 1, nextSeason: '2027', following: '2027' }).handler);
+        expect((await (await get()).json()).season).toBe('2027');
+
+        // From then on the usual six-hour TTL applies
+        const upstream = fakeUpstream({ lastRound: 3, next: 1, nextSeason: '2027', following: '2027' });
+        vi.stubGlobal('fetch', upstream.handler);
+        await getFresh();
+        expect(upstream.calls).not.toContain('eventsnextleague.php');
+      });
+
       it('stays while a fetched round is still to come', async () => {
         vi.setSystemTime(AFTER_SEASON);
         withState(partialState('2026-12-01'));
