@@ -334,6 +334,32 @@ describe('Worker /api/schedule/{series}', () => {
       expect(kv.put).toHaveBeenCalledTimes(2);
     });
 
+    // e.g. IndyCar moved on to 2027 24 minutes after its last KV write, then nothing
+    // else changed: without a catch-up write KV would keep 2026 indefinitely
+    it('catches KV up with a held-back change once a write is due, even with nothing new', async () => {
+      vi.stubGlobal('fetch', fakeUpstream({ lastRound: 30 }).handler);
+      await getFresh();
+      vi.setSystemTime(NOW + 60000);
+      await getFresh();
+      expect(kv.put).toHaveBeenCalledTimes(1);
+      const latest = await cacheStore.get(STATE_KEY).clone().json();
+      expect(Object.keys(JSON.parse(kv.store.get(KV_KEY)).rounds).length)
+        .toBeLessThan(Object.keys(latest.rounds).length);
+
+      // Half an hour on, TheSportsDB refuses: nothing new, but KV catches up
+      vi.stubGlobal('fetch', vi.fn(async () => jsonResponse({}, 429)));
+      vi.setSystemTime(NOW + KV_SAVE_INTERVAL_MS);
+      await getFresh();
+      expect(kv.put).toHaveBeenCalledTimes(2);
+      expect(JSON.parse(kv.store.get(KV_KEY)).rounds).toEqual(latest.rounds);
+
+      // And only once: KV is now up to date
+      throttle.cooldownUntil = 0;
+      vi.setSystemTime(NOW + 2 * KV_SAVE_INTERVAL_MS);
+      await getFresh();
+      expect(kv.put).toHaveBeenCalledTimes(2);
+    });
+
     it('uses the newer copy: KV when this data centre is behind, the cache when it is ahead', async () => {
       vi.stubGlobal('fetch', fakeUpstream().handler);
       await fillUntilComplete();
