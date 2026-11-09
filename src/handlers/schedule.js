@@ -100,6 +100,8 @@ export function emptyState(series) {
     nextRound: null, nextFetchedAt: 0,
     lastRound: null, endFetchedAt: 0,
     rolloverFetchedAt: 0,
+    // The league's next event is next season's: nothing is left in this one
+    followingListed: false,
     rounds: {}, venues: {},
   };
 }
@@ -253,6 +255,21 @@ export function isSeasonOver(state, now) {
 }
 
 /**
+ * Whether every round fetched so far (at least one) is well past. With the league
+ * listing next season's opener as its next event, that marks the season as over
+ * before all its rounds are known, which can take a while when TheSportsDB is
+ * rate limiting the Worker.
+ */
+function knownRoundsOver(state, now) {
+  const entries = Object.values(state.rounds);
+  if (entries.length === 0) return false;
+  return entries.every(entry => entry.events.every(e => {
+    const t = Date.parse(e.timestamp ? `${e.timestamp}Z` : `${e.date}T00:00:00Z`);
+    return !Number.isFinite(t) || now >= t + SEASON_OVER_AFTER_MS;
+  }));
+}
+
+/**
  * The latest valid season given: the league's current season plus the seasons of
  * its finished events. Some leagues (e.g. IMSA) leave strCurrentSeason on last
  * year all season. Ties keep the earlier argument.
@@ -281,12 +298,15 @@ async function refreshLeague(state, leagueId, now, spend) {
     if (season) {
       if (season !== state.season) {
         // New season: venues stay valid, rounds do not
-        Object.assign(state, { season, rounds: {}, lastRound: null, endFetchedAt: 0, nextRound: null, nextFetchedAt: 0, rolloverFetchedAt: 0 });
+        Object.assign(state, { season, rounds: {}, lastRound: null, endFetchedAt: 0, nextRound: null, nextFetchedAt: 0, rolloverFetchedAt: 0, followingListed: false });
       }
       state.seasonFetchedAt = now;
     }
   }
-  if (state.season && now - state.nextFetchedAt >= NEXT_ROUND_TTL_MS) {
+  // A state saved before followingListed existed checks straight away rather than
+  // waiting out the TTL, so a finished season can move on at once
+  const nextDue = now - state.nextFetchedAt >= NEXT_ROUND_TTL_MS || state.followingListed === undefined;
+  if (state.season && nextDue) {
     const res = await spend(`eventsnextleague.php?id=${leagueId}`);
     if (res.ok) {
       // Empty once the season has finished. Some leagues already list next season's
@@ -294,6 +314,8 @@ async function refreshLeague(state, leagueId, now, spend) {
       const events = Array.isArray(res.data?.events) ? res.data.events : [];
       const next = slimEvents(events.filter(e => !e?.strSeason || e.strSeason === state.season))[0];
       state.nextRound = next ? next.round : null;
+      const following = followingSeason(state.season);
+      state.followingListed = !next && events.some(e => e?.strSeason === following);
       state.nextFetchedAt = now;
     }
   }
@@ -303,9 +325,14 @@ async function refreshLeague(state, leagueId, now, spend) {
  * Once the season is over, moves on to next season as soon as TheSportsDB lists
  * its first round, so that round is the next one rather than nothing. Checked
  * daily: next season's calendar can appear any time over the break.
+ *
+ * Over means every round is known and the last is well past, or, sooner, that the
+ * league's next event is next season's and every round fetched so far is well past
+ * (e.g. IndyCar in November, with only some of its finished season fetched).
  */
 async function rollOverSeason(state, leagueId, now, spend) {
-  if (!isSeasonOver(state, now) || now - (state.rolloverFetchedAt ?? 0) < ROLLOVER_TTL_MS) return;
+  const over = isSeasonOver(state, now) || (state.followingListed === true && knownRoundsOver(state, now));
+  if (!over || now - (state.rolloverFetchedAt ?? 0) < ROLLOVER_TTL_MS) return;
   const next = followingSeason(state.season);
   if (!next) return;
   const res = await spend(`eventsround.php?id=${leagueId}&r=1&s=${next}`);
@@ -319,7 +346,7 @@ async function rollOverSeason(state, leagueId, now, spend) {
     rounds: { 1: { fetchedAt: now, events } },
     lastRound: null, endFetchedAt: 0,
     nextRound: 1, nextFetchedAt: now,
-    rolloverFetchedAt: 0,
+    rolloverFetchedAt: 0, followingListed: false,
   });
 }
 
