@@ -143,9 +143,17 @@ async function loadState(cache, series, env) {
   return copies.reduce((a, b) => ((b.savedAt ?? 0) > (a.savedAt ?? 0) ? b : a));
 }
 
-function saveState(cache, state, ctx, env, now) {
-  state.savedAt = now;
+/**
+ * Saves the state to this data centre's cache, and to KV when a KV write is due.
+ * With changed false (nothing new fetched) it only catches KV up: a change made
+ * within KV_SAVE_INTERVAL_MS of the last KV write is held back, and would
+ * otherwise never reach KV if nothing changed afterwards.
+ */
+function saveState(cache, state, ctx, env, now, { changed = true } = {}) {
   const kvDue = Boolean(env?.SCHEDULE_KV) && now - (state.kvSavedAt ?? 0) >= KV_SAVE_INTERVAL_MS;
+  const kvBehind = (state.savedAt ?? 0) > (state.kvSavedAt ?? 0);
+  if (!changed && !(kvDue && kvBehind)) return;
+  if (changed) state.savedAt = now;
   if (kvDue) state.kvSavedAt = now;
   const body = JSON.stringify(state);
   ctx.waitUntil(cache.put(stateKey(state.series), new Response(body, {
@@ -479,12 +487,15 @@ export async function handleScheduleRequest(request, env, ctx, url) {
 
   // Why upstream gave nothing, returned with a 503 to make failures diagnosable
   let failure = 'cooldown';
+  let changed = false;
   if (!(await isCoolingDown(cache))) {
     const result = await fillState(state, SERIES[series].leagueId, env, now);
     failure = result.failure;
-    if (result.changed) saveState(cache, state, ctx, env, now);
+    changed = result.changed;
     if (result.limited && throttle.isCoolingDown()) recordCooldown(cache, ctx);
   }
+  // Also when nothing changed, so a held-back change still reaches KV
+  saveState(cache, state, ctx, env, now, { changed });
 
   const schedule = assembleSchedule(state, now);
   if (schedule.races.length === 0) {
