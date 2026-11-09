@@ -226,6 +226,15 @@ describe('F1API', () => {
         });
 
         it('persists the source to localStorage and restores it from cache', async () => {
+            const persisted = { timestamp: Date.now(), races: [{ round: '1', raceName: 'Cached Grand Prix', date: '2099-03-01' }], source: 'jolpica' };
+            SafeStorage.getItem.mockReturnValueOnce(JSON.stringify(persisted));
+            const races = await api.getSchedule();
+            expect(races[0].raceName).toBe('Cached Grand Prix');
+            expect(api.scheduleSource).toBe('jolpica');
+            expect(mockFetch).not.toHaveBeenCalled();
+        });
+
+        it('tries Jolpica again rather than reuse a fresh copy from the OpenF1 fallback', async () => {
             const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
             mockFetch.mockResolvedValueOnce({ ok: false, status: 500 }); // Jolpica
             mockOpenF1Success();
@@ -235,11 +244,16 @@ describe('F1API', () => {
             const persisted = JSON.parse(SafeStorage.setItem.mock.calls.at(-1)[1]);
             expect(persisted.source).toBe('openf1');
 
-            // A fresh instance reading that cache should report the same source
+            // Next load: Jolpica is back, so its schedule (and round numbers) win
             const fresh = new F1API();
             SafeStorage.getItem.mockReturnValueOnce(JSON.stringify(persisted));
-            await fresh.getSchedule();
-            expect(fresh.scheduleSource).toBe('openf1');
+            mockFetch.mockResolvedValueOnce({
+                ok: true,
+                json: () => Promise.resolve({ MRData: { RaceTable: { Races: [{ round: '1', raceName: 'Jolpica Grand Prix' }] } } }),
+            });
+            const races = await fresh.getSchedule();
+            expect(races[0].raceName).toBe('Jolpica Grand Prix');
+            expect(fresh.scheduleSource).toBe('jolpica');
             warnSpy.mockRestore();
         });
 

@@ -28,8 +28,12 @@ export class F1API {
                 // SEC: Validate that cachedData.races is an Array to prevent application logic bypass/errors from poisoned localStorage
                 if (cachedData.timestamp && Array.isArray(cachedData.races)) {
                     // A week, or an hour on the day of an event. A finished season
-                    // is re-fetched, to find next season's opener
-                    if (now - cachedData.timestamp < getScheduleCacheMs(cachedData.races, now) && !isScheduleOver(cachedData.races, now)) {
+                    // is re-fetched, to find next season's opener. A copy from the
+                    // OpenF1 fallback is never fresh: Jolpica is tried again on the
+                    // next load (the copy stays a last resort), so a fallback
+                    // schedule doesn't outlive the outage that caused it
+                    const fresh = now - cachedData.timestamp < getScheduleCacheMs(cachedData.races, now);
+                    if (fresh && cachedData.source !== 'openf1' && !isScheduleOver(cachedData.races, now)) {
                         return this.useStoredSchedule(cacheKey, cachedData);
                     }
                     expiredCache = cachedData;

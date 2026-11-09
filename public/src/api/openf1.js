@@ -88,9 +88,15 @@ function transformOpenF1(meetings, sessions) {
         (sessionsByMeeting[s.meeting_key] ??= []).push(s);
     }
 
-    // Filter out pre-season testing (meetings with no Race session) and sort by date
+    // Keep meetings that still have a race: not pre-season testing (no Race
+    // session), and not a cancelled round. OpenF1 keeps cancelled meetings in the
+    // season with is_cancelled: true (2026's Bahrain and Saudi Arabian GPs), and
+    // counting them would number every later round two ahead of Jolpica's, so
+    // links like /f1/20/race would name another race once Jolpica is back
+    const isOn = (item) => item.is_cancelled !== true;
     const raceMeetings = meetings
-        .filter(m => (sessionsByMeeting[m.meeting_key] ?? []).some(s => s.session_type === 'Race'))
+        .filter(m => isOn(m) && (sessionsByMeeting[m.meeting_key] ?? [])
+            .some(s => s.session_type === 'Race' && isOn(s)))
         .map(m => ({ meeting: m, time: new Date(m.date_start).getTime() }))
         .sort((a, b) => a.time - b.time)
         .map(item => item.meeting);
@@ -111,6 +117,7 @@ function transformOpenF1(meetings, sessions) {
         };
 
         for (const s of msessions) {
+            if (!isOn(s)) continue;
             const dt = openF1ToErgastDateTime(s.date_start, s.gmt_offset);
             if (!dt) continue;
             switch (s.session_type) {
