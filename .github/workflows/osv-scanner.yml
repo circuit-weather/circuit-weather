@@ -1,0 +1,36 @@
+name: Vulnerability scan
+
+# Scans EVERY dependency in the repository on each pull request, not only the
+# ones the pull request changes, so a newly published advisory against an
+# existing dependency fails the next pull request instead of going unnoticed.
+# Any severity fails the check unless it is listed in osv-scanner.toml, and
+# entries there are added only by the repository owner's decision (AGENTS.md).
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  osv-scanner:
+    name: OSV-Scanner (all dependencies)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.27.x"
+          cache: false
+
+      - name: Install OSV-Scanner
+        run: go install github.com/google/osv-scanner/v2/cmd/osv-scanner@v2.7.0
+
+      - name: Scan all dependencies
+        run: |
+          "$(go env GOPATH)/bin/osv-scanner" scan source \
+            --recursive \
+            --all-vulns \
+            --config=osv-scanner.toml \
+            .

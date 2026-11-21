@@ -406,6 +406,28 @@ kill -9 <PID>
 
 **Raspberry Pi / Linux ARM:** Please note that the `wrangler` CLI may encounter an `Unsupported platform` error during installation on Linux ARM-based systems (like the Raspberry Pi). Development is recommended on an x86/x64-based machine or Apple Silicon Mac.
 
+## Dependency vulnerability scanning
+
+Every pull request runs `.github/workflows/osv-scanner.yml`, which scans **every** dependency in the repository with [OSV-Scanner](https://google.github.io/osv-scanner/), not just the ones the pull request changes. It fails on any known vulnerability of **any severity** that is not listed in `osv-scanner.toml`.
+
+A pull request that never touched a dependency can still fail this check: it means a new advisory was published against something already in use. Treat it as this pull request's to deal with. It is not a flake, and re-running will not clear it.
+
+### When the scan fails
+
+1. **Investigate every finding.** Record the package, the installed version, the advisory ID and severity, the first fixed version, whether it is a direct or a transitive dependency, and whether it ships at runtime or is dev/build tooling only.
+2. **Fix it where you can without changing functionality.** Upgrade within the existing semver range, bump the direct dependency that pulls it in, or force a patched transitive version with `overrides` (npm) / `pnpm.overrides` (pnpm). Then run this repo's full checks (`pnpm install --frozen-lockfile`, then `pnpm run test:coverage`) and confirm behaviour is unchanged. Put the fix in its own commit and say in the pull request what was fixed and how.
+3. **Otherwise, stop and flag it to the user for a decision.** That covers: no fixed version exists; the fix needs a major/breaking upgrade; or the fix needs changes beyond the dependency bump. Leave the check red. Report the advisory ID and severity, what is affected and whether the vulnerable code is reachable in this project, and the options (wait for a fix, take the breaking upgrade, replace the package, or accept the risk for now).
+
+### The allowlist (`osv-scanner.toml`) is the user's decision, never yours
+
+- **Never add, extend or renew an `[[IgnoredVulns]]` entry unattended.** Do it only when the user has explicitly decided to accept that specific advisory, and say so in the pull request.
+- Every entry needs `id`, a `reason` (why the risk is accepted, who decided it and when) and an `ignoreUntil` date no more than six months ahead.
+- When an entry expires and the scan fails again, investigate again from step 1. Do not just move the date.
+- Remove an entry as soon as the vulnerability is fixed.
+- Do not weaken the scan to get a green check: no `continue-on-error`, no excluded paths or lockfiles, no `--no-resolve`, no dropping `--all-vulns`, no changing when it runs.
+
+Dependabot security-update pull requests (`.github/dependabot.yml`) are reviewed and verified like any other dependency change.
+
 ## Before you start: look at the open pull requests
 
 List the open pull requests and check whether one already touches the file or
