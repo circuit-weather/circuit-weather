@@ -16,7 +16,7 @@ describe('Config Handler (src/handlers/config.js)', () => {
 
   it('returns 200 JSON response with mapboxToken from env', async () => {
     const req = createRequest();
-    const env = { MAPBOX_ACCESS_TOKEN: 'pk.test.123456' };
+    const env = { MAPBOX_ACCESS_TOKEN: 'test-token-test' };
 
     const res = handleConfigRequest(req, env);
 
@@ -26,7 +26,7 @@ describe('Config Handler (src/handlers/config.js)', () => {
 
     const body = await res.json();
     expect(body).toEqual({
-      mapboxToken: 'pk.test.123456'
+      mapboxToken: 'test-token-test'
     });
   });
 
@@ -46,7 +46,7 @@ describe('Config Handler (src/handlers/config.js)', () => {
     const req = createRequest('/api/config', {
       'Sec-Fetch-Dest': 'script'
     });
-    const env = { MAPBOX_ACCESS_TOKEN: 'pk.test.123456' };
+    const env = { MAPBOX_ACCESS_TOKEN: 'test-token-test' };
 
     const res = handleConfigRequest(req, env);
 
@@ -57,7 +57,7 @@ describe('Config Handler (src/handlers/config.js)', () => {
 
   it('includes standard security headers in the response', () => {
     const req = createRequest();
-    const env = { MAPBOX_ACCESS_TOKEN: 'pk.test.123456' };
+    const env = { MAPBOX_ACCESS_TOKEN: 'test-token-test' };
 
     const res = handleConfigRequest(req, env);
 
@@ -70,7 +70,7 @@ describe('Config Handler (src/handlers/config.js)', () => {
     const req = createRequest('/api/config', {
       Origin: 'https://circuit-weather.racing'
     });
-    const env = { MAPBOX_ACCESS_TOKEN: 'pk.test.123456' };
+    const env = { MAPBOX_ACCESS_TOKEN: 'test-token-test' };
 
     const res = handleConfigRequest(req, env);
 
@@ -82,7 +82,7 @@ describe('Config Handler (src/handlers/config.js)', () => {
     const req = createRequest('/api/config', {
       Origin: 'https://unauthorized-domain.com'
     });
-    const env = { MAPBOX_ACCESS_TOKEN: 'pk.test.123456' };
+    const env = { MAPBOX_ACCESS_TOKEN: 'test-token-test' };
 
     const res = handleConfigRequest(req, env);
 
