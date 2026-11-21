@@ -428,6 +428,41 @@ A pull request that never touched a dependency can still fail this check: it mea
 
 Dependabot security-update pull requests (`.github/dependabot.yml`) are reviewed and verified like any other dependency change.
 
+## Code, workflow and secret scanning
+
+Three more checks run on every pull request. Like the dependency scan, each one looks at the **whole repository**, not just what the pull request changes, and any finding fails the check. Treat a failure as this pull request's to deal with, including on code it never touched.
+
+| Workflow | Tool | What it checks |
+|---|---|---|
+| `.github/workflows/codeql.yml` | GitHub CodeQL (`security-extended`) | This repository's own code: injection, path traversal, SSRF, unsafe redirects, XSS and similar, plus the workflow files themselves (`actions`) |
+| `.github/workflows/zizmor.yml` | zizmor | GitHub Actions workflows, composite actions and `dependabot.yml`: unpinned actions, over-broad permissions, credentials left in checkouts, template injection, dangerous triggers, known-vulnerable or impostor actions |
+| `.github/workflows/gitleaks.yml` | gitleaks | The **entire git history** for committed credentials (API keys, tokens, private keys) |
+
+### When one of them fails
+
+Follow the same three steps as for the dependency scan: **investigate** every finding; **fix it** where you can without changing functionality and run this repo's checks; **otherwise stop and flag it to the user** with what you found and the options, leaving the check red.
+
+- **CodeQL.** Trace the flagged data flow and decide whether it is reachable with attacker-controlled input. A genuine issue gets a real fix, such as validation, encoding or an allowlist. Do not change code only to silence the query.
+- **zizmor.**
+  - Pin every third-party action to a full commit SHA with the version in a trailing comment (`uses: owner/action@<40-char sha> # vX.Y.Z`). Resolve the SHA from the tag; never guess one.
+  - Give every workflow or job an explicit least-privilege `permissions:` block.
+  - Set `persist-credentials: false` on every `actions/checkout` whose job does not push with the checkout's token.
+  - Pass `${{ }}` values to `run:` scripts through `env:` rather than inlining them.
+  - Triggers that strangers can fire (`issue_comment`, `pull_request_target`, `workflow_run`) are a design decision for the user.
+- **gitleaks.**
+  - A real secret in history is **already leaked**: this repository is public. Tell the user immediately so the credential can be rotated or revoked. Rewriting history does not undo the exposure, and is never done without the user.
+  - Never print, echo or paste a found secret anywhere, including pull requests, comments, commit messages and logs. The scan runs with `--redact` for this reason.
+
+### Suppressions are the user's decision, never yours
+
+Each tool has a way to mute a finding:
+- CodeQL: query filters, `paths-ignore` or a dismissed alert;
+- zizmor: `# zizmor: ignore[...]` or a `zizmor.yml`;
+- gitleaks: `.gitleaksignore` or `# gitleaks:allow`;
+- Ruff: `# noqa`.
+
+**Never add, widen or renew any of them unattended.** Add one only when the user has explicitly accepted that specific finding, record why and who decided next to it, and say so in the pull request. Do not weaken the checks either: no `continue-on-error`, no lowering `min-severity` or the query suite, no excluding paths, no changing when they run.
+
 ## Before you start: look at the open pull requests
 
 List the open pull requests and check whether one already touches the file or

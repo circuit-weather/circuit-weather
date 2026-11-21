@@ -1,0 +1,30 @@
+name: Workflow security (zizmor)
+
+# Audits every GitHub Actions workflow, composite action and the Dependabot
+# config in this repository with zizmor on each pull request, including the
+# online audits (impostor commits, known-vulnerable actions). Any finding of
+# any severity fails the check. Findings are fixed or taken to the owner; they
+# are never suppressed unattended (see AGENTS.md).
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  zizmor:
+    name: zizmor (all workflows)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - uses: zizmorcore/zizmor-action@45d7276c9ca790aabd705e31ca99c6185c3e76dd # v0.8.1
+        with:
+          version: "1.32.0"
+          # Plain job failure + inline annotations rather than a Security-tab upload,
+          # so the check itself goes red on any finding.
+          advanced-security: false
+          annotations: true
