@@ -3,6 +3,7 @@
   "version": "1.1.1",
   "description": "Real-time F1 race circuit weather radar application.",
   "type": "module",
+  "packageManager": "pnpm@9.15.9",
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy",
