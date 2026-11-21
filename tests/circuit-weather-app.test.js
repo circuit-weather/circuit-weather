@@ -63,15 +63,12 @@ const documentMock = {
 };
 
 vi.stubGlobal('document', documentMock);
-vi.stubGlobal('ResizeObserver', vi.fn().mockImplementation(() => ({
-    observe: vi.fn(),
-    unobserve: vi.fn(),
-    disconnect: vi.fn(),
-})));
-vi.stubGlobal('MutationObserver', vi.fn().mockImplementation(() => ({
-    observe: vi.fn(),
-    disconnect: vi.fn(),
-})));
+vi.stubGlobal('ResizeObserver', vi.fn().mockImplementation(function () {
+    return { observe: vi.fn(), unobserve: vi.fn(), disconnect: vi.fn() };
+}));
+vi.stubGlobal('MutationObserver', vi.fn().mockImplementation(function () {
+    return { observe: vi.fn(), disconnect: vi.fn() };
+}));
 vi.stubGlobal('window', {
     matchMedia: vi.fn(() => ({
         matches: false,

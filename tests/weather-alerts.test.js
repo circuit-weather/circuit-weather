@@ -156,7 +156,7 @@ describe('WeatherAlerts', () => {
     it('draws Mapbox polygons coloured by severity with popups', async () => {
         const map = createMapboxMap();
         const popup = { setLngLat: vi.fn().mockReturnThis(), setDOMContent: vi.fn().mockReturnThis(), addTo: vi.fn() };
-        vi.stubGlobal('mapboxgl', { Popup: vi.fn(() => popup) });
+        vi.stubGlobal('mapboxgl', { Popup: vi.fn(function () { return popup; }) });
 
         const alerts = new WeatherAlerts(map);
         alerts.setLocation(52, -1);

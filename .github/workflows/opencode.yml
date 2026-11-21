@@ -8,9 +8,13 @@ on:
 
 jobs:
   opencode:
+    # Only people with write access may start the agent: it runs with
+    # contents/pull-requests write and the OpenRouter key, and a comment is
+    # all it takes to steer it.
     if: |
-      contains(github.event.comment.body, '/oc') ||
-      contains(github.event.comment.body, '/opencode')
+      contains(fromJSON('["OWNER", "MEMBER", "COLLABORATOR"]'), github.event.comment.author_association) &&
+      (contains(github.event.comment.body, '/oc') ||
+      contains(github.event.comment.body, '/opencode'))
     runs-on: ubuntu-latest
     permissions:
       contents: write

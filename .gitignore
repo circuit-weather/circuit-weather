@@ -154,3 +154,6 @@ test-results/
 # Vite logs files
 vite.config.js.timestamp-*
 vite.config.ts.timestamp-*
+
+# pnpm is the package manager (see packageManager in package.json)
+package-lock.json
