@@ -239,6 +239,9 @@ describe('SEO Title Updates', () => {
 
         // Ensure appendChild is spied to check it doesn't add multiple scripts
         const appendSpy = vi.spyOn(document.head, 'appendChild');
+        // head.appendChild is already a vi.fn here, and Vitest 4's spyOn returns
+        // that same mock with its history, so only count calls from this point.
+        appendSpy.mockClear();
 
         await app.selectSession('qualifying');
 

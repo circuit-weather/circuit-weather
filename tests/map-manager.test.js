@@ -23,7 +23,7 @@ const mapboxMapMock = {
 // Use a variable we can modify instead of stubbing directly initially to handle
 // how mock implementations are scoped per test block
 const mapboxglMock = {
-  Map: vi.fn(() => mapboxMapMock),
+  Map: vi.fn(function () { return mapboxMapMock; }),
   accessToken: ''
 };
 
@@ -72,7 +72,7 @@ vi.stubGlobal("document", documentMock);
 
 // Mock ResizeObserver
 let resizeCallback;
-const resizeObserverMock = vi.fn((cb) => {
+const resizeObserverMock = vi.fn(function (cb) {
   resizeCallback = cb;
   return {
     observe: vi.fn(),

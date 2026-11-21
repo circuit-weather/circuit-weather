@@ -20,9 +20,9 @@
   "author": "Jules",
   "license": "MIT",
   "devDependencies": {
-    "@vitest/coverage-v8": "^1.6.1",
-    "vitest": "^1.6.0",
-    "wrangler": "^4.156.0"
+    "@vitest/coverage-v8": "^4.1.12",
+    "vitest": "^4.1.12",
+    "wrangler": "^4.166.0"
   },
   "dependencies": {
     "jsdom": "^24.1.3"

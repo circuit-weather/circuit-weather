@@ -6,9 +6,9 @@ import { i18n } from '../public/src/i18n/index.js';
 
 vi.mock('../public/src/CircuitWeatherApp.js', () => {
     return {
-        CircuitWeatherApp: vi.fn().mockImplementation(() => ({
-            init: vi.fn()
-        }))
+        CircuitWeatherApp: vi.fn().mockImplementation(function () {
+            return { init: vi.fn() };
+        })
     };
 });
 
