@@ -1,0 +1,10 @@
+# Dependabot SECURITY updates only: open-pull-requests-limit: 0 turns off
+# routine version-bump PRs, while security-fix PRs still use this config.
+# Requires "Dependabot security updates" to be enabled in the repository settings.
+version: 2
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 0

@@ -1,0 +1,12 @@
+# OSV-Scanner allowlist, read by .github/workflows/osv-scanner.yml.
+#
+# Entries are added ONLY when the repository owner has decided to accept a
+# specific advisory, never unattended (see AGENTS.md). Each entry needs an id,
+# a reason that records that decision, and an ignoreUntil date no more than six
+# months out. When it lapses the scan fails again and the advisory is
+# re-investigated, not simply re-dated. Remove entries once fixed.
+#
+# [[IgnoredVulns]]
+# id = "GHSA-xxxx-xxxx-xxxx"
+# ignoreUntil = 2027-01-01
+# reason = "Why the risk is accepted; accepted by <owner> on <date>."
