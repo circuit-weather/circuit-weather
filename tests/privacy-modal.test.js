@@ -71,14 +71,16 @@ class MockDOMParser {
   parseFromString(str, type) {
     // Simple mock implementation to handle entity decoding for our specific test cases
     let decoded = str;
-    // Run a few times to handle nested encoded strings like `&amp;colon;` becoming `&colon;` then `:`
+    // Run a few times to handle nested encoded strings like `&amp;colon;` becoming `&colon;` then `:`.
+    // `&amp;` is decoded last in each pass, so a single pass never decodes the
+    // `&` it just produced; the next pass picks up the nested entity instead.
     for (let i = 0; i < 3; i++) {
       decoded = decoded
-        .replace(/&amp;/gi, "&")
         .replace(/&colon;/gi, ":")
         .replace(/&#58;/gi, ":")
         .replace(/&#x3a;/gi, ":")
-        .replace(/&quot;/gi, '"');
+        .replace(/&quot;/gi, '"')
+        .replace(/&amp;/gi, "&");
     }
 
     return {

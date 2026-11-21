@@ -1,0 +1,68 @@
+name: CodeQL
+
+# Static analysis of the repository's OWN code (not its dependencies; that is
+# osv-scanner.yml) with GitHub CodeQL's security-extended query suite, on every
+# pull request. The whole codebase is analysed, and the job fails on ANY
+# result, not just ones on lines the pull request changed, so a finding in
+# untouched code still blocks. Results are also uploaded to the repository's
+# Security tab for same-repository pull requests. Findings are fixed or taken
+# to the owner; they are never suppressed unattended (see AGENTS.md).
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  analyze:
+    name: CodeQL (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write # upload results to the Security tab
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [javascript-typescript, actions]
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          persist-credentials: false
+
+      - uses: github/codeql-action/init@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: none
+          queries: security-extended
+
+      - uses: github/codeql-action/analyze@33d7b85da1a04171e211befe2c739303b9a4c066 # v4.39.3
+        with:
+          category: /language:${{ matrix.language }}
+          output: ${{ runner.temp }}/codeql-sarif
+          # Fork pull requests get a read-only token and cannot upload.
+          upload: ${{ github.event.pull_request.head.repo.full_name == github.repository && 'always' || 'never' }}
+
+      - name: Fail on any CodeQL result
+        env:
+          SARIF_DIR: ${{ runner.temp }}/codeql-sarif
+        run: |
+          python3 - <<'PY'
+          import glob, json, os, sys
+          results = []
+          for path in glob.glob(os.path.join(os.environ["SARIF_DIR"], "*.sarif")):
+              for run in json.load(open(path))["runs"]:
+                  rules = {r["id"]: r for r in run["tool"]["driver"].get("rules", [])}
+                  for res in run.get("results", []):
+                      loc = res["locations"][0]["physicalLocation"]
+                      rule = rules.get(res["ruleId"], {})
+                      sev = rule.get("properties", {}).get("security-severity", "-")
+                      results.append(
+                          f'{loc["artifactLocation"]["uri"]}:{loc.get("region", {}).get("startLine", "?")}'
+                          f'  [{res["ruleId"]}, security-severity {sev}]  {res["message"]["text"]}'
+                      )
+          for line in results:
+              print(line)
+          print(f"{len(results)} CodeQL result(s).")
+          sys.exit(1 if results else 0)
+          PY

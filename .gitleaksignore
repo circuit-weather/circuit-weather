@@ -1,0 +1,13 @@
+# gitleaks false positives, accepted by the repository owner on 2026-11-21.
+# Only the owner may add entries here (see AGENTS.md); each needs a reason.
+#
+# tests/handler-config.test.js as added in d531c63 used a 14-character
+# placeholder MAPBOX_ACCESS_TOKEN for the config-handler unit tests. It is not a
+# real Mapbox token (those are long JWT-style strings), and the test now uses an
+# obviously fake value. These fingerprints cover only that commit's copies.
+d531c636ba725516b6fffb8d208a68b1734446a5:tests/handler-config.test.js:generic-api-key:19
+d531c636ba725516b6fffb8d208a68b1734446a5:tests/handler-config.test.js:generic-api-key:29
+d531c636ba725516b6fffb8d208a68b1734446a5:tests/handler-config.test.js:generic-api-key:49
+d531c636ba725516b6fffb8d208a68b1734446a5:tests/handler-config.test.js:generic-api-key:60
+d531c636ba725516b6fffb8d208a68b1734446a5:tests/handler-config.test.js:generic-api-key:73
+d531c636ba725516b6fffb8d208a68b1734446a5:tests/handler-config.test.js:generic-api-key:85

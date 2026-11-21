@@ -1,0 +1,41 @@
+name: Secret scan (gitleaks)
+
+# Scans the repository's ENTIRE git history, not just the pull request's
+# commits, for committed credentials (API keys, tokens, private keys) with
+# gitleaks on every pull request. Any finding fails the check. Output is
+# redacted: this repository is public, so its CI logs are too, and a found
+# secret must never be printed. A real leak means rotating the credential;
+# only the owner may mark a finding as a false positive in .gitleaksignore
+# (see AGENTS.md).
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  gitleaks:
+    name: gitleaks (full history)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
+        with:
+          fetch-depth: 0 # full history
+          persist-credentials: false
+
+      - uses: actions/setup-go@40f1582b2485089dde7abd97c1529aa768e1baff # v5.6.0
+        with:
+          go-version: "1.27.x"
+          cache: false
+
+      - name: Install gitleaks
+        run: go install github.com/zricethezav/gitleaks/v8@v8.30.1
+
+      - name: Scan full history
+        run: |
+          "$(go env GOPATH)/bin/gitleaks" git \
+            --redact \
+            --verbose \
+            --no-banner \
+            .
