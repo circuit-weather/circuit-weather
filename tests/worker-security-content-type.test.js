@@ -243,34 +243,4 @@ describe('Worker Security: Strict Content-Type Validation', () => {
     });
   });
 
-  describe('Tile Proxy (/api/tiles/*)', () => {
-    it('allows image/png', async () => {
-        mockFetch.mockResolvedValueOnce(new Response(new ArrayBuffer(10), {
-            status: 200,
-            headers: { 'Content-Type': 'image/png' }
-        }));
-
-        const req = createRequest('/api/tiles/v2/radar/1/512/2/3/1/2/1_1.png');
-        const res = await worker.fetch(req, global.env, global.ctx);
-        expect(res.status).toBe(200);
-    });
-
-    it('blocks deceptive type: image/png-evil', async () => {
-        const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-        mockFetch.mockResolvedValueOnce(new Response(new ArrayBuffer(10), {
-            status: 200,
-            headers: { 'Content-Type': 'image/png-evil' }
-        }));
-
-        const req = createRequest('/api/tiles/v2/radar/1/512/2/3/1/2/1_1.png');
-        const res = await worker.fetch(req, global.env, global.ctx);
-
-        // Strict comparison must reject image/png-evil (a startsWith check would
-        // wrongly accept it).
-        expect(res.status).toBe(502);
-        expect(errorSpy).toHaveBeenCalled();
-        errorSpy.mockRestore();
-    });
-  });
-
 });

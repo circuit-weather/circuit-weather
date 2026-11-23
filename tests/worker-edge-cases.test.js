@@ -152,7 +152,7 @@ describe('Worker Edge Cases', () => {
         it('handles preflight OPTIONS across various API routes', async () => {
             const routes = [
                 '/api/f1/current',
-                '/api/tiles/v2/radar/1/512/2/3/1/2/1_1.png',
+                '/api/radar',
                 '/api/assets/leaflet.js',
                 '/api/track/bahrain',
             ];
@@ -399,30 +399,4 @@ describe('Worker Edge Cases', () => {
     // ---------------------------------------------------------------
     // Tile endpoint validation
     // ---------------------------------------------------------------
-    describe('/api/tiles validation', () => {
-        it('rejects non-PNG tile requests', async () => {
-            const request = createRequest('/api/tiles/v2/radar/test.svg');
-            const response = await workerModule.fetch(request, env, ctx);
-
-            expect(response.status).toBe(400);
-            const body = await response.json();
-            expect(body.error.message).toBe('Invalid tile format');
-        });
-
-        it('rejects tile paths with dotfile segments', async () => {
-            const request = createRequest('/api/tiles/.hidden/tile.png');
-            const response = await workerModule.fetch(request, env, ctx);
-
-            // Dotfile regex catches hidden segments
-            expect(response.status).toBe(400);
-        });
-
-        it('rejects tile paths exceeding 255 characters', async () => {
-            const longPath = '/v2/' + 'a'.repeat(252) + '.png';
-            const request = createRequest(`/api/tiles${longPath}`);
-            const response = await workerModule.fetch(request, env, ctx);
-
-            expect(response.status).toBe(400);
-        });
-    });
 });

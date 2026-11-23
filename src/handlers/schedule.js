@@ -21,7 +21,8 @@
  *   addresses and the Cache API copy is per data centre and can be evicted, so
  *   without it a 429 could leave a data centre with nothing to serve. Each request
  *   uses the newer of the two copies; KV is written at most every
- *   KV_SAVE_INTERVAL_MS per series (the free plan allows 1,000 writes a day).
+ *   KV_SAVE_INTERVAL_MS per series (the free plan allows 1,000 writes a day), and
+ *   straight away when the season changes.
  */
 
 import {
@@ -150,11 +151,18 @@ async function loadState(cache, series, env) {
  * otherwise never reach KV if nothing changed afterwards.
  */
 function saveState(cache, state, ctx, env, now, { changed = true } = {}) {
-  const kvDue = Boolean(env?.SCHEDULE_KV) && now - (state.kvSavedAt ?? 0) >= KV_SAVE_INTERVAL_MS;
+  // A new season is written to KV at once: held back, it could be lost with this data
+  // centre's cache before another request comes (IndyCar's 2027 rollover was). Seasons
+  // change about once a year per series, so this adds next to no writes
+  const newSeason = state.season !== (state.kvSeason ?? null);
+  const kvDue = Boolean(env?.SCHEDULE_KV) && (newSeason || now - (state.kvSavedAt ?? 0) >= KV_SAVE_INTERVAL_MS);
   const kvBehind = (state.savedAt ?? 0) > (state.kvSavedAt ?? 0);
   if (!changed && !(kvDue && kvBehind)) return;
   if (changed) state.savedAt = now;
-  if (kvDue) state.kvSavedAt = now;
+  if (kvDue) {
+    state.kvSavedAt = now;
+    state.kvSeason = state.season;
+  }
   const body = JSON.stringify(state);
   ctx.waitUntil(cache.put(stateKey(state.series), new Response(body, {
     headers: { 'Content-Type': 'application/json', 'Cache-Control': `public, max-age=${STATE_CACHE_TTL}` },

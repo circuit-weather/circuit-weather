@@ -468,6 +468,29 @@ describe('Worker /api/schedule/{series}', () => {
         expect(body.races[0].date).toBe('2027-03-07');
       });
 
+      // IndyCar rolled over 24 minutes after its last KV write; held back, the new
+      // season was lost when that data centre's cache entry went
+      it('writes the new season to KV at once, even within the write interval', async () => {
+        const store = new Map();
+        env.SCHEDULE_KV = {
+          get: vi.fn(async (key) => (store.has(key) ? JSON.parse(store.get(key)) : null)),
+          put: vi.fn(async (key, value) => { store.set(key, value); }),
+        };
+        vi.setSystemTime(AFTER_SEASON);
+        // Written to KV a minute ago, as the 2026 season
+        withState({ ...partialState('2026-03-01'), savedAt: AFTER_SEASON - 60000, kvSavedAt: AFTER_SEASON - 60000, kvSeason: '2026' });
+        vi.stubGlobal('fetch', fakeUpstream({ lastRound: 3, next: 1, nextSeason: '2027', following: '2027' }).handler);
+
+        expect((await (await get()).json()).season).toBe('2027');
+        expect(env.SCHEDULE_KV.put).toHaveBeenCalledTimes(1);
+        expect(JSON.parse(store.get('state/f2')).season).toBe('2027');
+
+        // Back to the usual interval for changes within the season
+        vi.setSystemTime(AFTER_SEASON + 60000);
+        await getFresh();
+        expect(env.SCHEDULE_KV.put).toHaveBeenCalledTimes(1);
+      });
+
       it('checks a state saved before this check existed straight away', async () => {
         vi.setSystemTime(AFTER_SEASON);
         // Next event fetched a minute ago, but no followingListed field yet

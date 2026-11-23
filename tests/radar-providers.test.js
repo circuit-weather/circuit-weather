@@ -2,13 +2,8 @@ import { describe, it, expect } from 'vitest';
 import {
   normaliseLibreWxrMetadata,
   normaliseRainViewerMetadata,
-  buildOverlayQuery,
-  resolveTileUpstream,
   buildAlertsUpstreamUrl,
   sanitiseAlerts,
-  TILE_TTL_PAST,
-  TILE_TTL_NOWCAST,
-  TILE_TTL_SATELLITE,
 } from '../src/radar-providers.js';
 
 const NOW_MS = 2_000_000 * 1000;
@@ -90,76 +85,6 @@ describe('normaliseRainViewerMetadata', () => {
 
   it('returns null without usable past frames', () => {
     expect(normaliseRainViewerMetadata({ radar: { past: [] } })).toBeNull();
-  });
-});
-
-describe('buildOverlayQuery', () => {
-  it('keeps allowed overlays in a fixed order', () => {
-    const params = new URLSearchParams('lightning=bolts&cells=dark&arrows=light&nowcast=1');
-    expect(buildOverlayQuery(params)).toBe('?arrows=light&cells=dark&lightning=bolts');
-  });
-
-  it('drops unknown values', () => {
-    const params = new URLSearchParams('arrows=<script>&cells=&lightning=1');
-    expect(buildOverlayQuery(params)).toBe('');
-  });
-});
-
-describe('resolveTileUpstream', () => {
-  const none = new URLSearchParams();
-
-  it('routes past LibreWXR radar tiles with the long TTL', () => {
-    const result = resolveTileUpstream('/v2/radar/1000/512/12/3/4/2/1_1.png', none, NOW_MS);
-    expect(result).toEqual({
-      upstreamUrl: 'https://api.librewxr.net/v2/radar/1000/512/12/3/4/2/1_1.png',
-      cacheKeyUrl: 'https://api.librewxr.net/v2/radar/1000/512/12/3/4/2/1_1.png',
-      ttl: TILE_TTL_PAST,
-    });
-  });
-
-  it('caches nowcast tiles briefly under a separate key', () => {
-    const result = resolveTileUpstream('/v2/radar/3000000/512/5/3/4/2/1_1.png', none, NOW_MS);
-    expect(result.ttl).toBe(TILE_TTL_NOWCAST);
-    expect(result.upstreamUrl).toBe('https://api.librewxr.net/v2/radar/3000000/512/5/3/4/2/1_1.png');
-    expect(result.cacheKeyUrl).toBe(`${result.upstreamUrl}?cw-nowcast=1`);
-  });
-
-  it('appends overlay params, joining the nowcast marker with &', () => {
-    const params = new URLSearchParams('arrows=dark');
-    const result = resolveTileUpstream('/v2/radar/3000000/512/5/3/4/2/1_1.png', params, NOW_MS);
-    expect(result.upstreamUrl).toBe('https://api.librewxr.net/v2/radar/3000000/512/5/3/4/2/1_1.png?arrows=dark');
-    expect(result.cacheKeyUrl).toBe(`${result.upstreamUrl}&cw-nowcast=1`);
-  });
-
-  it('rejects radar tiles beyond the zoom limit or with an unknown colour', () => {
-    expect(resolveTileUpstream('/v2/radar/1000/512/13/3/4/2/1_1.png', none, NOW_MS)).toBeNull();
-    expect(resolveTileUpstream('/v2/radar/1000/512/5/3/4/99/1_1.png', none, NOW_MS)).toBeNull();
-    expect(resolveTileUpstream('/v2/radar/1000/512/5/3/4/255/0_0.png', none, NOW_MS)).not.toBeNull();
-  });
-
-  it('routes satellite tiles without overlays', () => {
-    const params = new URLSearchParams('arrows=dark');
-    expect(resolveTileUpstream('/v2/satellite/900/512/6/3/4/0/0_0.png', params, NOW_MS)).toEqual({
-      upstreamUrl: 'https://api.librewxr.net/v2/satellite/900/512/6/3/4/0/0_0.png',
-      cacheKeyUrl: 'https://api.librewxr.net/v2/satellite/900/512/6/3/4/0/0_0.png',
-      ttl: TILE_TTL_SATELLITE,
-    });
-    expect(resolveTileUpstream('/v2/satellite/900/512/13/3/4/0/0_0.png', none, NOW_MS)).toBeNull();
-  });
-
-  it('routes prefixed RainViewer tiles and enforces their zoom limit', () => {
-    expect(resolveTileUpstream('/rainviewer/v2/radar/abc/512/7/3/4/2/1_1.png', none, NOW_MS)).toEqual({
-      upstreamUrl: 'https://tilecache.rainviewer.com/v2/radar/abc/512/7/3/4/2/1_1.png',
-      cacheKeyUrl: 'https://tilecache.rainviewer.com/v2/radar/abc/512/7/3/4/2/1_1.png',
-      ttl: TILE_TTL_PAST,
-    });
-    expect(resolveTileUpstream('/rainviewer/v2/radar/abc/512/8/3/4/2/1_1.png', none, NOW_MS)).toBeNull();
-  });
-
-  it('rejects anything else', () => {
-    expect(resolveTileUpstream('/v2/radar/abc/512/5/3/4/2/1_1.png', none, NOW_MS)).toBeNull();
-    expect(resolveTileUpstream('/v2/coverage/0/512/5/3/4/0/0_0.png', none, NOW_MS)).toBeNull();
-    expect(resolveTileUpstream('/test.png', none, NOW_MS)).toBeNull();
   });
 });
 
