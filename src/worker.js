@@ -6,7 +6,6 @@
  * - /api/schedule/{series}
  * - /api/health
  * - /api/radar
- * - /api/tiles/*
  * - /api/alerts
  * - /api/track/*
  * - /api/assets/*
@@ -26,7 +25,7 @@ import {
 import { handleApiRequest } from './handlers/f1.js';
 import { handleScheduleRequest } from './handlers/schedule.js';
 import { handleHealthRequest } from './handlers/health.js';
-import { handleRadarRequest, handleTileRequest, handleAlertsRequest } from './handlers/radar.js';
+import { handleRadarRequest, handleAlertsRequest } from './handlers/radar.js';
 import { handleTrackRequest } from './handlers/track.js';
 import { handleAssetRequest } from './handlers/assets.js';
 import { handleConfigRequest } from './handlers/config.js';
@@ -90,10 +89,6 @@ export default {
         return handleRadarRequest(request, env, ctx);
       }
 
-      // Handle radar tile requests (Optimized Cache)
-      if (path.startsWith('/api/tiles/')) {
-        return handleTileRequest(request, env, ctx, url);
-      }
 
       // Handle weather alert requests
       if (path === '/api/alerts') {

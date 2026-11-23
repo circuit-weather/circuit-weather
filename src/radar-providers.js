@@ -15,10 +15,9 @@ export const LIBREWXR_HOST = 'https://api.librewxr.net';
 export const LIBREWXR_METADATA_URL = `${LIBREWXR_HOST}/public/weather-maps.json`;
 export const LIBREWXR_ALERTS_URL = `${LIBREWXR_HOST}/v2/alerts`;
 export const RAINVIEWER_METADATA_URL = 'https://api.rainviewer.com/public/weather-maps.json';
-export const RAINVIEWER_TILE_HOST = 'https://tilecache.rainviewer.com';
 
-// Tile paths for RainViewer frames are prefixed so the tile proxy knows which
-// upstream to use. LibreWXR paths are passed through unchanged.
+// RainViewer frame paths are prefixed so the client knows which host serves their
+// tiles (tileBase in public/src/map/RadarFrames.js). LibreWXR paths are unchanged.
 export const RAINVIEWER_PATH_PREFIX = '/rainviewer';
 
 export const PROVIDER_MAX_ZOOM = Object.freeze({
@@ -26,15 +25,6 @@ export const PROVIDER_MAX_ZOOM = Object.freeze({
   // RainViewer free tier limit (Jan 2026)
   rainviewer: 7,
 });
-
-// Past radar tiles never change once published, so they keep the long edge
-// cache. Nowcast tiles are re-generated every cycle under the same timestamp,
-// so they are cached briefly and under a separate key (see resolveTileUpstream).
-export const TILE_TTL_PAST = 7200;
-export const TILE_TTL_NOWCAST = 300;
-// Satellite frames are hourly and LibreWXR keeps 12 hours of them; a frame's
-// tiles never change, so they can stay cached for that whole window.
-export const TILE_TTL_SATELLITE = 12 * 60 * 60;
 
 const MAX_FRAMES = 48;
 const MAX_COLOUR_SCHEMES = 32;
@@ -50,22 +40,8 @@ export const ALERT_BBOX_HALF_SIZE_DEG = 2;
 const LIBREWXR_FRAME_PATH = /^\/v2\/(radar|satellite)\/\d{1,12}$/;
 const RAINVIEWER_FRAME_PATH = /^\/v2\/radar\/[A-Za-z0-9]{1,64}$/;
 
-// /v2/radar/{ts}/{size}/{z}/{x}/{y}/{colour}/{smooth}_{snow}.png
-const LIBREWXR_RADAR_TILE = /^\/v2\/radar\/(\d{1,12})\/(256|512)\/(\d{1,2})\/(\d{1,5})\/(\d{1,5})\/(\d{1,3})\/([01])_([01])\.png$/;
-// /v2/satellite/{ts}/{size}/{z}/{x}/{y}/0/0_0.png
-const LIBREWXR_SATELLITE_TILE = /^\/v2\/satellite\/(\d{1,12})\/(256|512)\/(\d{1,2})\/(\d{1,5})\/(\d{1,5})\/0\/0_0\.png$/;
-// /rainviewer/v2/radar/{hash}/{size}/{z}/{x}/{y}/{colour}/{smooth}_{snow}.png
-const RAINVIEWER_RADAR_TILE = /^\/rainviewer(\/v2\/radar\/[A-Za-z0-9]{1,64}\/(?:256|512)\/(\d{1,2})\/\d{1,5}\/\d{1,5}\/\d{1,3}\/[01]_[01]\.png)$/;
-
 // LibreWXR colour scheme IDs (0-14) plus 255 (raw greyscale).
 const VALID_COLOUR_IDS = new Set([...Array(15).keys(), 255]);
-
-// Optional tile overlays. Values outside these sets are dropped.
-const OVERLAY_PARAMS = Object.freeze({
-  arrows: new Set(['light', 'dark']),
-  cells: new Set(['light', 'dark']),
-  lightning: new Set(['dots', 'bolts']),
-});
 
 function sanitiseFrames(list, pathPattern, pathPrefix = '') {
   if (!Array.isArray(list)) return [];
@@ -115,7 +91,7 @@ export function normaliseLibreWxrMetadata(data) {
 
 /**
  * Rebuild RainViewer metadata into the client schema, prefixing frame paths
- * so the tile proxy routes them to RainViewer.
+ * so the client loads their tiles from RainViewer.
  * Returns null when there are no usable past frames.
  */
 export function normaliseRainViewerMetadata(data) {
@@ -132,64 +108,6 @@ export function normaliseRainViewerMetadata(data) {
     satellite: { infrared: [] },
     colorSchemes: [],
   };
-}
-
-/**
- * Picks the allowed overlay query parameters in a fixed order, so equivalent
- * requests share one cache entry. Returns '' or a string starting with '?'.
- */
-export function buildOverlayQuery(searchParams) {
-  const parts = [];
-  for (const [name, allowed] of Object.entries(OVERLAY_PARAMS)) {
-    const value = searchParams.get(name);
-    if (value !== null && allowed.has(value)) {
-      parts.push(`${name}=${value}`);
-    }
-  }
-  return parts.length ? `?${parts.join('&')}` : '';
-}
-
-/**
- * Resolve a validated, decoded tile path (e.g. `/v2/radar/123/512/8/1/2/2/1_1.png`)
- * to its upstream. Returns null for anything that is not a known tile shape.
- *
- * @param {string} tilePath
- * @param {URLSearchParams} searchParams
- * @param {number} nowMs - Current time, injected for testing
- * @returns {{ upstreamUrl: string, cacheKeyUrl: string, ttl: number } | null}
- */
-export function resolveTileUpstream(tilePath, searchParams, nowMs) {
-  const radar = LIBREWXR_RADAR_TILE.exec(tilePath);
-  if (radar) {
-    const [, ts, , z, , , colour] = radar;
-    if (Number(z) > PROVIDER_MAX_ZOOM.librewxr) return null;
-    if (!VALID_COLOUR_IDS.has(Number(colour))) return null;
-    const upstreamUrl = `${LIBREWXR_HOST}${tilePath}${buildOverlayQuery(searchParams)}`;
-    const isNowcast = Number(ts) * 1000 > nowMs;
-    if (isNowcast) {
-      // Separate cache key: once this timestamp becomes an observed frame, the
-      // radar tile must be fetched fresh instead of serving the forecast one.
-      const separator = upstreamUrl.includes('?') ? '&' : '?';
-      return { upstreamUrl, cacheKeyUrl: `${upstreamUrl}${separator}cw-nowcast=1`, ttl: TILE_TTL_NOWCAST };
-    }
-    return { upstreamUrl, cacheKeyUrl: upstreamUrl, ttl: TILE_TTL_PAST };
-  }
-
-  const satellite = LIBREWXR_SATELLITE_TILE.exec(tilePath);
-  if (satellite) {
-    if (Number(satellite[3]) > PROVIDER_MAX_ZOOM.librewxr) return null;
-    const upstreamUrl = `${LIBREWXR_HOST}${tilePath}`;
-    return { upstreamUrl, cacheKeyUrl: upstreamUrl, ttl: TILE_TTL_SATELLITE };
-  }
-
-  const rainviewer = RAINVIEWER_RADAR_TILE.exec(tilePath);
-  if (rainviewer) {
-    if (Number(rainviewer[2]) > PROVIDER_MAX_ZOOM.rainviewer) return null;
-    const upstreamUrl = `${RAINVIEWER_TILE_HOST}${rainviewer[1]}`;
-    return { upstreamUrl, cacheKeyUrl: upstreamUrl, ttl: TILE_TTL_PAST };
-  }
-
-  return null;
 }
 
 function parseCoordinate(value, limit) {

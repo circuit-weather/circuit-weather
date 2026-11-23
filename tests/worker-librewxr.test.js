@@ -32,54 +32,6 @@ describe('Worker LibreWXR routes', () => {
     ctx = { waitUntil: vi.fn() };
   });
 
-  describe('/api/tiles/*', () => {
-    it('proxies LibreWXR radar tiles with allowed overlays only', async () => {
-      mockFetch.mockResolvedValueOnce(png());
-
-      const res = await worker.fetch(
-        createRequest('/api/tiles/v2/radar/1000/512/10/3/4/2/1_1.png?cells=dark&arrows=dark&evil=1'),
-        env, ctx
-      );
-
-      expect(res.status).toBe(200);
-      expect(res.headers.get('Cache-Control')).toBe('public, max-age=7200');
-      expect(mockFetch.mock.calls[0][0]).toBe(
-        'https://api.librewxr.net/v2/radar/1000/512/10/3/4/2/1_1.png?arrows=dark&cells=dark'
-      );
-    });
-
-    it('caches nowcast tiles for 5 minutes under a separate key', async () => {
-      mockFetch.mockResolvedValueOnce(png());
-      const future = Math.floor(Date.now() / 1000) + 1800;
-
-      const res = await worker.fetch(
-        createRequest(`/api/tiles/v2/radar/${future}/512/8/3/4/2/1_1.png?nowcast=1`), env, ctx
-      );
-
-      expect(res.status).toBe(200);
-      expect(res.headers.get('Cache-Control')).toBe('public, max-age=300');
-      expect(mockFetch.mock.calls[0][0]).toBe(`https://api.librewxr.net/v2/radar/${future}/512/8/3/4/2/1_1.png`);
-      expect(cacheStore.has(`https://api.librewxr.net/v2/radar/${future}/512/8/3/4/2/1_1.png?cw-nowcast=1`)).toBe(true);
-    });
-
-    it('routes RainViewer fallback tiles to RainViewer', async () => {
-      mockFetch.mockResolvedValueOnce(png());
-
-      const res = await worker.fetch(createRequest('/api/tiles/rainviewer/v2/radar/abc/512/6/3/4/2/1_1.png'), env, ctx);
-
-      expect(res.status).toBe(200);
-      expect(mockFetch.mock.calls[0][0]).toBe('https://tilecache.rainviewer.com/v2/radar/abc/512/6/3/4/2/1_1.png');
-    });
-
-    it('rejects unknown tile shapes without contacting upstream', async () => {
-      const res = await worker.fetch(createRequest('/api/tiles/v2/radar/1000/512/14/3/4/2/1_1.png'), env, ctx);
-
-      expect(res.status).toBe(400);
-      expect((await res.json()).error.message).toBe('Invalid tile path');
-      expect(mockFetch).not.toHaveBeenCalled();
-    });
-  });
-
   describe('/api/alerts', () => {
     const UPSTREAM = 'https://api.librewxr.net/v2/alerts?bbox=-3,50.1,1,54.1&simplify=1000';
     const alertsBody = {
